@@ -50,6 +50,10 @@ export function Sidebar() {
   const { user, logoutMutation } = useAuth();
   const [location] = useLocation();
 
+  // デバッグ用のログ出力を追加
+  console.log("Current user:", user);
+  console.log("Is admin:", user?.isAdmin);
+
   return (
     <div className="h-screen w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
       <div className="p-6">
@@ -60,7 +64,10 @@ export function Sidebar() {
 
       <nav className="flex-1">
         {menuItems.map((item) => {
-          if (item.adminOnly && !user?.isAdmin) return null;
+          if (item.adminOnly && !user?.isAdmin) {
+            console.log(`Skipping admin-only menu item: ${item.label}`);
+            return null;
+          }
 
           const Icon = item.icon;
           const isActive = location === item.href || 

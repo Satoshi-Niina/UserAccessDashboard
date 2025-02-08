@@ -16,6 +16,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { insertUserSchema } from "@shared/schema";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const loginSchema = insertUserSchema.pick({
   username: true,
@@ -42,11 +43,14 @@ export default function AuthPage() {
     },
   });
 
-  const registerForm = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+  const registerForm = useForm<LoginFormData & { isAdmin: boolean }>({
+    resolver: zodResolver(loginSchema.extend({
+      isAdmin: z.boolean().default(false),
+    })),
     defaultValues: {
       username: "",
       password: "",
+      isAdmin: false,
     },
   });
 
@@ -111,7 +115,7 @@ export default function AuthPage() {
                 <CardContent>
                   <form
                     onSubmit={registerForm.handleSubmit((data) =>
-                      registerMutation.mutate({ ...data, isAdmin: false })
+                      registerMutation.mutate(data)
                     )}
                     className="space-y-4"
                   >
@@ -129,6 +133,13 @@ export default function AuthPage() {
                         type="password"
                         {...registerForm.register("password")}
                       />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="isAdmin"
+                        {...registerForm.register("isAdmin")}
+                      />
+                      <Label htmlFor="isAdmin">管理者として登録</Label>
                     </div>
                     <Button
                       type="submit"

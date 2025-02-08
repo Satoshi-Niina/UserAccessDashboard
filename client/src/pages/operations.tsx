@@ -1,14 +1,25 @@
 import { Sidebar } from "@/components/layout/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
+import { useLocation } from "wouter";
+import { useEffect } from "react";
 
 export default function Operations() {
+  const [location, setLocation] = useLocation();
+  const currentTab = new URLSearchParams(location.split("?")[1]).get("tab") || "inspection";
+
+  useEffect(() => {
+    if (!location.includes("?tab=")) {
+      setLocation("/operations?tab=inspection");
+    }
+  }, [location, setLocation]);
+
   return (
     <div className="flex h-screen">
       <Sidebar />
       <main className="flex-1 p-6">
         <h1 className="text-3xl font-bold mb-6">運用管理</h1>
-        <Tabs defaultValue="inspection" className="w-full">
+        <Tabs value={currentTab} onValueChange={(value) => setLocation(`/operations?tab=${value}`)}>
           <TabsList>
             <TabsTrigger value="inspection">仕業点検</TabsTrigger>
             <TabsTrigger value="performance">運用実績</TabsTrigger>

@@ -45,30 +45,6 @@ class Auth {
         }
     }
 
-    async register(username, password, isAdmin = false) {
-        try {
-            const response = await fetch('/api/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ username, password, isAdmin }),
-                credentials: 'include'
-            });
-
-            if (!response.ok) {
-                throw new Error('登録に失敗しました');
-            }
-
-            this.user = await response.json();
-            this.notifyListeners();
-            return true;
-        } catch (error) {
-            console.error('登録エラー:', error);
-            return false;
-        }
-    }
-
     async logout() {
         try {
             await fetch('/api/logout', {
@@ -94,6 +70,10 @@ class Auth {
 
     notifyListeners() {
         this.listeners.forEach(callback => callback(this.user));
+    }
+
+    isAdmin() {
+        return this.user?.isAdmin === true;
     }
 }
 

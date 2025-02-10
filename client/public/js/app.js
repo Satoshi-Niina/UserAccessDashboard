@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
         router.navigate('/auth');
     }
 
-    // 認証フォームのイベントハンドラー
+    // ログインフォームのイベントハンドラー
     window.handleLogin = async (event) => {
         event.preventDefault();
         const form = event.target;
@@ -19,30 +19,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    window.handleRegister = async (event) => {
-        event.preventDefault();
-        const form = event.target;
-        const username = form.username.value;
-        const password = form.password.value;
-        const isAdmin = form.isAdmin.checked;
-
-        if (await auth.register(username, password, isAdmin)) {
-            router.navigate('/');
-        } else {
-            alert('登録に失敗しました');
-        }
-    };
-
-    // 認証タブの切り替え
-    document.addEventListener('click', (e) => {
-        if (e.target.matches('.auth-tab')) {
-            const tabName = e.target.dataset.tab;
-            document.querySelectorAll('.auth-tab').forEach(tab => {
-                tab.classList.toggle('active', tab === e.target);
-            });
-            document.getElementById('loginForm').classList.toggle('hidden', tabName !== 'login');
-            document.getElementById('registerForm').classList.toggle('hidden', tabName !== 'register');
-        }
+    // ログアウトボタンのイベントハンドラー
+    document.getElementById('logoutButton')?.addEventListener('click', () => {
+        auth.logout().then(() => {
+            router.navigate('/auth');
+        });
     });
 });
 

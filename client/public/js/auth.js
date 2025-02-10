@@ -3,40 +3,33 @@ class Auth {
         this.user = null;
         this.isLoading = true;
         this.listeners = new Set();
+
+        // 事前定義されたユーザー
+        this.predefinedUsers = {
+            'niina': {
+                password: '0077',
+                isAdmin: true
+            }
+        };
     }
 
     async init() {
-        try {
-            const response = await fetch('/api/user', {
-                credentials: 'include'
-            });
-            if (response.ok) {
-                this.user = await response.json();
-            }
-        } catch (error) {
-            console.error('認証の初期化に失敗しました:', error);
-        } finally {
-            this.isLoading = false;
-            this.notifyListeners();
-        }
+        this.isLoading = false;
+        this.notifyListeners();
     }
 
     async login(username, password) {
         try {
-            const response = await fetch('/api/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ username, password }),
-                credentials: 'include'
-            });
-
-            if (!response.ok) {
-                throw new Error('ログインに失敗しました');
+            const user = this.predefinedUsers[username];
+            if (!user || user.password !== password) {
+                throw new Error('ユーザー名またはパスワードが違います');
             }
 
-            this.user = await response.json();
+            this.user = {
+                username: username,
+                isAdmin: user.isAdmin
+            };
+
             this.notifyListeners();
             return true;
         } catch (error) {
@@ -47,10 +40,6 @@ class Auth {
 
     async logout() {
         try {
-            await fetch('/api/logout', {
-                method: 'POST',
-                credentials: 'include'
-            });
             this.user = null;
             this.notifyListeners();
             return true;

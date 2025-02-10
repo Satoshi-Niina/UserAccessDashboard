@@ -55,44 +55,18 @@ router.addRoute('/auth', async () => {
     return `
         <div class="auth-container">
             <div class="auth-card">
-                <div class="auth-tabs">
-                    <button class="auth-tab active" data-tab="login">ログイン</button>
-                    <button class="auth-tab" data-tab="register">新規登録</button>
-                </div>
-                
-                <div class="auth-form" id="loginForm">
-                    <form onsubmit="handleLogin(event)">
-                        <div class="form-group">
-                            <label class="form-label">ユーザー名</label>
-                            <input type="text" class="form-input" name="username" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">パスワード</label>
-                            <input type="password" class="form-input" name="password" required>
-                        </div>
-                        <button type="submit" class="button button-primary">ログイン</button>
-                    </form>
-                </div>
-                
-                <div class="auth-form hidden" id="registerForm">
-                    <form onsubmit="handleRegister(event)">
-                        <div class="form-group">
-                            <label class="form-label">ユーザー名</label>
-                            <input type="text" class="form-input" name="username" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">パスワード</label>
-                            <input type="password" class="form-input" name="password" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">
-                                <input type="checkbox" name="isAdmin">
-                                管理者として登録
-                            </label>
-                        </div>
-                        <button type="submit" class="button button-primary">登録</button>
-                    </form>
-                </div>
+                <h2>ログイン</h2>
+                <form onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label class="form-label">ユーザー名</label>
+                        <input type="text" class="form-input" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">パスワード</label>
+                        <input type="password" class="form-input" name="password" required>
+                    </div>
+                    <button type="submit" class="button button-primary">ログイン</button>
+                </form>
             </div>
         </div>
     `;

@@ -10,6 +10,7 @@ import {
   LogOut,
   Database,
   History,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +43,7 @@ const menuItems: MenuItem[] = [
     subItems: [
       { icon: Database, label: "基本データ処理", href: "/settings/basic-data" },
       { icon: History, label: "履歴検索", href: "/settings/history" },
+      { icon: Users, label: "ユーザー登録", href: "/settings/user-management" },
     ],
   },
 ];
@@ -49,10 +51,6 @@ const menuItems: MenuItem[] = [
 export function Sidebar() {
   const { user, logoutMutation } = useAuth();
   const [location] = useLocation();
-
-  // デバッグ用のログ出力を追加
-  console.log("Current user:", user);
-  console.log("Is admin:", user?.isAdmin);
 
   return (
     <div className="h-screen w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
@@ -65,7 +63,6 @@ export function Sidebar() {
       <nav className="flex-1">
         {menuItems.map((item) => {
           if (item.adminOnly && !user?.isAdmin) {
-            console.log(`Skipping admin-only menu item: ${item.label}`);
             return null;
           }
 

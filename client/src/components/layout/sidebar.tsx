@@ -59,7 +59,7 @@ export function Sidebar() {
     <div
       className={cn(
         "fixed h-screen bg-sidebar border-r border-sidebar-border flex flex-col transition-all duration-300",
-        isExpanded ? "w-64" : "w-12"
+        isExpanded ? "w-64" : "w-16"
       )}
       onMouseEnter={() => setIsExpanded(true)}
       onMouseLeave={() => setIsExpanded(false)}
@@ -97,7 +97,7 @@ export function Sidebar() {
                   className={cn(
                     "flex items-center gap-3 px-6 py-3 text-sidebar-foreground hover:bg-sidebar-accent transition-colors",
                     isActive && "bg-sidebar-accent text-sidebar-accent-foreground",
-                    !isExpanded && "justify-center px-3"
+                    !isExpanded && "justify-center px-4"
                   )}
                 >
                   <Icon className="h-5 w-5" />

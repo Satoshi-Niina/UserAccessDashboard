@@ -56,7 +56,7 @@ export default function VoiceAssistant() {
   return (
     <div className="flex h-screen">
       <Sidebar />
-      <main className="flex-1 p-6 ml-12 transition-all duration-300">
+      <main className="flex-1 p-6 ml-16 transition-all duration-300">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">音声アシスタント</h1>
           <Button

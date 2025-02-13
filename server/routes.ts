@@ -1,17 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { setupAuth } from "./auth";
+import { setupAuth, hashPassword } from "./auth";
 import { storage } from "./storage";
-
-// Assuming hashPassword function exists elsewhere, e.g., in ./auth.ts or a separate password-handling module
-const hashPassword = async (password:string) => {
-    //Implementation to hash the password,  replace with your actual hashing logic.  Example using bcrypt:
-    const bcrypt = require('bcrypt');
-    const saltRounds = 10;
-    const salt = await bcrypt.genSalt(saltRounds);
-    const hash = await bcrypt.hash(password, salt);
-    return hash;
-};
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);

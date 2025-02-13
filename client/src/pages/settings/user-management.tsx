@@ -9,15 +9,17 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 
 type User = {
+  id: number;
   username: string;
   isAdmin: boolean;
-  password?: string; // Added password field to the User type.  This is optional to allow for cases where password isn't returned from the API
+  password?: string;
 };
 
 export default function UserManagement() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -46,16 +48,50 @@ export default function UserManagement() {
     loadUsers();
   }, []);
 
+  // ユーザー選択時の処理
+  const handleUserSelect = (user: User) => {
+    setSelectedUser(user);
+    setFormData({
+      username: user.username,
+      password: "", // パスワードは空にする
+      isAdmin: user.isAdmin,
+    });
+  };
+
+  // フォームクリア
+  const clearForm = () => {
+    setSelectedUser(null);
+    setFormData({
+      username: "",
+      password: "",
+      isAdmin: false,
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch("/api/users", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      let response;
+
+      if (selectedUser) {
+        // 更新
+        response = await fetch(`/api/users/${selectedUser.id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        });
+      } else {
+        // 新規作成
+        response = await fetch("/api/users", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        });
+      }
 
       if (!response.ok) {
         const error = await response.json();
@@ -64,15 +100,15 @@ export default function UserManagement() {
 
       toast({
         title: "成功",
-        description: "ユーザーを登録しました",
+        description: selectedUser ? "ユーザー情報を更新しました" : "ユーザーを登録しました",
       });
 
-      setFormData({ username: "", password: "", isAdmin: false });
+      clearForm();
       loadUsers();
     } catch (error) {
       toast({
         title: "エラー",
-        description: error instanceof Error ? error.message : "ユーザー登録に失敗しました",
+        description: error instanceof Error ? error.message : "処理に失敗しました",
         variant: "destructive",
       });
     }
@@ -110,7 +146,9 @@ export default function UserManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">パスワード</Label>
+                  <Label htmlFor="password">
+                    パスワード {selectedUser && "(変更する場合のみ入力)"}
+                  </Label>
                   <Input
                     id="password"
                     type="password"
@@ -118,7 +156,7 @@ export default function UserManagement() {
                     onChange={(e) =>
                       setFormData({ ...formData, password: e.target.value })
                     }
-                    required
+                    required={!selectedUser}
                   />
                 </div>
                 <div className="flex items-center space-x-2">
@@ -131,9 +169,16 @@ export default function UserManagement() {
                   />
                   <Label htmlFor="isAdmin">管理者権限を付与</Label>
                 </div>
-                <Button type="submit" className="w-full">
-                  登録
-                </Button>
+                <div className="flex gap-2">
+                  <Button type="submit" className="flex-1">
+                    {selectedUser ? "更新" : "登録"}
+                  </Button>
+                  {selectedUser && (
+                    <Button type="button" variant="outline" onClick={clearForm}>
+                      キャンセル
+                    </Button>
+                  )}
+                </div>
               </form>
             </CardContent>
           </Card>
@@ -151,8 +196,14 @@ export default function UserManagement() {
                     </tr>
                   </thead>
                   <tbody>
-                    {users.map((user, index) => (
-                      <tr key={index} className="border-t">
+                    {users.map((user) => (
+                      <tr
+                        key={user.id}
+                        className={`border-t cursor-pointer hover:bg-accent/50 transition-colors ${
+                          selectedUser?.id === user.id ? "bg-accent" : ""
+                        }`}
+                        onClick={() => handleUserSelect(user)}
+                      >
                         <td className="p-2">{user.username}</td>
                         <td className="p-2">••••••</td>
                         <td className="p-2">{user.isAdmin ? "管理者" : "一般"}</td>

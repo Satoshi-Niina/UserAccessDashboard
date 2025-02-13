@@ -20,6 +20,7 @@ export default function UserManagement() {
   const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [isMenuExpanded, setIsMenuExpanded] = useState(false);
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -48,17 +49,15 @@ export default function UserManagement() {
     loadUsers();
   }, []);
 
-  // ユーザー選択時の処理
   const handleUserSelect = (user: User) => {
     setSelectedUser(user);
     setFormData({
       username: user.username,
-      password: "", // パスワードは空にする
+      password: "", 
       isAdmin: user.isAdmin,
     });
   };
 
-  // フォームクリア
   const clearForm = () => {
     setSelectedUser(null);
     setFormData({
@@ -74,7 +73,6 @@ export default function UserManagement() {
       let response;
 
       if (selectedUser) {
-        // 更新
         response = await fetch(`/api/users/${selectedUser.id}`, {
           method: "PATCH",
           headers: {
@@ -83,7 +81,6 @@ export default function UserManagement() {
           body: JSON.stringify(formData),
         });
       } else {
-        // 新規作成
         response = await fetch("/api/users", {
           method: "POST",
           headers: {
@@ -117,105 +114,109 @@ export default function UserManagement() {
   if (!user?.isAdmin) {
     return (
       <div className="flex h-screen">
-        <Sidebar />
-        <main className="flex-1 p-6">
-          <h1 className="text-3xl font-bold mb-6">アクセス権限がありません</h1>
-        </main>
+        <Sidebar onExpandChange={setIsMenuExpanded} />
+        <div className={`flex-1 ${isMenuExpanded ? 'ml-64' : 'ml-16'} transition-all duration-300`}>
+          <main className="p-6">
+            <h1 className="text-3xl font-bold mb-6">アクセス権限がありません</h1>
+          </main>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex h-screen">
-      <Sidebar />
-      <main className="flex-1 p-6">
-        <h1 className="text-3xl font-bold mb-6">ユーザー登録</h1>
-        <div className="grid gap-6">
-          <Card>
-            <CardContent className="pt-6">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="username">ユーザー名</Label>
-                  <Input
-                    id="username"
-                    value={formData.username}
-                    onChange={(e) =>
-                      setFormData({ ...formData, username: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">
-                    パスワード {selectedUser && "(変更する場合のみ入力)"}
-                  </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
-                    }
-                    required={!selectedUser}
-                  />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="isAdmin"
-                    checked={formData.isAdmin}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, isAdmin: checked as boolean })
-                    }
-                  />
-                  <Label htmlFor="isAdmin">管理者権限を付与</Label>
-                </div>
-                <div className="flex gap-2">
-                  <Button type="submit" className="flex-1">
-                    {selectedUser ? "更新" : "登録"}
-                  </Button>
-                  {selectedUser && (
-                    <Button type="button" variant="outline" onClick={clearForm}>
-                      キャンセル
+      <Sidebar onExpandChange={setIsMenuExpanded} />
+      <div className={`flex-1 ${isMenuExpanded ? 'ml-64' : 'ml-16'} transition-all duration-300`}>
+        <main className="p-6">
+          <h1 className="text-3xl font-bold mb-6">ユーザー管理</h1>
+          <div className="grid gap-6">
+            <Card>
+              <CardContent className="pt-6">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="username">ユーザー名</Label>
+                    <Input
+                      id="username"
+                      value={formData.username}
+                      onChange={(e) =>
+                        setFormData({ ...formData, username: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">
+                      パスワード {selectedUser && "(変更する場合のみ入力)"}
+                    </Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) =>
+                        setFormData({ ...formData, password: e.target.value })
+                      }
+                      required={!selectedUser}
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="isAdmin"
+                      checked={formData.isAdmin}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, isAdmin: checked as boolean })
+                      }
+                    />
+                    <Label htmlFor="isAdmin">管理者権限を付与</Label>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button type="submit" className="flex-1">
+                      {selectedUser ? "更新" : "登録"}
                     </Button>
-                  )}
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+                    {selectedUser && (
+                      <Button type="button" variant="outline" onClick={clearForm}>
+                        キャンセル
+                      </Button>
+                    )}
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardContent className="pt-6">
-              <h2 className="text-xl font-semibold mb-4">登録済みユーザー一覧</h2>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr>
-                      <th className="text-left p-2">ユーザー名</th>
-                      <th className="text-left p-2">パスワード</th>
-                      <th className="text-left p-2">権限</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map((user) => (
-                      <tr
-                        key={user.id}
-                        className={`border-t cursor-pointer hover:bg-accent/50 transition-colors ${
-                          selectedUser?.id === user.id ? "bg-accent" : ""
-                        }`}
-                        onClick={() => handleUserSelect(user)}
-                      >
-                        <td className="p-2">{user.username}</td>
-                        <td className="p-2">••••••</td>
-                        <td className="p-2">{user.isAdmin ? "管理者" : "一般"}</td>
+            <Card>
+              <CardContent className="pt-6">
+                <h2 className="text-xl font-semibold mb-4">登録済みユーザー一覧</h2>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr>
+                        <th className="text-left p-2">ユーザー名</th>
+                        <th className="text-left p-2">パスワード</th>
+                        <th className="text-left p-2">権限</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
+                    </thead>
+                    <tbody>
+                      {users.map((user) => (
+                        <tr
+                          key={user.id}
+                          className={`border-t cursor-pointer hover:bg-accent/50 transition-colors ${
+                            selectedUser?.id === user.id ? "bg-accent" : ""
+                          }`}
+                          onClick={() => handleUserSelect(user)}
+                        >
+                          <td className="p-2">{user.username}</td>
+                          <td className="p-2">••••••</td>
+                          <td className="p-2">{user.isAdmin ? "管理者" : "一般"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

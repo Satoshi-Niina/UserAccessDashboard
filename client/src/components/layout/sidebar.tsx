@@ -66,7 +66,7 @@ export function Sidebar({ onExpandChange }: SidebarProps) {
   return (
     <div
       className={cn(
-        "fixed h-screen bg-sidebar border-r border-sidebar-border flex flex-col transition-all duration-300",
+        "fixed h-screen bg-sidebar border-r border-sidebar-border flex flex-col transition-all duration-300 z-50",
         isExpanded ? "w-64" : "w-16"
       )}
       onMouseEnter={() => setIsExpanded(true)}
@@ -88,7 +88,7 @@ export function Sidebar({ onExpandChange }: SidebarProps) {
         </h1>
       </div>
 
-      <nav className="flex-1">
+      <nav className="flex-1 relative">
         {menuItems.map((item) => {
           if (item.adminOnly && !user?.isAdmin) {
             return null;
@@ -113,7 +113,7 @@ export function Sidebar({ onExpandChange }: SidebarProps) {
                 </a>
               </Link>
               {item.subItems && isActive && isExpanded && (
-                <div className="pl-12">
+                <div className="pl-12 bg-sidebar-accent/50">
                   {item.subItems.map((subItem) => {
                     const SubIcon = subItem.icon;
                     const isSubActive = location === subItem.href;

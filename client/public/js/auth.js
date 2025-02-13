@@ -3,33 +3,37 @@ class Auth {
         this.user = null;
         this.isLoading = true;
         this.listeners = new Set();
-
-        // 事前定義されたユーザー
-        this.predefinedUsers = {
-            'niina': {
-                password: '0077',
-                isAdmin: true
-            }
-        };
     }
 
     async init() {
-        this.isLoading = false;
-        this.notifyListeners();
+        try {
+            const response = await fetch('/api/auth/validate');
+            if (response.ok) {
+                this.user = await response.json();
+            }
+        } catch (error) {
+            console.error('認証の初期化に失敗しました:', error);
+        } finally {
+            this.isLoading = false;
+            this.notifyListeners();
+        }
     }
 
     async login(username, password) {
         try {
-            const user = this.predefinedUsers[username];
-            if (!user || user.password !== password) {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            });
+
+            if (!response.ok) {
                 throw new Error('ユーザー名またはパスワードが違います');
             }
 
-            this.user = {
-                username: username,
-                isAdmin: user.isAdmin
-            };
-
+            this.user = await response.json();
             this.notifyListeners();
             return true;
         } catch (error) {
@@ -40,6 +44,9 @@ class Auth {
 
     async logout() {
         try {
+            await fetch('/api/auth/logout', {
+                method: 'POST'
+            });
             this.user = null;
             this.notifyListeners();
             return true;
@@ -68,13 +75,6 @@ class Auth {
 
 const auth = new Auth();
 auth.init();
-
-// ログアウトボタンのイベントリスナー
-document.getElementById('logoutButton')?.addEventListener('click', () => {
-    auth.logout().then(() => {
-        window.location.href = '/auth';
-    });
-});
 
 // 管理者メニューの表示制御
 auth.addListener(user => {

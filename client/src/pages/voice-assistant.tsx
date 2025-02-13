@@ -50,7 +50,9 @@ export default function VoiceAssistant() {
   };
 
   const handleExit = () => {
-    setLocation("/");
+    if (window.confirm('音声アシスタントを終了しますか？')) {
+      setLocation("/");
+    }
   };
 
   return (
@@ -62,12 +64,12 @@ export default function VoiceAssistant() {
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold">音声アシスタント</h1>
             <Button
-              variant="outline"
-              size="icon"
+              variant="destructive"
               onClick={handleExit}
-              className="hover:bg-destructive hover:text-destructive-foreground"
+              className="gap-2"
             >
               <XCircle className="h-4 w-4" />
+              音声アシスタント終了
             </Button>
           </div>
           <Card className="h-[calc(100vh-12rem)]">

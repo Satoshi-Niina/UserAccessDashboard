@@ -2,9 +2,10 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mic, Send, X } from "lucide-react";
+import { Mic, Send, X, XCircle } from "lucide-react";
 import { ChatBubble } from "@/components/ui/chat-bubble";
 import { useState } from "react";
+import { useLocation } from "wouter";
 
 type ChatMessage = {
   content: string;
@@ -16,6 +17,7 @@ export default function VoiceAssistant() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
+  const [, setLocation] = useLocation();
 
   const handleStartRecording = () => {
     setIsRecording(true);
@@ -30,14 +32,11 @@ export default function VoiceAssistant() {
   const handleSend = () => {
     if (!inputText.trim()) return;
 
-    // ユーザーのメッセージを追加
-    setMessages([...messages, { content: inputText, isUser: true }]);
-
     // TODO: AIの応答を実装
     // 仮の応答
     setTimeout(() => {
       setMessages(prev => [...prev, {
-        content: "応答テスト",
+        content: "検索結果",
         isUser: false,
         image: "https://example.com/test-image.jpg"
       }]);
@@ -50,22 +49,38 @@ export default function VoiceAssistant() {
     setInputText("");
   };
 
+  const handleExit = () => {
+    setLocation("/");
+  };
+
   return (
     <div className="flex h-screen">
       <Sidebar />
       <main className="flex-1 p-6">
-        <h1 className="text-3xl font-bold mb-6">音声アシスタント</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">音声アシスタント</h1>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleExit}
+            className="hover:bg-destructive hover:text-destructive-foreground"
+          >
+            <XCircle className="h-4 w-4" />
+          </Button>
+        </div>
         <Card className="h-[calc(100vh-12rem)]">
           <CardContent className="flex flex-col h-full p-6">
-            {/* チャットエリア */}
+            {/* チャットエリア - AIの応答と画像のみを表示 */}
             <div className="flex-1 overflow-y-auto space-y-4 mb-4">
               {messages.map((message, index) => (
-                <ChatBubble
-                  key={index}
-                  content={message.content}
-                  isUser={message.isUser}
-                  image={message.image}
-                />
+                !message.isUser && (
+                  <ChatBubble
+                    key={index}
+                    content={message.content}
+                    isUser={false}
+                    image={message.image}
+                  />
+                )
               ))}
             </div>
 

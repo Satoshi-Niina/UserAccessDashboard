@@ -11,8 +11,10 @@ import {
   Database,
   History,
   Users,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 type MenuItem = {
   icon: React.ElementType;
@@ -51,10 +53,28 @@ const menuItems: MenuItem[] = [
 export function Sidebar() {
   const { user, logoutMutation } = useAuth();
   const [location] = useLocation();
+  const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="h-screen w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
-      <div className="p-6">
+    <div
+      className={cn(
+        "fixed h-screen bg-sidebar border-r border-sidebar-border flex flex-col transition-all duration-300",
+        isExpanded ? "w-64" : "w-12"
+      )}
+      onMouseEnter={() => setIsExpanded(true)}
+      onMouseLeave={() => setIsExpanded(false)}
+    >
+      {/* サイドバーの展開・収納トリガー */}
+      <div
+        className={cn(
+          "absolute top-1/2 -right-3 w-6 h-12 bg-sidebar border border-sidebar-border rounded-r-lg flex items-center justify-center cursor-pointer transition-opacity",
+          isExpanded ? "opacity-0" : "opacity-100"
+        )}
+      >
+        <ChevronRight className="h-4 w-4 text-sidebar-foreground" />
+      </div>
+
+      <div className={cn("p-6", !isExpanded && "hidden")}>
         <h1 className="text-2xl font-bold text-sidebar-foreground">
           ダッシュボード
         </h1>
@@ -76,14 +96,15 @@ export function Sidebar() {
                 <a
                   className={cn(
                     "flex items-center gap-3 px-6 py-3 text-sidebar-foreground hover:bg-sidebar-accent transition-colors",
-                    isActive && "bg-sidebar-accent text-sidebar-accent-foreground"
+                    isActive && "bg-sidebar-accent text-sidebar-accent-foreground",
+                    !isExpanded && "justify-center px-3"
                   )}
                 >
                   <Icon className="h-5 w-5" />
-                  <span>{item.label}</span>
+                  {isExpanded && <span>{item.label}</span>}
                 </a>
               </Link>
-              {item.subItems && isActive && (
+              {item.subItems && isActive && isExpanded && (
                 <div className="pl-12">
                   {item.subItems.map((subItem) => {
                     const SubIcon = subItem.icon;
@@ -110,7 +131,7 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="p-6 border-t border-sidebar-border">
+      <div className={cn("p-6 border-t border-sidebar-border", !isExpanded && "hidden")}>
         <Button
           variant="outline"
           className="w-full"

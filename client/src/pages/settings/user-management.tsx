@@ -6,30 +6,44 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
+
+type User = {
+  username: string;
+  isAdmin: boolean;
+};
 
 export default function UserManagement() {
   const { user } = useAuth();
-  const [users, setUsers] = useState<Array<{ username: string; isAdmin: boolean }>>([]);
+  const { toast } = useToast();
+  const [users, setUsers] = useState<User[]>([]);
   const [formData, setFormData] = useState({
     username: "",
     password: "",
     isAdmin: false,
   });
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
   const loadUsers = async () => {
     try {
       const response = await fetch("/api/users");
-      if (!response.ok) throw new Error("ユーザー一覧の取得に失敗しました");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error);
+      }
       const data = await response.json();
       setUsers(data);
     } catch (error) {
-      console.error("ユーザー一覧取得エラー:", error);
+      toast({
+        title: "エラー",
+        description: error instanceof Error ? error.message : "ユーザー一覧の取得に失敗しました",
+        variant: "destructive",
+      });
     }
   };
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,11 +61,19 @@ export default function UserManagement() {
         throw new Error(error.error);
       }
 
-      alert("ユーザーを登録しました");
+      toast({
+        title: "成功",
+        description: "ユーザーを登録しました",
+      });
+
       setFormData({ username: "", password: "", isAdmin: false });
-      await loadUsers();
+      loadUsers();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "ユーザー登録に失敗しました");
+      toast({
+        title: "エラー",
+        description: error instanceof Error ? error.message : "ユーザー登録に失敗しました",
+        variant: "destructive",
+      });
     }
   };
 

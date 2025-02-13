@@ -14,7 +14,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 type MenuItem = {
   icon: React.ElementType;
@@ -50,10 +50,18 @@ const menuItems: MenuItem[] = [
   },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  onExpandChange?: (expanded: boolean) => void;
+}
+
+export function Sidebar({ onExpandChange }: SidebarProps) {
   const { user, logoutMutation } = useAuth();
   const [location] = useLocation();
   const [isExpanded, setIsExpanded] = useState(false);
+
+  useEffect(() => {
+    onExpandChange?.(isExpanded);
+  }, [isExpanded, onExpandChange]);
 
   return (
     <div

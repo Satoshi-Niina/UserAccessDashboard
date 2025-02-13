@@ -17,6 +17,7 @@ export default function VoiceAssistant() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
+  const [isMenuExpanded, setIsMenuExpanded] = useState(false);
   const [, setLocation] = useLocation();
 
   const handleStartRecording = () => {
@@ -57,9 +58,9 @@ export default function VoiceAssistant() {
 
   return (
     <div className="flex h-screen">
-      <Sidebar />
-      {/* メインコンテンツをサイドバーの最小幅分ずらす */}
-      <div className="flex-1 ml-16">
+      <Sidebar onExpandChange={setIsMenuExpanded} />
+      {/* メインコンテンツをサイドバーの幅に合わせて動的に調整 */}
+      <div className={`flex-1 ${isMenuExpanded ? 'ml-64' : 'ml-16'} transition-all duration-300`}>
         <main className="p-6">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold">音声アシスタント</h1>

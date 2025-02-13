@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 type User = {
   username: string;
   isAdmin: boolean;
+  password?: string; // Added password field to the User type.  This is optional to allow for cases where password isn't returned from the API
 };
 
 export default function UserManagement() {
@@ -145,6 +146,7 @@ export default function UserManagement() {
                   <thead>
                     <tr>
                       <th className="text-left p-2">ユーザー名</th>
+                      <th className="text-left p-2">パスワード</th>
                       <th className="text-left p-2">権限</th>
                     </tr>
                   </thead>
@@ -152,6 +154,7 @@ export default function UserManagement() {
                     {users.map((user, index) => (
                       <tr key={index} className="border-t">
                         <td className="p-2">{user.username}</td>
+                        <td className="p-2">••••••</td>
                         <td className="p-2">{user.isAdmin ? "管理者" : "一般"}</td>
                       </tr>
                     ))}

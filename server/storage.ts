@@ -81,29 +81,39 @@ export class DatabaseStorage implements IStorage {
 
 // 初期管理者ユーザーのセットアップ
 const setupInitialAdmin = async () => {
-  db.get('SELECT * FROM users WHERE username = ?', ['niina'], async (err, row) => {
-    if (err) {
-      console.error('Error checking admin:', err);
-      return;
-    }
-    
-    if (!row) {
-      const salt = randomBytes(16).toString("hex");
-      const buf = (await scryptAsync("0077", salt, 64)) as Buffer;
-      const hashedPassword = `${buf.toString("hex")}.${salt}`;
+  db.serialize(() => {
+    db.get('SELECT * FROM users WHERE username = ?', ['niina'], async (err, row) => {
+      if (err) {
+        console.error('Error checking admin:', err);
+        return;
+      }
+      
+      if (!row) {
+        const salt = randomBytes(16).toString("hex");
+        const buf = (await scryptAsync("0077", salt, 64)) as Buffer;
+        const hashedPassword = `${buf.toString("hex")}.${salt}`;
 
-      db.run(
-        'INSERT INTO users (username, password, is_admin) VALUES (?, ?, ?)',
-        ['niina', hashedPassword, true],
-        (err) => {
-          if (err) {
-            console.error('Error creating admin:', err);
-          } else {
-            console.log('Initial admin user created');
+        db.run(
+          'INSERT INTO users (username, password, is_admin) VALUES (?, ?, ?)',
+          ['niina', hashedPassword, 1],
+          (err) => {
+            if (err) {
+              console.error('Error creating admin:', err);
+            } else {
+              console.log('Initial admin user created');
+            }
           }
-        }
-      );
-    }
+        );
+      } else if (!row.is_admin) {
+        db.run('UPDATE users SET is_admin = 1 WHERE username = ?', ['niina'], (err) => {
+          if (err) {
+            console.error('Error updating admin status:', err);
+          } else {
+            console.log('Admin status updated for niina');
+          }
+        });
+      }
+    });
   });
 };
 

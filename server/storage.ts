@@ -1,14 +1,14 @@
 import { users, type User, type InsertUser } from "@shared/schema";
 import { db } from "./db";
 import session from "express-session";
-import MySQLStore from "express-mysql-session";
+import SQLiteStore from "connect-sqlite3";
+const SQLiteSessionStore = SQLiteStore(session);
 import { randomBytes, scrypt } from "crypto";
 import { promisify } from "util";
 
 const scryptAsync = promisify(scrypt);
 import { eq } from "drizzle-orm";
 
-const MySQLSessionStore = MySQLStore(session);
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -23,7 +23,7 @@ export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
-    this.sessionStore = new MySQLSessionStore({ 
+    this.sessionStore = new SQLiteSessionStore({ 
       createDatabaseTable: true
     }, db);
   }

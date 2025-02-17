@@ -1,17 +1,18 @@
 
-import mysql from 'mysql2/promise';
+import { createConnection } from 'sqlite3';
+import { open } from 'sqlite';
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL must be set");
-}
-
-export const pool = mysql.createPool({
-  host: '0.0.0.0',
-  user: 'root',
-  password: 'root',
-  database: 'test',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
+export const db = await open({
+  filename: './database.sqlite',
+  driver: createConnection
 });
-export const db = pool;
+
+// テーブル作成
+await db.exec(`
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    is_admin BOOLEAN NOT NULL DEFAULT 0
+  );
+`);

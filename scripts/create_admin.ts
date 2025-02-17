@@ -1,5 +1,6 @@
 
-import { Database } from "sqlite3";
+import sqlite3 from "sqlite3";
+const { Database } = sqlite3;
 import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
 

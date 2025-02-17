@@ -17,7 +17,7 @@ async function main() {
   const hashedPassword = await hashPassword("0077");
   
   db.run(`
-    INSERT OR REPLACE INTO users (username, password, isAdmin) 
+    INSERT OR REPLACE INTO users (username, password, is_admin) 
     VALUES ('admin', ?, 1)
   `, [hashedPassword], (err) => {
     if (err) {

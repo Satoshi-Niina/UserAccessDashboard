@@ -1,11 +1,10 @@
+
 import { users, type User, type InsertUser } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
 import session from "express-session";
-import connectPg from "connect-pg-simple";
-import { pool } from "./db";
+import MySQLStore from "express-mysql-session";
 
-const PostgresSessionStore = connectPg(session);
+const MySQLSessionStore = MySQLStore(session);
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -20,41 +19,34 @@ export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
-    this.sessionStore = new PostgresSessionStore({ 
-      pool, 
-      createTableIfMissing: true 
-    });
+    this.sessionStore = new MySQLSessionStore({ 
+      createDatabaseTable: true
+    }, db);
   }
 
   async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+    const [rows] = await db.query('SELECT * FROM users WHERE id = ?', [id]);
+    return rows[0];
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user;
+    const [rows] = await db.query('SELECT * FROM users WHERE username = ?', [username]);
+    return rows[0];
   }
 
   async getAllUsers(): Promise<User[]> {
-    return await db.select().from(users);
+    const [rows] = await db.query('SELECT * FROM users');
+    return rows;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(insertUser)
-      .returning();
-    return user;
+    const [result] = await db.query('INSERT INTO users SET ?', [insertUser]);
+    return { ...insertUser, id: result.insertId };
   }
 
   async updateUser(id: number, updateData: Partial<User>): Promise<User> {
-    const [user] = await db
-      .update(users)
-      .set(updateData)
-      .where(eq(users.id, id))
-      .returning();
-    return user;
+    await db.query('UPDATE users SET ? WHERE id = ?', [updateData, id]);
+    return this.getUser(id) as Promise<User>;
   }
 }
 

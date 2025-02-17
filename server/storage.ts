@@ -29,28 +29,53 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUser(id: number): Promise<User | undefined> {
-    const [rows] = await db.query('SELECT * FROM users WHERE id = ?', [id]);
-    return rows[0];
+    return new Promise((resolve, reject) => {
+      db.get('SELECT * FROM users WHERE id = ?', [id], (err, row) => {
+        if (err) reject(err);
+        resolve(row);
+      });
+    });
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [rows] = await db.query('SELECT * FROM users WHERE username = ?', [username]);
-    return rows[0];
+    return new Promise((resolve, reject) => {
+      db.get('SELECT * FROM users WHERE username = ?', [username], (err, row) => {
+        if (err) reject(err);
+        resolve(row);
+      });
+    });
   }
 
   async getAllUsers(): Promise<User[]> {
-    const [rows] = await db.query('SELECT * FROM users');
-    return rows;
+    return new Promise((resolve, reject) => {
+      db.all('SELECT * FROM users', [], (err, rows) => {
+        if (err) reject(err);
+        resolve(rows);
+      });
+    });
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [result] = await db.query('INSERT INTO users SET ?', [insertUser]);
-    return { ...insertUser, id: result.insertId };
+    return new Promise((resolve, reject) => {
+      db.run('INSERT INTO users (username, password, is_admin) VALUES (?, ?, ?)',
+        [insertUser.username, insertUser.password, insertUser.is_admin || false],
+        function(err) {
+          if (err) reject(err);
+          resolve({ ...insertUser, id: this.lastID });
+        });
+    });
   }
 
   async updateUser(id: number, updateData: Partial<User>): Promise<User> {
-    await db.query('UPDATE users SET ? WHERE id = ?', [updateData, id]);
-    return this.getUser(id) as Promise<User>;
+    const fields = Object.keys(updateData).map(key => `${key} = ?`).join(', ');
+    const values = [...Object.values(updateData), id];
+    
+    return new Promise((resolve, reject) => {
+      db.run(`UPDATE users SET ${fields} WHERE id = ?`, values, (err) => {
+        if (err) reject(err);
+        this.getUser(id).then(resolve).catch(reject);
+      });
+    });
   }
 }
 

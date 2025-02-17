@@ -56,17 +56,16 @@ export class DatabaseStorage implements IStorage {
 
 // 初期管理者ユーザーのセットアップ
 const setupInitialAdmin = async () => {
-  const adminExists = await db.select().from(users).where(eq(users.username, 'niina'));
+  const [adminExists] = await db.query('SELECT * FROM users WHERE username = ?', ['niina']);
   if (adminExists.length === 0) {
     const salt = randomBytes(16).toString("hex");
     const buf = (await scryptAsync("0077", salt, 64)) as Buffer;
     const hashedPassword = `${buf.toString("hex")}.${salt}`;
 
-    await db.insert(users).values({
-      username: 'niina',
-      password: hashedPassword,
-      isAdmin: true
-    });
+    await db.query(
+      'INSERT INTO users (username, password, is_admin) VALUES (?, ?, ?)',
+      ['niina', hashedPassword, true]
+    );
     console.log('Initial admin user created');
   }
 };

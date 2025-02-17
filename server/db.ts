@@ -6,9 +6,9 @@ if (!process.env.DATABASE_URL) {
 }
 
 export const pool = mysql.createPool({
-  host: 'localhost',
+  host: '0.0.0.0',
   user: 'root',
-  password: '',
+  password: 'root',
   database: 'test',
   waitForConnections: true,
   connectionLimit: 10,

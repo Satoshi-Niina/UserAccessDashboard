@@ -6,6 +6,8 @@ import { Mic, Send, X, XCircle } from "lucide-react";
 import { ChatBubble } from "@/components/ui/chat-bubble";
 import { useState } from "react";
 import { useLocation } from "wouter";
+import axios from 'axios';
+import { handleStartRecording, handleStopRecording, handleSend, handleClear, handleExit } from "@/utils/voice-assistant";
 
 type ChatMessage = {
   content: string;
@@ -20,42 +22,6 @@ export default function VoiceAssistant() {
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
   const [, setLocation] = useLocation();
 
-  const handleStartRecording = () => {
-    setIsRecording(true);
-    // TODO: 音声認識の実装
-  };
-
-  const handleStopRecording = () => {
-    setIsRecording(false);
-    // TODO: 音声認識の停止処理
-  };
-
-  const handleSend = () => {
-    if (!inputText.trim()) return;
-
-    // TODO: AIの応答を実装
-    // 仮の応答
-    setTimeout(() => {
-      setMessages(prev => [...prev, {
-        content: "検索結果",
-        isUser: false,
-        image: "https://example.com/test-image.jpg"
-      }]);
-    }, 1000);
-
-    setInputText("");
-  };
-
-  const handleClear = () => {
-    setInputText("");
-  };
-
-  const handleExit = () => {
-    if (window.confirm('音声アシスタントを終了しますか？')) {
-      setLocation("/");
-    }
-  };
-
   return (
     <div className="flex h-screen">
       <Sidebar onExpandChange={setIsMenuExpanded} />
@@ -66,7 +32,7 @@ export default function VoiceAssistant() {
             <h1 className="text-3xl font-bold">音声アシスタント</h1>
             <Button
               variant="destructive"
-              onClick={handleExit}
+              onClick={() => handleExit(setLocation)}
               className="gap-2"
             >
               <XCircle className="h-4 w-4" />
@@ -94,7 +60,7 @@ export default function VoiceAssistant() {
                 <Button
                   variant={isRecording ? "destructive" : "default"}
                   size="icon"
-                  onClick={isRecording ? handleStopRecording : handleStartRecording}
+                  onClick={isRecording ? () => handleStopRecording(setIsRecording) : () => handleStartRecording(setIsRecording, setInputText)}
                 >
                   <Mic className="h-4 w-4" />
                 </Button>
@@ -107,12 +73,12 @@ export default function VoiceAssistant() {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={handleClear}
+                  onClick={() => handleClear(setInputText)}
                   disabled={!inputText}
                 >
                   <X className="h-4 w-4" />
                 </Button>
-                <Button size="icon" onClick={handleSend} disabled={!inputText}>
+                <Button size="icon" onClick={() => handleSend(inputText, setMessages, setInputText)} disabled={!inputText}>
                   <Send className="h-4 w-4" />
                 </Button>
               </div>

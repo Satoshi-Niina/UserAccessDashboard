@@ -1,6 +1,16 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import dotenv from 'dotenv';
+import { Client } from 'pg'; 
+dotenv.config();
+
+const client = new Client({
+  connectionString: process.env.DATABASE_URL,
+});
+client.connect().catch(err => console.error('connection error', err.stack));
+
+console.log('DATABASE_URL:', process.env.DATABASE_URL); // 追加
 
 const app = express();
 app.use(express.json());

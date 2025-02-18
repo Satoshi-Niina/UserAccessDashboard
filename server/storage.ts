@@ -59,7 +59,7 @@ export class DatabaseStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     return new Promise((resolve, reject) => {
       db.run('INSERT INTO users (username, password, is_admin) VALUES (?, ?, ?)',
-        [insertUser.username, insertUser.password, insertUser.is_admin || false],
+        [insertUser.username, insertUser.password, insertUser.is_admin ? 1 : 0], // Corrected this line
         function(err) {
           if (err) reject(err);
           resolve({ ...insertUser, id: this.lastID });

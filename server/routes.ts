@@ -51,13 +51,13 @@ export function registerRoutes(app: Express): Server {
       const user = await storage.createUser({
         username,
         password: await hashPassword(password),
-        isAdmin: isAdmin || false
+        is_admin: isAdmin ? 1 : 0  // SQLiteでは真偽値を1/0で表現
       });
 
       res.status(201).json({
         id: user.id,
         username: user.username,
-        isAdmin: user.isAdmin
+        isAdmin: user.is_admin === 1
       });
     } catch (error) {
       console.error("ユーザー登録エラー:", error);

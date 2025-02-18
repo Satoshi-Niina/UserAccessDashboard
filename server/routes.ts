@@ -22,7 +22,7 @@ export function registerRoutes(app: Express): Server {
       res.json(users.map(user => ({
         id: user.id,
         username: user.username,
-        isAdmin: user.isAdmin
+        isAdmin: user.is_admin === 1
       })));
     } catch (error) {
       console.error("ユーザー一覧取得エラー:", error);
@@ -67,7 +67,10 @@ export function registerRoutes(app: Express): Server {
 
   // ユーザー情報の更新 (管理者のみ)
   app.patch("/api/users/:id", async (req, res) => {
-    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "認証が必要です" });
+    }
+    if (!req.user || req.user.is_admin !== 1) {
       return res.status(403).json({ error: "管理者権限が必要です" });
     }
 

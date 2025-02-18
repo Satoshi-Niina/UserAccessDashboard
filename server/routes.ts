@@ -11,7 +11,8 @@ export function registerRoutes(app: Express): Server {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ error: "認証が必要です" });
     }
-    if (!req.user?.isAdmin) {
+
+    if (!req.user || req.user.isAdmin !== 1) {
       return res.status(403).json({ error: "管理者権限が必要です" });
     }
 

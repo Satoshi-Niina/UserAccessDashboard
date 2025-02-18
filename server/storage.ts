@@ -16,6 +16,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<User>): Promise<User>;
   getAllUsers(): Promise<User[]>;
+  deleteUser(id: number): Promise<void>; // Added deleteUser method
   sessionStore: session.Store;
 }
 
@@ -69,11 +70,20 @@ export class DatabaseStorage implements IStorage {
   async updateUser(id: number, updateData: Partial<User>): Promise<User> {
     const fields = Object.keys(updateData).map(key => `${key} = ?`).join(', ');
     const values = [...Object.values(updateData), id];
-    
+
     return new Promise((resolve, reject) => {
       db.run(`UPDATE users SET ${fields} WHERE id = ?`, values, (err) => {
         if (err) reject(err);
         this.getUser(id).then(resolve).catch(reject);
+      });
+    });
+  }
+
+  async deleteUser(id: number): Promise<void> {
+    return new Promise((resolve, reject) => {
+      db.run('DELETE FROM users WHERE id = ?', [id], (err) => {
+        if (err) reject(err);
+        resolve();
       });
     });
   }
@@ -87,7 +97,7 @@ const setupInitialAdmin = async () => {
         console.error('Error checking admin:', err);
         return;
       }
-      
+
       if (!row) {
         const salt = randomBytes(16).toString("hex");
         const buf = (await scryptAsync("0077", salt, 64)) as Buffer;

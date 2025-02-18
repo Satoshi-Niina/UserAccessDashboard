@@ -35,7 +35,7 @@ export function registerRoutes(app: Express): Server {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ error: "認証が必要です" });
     }
-    if (!req.user?.isAdmin) {
+    if (!req.user || req.user.is_admin !== 1) {
       return res.status(403).json({ error: "管理者権限が必要です" });
     }
 
@@ -110,6 +110,36 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("ユーザー更新エラー:", error);
       res.status(500).json({ error: "ユーザーの更新に失敗しました" });
+    }
+  });
+
+  // ユーザー削除 (管理者のみ)
+  app.delete("/api/users/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "認証が必要です" });
+    }
+    if (!req.user || req.user.is_admin !== 1) {
+      return res.status(403).json({ error: "管理者権限が必要です" });
+    }
+
+    try {
+      const userId = parseInt(req.params.id);
+      
+      // 自分自身は削除できない
+      if (userId === req.user.id) {
+        return res.status(400).json({ error: "自分自身は削除できません" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "ユーザーが見つかりません" });
+      }
+
+      await storage.deleteUser(userId);
+      res.status(200).json({ message: "ユーザーを削除しました" });
+    } catch (error) {
+      console.error("ユーザー削除エラー:", error);
+      res.status(500).json({ error: "ユーザーの削除に失敗しました" });
     }
   });
 

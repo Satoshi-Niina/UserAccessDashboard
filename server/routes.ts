@@ -8,7 +8,10 @@ export function registerRoutes(app: Express): Server {
 
   // ユーザー一覧の取得 (管理者のみ)
   app.get("/api/users", async (req, res) => {
-    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "認証が必要です" });
+    }
+    if (!req.user?.isAdmin) {
       return res.status(403).json({ error: "管理者権限が必要です" });
     }
 
@@ -27,7 +30,10 @@ export function registerRoutes(app: Express): Server {
 
   // 新規ユーザーの登録 (管理者のみ)
   app.post("/api/users", async (req, res) => {
-    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "認証が必要です" });
+    }
+    if (!req.user?.isAdmin) {
       return res.status(403).json({ error: "管理者権限が必要です" });
     }
 

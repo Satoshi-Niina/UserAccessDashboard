@@ -12,7 +12,8 @@ export function registerRoutes(app: Express): Server {
       return res.status(401).json({ error: "認証が必要です" });
     }
 
-    if (!req.user || req.user.isAdmin !== 1) {
+    const user = req.user;
+    if (!user || user.is_admin !== 1) {
       return res.status(403).json({ error: "管理者権限が必要です" });
     }
 

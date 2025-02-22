@@ -1,3 +1,6 @@
+// 区切り線コンポーネント
+// コンテンツの視覚的な区切りを提供
+// 水平・垂直方向の配置に対応
 import * as React from "react"
 import * as SeparatorPrimitive from "@radix-ui/react-separator"
 

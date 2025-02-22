@@ -1,3 +1,6 @@
+// アコーディオンコンポーネント
+// 展開/折りたたみ可能なコンテンツセクションを提供
+// Radix UIのプリミティブを使用してアクセシビリティを確保
 import * as React from "react"
 import * as AccordionPrimitive from "@radix-ui/react-accordion"
 import { ChevronDown } from "lucide-react"

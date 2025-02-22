@@ -47,6 +47,8 @@ const sheetVariants = cva(
   }
 )
 
+// シートコンポーネントのコンテンツ部分の型定義
+// side属性で表示位置を指定可能
 interface SheetContentProps
   extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
     VariantProps<typeof sheetVariants> {}

@@ -3,6 +3,9 @@
 // ホバーカードコンポーネント
 // マウスホバー時に追加情報を表示
 // ポップオーバー形式の情報提示を実装
+// ホバーカードコンポーネント
+// マウスホバー時に表示される補足情報カード
+// アニメーション付きの表示/非表示を実装
 import * as React from "react"
 import * as HoverCardPrimitive from "@radix-ui/react-hover-card"
 

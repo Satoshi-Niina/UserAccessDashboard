@@ -1,5 +1,7 @@
+// カードコンポーネント
+// コンテンツをグループ化して表示するための
+// 汎用的なコンテナを提供
 import * as React from "react"
-
 import { cn } from "@/lib/utils"
 
 const Card = React.forwardRef<

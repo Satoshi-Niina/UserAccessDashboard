@@ -1,6 +1,9 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
 
+// 404エラーページコンポーネント
+// 存在しないページへのアクセス時に表示
+// ホームページへの誘導を提供
 export default function NotFound() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">

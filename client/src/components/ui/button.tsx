@@ -1,3 +1,6 @@
+// ボタンコンポーネント
+// クリック可能なアクション要素を提供
+// バリアント、サイズ、状態に応じたスタイルを実装
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"

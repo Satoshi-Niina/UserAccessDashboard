@@ -1,6 +1,9 @@
 // スクロールエリアコンポーネント
 // カスタマイズ可能なスクロールバーを提供
 // オーバーフローコンテンツの表示を最適化
+// スクロールエリアコンポーネント
+// カスタマイズ可能なスクロールバーを提供
+// オーバーフローコンテンツの表示を最適化
 import * as React from "react"
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area"
 

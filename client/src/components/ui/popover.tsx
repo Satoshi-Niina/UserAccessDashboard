@@ -1,5 +1,8 @@
 // ポップオーバーコンポーネント
 // トリガー要素をクリックすると表示されるフローティングコンテンツを提供
+// ポップオーバーコンポーネント
+// フローティングパネルによる補足情報の表示
+// 位置調整とアニメーションを実装
 import * as React from "react"
 import * as PopoverPrimitive from "@radix-ui/react-popover"
 

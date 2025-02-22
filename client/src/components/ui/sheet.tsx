@@ -1,6 +1,9 @@
 // シートコンポーネント
 // スライドインパネルを提供し、補足情報や設定を表示
 // レスポンシブな表示に対応
+// シートコンポーネント
+// スライドインパネルによる補足情報の表示
+// モバイルフレンドリーなナビゲーションを実現
 import * as React from "react"
 import * as SheetPrimitive from "@radix-ui/react-dialog"
 import { cva, type VariantProps } from "class-variance-authority"

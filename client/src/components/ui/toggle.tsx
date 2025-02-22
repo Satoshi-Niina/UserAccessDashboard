@@ -1,3 +1,7 @@
+// トグルコンポーネント
+// オン/オフの切り替えを提供
+// アニメーション付きの状態変更を実装
+// アクセシビリティ対応のトグルボタン
 import * as React from "react"
 import * as TogglePrimitive from "@radix-ui/react-toggle"
 import { cva, type VariantProps } from "class-variance-authority"

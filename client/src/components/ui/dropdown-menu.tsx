@@ -1,6 +1,9 @@
 // ドロップダウンメニューコンポーネント
 // クリック時に表示されるコンテキストメニューを提供
 // キーボードナビゲーションとサブメニューをサポート
+// ドロップダウンメニューコンポーネント
+// 階層的なメニュー構造を提供
+// キーボード操作とアクセシビリティに対応
 import * as React from "react"
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
 import { Check, ChevronRight, Circle } from "lucide-react"

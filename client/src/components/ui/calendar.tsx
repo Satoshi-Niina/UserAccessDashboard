@@ -1,3 +1,6 @@
+// カレンダーコンポーネント
+// 日付選択とカレンダー表示機能を提供
+// react-day-pickerを使用したインタラクティブなUI
 import * as React from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { DayPicker } from "react-day-picker"

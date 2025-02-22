@@ -1,6 +1,6 @@
 // メッセージページコンポーネント
-// チーム間のコミュニケーション機能を提供
-// サイドバーとメインコンテンツのレイアウトを実装
+// チャットやメッセージングの機能を提供
+// リアルタイムコミュニケーションを実装
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { MessageSquare } from "lucide-react";

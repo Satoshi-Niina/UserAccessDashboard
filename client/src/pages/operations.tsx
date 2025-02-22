@@ -1,11 +1,13 @@
-// 運用管理ページコンポーネント
-// 仕業点検と運用実績の管理機能を提供
-// タブ切り替えによる情報の整理を実装
+// オペレーションページコンポーネント
+// 業務操作の一覧と実行機能を提供
+// サイドバーとメインコンテンツのレイアウトを実装
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent } from "@/components/ui/card";
+import { ListChecks } from "lucide-react";
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocation } from "wouter";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 export default function Operations() {
   const [location, setLocation] = useLocation();

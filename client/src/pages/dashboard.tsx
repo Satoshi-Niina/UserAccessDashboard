@@ -1,4 +1,8 @@
+// ダッシュボードページコンポーネント
+// システム全体の概要と主要機能へのアクセスを提供
+// データの可視化とナビゲーションを実装
 import { Sidebar } from "@/components/layout/sidebar";
+import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
 
 export default function Dashboard() {

@@ -1,6 +1,7 @@
 // タブコンポーネント
 // コンテンツを切り替え可能なタブインターフェースを提供
 // キーボード操作とアクセシビリティをサポート
+// アニメーション付きのタブ切り替えを実装
 import * as React from "react"
 import * as TabsPrimitive from "@radix-ui/react-tabs"
 

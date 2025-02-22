@@ -1,3 +1,6 @@
+// カルーセルコンポーネント
+// スライド形式でコンテンツを表示
+// タッチ操作とキーボード操作に対応
 import * as React from "react"
 import useEmblaCarousel, {
   type UseEmblaCarouselType,

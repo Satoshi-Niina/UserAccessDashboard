@@ -1,3 +1,6 @@
+// 音声アシスタントページコンポーネント
+// 音声認識と音声合成による対話インターフェースを提供
+// チャットメッセージの履歴管理を実装
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

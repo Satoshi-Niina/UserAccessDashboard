@@ -1,3 +1,6 @@
+// インプットコンポーネント
+// ユーザー入力を受け付けるテキストフィールド
+// アクセシビリティとスタイリングに配慮
 import * as React from "react"
 
 import { cn } from "@/lib/utils"

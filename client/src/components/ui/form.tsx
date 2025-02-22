@@ -1,3 +1,6 @@
+// フォームコンポーネント
+// バリデーションとエラー表示機能を備えたフォーム
+// React Hook Formとの統合を実現
 import * as React from "react"
 import * as LabelPrimitive from "@radix-ui/react-label"
 import { Slot } from "@radix-ui/react-slot"

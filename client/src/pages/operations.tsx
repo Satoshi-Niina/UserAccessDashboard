@@ -1,6 +1,9 @@
+// 運用管理ページコンポーネント
+// 仕業点検と運用実績の管理機能を提供
+// タブ切り替えによる情報の整理を実装
 import { Sidebar } from "@/components/layout/sidebar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
 

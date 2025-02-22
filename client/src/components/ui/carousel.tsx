@@ -1,6 +1,10 @@
 // カルーセルコンポーネント
 // スライド形式でコンテンツを表示
 // タッチ操作とキーボード操作に対応
+// カルーセルコンポーネント
+// スライドショー形式のコンテンツ表示を提供
+// タッチ操作とキーボードナビゲーションに対応
+// レスポンシブなデザインを実装
 import * as React from "react"
 import useEmblaCarousel, {
   type UseEmblaCarouselType,

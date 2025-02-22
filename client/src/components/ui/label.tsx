@@ -1,3 +1,6 @@
+// ラベルコンポーネント
+// フォーム要素のラベルを提供
+// アクセシビリティを考慮したラベリング
 import * as React from "react"
 import * as LabelPrimitive from "@radix-ui/react-label"
 import { cva, type VariantProps } from "class-variance-authority"

@@ -1,8 +1,8 @@
-// コマンドパレットコンポーネント
-// キーボードショートカットによるコマンド実行機能を提供
-// アクセシビリティに配慮した実装
+// コマンドコンポーネント
+// コマンドパレットUIを提供
+// キーボードナビゲーションとコマンド実行の機能を実装
 import * as React from "react"
-import { DialogProps } from "@radix-ui/react-dialog"
+import { type DialogProps } from "@radix-ui/react-dialog"
 import { Command as CommandPrimitive } from "cmdk"
 import { Search } from "lucide-react"
 

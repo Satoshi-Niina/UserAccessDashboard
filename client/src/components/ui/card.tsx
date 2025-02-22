@@ -1,7 +1,8 @@
 // カードコンポーネント
-// コンテンツをグループ化して表示するための
-// 汎用的なコンテナを提供
+// コンテンツを視覚的にグループ化するUIを提供
+// ヘッダー、フッター、コンテンツ領域を含む構造化されたレイアウト
 import * as React from "react"
+
 import { cn } from "@/lib/utils"
 
 const Card = React.forwardRef<

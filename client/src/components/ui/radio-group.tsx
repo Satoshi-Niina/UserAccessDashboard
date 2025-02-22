@@ -4,6 +4,9 @@
 // ラジオグループコンポーネント
 // 排他的な選択肢を提供するラジオボタングループ
 // アクセシビリティに準拠した実装
+// ラジオグループコンポーネント
+// 排他的な選択肢を提供
+// アクセシビリティに準拠した実装
 import * as React from "react"
 import * as RadioGroupPrimitive from "@radix-ui/react-radio-group"
 import { Circle } from "lucide-react"

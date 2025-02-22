@@ -1,6 +1,9 @@
 // プログレスバーコンポーネント
 // 進行状況を視覚的に表示
 // アニメーション付きの進捗表示を実装
+// プログレスコンポーネント
+// 進行状況を視覚的に表示
+// アニメーション付きのプログレスバーを実装
 import * as React from "react"
 import * as ProgressPrimitive from "@radix-ui/react-progress"
 

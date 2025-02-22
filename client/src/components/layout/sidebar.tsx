@@ -1,3 +1,6 @@
+// サイドバーコンポーネント
+// アプリケーションのナビゲーションメニューを提供
+// 展開/折りたたみ可能なレスポンシブなデザイン
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";

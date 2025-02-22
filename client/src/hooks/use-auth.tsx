@@ -1,3 +1,6 @@
+// 認証フックコンポーネント
+// ユーザー認証状態の管理と認証関連の操作を提供
+// React QueryとContextを使用した状態管理を実装
 import { createContext, useContext, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";

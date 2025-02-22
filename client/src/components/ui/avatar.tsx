@@ -1,3 +1,6 @@
+// アバターコンポーネント
+// ユーザープロフィール画像の表示と
+// フォールバック表示機能を提供
 import * as React from "react"
 import * as AvatarPrimitive from "@radix-ui/react-avatar"
 

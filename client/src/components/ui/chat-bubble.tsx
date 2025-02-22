@@ -1,3 +1,6 @@
+// チャットバブルコンポーネント
+// メッセージの表示とユーザーアバターを組み合わせた
+// チャットインターフェースを提供
 import { cn } from "@/lib/utils";
 
 interface ChatBubbleProps {

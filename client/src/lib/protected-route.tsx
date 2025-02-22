@@ -1,11 +1,11 @@
 // 保護されたルートコンポーネント
-// 認証状態に基づいてルートへのアクセスを制御
-// 未認証ユーザーをログインページにリダイレクト
-import { useEffect } from "react";
+// 認証済みユーザーのみアクセス可能なルートを提供
+// 未認証時は認証ページにリダイレクト
+import { Route, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
-import { Redirect, Route } from "wouter";
-import { useLocation } from "wouter";
+import { Redirect } from "wouter";
 
 
 export function ProtectedRoute({

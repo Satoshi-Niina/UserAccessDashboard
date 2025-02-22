@@ -57,6 +57,9 @@ const BreadcrumbLink = React.forwardRef<
 })
 BreadcrumbLink.displayName = "BreadcrumbLink"
 
+// パンくずリストコンポーネント
+// ページの階層構造とナビゲーションを表示
+// ユーザーの現在位置を示すUIを提供
 const BreadcrumbPage = React.forwardRef<
   HTMLSpanElement,
   React.ComponentPropsWithoutRef<"span">

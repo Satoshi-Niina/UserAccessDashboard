@@ -1,3 +1,6 @@
+// スイッチコンポーネント
+// トグル可能な状態を視覚的に表現
+// オン/オフの切り替えをアニメーション付きで実装
 import * as React from "react"
 import * as SwitchPrimitives from "@radix-ui/react-switch"
 

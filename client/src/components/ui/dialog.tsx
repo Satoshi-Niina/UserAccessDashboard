@@ -4,6 +4,9 @@
 // ダイアログコンポーネント
 // モーダルウィンドウによる対話的なUIを提供
 // アクセシビリティに配慮した実装
+// ダイアログコンポーネント
+// モーダルウィンドウを提供
+// オーバーレイ、ヘッダー、フッターを含む構造化されたUI
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"

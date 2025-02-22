@@ -1,3 +1,6 @@
+// 設定ページコンポーネント
+// アプリケーションの各種設定項目へのナビゲーションを提供
+// カード形式でわかりやすく設定カテゴリを表示
 import { Sidebar } from "@/components/layout/sidebar";
 import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";

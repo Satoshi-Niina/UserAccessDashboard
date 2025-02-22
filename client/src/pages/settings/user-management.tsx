@@ -1,3 +1,6 @@
+// ユーザー管理ページコンポーネント
+// ユーザーの追加、編集、削除機能を提供
+// 権限管理とアクセス制御を実装
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

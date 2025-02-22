@@ -1,3 +1,6 @@
+// ナビゲーションメニューコンポーネント
+// アクセシブルなドロップダウンナビゲーションを提供
+// Radix UIを使用したキーボード操作対応のメニュー
 import * as React from "react"
 import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu"
 import { cva } from "class-variance-authority"

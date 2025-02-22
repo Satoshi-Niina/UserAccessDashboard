@@ -1,3 +1,6 @@
+// ダイアログコンポーネント
+// モーダルウィンドウを提供し、重要な情報やアクションを表示
+// アクセシビリティに配慮したフォーカストラップ機能を実装
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"

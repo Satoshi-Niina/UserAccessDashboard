@@ -1,3 +1,6 @@
+// APIリクエスト処理とキャッシュ管理を行うクエリクライアント
+// React Queryを使用した効率的なデータフェッチングを実装
+// エラーハンドリングと認証状態の管理を統合
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 async function throwIfResNotOk(res: Response) {

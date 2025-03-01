@@ -39,6 +39,11 @@ const menuItems: MenuItem[] = [
       { icon: ClipboardCheck, label: "運用実績", href: "/operations?tab=performance" },
     ],
   },
+  { 
+    icon: ClipboardCheck, 
+    label: "点検システム", 
+    href: "/machine-inspection" 
+  },
   { icon: MessageSquare, label: "メッセージ", href: "/messages" },
   {
     icon: Settings,

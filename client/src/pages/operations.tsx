@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+// Added placeholder for missing import
 import { useToast } from "@/components/ui/use-toast";
+
 
 // インスペクション項目のタイプ定義
 interface InspectionItem {

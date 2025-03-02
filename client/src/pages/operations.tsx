@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,7 +29,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast"; // Corrected import path
 import { ListChecks, Edit, Trash2, Plus, Save, X } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
@@ -77,10 +76,10 @@ const initialColumns: Column[] = [
 const parseCSVData = (csvText: string): InspectionItem[] => {
   const lines = csvText.trim().split('\n');
   const headers = lines[0].split(',').map(h => h.trim());
-  
+
   return lines.slice(1).map((line, index) => {
     const values = line.split(',');
-    
+
     return {
       id: (index + 1).toString(),
       manufacturer: values[0] || '',
@@ -131,15 +130,15 @@ export default function Operations() {
     const fetchData = async () => {
       const data = await loadSampleData();
       setItems(data);
-      
+
       // フィルター用の製造メーカーと機種のリストを作成
       const uniqueManufacturers = Array.from(new Set(data.map(item => item.manufacturer))).filter(Boolean);
       const uniqueModelTypes = Array.from(new Set(data.map(item => item.modelType))).filter(Boolean);
-      
+
       setManufacturers(uniqueManufacturers);
       setModelTypes(uniqueModelTypes);
     };
-    
+
     fetchData();
   }, []);
 
@@ -154,11 +153,11 @@ export default function Operations() {
   const handleAddItem = () => {
     const newId = (Math.max(0, ...items.map(item => parseInt(item.id))) + 1).toString();
     const newItemWithId = { ...newItem, id: newId, order: items.length + 1 };
-    
+
     setItems([...items, newItemWithId as InspectionItem]);
     setNewItem({});
     setIsAddDialogOpen(false);
-    
+
     toast({
       title: "項目を追加しました",
       description: "新しい点検項目を追加しました。",
@@ -173,14 +172,14 @@ export default function Operations() {
   // 編集の保存
   const handleSaveEdit = () => {
     if (!editingItem) return;
-    
+
     const updatedItems = items.map(item => 
       item.id === editingItem.id ? editingItem : item
     );
-    
+
     setItems(updatedItems);
     setEditingItem(null);
-    
+
     toast({
       title: "変更を保存しました",
       description: "点検項目の変更を保存しました。",
@@ -191,7 +190,7 @@ export default function Operations() {
   const handleDeleteItem = (id: string) => {
     const updatedItems = items.filter(item => item.id !== id);
     setItems(updatedItems);
-    
+
     toast({
       title: "項目を削除しました",
       description: "点検項目を削除しました。",
@@ -201,25 +200,25 @@ export default function Operations() {
   // ドラッグ&ドロップの処理
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
-    
+
     const reorderedItems = Array.from(filteredItems);
     const [movedItem] = reorderedItems.splice(result.source.index, 1);
     reorderedItems.splice(result.destination.index, 0, movedItem);
-    
+
     // 順序を更新
     const updatedItems = reorderedItems.map((item, index) => ({
       ...item,
       order: index + 1
     }));
-    
+
     // 元のアイテムリストと合わせて更新
     const newItems = items.map(item => {
       const updatedItem = updatedItems.find(updated => updated.id === item.id);
       return updatedItem || item;
     });
-    
+
     setItems(newItems);
-    
+
     toast({
       title: "項目を並べ替えました",
       description: "点検項目の順序を変更しました。",
@@ -229,9 +228,9 @@ export default function Operations() {
   // カラムの追加
   const handleAddColumn = () => {
     if (!newColumnName.trim()) return;
-    
+
     const columnId = newColumnName.toLowerCase().replace(/\s+/g, '_');
-    
+
     if (columns.some(col => col.id === columnId)) {
       toast({
         title: "エラー",
@@ -240,17 +239,17 @@ export default function Operations() {
       });
       return;
     }
-    
+
     const newColumn = {
       id: columnId,
       name: newColumnName,
       required: false
     };
-    
+
     setColumns([...columns, newColumn]);
     setNewColumnName('');
     setIsAddColumnDialogOpen(false);
-    
+
     toast({
       title: "カラムを追加しました",
       description: `「${newColumnName}」カラムを追加しました。`,
@@ -260,15 +259,15 @@ export default function Operations() {
   // カラム名の編集
   const handleEditColumn = () => {
     if (!editColumnId || !newColumnName.trim()) return;
-    
+
     const updatedColumns = columns.map(col => 
       col.id === editColumnId ? { ...col, name: newColumnName } : col
     );
-    
+
     setColumns(updatedColumns);
     setEditColumnId(null);
     setNewColumnName('');
-    
+
     toast({
       title: "カラム名を更新しました",
       description: `カラム名を「${newColumnName}」に更新しました。`,
@@ -287,10 +286,10 @@ export default function Operations() {
       });
       return;
     }
-    
+
     const updatedColumns = columns.filter(col => col.id !== id);
     setColumns(updatedColumns);
-    
+
     toast({
       title: "カラムを削除しました",
       description: "カラムを削除しました。",
@@ -303,11 +302,11 @@ export default function Operations() {
     const rows = items.map(item => {
       return columns.map(col => item[col.id as keyof InspectionItem] || '').join(',');
     }).join('\n');
-    
+
     const csvContent = `${headers}\n${rows}`;
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    
+
     const link = document.createElement('a');
     link.setAttribute('href', url);
     link.setAttribute('download', '仕業点検マスタ.csv');
@@ -315,7 +314,7 @@ export default function Operations() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     toast({
       title: "エクスポート完了",
       description: "CSVファイルをエクスポートしました。",
@@ -331,7 +330,7 @@ export default function Operations() {
             <div className="flex items-center justify-between">
               <h1 className="text-3xl font-bold tracking-tight">運用管理</h1>
             </div>
-            
+
             <TabsContent value="operations" className="space-y-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -408,7 +407,7 @@ export default function Operations() {
                         </Button>
                       </div>
                     </div>
-                    
+
                     {/* データテーブル */}
                     <DragDropContext onDragEnd={handleDragEnd}>
                       <Droppable droppableId="inspection-items">

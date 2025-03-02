@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { 
@@ -28,7 +27,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui';
-import { Plus, Edit, Trash2, Move, Upload, Save, X } from 'lucide-react';
+import { Plus, Edit, Trash2, Move, Upload, Save, X, FileUp, FileDown } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 
 // CSVから読み込んだデータの形式
@@ -67,10 +66,10 @@ const initialColumns = [
 const parseCSVData = (csvText: string): InspectionItem[] => {
   const lines = csvText.trim().split('\n');
   const headers = lines[0].split(',').map(h => h.trim());
-  
+
   return lines.slice(1).map((line, index) => {
     const values = line.split(',');
-    
+
     return {
       id: (index + 1).toString(),
       manufacturer: values[0] || '',
@@ -150,11 +149,11 @@ export default function InspectionItems() {
           setCsvContent(text);
           const parsedItems = parseCSVData(text);
           setItems(parsedItems);
-          
+
           // メーカーと機種のリストを作成
           const mfrs = Array.from(new Set(parsedItems.map(item => item.manufacturer).filter(Boolean)));
           const models = Array.from(new Set(parsedItems.map(item => item.modelType).filter(Boolean)));
-          
+
           setManufacturers(['すべて', ...mfrs]);
           setModelTypes(['すべて', ...models]);
         } else {
@@ -181,23 +180,23 @@ export default function InspectionItems() {
   // 項目の並び替え処理
   const handleItemDragEnd = (result: any) => {
     if (!result.destination) return;
-    
+
     const reorderedItems = Array.from(filteredItems);
     const [removed] = reorderedItems.splice(result.source.index, 1);
     reorderedItems.splice(result.destination.index, 0, removed);
-    
+
     // orderの更新
     const updatedItems = reorderedItems.map((item, index) => ({
       ...item,
       order: index + 1
     }));
-    
+
     // 全体のアイテムリストを更新
     const newItems = items.map(item => {
       const found = updatedItems.find(updatedItem => updatedItem.id === item.id);
       return found || item;
     });
-    
+
     setItems(newItems);
     toast({
       title: "並び順を更新しました",
@@ -208,11 +207,11 @@ export default function InspectionItems() {
   // カラムの並び替え処理
   const handleColumnDragEnd = (result: any) => {
     if (!result.destination) return;
-    
+
     const reorderedColumns = Array.from(columns);
     const [removed] = reorderedColumns.splice(result.source.index, 1);
     reorderedColumns.splice(result.destination.index, 0, removed);
-    
+
     setColumns(reorderedColumns);
     toast({
       title: "カラム順を更新しました",
@@ -226,15 +225,15 @@ export default function InspectionItems() {
     columns.forEach(col => {
       initialValues[col.id] = '';
     });
-    
+
     if (selectedManufacturer !== 'すべて') {
       initialValues['manufacturer'] = selectedManufacturer;
     }
-    
+
     if (selectedModelType !== 'すべて') {
       initialValues['modelType'] = selectedModelType;
     }
-    
+
     setNewItemValues(initialValues);
     setIsAddItemOpen(true);
   };
@@ -242,7 +241,7 @@ export default function InspectionItems() {
   // 項目の追加
   const handleAddItem = () => {
     const newId = (Math.max(...items.map(item => parseInt(item.id)), 0) + 1).toString();
-    
+
     const newItem: InspectionItem = {
       id: newId,
       manufacturer: newItemValues['manufacturer'] || '',
@@ -258,20 +257,20 @@ export default function InspectionItems() {
       graphicRecord: newItemValues['graphicRecord'] || '',
       order: items.length + 1
     };
-    
+
     setItems([...items, newItem]);
     setIsAddItemOpen(false);
-    
+
     // メーカーリストを更新
     if (newItem.manufacturer && !manufacturers.includes(newItem.manufacturer)) {
       setManufacturers([...manufacturers, newItem.manufacturer]);
     }
-    
+
     // 機種リストを更新
     if (newItem.modelType && !modelTypes.includes(newItem.modelType)) {
       setModelTypes([...modelTypes, newItem.modelType]);
     }
-    
+
     toast({
       title: "項目を追加しました",
       description: `「${newItem.checkPoint}」を追加しました。`,
@@ -281,12 +280,12 @@ export default function InspectionItems() {
   // 項目の編集初期化
   const initEditItem = (item: InspectionItem) => {
     setCurrentItem(item);
-    
+
     const initialValues: Record<string, string> = {};
     columns.forEach(col => {
       initialValues[col.id] = item[col.id as keyof InspectionItem]?.toString() || '';
     });
-    
+
     setNewItemValues(initialValues);
     setIsEditItemOpen(true);
   };
@@ -294,7 +293,7 @@ export default function InspectionItems() {
   // 項目の編集
   const handleEditItem = () => {
     if (!currentItem) return;
-    
+
     const updatedItem: InspectionItem = {
       ...currentItem,
       manufacturer: newItemValues['manufacturer'] || '',
@@ -309,25 +308,25 @@ export default function InspectionItems() {
       measurement: newItemValues['measurement'] || '',
       graphicRecord: newItemValues['graphicRecord'] || '',
     };
-    
+
     const updatedItems = items.map(item => 
       item.id === currentItem.id ? updatedItem : item
     );
-    
+
     setItems(updatedItems);
     setIsEditItemOpen(false);
     setCurrentItem(null);
-    
+
     // メーカーリストを更新
     if (updatedItem.manufacturer && !manufacturers.includes(updatedItem.manufacturer)) {
       setManufacturers([...manufacturers, updatedItem.manufacturer]);
     }
-    
+
     // 機種リストを更新
     if (updatedItem.modelType && !modelTypes.includes(updatedItem.modelType)) {
       setModelTypes([...modelTypes, updatedItem.modelType]);
     }
-    
+
     toast({
       title: "項目を更新しました",
       description: `「${updatedItem.checkPoint}」を更新しました。`,
@@ -340,9 +339,9 @@ export default function InspectionItems() {
       ...item,
       order: index + 1
     }));
-    
+
     setItems(updatedItems);
-    
+
     toast({
       title: "項目を削除しました",
       description: "点検項目を削除しました。",
@@ -352,9 +351,9 @@ export default function InspectionItems() {
   // 新規カラムの追加
   const handleAddColumn = () => {
     if (!newColumnName.trim()) return;
-    
+
     const columnId = newColumnName.toLowerCase().replace(/\s+/g, '_');
-    
+
     if (columns.some(col => col.id === columnId)) {
       toast({
         title: "エラー",
@@ -363,16 +362,16 @@ export default function InspectionItems() {
       });
       return;
     }
-    
+
     const newColumn = {
       id: columnId,
       name: newColumnName,
       required: false
     };
-    
+
     setColumns([...columns, newColumn]);
     setNewColumnName('');
-    
+
     toast({
       title: "カラムを追加しました",
       description: `「${newColumnName}」カラムを追加しました。`,
@@ -382,15 +381,15 @@ export default function InspectionItems() {
   // カラム名の編集
   const handleEditColumn = () => {
     if (!editColumnId || !newColumnName.trim()) return;
-    
+
     const updatedColumns = columns.map(col => 
       col.id === editColumnId ? { ...col, name: newColumnName } : col
     );
-    
+
     setColumns(updatedColumns);
     setEditColumnId(null);
     setNewColumnName('');
-    
+
     toast({
       title: "カラム名を更新しました",
       description: `カラム名を「${newColumnName}」に更新しました。`,
@@ -409,10 +408,10 @@ export default function InspectionItems() {
       });
       return;
     }
-    
+
     const updatedColumns = columns.filter(col => col.id !== id);
     setColumns(updatedColumns);
-    
+
     toast({
       title: "カラムを削除しました",
       description: "カラムを削除しました。",
@@ -428,18 +427,18 @@ export default function InspectionItems() {
     reader.onload = (e) => {
       const text = e.target?.result as string;
       setCsvContent(text);
-      
+
       try {
         const parsedItems = parseCSVData(text);
         setItems(parsedItems);
-        
+
         // メーカーと機種のリストを作成
         const mfrs = Array.from(new Set(parsedItems.map(item => item.manufacturer).filter(Boolean)));
         const models = Array.from(new Set(parsedItems.map(item => item.modelType).filter(Boolean)));
-        
+
         setManufacturers(['すべて', ...mfrs]);
         setModelTypes(['すべて', ...models]);
-        
+
         toast({
           title: "CSVをインポートしました",
           description: `${parsedItems.length}件の点検項目をインポートしました。`,
@@ -463,9 +462,9 @@ export default function InspectionItems() {
     const rows = items.map(item => {
       return columns.map(col => item[col.id as keyof InspectionItem] || '').join(',');
     }).join('\n');
-    
+
     const csv = `${headers}\n${rows}`;
-    
+
     // ダウンロード
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -476,7 +475,7 @@ export default function InspectionItems() {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    
+
     toast({
       title: "エクスポート完了",
       description: "CSVファイルをエクスポートしました。",

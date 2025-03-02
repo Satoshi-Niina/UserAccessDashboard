@@ -1,3 +1,4 @@
+
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth, hashPassword } from "./auth";
@@ -105,6 +106,13 @@ export function registerRoutes(app: Express): Server {
       res.json({
         id: updatedUser.id,
         username: updatedUser.username,
+        isAdmin: updatedUser.isAdmin
+      });
+    } catch (error) {
+      console.error("ユーザー更新エラー:", error);
+      res.status(500).json({ error: "ユーザーの更新に失敗しました" });
+    }
+  });
 
   // CSVファイルの提供
   app.get("/api/inspection-data", (req, res) => {
@@ -123,15 +131,6 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("CSVファイル読み込みエラー:", error);
       res.status(500).json({ error: "CSVファイルの読み込みに失敗しました" });
-    }
-  });
-
-
-        isAdmin: updatedUser.isAdmin
-      });
-    } catch (error) {
-      console.error("ユーザー更新エラー:", error);
-      res.status(500).json({ error: "ユーザーの更新に失敗しました" });
     }
   });
 

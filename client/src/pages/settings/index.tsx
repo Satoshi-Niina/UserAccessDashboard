@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'wouter';
 import {
@@ -10,6 +9,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Database, List, BarChart2, History, Users } from 'lucide-react';
+import { ListChecks, Ruler } from 'lucide-react'; // Added imports for new icons
+
 
 export default function Settings() {
   const settingsLinks = [

@@ -133,7 +133,6 @@ export {
 // 一時的な通知を表示するためのコンポーネント
 // アクセシビリティに配慮した実装
 
-import * as React from "react"
 import * as ToastPrimitives from "@radix-ui/react-toast"
 import { cva, type VariantProps } from "class-variance-authority"
 import { X } from "lucide-react"

@@ -4,7 +4,7 @@
 import { Sidebar } from "@/components/layout/sidebar";
 import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
-import { Database, Users, History } from "lucide-react";
+import { Database, Users, History, Clipboard, Ruler } from "lucide-react";
 import { useState } from "react";
 
 type SettingsCard = {
@@ -32,6 +32,18 @@ const settingsCards: SettingsCard[] = [
     title: "履歴検索",
     description: "操作履歴を確認します",
     href: "/settings/history",
+  },
+  {
+    icon: Clipboard,
+    title: "点検項目編集",
+    description: "点検項目を追加・修正します",
+    href: "/settings/inspection-items",
+  },
+  {
+    icon: Ruler,
+    title: "測定基準値設定",
+    description: "点検項目の基準値を設定します",
+    href: "/settings/measurement-standards",
   },
 ];
 

@@ -1,389 +1,452 @@
 
-// 点検項目編集ページ
-// 点検項目の追加・編集・削除・並べ替え機能を提供
-import { Sidebar } from "@/components/layout/sidebar";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Clipboard, Plus, Edit, Trash2, GripVertical } from "lucide-react";
-import { useState, useRef } from "react";
-import { DndProvider, useDrag, useDrop } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
+import React, { useState, useEffect } from 'react';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { 
+  Card, CardContent, CardHeader, CardTitle,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  Input,
+  Label,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui';
+import { Plus, Edit, Trash2, Move } from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
 
-type InspectionItem = {
-  id: number;
-  name: string;
-  order: number;
-  columns: Column[];
-};
-
-type Column = {
-  id: number;
-  name: string;
-  order: number;
-};
-
-// サンプルデータ（実際にはAPIから取得）
-const initialItems: InspectionItem[] = [
-  {
-    id: 1,
-    name: "車両本体点検",
-    order: 1,
-    columns: [
-      { id: 1, name: "外観", order: 1 },
-      { id: 2, name: "エンジン", order: 2 },
-      { id: 3, name: "ブレーキ", order: 3 }
-    ]
-  },
-  {
-    id: 2,
-    name: "安全装置点検",
-    order: 2,
-    columns: [
-      { id: 4, name: "ライト", order: 1 },
-      { id: 5, name: "警告装置", order: 2 }
-    ]
-  }
+// 仮のデータ
+const initialItems = [
+  { id: '1', name: 'エンジン始動確認', order: 1 },
+  { id: '2', name: 'ブレーキ点検', order: 2 },
+  { id: '3', name: 'オイル量確認', order: 3 },
+  { id: '4', name: '冷却水量確認', order: 4 },
+  { id: '5', name: 'タイヤ空気圧確認', order: 5 },
 ];
 
-// ドラッグ可能な項目コンポーネント
-const DraggableItem = ({ item, index, moveItem }: { item: InspectionItem, index: number, moveItem: (dragIndex: number, hoverIndex: number) => void }) => {
-  const ref = useRef<HTMLTableRowElement>(null);
-  
-  const [{ isDragging }, drag] = useDrag({
-    type: 'ITEM',
-    item: () => ({ index }),
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-  });
-  
-  const [, drop] = useDrop({
-    accept: 'ITEM',
-    hover: (draggedItem: { index: number }, monitor) => {
-      if (!ref.current) return;
-      const dragIndex = draggedItem.index;
-      const hoverIndex = index;
-      if (dragIndex === hoverIndex) return;
-      
-      moveItem(dragIndex, hoverIndex);
-      draggedItem.index = hoverIndex;
-    },
-  });
-  
-  drag(drop(ref));
-  
-  return (
-    <TableRow 
-      ref={ref} 
-      style={{ opacity: isDragging ? 0.5 : 1, cursor: 'move' }}
-    >
-      <TableCell>
-        <GripVertical className="h-5 w-5 text-muted-foreground" />
-      </TableCell>
-      <TableCell>{item.name}</TableCell>
-      <TableCell>{item.columns.length}</TableCell>
-      <TableCell>
-        <div className="flex space-x-2">
-          <Button variant="outline" size="sm">
-            <Edit className="h-4 w-4 mr-1" />
-            編集
-          </Button>
-          <Button variant="destructive" size="sm">
-            <Trash2 className="h-4 w-4 mr-1" />
-            削除
-          </Button>
-        </div>
-      </TableCell>
-    </TableRow>
-  );
-};
-
-// ドラッグ可能なカラムコンポーネント
-const DraggableColumn = ({ column, index, moveColumn }: { column: Column, index: number, moveColumn: (dragIndex: number, hoverIndex: number) => void }) => {
-  const ref = useRef<HTMLTableRowElement>(null);
-  
-  const [{ isDragging }, drag] = useDrag({
-    type: 'COLUMN',
-    item: () => ({ index }),
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-  });
-  
-  const [, drop] = useDrop({
-    accept: 'COLUMN',
-    hover: (draggedItem: { index: number }, monitor) => {
-      if (!ref.current) return;
-      const dragIndex = draggedItem.index;
-      const hoverIndex = index;
-      if (dragIndex === hoverIndex) return;
-      
-      moveColumn(dragIndex, hoverIndex);
-      draggedItem.index = hoverIndex;
-    },
-  });
-  
-  drag(drop(ref));
-  
-  return (
-    <TableRow 
-      ref={ref} 
-      style={{ opacity: isDragging ? 0.5 : 1, cursor: 'move' }}
-    >
-      <TableCell>
-        <GripVertical className="h-5 w-5 text-muted-foreground" />
-      </TableCell>
-      <TableCell>{column.name}</TableCell>
-      <TableCell>
-        <div className="flex space-x-2">
-          <Button variant="outline" size="sm">
-            <Edit className="h-4 w-4 mr-1" />
-            編集
-          </Button>
-          <Button variant="destructive" size="sm">
-            <Trash2 className="h-4 w-4 mr-1" />
-            削除
-          </Button>
-        </div>
-      </TableCell>
-    </TableRow>
-  );
-};
+// カラム初期データ
+const initialColumns = [
+  { id: 'name', name: '点検項目名', required: true },
+  { id: 'standard', name: '基準値', required: false },
+  { id: 'unit', name: '単位', required: false },
+];
 
 export default function InspectionItems() {
-  const [isMenuExpanded, setIsMenuExpanded] = useState(false);
-  const [items, setItems] = useState<InspectionItem[]>(initialItems);
-  const [selectedItem, setSelectedItem] = useState<InspectionItem | null>(null);
-  const [newItemName, setNewItemName] = useState("");
-  const [newColumnName, setNewColumnName] = useState("");
-  const [isAddItemDialogOpen, setIsAddItemDialogOpen] = useState(false);
-  const [isAddColumnDialogOpen, setIsAddColumnDialogOpen] = useState(false);
+  const [items, setItems] = useState(initialItems);
+  const [columns, setColumns] = useState(initialColumns);
+  const [isAddItemOpen, setIsAddItemOpen] = useState(false);
+  const [isEditItemOpen, setIsEditItemOpen] = useState(false);
+  const [isColumnManageOpen, setIsColumnManageOpen] = useState(false);
+  const [currentItem, setCurrentItem] = useState<any>(null);
+  const [newItemName, setNewItemName] = useState('');
+  const [newColumnName, setNewColumnName] = useState('');
+  const [editColumnId, setEditColumnId] = useState<string | null>(null);
 
-  // 項目の並べ替え処理
-  const moveItem = (dragIndex: number, hoverIndex: number) => {
-    const dragItem = items[dragIndex];
-    const newItems = [...items];
-    newItems.splice(dragIndex, 1);
-    newItems.splice(hoverIndex, 0, dragItem);
+  // 項目の並び替え処理
+  const handleItemDragEnd = (result: any) => {
+    if (!result.destination) return;
     
-    // 順序を更新
-    const updatedItems = newItems.map((item, idx) => ({
+    const reorderedItems = Array.from(items);
+    const [removed] = reorderedItems.splice(result.source.index, 1);
+    reorderedItems.splice(result.destination.index, 0, removed);
+    
+    // orderの更新
+    const updatedItems = reorderedItems.map((item, index) => ({
       ...item,
-      order: idx + 1
+      order: index + 1
     }));
     
     setItems(updatedItems);
+    toast({
+      title: "並び順を更新しました",
+      description: "点検項目の並び順が更新されました。",
+    });
   };
 
-  // カラムの並べ替え処理
-  const moveColumn = (dragIndex: number, hoverIndex: number) => {
-    if (!selectedItem) return;
+  // カラムの並び替え処理
+  const handleColumnDragEnd = (result: any) => {
+    if (!result.destination) return;
     
-    const dragColumn = selectedItem.columns[dragIndex];
-    const newColumns = [...selectedItem.columns];
-    newColumns.splice(dragIndex, 1);
-    newColumns.splice(hoverIndex, 0, dragColumn);
+    const reorderedColumns = Array.from(columns);
+    const [removed] = reorderedColumns.splice(result.source.index, 1);
+    reorderedColumns.splice(result.destination.index, 0, removed);
     
-    // 順序を更新
-    const updatedColumns = newColumns.map((column, idx) => ({
-      ...column,
-      order: idx + 1
-    }));
-    
-    const updatedItem = {
-      ...selectedItem,
-      columns: updatedColumns
-    };
-    
-    setSelectedItem(updatedItem);
-    setItems(items.map(item => 
-      item.id === selectedItem.id ? updatedItem : item
-    ));
+    setColumns(reorderedColumns);
+    toast({
+      title: "カラム順を更新しました",
+      description: "カラムの並び順が更新されました。",
+    });
   };
 
-  // 新しい項目を追加
-  const addNewItem = () => {
+  // 項目の追加
+  const handleAddItem = () => {
     if (!newItemName.trim()) return;
     
-    const newItem: InspectionItem = {
-      id: Math.max(0, ...items.map(i => i.id)) + 1,
+    const newId = (items.length + 1).toString();
+    const newItem = {
+      id: newId,
       name: newItemName,
-      order: items.length + 1,
-      columns: []
+      order: items.length + 1
     };
     
     setItems([...items, newItem]);
-    setNewItemName("");
-    setIsAddItemDialogOpen(false);
+    setNewItemName('');
+    setIsAddItemOpen(false);
+    
+    toast({
+      title: "項目を追加しました",
+      description: `「${newItemName}」を追加しました。`,
+    });
   };
 
-  // 新しいカラムを追加
-  const addNewColumn = () => {
-    if (!selectedItem || !newColumnName.trim()) return;
+  // 項目の編集
+  const handleEditItem = () => {
+    if (!currentItem || !newItemName.trim()) return;
     
-    const newColumn: Column = {
-      id: Math.max(0, ...selectedItem.columns.map(c => c.id)) + 1,
+    const updatedItems = items.map(item => 
+      item.id === currentItem.id ? { ...item, name: newItemName } : item
+    );
+    
+    setItems(updatedItems);
+    setIsEditItemOpen(false);
+    setCurrentItem(null);
+    setNewItemName('');
+    
+    toast({
+      title: "項目を更新しました",
+      description: "点検項目の名前を更新しました。",
+    });
+  };
+
+  // 項目の削除
+  const handleDeleteItem = (id: string) => {
+    const updatedItems = items.filter(item => item.id !== id);
+    setItems(updatedItems);
+    
+    toast({
+      title: "項目を削除しました",
+      description: "点検項目を削除しました。",
+    });
+  };
+
+  // カラムの追加
+  const handleAddColumn = () => {
+    if (!newColumnName.trim()) return;
+    
+    const newId = `col_${Date.now()}`;
+    const newColumn = {
+      id: newId,
       name: newColumnName,
-      order: selectedItem.columns.length + 1
+      required: false
     };
     
-    const updatedItem = {
-      ...selectedItem,
-      columns: [...selectedItem.columns, newColumn]
-    };
+    setColumns([...columns, newColumn]);
+    setNewColumnName('');
     
-    setSelectedItem(updatedItem);
-    setItems(items.map(item => 
-      item.id === selectedItem.id ? updatedItem : item
-    ));
+    toast({
+      title: "カラムを追加しました",
+      description: `「${newColumnName}」カラムを追加しました。`,
+    });
+  };
+
+  // カラム名の編集
+  const handleEditColumn = (id: string, newName: string) => {
+    const updatedColumns = columns.map(col => 
+      col.id === id ? { ...col, name: newName } : col
+    );
     
-    setNewColumnName("");
-    setIsAddColumnDialogOpen(false);
+    setColumns(updatedColumns);
+    setEditColumnId(null);
+    
+    toast({
+      title: "カラム名を更新しました",
+      description: "カラム名を更新しました。",
+    });
+  };
+
+  // カラムの削除
+  const handleDeleteColumn = (id: string) => {
+    // 必須カラムは削除不可
+    const columnToDelete = columns.find(col => col.id === id);
+    if (columnToDelete?.required) {
+      toast({
+        title: "削除できません",
+        description: "必須カラムは削除できません。",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const updatedColumns = columns.filter(col => col.id !== id);
+    setColumns(updatedColumns);
+    
+    toast({
+      title: "カラムを削除しました",
+      description: "カラムを削除しました。",
+    });
   };
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <div className="flex h-screen">
-        <Sidebar onExpandChange={setIsMenuExpanded} />
-        <div className={`flex-1 ${isMenuExpanded ? 'ml-64' : 'ml-16'} transition-all duration-300`}>
-          <main className="p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h1 className="text-3xl font-bold">点検項目編集</h1>
-              <Dialog open={isAddItemDialogOpen} onOpenChange={setIsAddItemDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    新規項目追加
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>新規点検項目の追加</DialogTitle>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <label htmlFor="name" className="text-right">
-                        項目名
-                      </label>
-                      <Input
-                        id="name"
-                        value={newItemName}
-                        onChange={(e) => setNewItemName(e.target.value)}
-                        className="col-span-3"
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button onClick={addNewItem}>追加</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* 点検項目リスト */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>点検項目一覧</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead></TableHead>
-                        <TableHead>項目名</TableHead>
-                        <TableHead>カラム数</TableHead>
-                        <TableHead>操作</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {items.map((item, index) => (
-                        <DraggableItem 
-                          key={item.id}
-                          item={item}
-                          index={index}
-                          moveItem={moveItem}
-                        />
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-
-              {/* 選択した項目のカラム一覧 */}
-              <Card>
-                <CardHeader className="flex flex-row justify-between items-center">
-                  <CardTitle>
-                    {selectedItem ? `「${selectedItem.name}」のカラム` : "カラム管理"}
-                  </CardTitle>
-                  {selectedItem && (
-                    <Dialog open={isAddColumnDialogOpen} onOpenChange={setIsAddColumnDialogOpen}>
-                      <DialogTrigger asChild>
-                        <Button size="sm">
-                          <Plus className="mr-2 h-4 w-4" />
-                          新規カラム追加
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>新規カラムの追加</DialogTitle>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <label htmlFor="columnName" className="text-right">
-                              カラム名
-                            </label>
-                            <Input
-                              id="columnName"
-                              value={newColumnName}
-                              onChange={(e) => setNewColumnName(e.target.value)}
-                              className="col-span-3"
-                            />
-                          </div>
-                        </div>
-                        <DialogFooter>
-                          <Button onClick={addNewColumn}>追加</Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  {selectedItem ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead></TableHead>
-                          <TableHead>カラム名</TableHead>
-                          <TableHead>操作</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {selectedItem.columns.map((column, index) => (
-                          <DraggableColumn
-                            key={column.id}
-                            column={column}
-                            index={index}
-                            moveColumn={moveColumn}
-                          />
-                        ))}
-                      </TableBody>
-                    </Table>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center p-6 text-center">
-                      <Clipboard className="h-10 w-10 text-muted-foreground mb-4" />
-                      <p>左の項目リストから項目を選択してください</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </main>
+    <div className="container mx-auto p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">点検項目管理</h1>
+        <div className="flex gap-2">
+          <Button onClick={() => setIsColumnManageOpen(true)}>
+            カラム管理
+          </Button>
+          <Button onClick={() => setIsAddItemOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" /> 点検項目追加
+          </Button>
         </div>
       </div>
-    </DndProvider>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>点検項目一覧</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <DragDropContext onDragEnd={handleItemDragEnd}>
+            <Droppable droppableId="inspection-items">
+              {(provided) => (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12"></TableHead>
+                      <TableHead>No.</TableHead>
+                      {columns.map(col => (
+                        <TableHead key={col.id}>{col.name}</TableHead>
+                      ))}
+                      <TableHead className="w-24">操作</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody 
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                  >
+                    {items.map((item, index) => (
+                      <Draggable key={item.id} draggableId={item.id} index={index}>
+                        {(provided) => (
+                          <TableRow
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            className="hover:bg-muted/50"
+                          >
+                            <TableCell {...provided.dragHandleProps}>
+                              <Move className="h-4 w-4 text-muted-foreground" />
+                            </TableCell>
+                            <TableCell>{item.order}</TableCell>
+                            <TableCell>{item.name}</TableCell>
+                            {columns.slice(1).map(col => (
+                              <TableCell key={col.id}>-</TableCell>
+                            ))}
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => {
+                                    setCurrentItem(item);
+                                    setNewItemName(item.name);
+                                    setIsEditItemOpen(true);
+                                  }}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDeleteItem(item.id)}
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </TableBody>
+                </Table>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </CardContent>
+      </Card>
+
+      {/* 点検項目追加ダイアログ */}
+      <Dialog open={isAddItemOpen} onOpenChange={setIsAddItemOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>点検項目の追加</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                項目名
+              </Label>
+              <Input
+                id="name"
+                value={newItemName}
+                onChange={(e) => setNewItemName(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddItemOpen(false)}>
+              キャンセル
+            </Button>
+            <Button onClick={handleAddItem}>追加</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 点検項目編集ダイアログ */}
+      <Dialog open={isEditItemOpen} onOpenChange={setIsEditItemOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>点検項目の編集</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-name" className="text-right">
+                項目名
+              </Label>
+              <Input
+                id="edit-name"
+                value={newItemName}
+                onChange={(e) => setNewItemName(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditItemOpen(false)}>
+              キャンセル
+            </Button>
+            <Button onClick={handleEditItem}>更新</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* カラム管理ダイアログ */}
+      <Dialog open={isColumnManageOpen} onOpenChange={setIsColumnManageOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>カラム管理</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="flex gap-2 mb-4">
+              <Input
+                placeholder="新しいカラム名"
+                value={newColumnName}
+                onChange={(e) => setNewColumnName(e.target.value)}
+                className="flex-1"
+              />
+              <Button onClick={handleAddColumn}>追加</Button>
+            </div>
+            
+            <DragDropContext onDragEnd={handleColumnDragEnd}>
+              <Droppable droppableId="columns">
+                {(provided) => (
+                  <div
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                    className="space-y-2"
+                  >
+                    {columns.map((column, index) => (
+                      <Draggable
+                        key={column.id}
+                        draggableId={column.id}
+                        index={index}
+                        isDragDisabled={column.required}
+                      >
+                        {(provided) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            className="flex items-center p-3 border rounded-md"
+                          >
+                            <div
+                              {...provided.dragHandleProps}
+                              className="mr-2"
+                            >
+                              <Move className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                            
+                            {editColumnId === column.id ? (
+                              <Input
+                                value={column.name}
+                                onChange={(e) => {
+                                  const newName = e.target.value;
+                                  setColumns(columns.map(col => 
+                                    col.id === column.id ? { ...col, name: newName } : col
+                                  ));
+                                }}
+                                className="flex-1"
+                                autoFocus
+                                onBlur={() => handleEditColumn(column.id, column.name)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    handleEditColumn(column.id, column.name);
+                                  }
+                                }}
+                              />
+                            ) : (
+                              <span className="flex-1">{column.name}</span>
+                            )}
+                            
+                            {column.required && (
+                              <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-md mr-2">
+                                必須
+                              </span>
+                            )}
+                            
+                            <div className="flex gap-1">
+                              {!column.required && (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => setEditColumnId(column.id)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleDeleteColumn(column.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setIsColumnManageOpen(false)}>
+              閉じる
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

@@ -15,6 +15,8 @@ import {
   History,
   Users,
   ChevronRight,
+  BarChart2,
+  List,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
@@ -39,11 +41,6 @@ const menuItems: MenuItem[] = [
       { icon: ClipboardCheck, label: "運用実績", href: "/operations?tab=performance" },
     ],
   },
-  { 
-    icon: ClipboardCheck, 
-    label: "点検システム", 
-    href: "/machine-inspection" 
-  },
   { icon: MessageSquare, label: "メッセージ", href: "/messages" },
   {
     icon: Settings,
@@ -52,6 +49,8 @@ const menuItems: MenuItem[] = [
     adminOnly: true,
     subItems: [
       { icon: Database, label: "基本データ処理", href: "/settings/basic-data" },
+      { icon: List, label: "点検項目管理", href: "/settings/inspection-items" },
+      { icon: BarChart2, label: "測定基準値設定", href: "/settings/measurement-standards" },
       { icon: History, label: "履歴検索", href: "/settings/history" },
       { icon: Users, label: "ユーザー登録", href: "/settings/user-management" },
     ],

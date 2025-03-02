@@ -105,6 +105,28 @@ export function registerRoutes(app: Express): Server {
       res.json({
         id: updatedUser.id,
         username: updatedUser.username,
+
+  // CSVファイルの提供
+  app.get("/api/inspection-data", (req, res) => {
+    const fs = require('fs');
+    const path = require('path');
+    
+    try {
+      const csvPath = path.join(process.cwd(), 'attached_assets', '仕業点検マスタ.csv');
+      if (fs.existsSync(csvPath)) {
+        const data = fs.readFileSync(csvPath, 'utf8');
+        res.set('Content-Type', 'text/csv');
+        res.send(data);
+      } else {
+        res.status(404).json({ error: "CSVファイルが見つかりません" });
+      }
+    } catch (error) {
+      console.error("CSVファイル読み込みエラー:", error);
+      res.status(500).json({ error: "CSVファイルの読み込みに失敗しました" });
+    }
+  });
+
+
         isAdmin: updatedUser.isAdmin
       });
     } catch (error) {

@@ -1,14 +1,10 @@
 
-// オペレーションページコンポーネント
-// 業務操作の一覧と実行機能を提供
-// サイドバーとメインコンテンツのレイアウトを実装
+import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ListChecks, Plus, Edit, Trash2, MoveVertical, FileUp, FileDown, Filter } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useLocation } from "wouter";
+import { Input } from "@/components/ui/input";
+import { TabsContent } from "@/components/ui/tabs";
 import { 
   Select,
   SelectContent,
@@ -24,21 +20,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { toast } from "@/components/ui/use-toast";
+import { ListChecks, Edit, Trash2, Plus, Save, X } from "lucide-react";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
-// CSVデータの型定義
+// CSVのデータモデル
 interface InspectionItem {
-  id: number;
+  id: string;
   manufacturer: string;
   modelType: string;
   engineType: string;
@@ -46,233 +44,270 @@ interface InspectionItem {
   device: string;
   procedure: string;
   checkPoint: string;
-  criteria: string;
-  inspectionMethod: string;
+  judgmentCriteria: string;
+  checkMethod: string;
   measurement: string;
   graphicRecord: string;
+  order?: number;
 }
 
-// 仮のCSVデータ（実際の実装では、APIからデータを取得します）
-const mockInspectionData: InspectionItem[] = [
-  {
-    id: 1,
-    manufacturer: "堀川工機",
-    modelType: "MC300",
-    engineType: "ボルボ",
-    part: "エンジン",
-    device: "本体",
-    procedure: "",
-    checkPoint: "エンジンヘッドカバー、ターボ",
-    criteria: "オイル、燃料漏れ",
-    inspectionMethod: "オイル等滲み・垂れ跡が無",
-    measurement: "",
-    graphicRecord: "",
-  },
-  {
-    id: 2,
-    manufacturer: "",
-    modelType: "",
-    engineType: "",
-    part: "エンジン",
-    device: "本体",
-    procedure: "",
-    checkPoint: "排気及び吸気",
-    criteria: "排気ガス色及びガス漏れ等の点検（マフラー等）",
-    inspectionMethod: "ほぼ透明の薄紫",
-    measurement: "",
-    graphicRecord: "",
-  },
-  {
-    id: 3,
-    manufacturer: "",
-    modelType: "",
-    engineType: "",
-    part: "エンジン",
-    device: "スターター",
-    procedure: "",
-    checkPoint: "起動状態",
-    criteria: "回転及び異音の確認",
-    inspectionMethod: "イグニションスタートでスムーズに回転",
-    measurement: "",
-    graphicRecord: "",
-  },
-  // 追加のデータはCSVからインポート
+// カラム定義
+interface Column {
+  id: string;
+  name: string;
+  required: boolean;
+}
+
+// 初期カラム定義
+const initialColumns: Column[] = [
+  { id: "manufacturer", name: "製造メーカー", required: true },
+  { id: "modelType", name: "機種", required: true },
+  { id: "engineType", name: "エンジン型式", required: false },
+  { id: "part", name: "部位", required: true },
+  { id: "device", name: "装置", required: true },
+  { id: "procedure", name: "手順", required: false },
+  { id: "checkPoint", name: "確認箇所", required: true },
+  { id: "judgmentCriteria", name: "判断基準", required: true },
+  { id: "checkMethod", name: "確認要領", required: false },
+  { id: "measurement", name: "測定等記録", required: false },
+  { id: "graphicRecord", name: "図形記録", required: false },
 ];
 
-export default function Operations() {
-  const [location, setLocation] = useLocation();
-  const [isMenuExpanded, setIsMenuExpanded] = useState(false);
-  const currentTab = new URLSearchParams(location.split("?")[1]).get("tab") || "inspection";
+// CSVの項目を処理して表示用のアイテムに変換する関数
+const parseCSVData = (csvText: string): InspectionItem[] => {
+  const lines = csvText.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim());
   
-  // データ管理のための状態
-  const [inspectionData, setInspectionData] = useState<InspectionItem[]>(mockInspectionData);
-  const [selectedItem, setSelectedItem] = useState<InspectionItem | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add');
-  const [filterManufacturer, setFilterManufacturer] = useState<string>('all');
-  const [filterModelType, setFilterModelType] = useState<string>('all');
-  const [filterPart, setFilterPart] = useState<string>('all');
+  return lines.slice(1).map((line, index) => {
+    const values = line.split(',');
+    
+    return {
+      id: (index + 1).toString(),
+      manufacturer: values[0] || '',
+      modelType: values[1] || '',
+      engineType: values[2] || '',
+      part: values[3] || '',
+      device: values[4] || '',
+      procedure: values[5] || '',
+      checkPoint: values[6] || '',
+      judgmentCriteria: values[7] || '',
+      checkMethod: values[8] || '',
+      measurement: values[9] || '',
+      graphicRecord: values[10] || '',
+      order: index + 1
+    };
+  });
+};
 
-  // フィルターされたデータ
-  const filteredData = useMemo(() => {
-    return inspectionData.filter(item => {
-      const matchesManufacturer = filterManufacturer === 'all' || item.manufacturer === filterManufacturer;
-      const matchesModelType = filterModelType === 'all' || item.modelType === filterModelType;
-      const matchesPart = filterPart === 'all' || item.part === filterPart;
-      return matchesManufacturer && matchesModelType && matchesPart;
+// サンプルCSVデータの読み込み（実際には外部ファイルから取得する）
+const loadSampleData = async (): Promise<InspectionItem[]> => {
+  // 実際の実装では、APIからCSVデータを取得する
+  try {
+    const response = await fetch("/attached_assets/仕業点検マスタ.csv");
+    const csvText = await response.text();
+    return parseCSVData(csvText);
+  } catch (error) {
+    console.error("CSVデータの読み込みに失敗しました:", error);
+    return [];
+  }
+};
+
+export default function Operations() {
+  const [items, setItems] = useState<InspectionItem[]>([]);
+  const [columns, setColumns] = useState<Column[]>(initialColumns);
+  const [filterManufacturer, setFilterManufacturer] = useState<string>("all");
+  const [filterModelType, setFilterModelType] = useState<string>("all");
+  const [editingItem, setEditingItem] = useState<InspectionItem | null>(null);
+  const [newItem, setNewItem] = useState<Partial<InspectionItem>>({});
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [editColumnId, setEditColumnId] = useState<string | null>(null);
+  const [newColumnName, setNewColumnName] = useState("");
+  const [isAddColumnDialogOpen, setIsAddColumnDialogOpen] = useState(false);
+  const [manufacturers, setManufacturers] = useState<string[]>([]);
+  const [modelTypes, setModelTypes] = useState<string[]>([]);
+
+  // CSVデータの読み込み
+  useEffect(() => {
+    const fetchData = async () => {
+      const data = await loadSampleData();
+      setItems(data);
+      
+      // フィルター用の製造メーカーと機種のリストを作成
+      const uniqueManufacturers = Array.from(new Set(data.map(item => item.manufacturer))).filter(Boolean);
+      const uniqueModelTypes = Array.from(new Set(data.map(item => item.modelType))).filter(Boolean);
+      
+      setManufacturers(uniqueManufacturers);
+      setModelTypes(uniqueModelTypes);
+    };
+    
+    fetchData();
+  }, []);
+
+  // フィルター適用後のアイテム
+  const filteredItems = items.filter(item => {
+    const matchManufacturer = filterManufacturer === "all" || item.manufacturer === filterManufacturer;
+    const matchModelType = filterModelType === "all" || item.modelType === filterModelType;
+    return matchManufacturer && matchModelType;
+  });
+
+  // 項目の追加
+  const handleAddItem = () => {
+    const newId = (Math.max(0, ...items.map(item => parseInt(item.id))) + 1).toString();
+    const newItemWithId = { ...newItem, id: newId, order: items.length + 1 };
+    
+    setItems([...items, newItemWithId as InspectionItem]);
+    setNewItem({});
+    setIsAddDialogOpen(false);
+    
+    toast({
+      title: "項目を追加しました",
+      description: "新しい点検項目を追加しました。",
     });
-  }, [inspectionData, filterManufacturer, filterModelType, filterPart]);
+  };
 
-  // ユニークな製造メーカー、機種、部位のリストを取得
-  const manufacturers = [...new Set(inspectionData.map(item => item.manufacturer))].filter(Boolean);
-  const modelTypes = [...new Set(inspectionData.map(item => item.modelType))].filter(Boolean);
-  const parts = [...new Set(inspectionData.map(item => item.part))].filter(Boolean);
+  // 項目の編集
+  const handleEditItem = (item: InspectionItem) => {
+    setEditingItem(item);
+  };
 
-  // 項目を追加する関数
-  const addInspectionItem = (item: Omit<InspectionItem, 'id'>) => {
-    const newItem = {
+  // 編集の保存
+  const handleSaveEdit = () => {
+    if (!editingItem) return;
+    
+    const updatedItems = items.map(item => 
+      item.id === editingItem.id ? editingItem : item
+    );
+    
+    setItems(updatedItems);
+    setEditingItem(null);
+    
+    toast({
+      title: "変更を保存しました",
+      description: "点検項目の変更を保存しました。",
+    });
+  };
+
+  // 項目の削除
+  const handleDeleteItem = (id: string) => {
+    const updatedItems = items.filter(item => item.id !== id);
+    setItems(updatedItems);
+    
+    toast({
+      title: "項目を削除しました",
+      description: "点検項目を削除しました。",
+    });
+  };
+
+  // ドラッグ&ドロップの処理
+  const handleDragEnd = (result: any) => {
+    if (!result.destination) return;
+    
+    const reorderedItems = Array.from(filteredItems);
+    const [movedItem] = reorderedItems.splice(result.source.index, 1);
+    reorderedItems.splice(result.destination.index, 0, movedItem);
+    
+    // 順序を更新
+    const updatedItems = reorderedItems.map((item, index) => ({
       ...item,
-      id: Math.max(0, ...inspectionData.map(i => i.id)) + 1
-    };
-    setInspectionData([...inspectionData, newItem]);
-  };
-
-  // 項目を更新する関数
-  const updateInspectionItem = (item: InspectionItem) => {
-    setInspectionData(inspectionData.map(i => i.id === item.id ? item : i));
-  };
-
-  // 項目を削除する関数
-  const deleteInspectionItem = (id: number) => {
-    setInspectionData(inspectionData.filter(i => i.id !== id));
-  };
-
-  // アイテムの順序を変更する関数
-  const moveItem = (id: number, direction: 'up' | 'down') => {
-    const index = inspectionData.findIndex(i => i.id === id);
-    if (
-      (direction === 'up' && index === 0) || 
-      (direction === 'down' && index === inspectionData.length - 1)
-    ) {
-      return; // 既に一番上または一番下の場合は何もしない
-    }
-
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
-    const newData = [...inspectionData];
-    const temp = newData[index];
-    newData[index] = newData[newIndex];
-    newData[newIndex] = temp;
-    setInspectionData(newData);
-  };
-
-  // ダイアログを開く関数
-  const openAddDialog = () => {
-    setSelectedItem({
-      id: 0,
-      manufacturer: "",
-      modelType: "",
-      engineType: "",
-      part: "",
-      device: "",
-      procedure: "",
-      checkPoint: "",
-      criteria: "",
-      inspectionMethod: "",
-      measurement: "",
-      graphicRecord: "",
+      order: index + 1
+    }));
+    
+    // 元のアイテムリストと合わせて更新
+    const newItems = items.map(item => {
+      const updatedItem = updatedItems.find(updated => updated.id === item.id);
+      return updatedItem || item;
     });
-    setDialogMode('add');
-    setIsDialogOpen(true);
+    
+    setItems(newItems);
+    
+    toast({
+      title: "項目を並べ替えました",
+      description: "点検項目の順序を変更しました。",
+    });
   };
 
-  const openEditDialog = (item: InspectionItem) => {
-    setSelectedItem({...item});
-    setDialogMode('edit');
-    setIsDialogOpen(true);
-  };
-
-  // フォーム送信関数
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedItem) return;
-
-    if (dialogMode === 'add') {
-      // 新しい項目を追加
-      const { id, ...rest } = selectedItem;
-      addInspectionItem(rest);
-    } else {
-      // 既存の項目を更新
-      updateInspectionItem(selectedItem);
+  // カラムの追加
+  const handleAddColumn = () => {
+    if (!newColumnName.trim()) return;
+    
+    const columnId = newColumnName.toLowerCase().replace(/\s+/g, '_');
+    
+    if (columns.some(col => col.id === columnId)) {
+      toast({
+        title: "エラー",
+        description: "同じIDのカラムが既に存在します。",
+        variant: "destructive"
+      });
+      return;
     }
     
-    setIsDialogOpen(false);
-    setSelectedItem(null);
-  };
-
-  // CSVデータをインポートする関数
-  const importCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const csvText = event.target?.result as string;
-      const lines = csvText.split('\n');
-      const headers = lines[0].split(',');
-      
-      const data: InspectionItem[] = [];
-      for (let i = 1; i < lines.length; i++) {
-        if (!lines[i].trim()) continue;
-        
-        const values = lines[i].split(',');
-        data.push({
-          id: i,
-          manufacturer: values[0] || "",
-          modelType: values[1] || "",
-          engineType: values[2] || "",
-          part: values[3] || "",
-          device: values[4] || "",
-          procedure: values[5] || "",
-          checkPoint: values[6] || "",
-          criteria: values[7] || "",
-          inspectionMethod: values[8] || "",
-          measurement: values[9] || "",
-          graphicRecord: values[10] || "",
-        });
-      }
-      
-      setInspectionData(data);
+    const newColumn = {
+      id: columnId,
+      name: newColumnName,
+      required: false
     };
     
-    reader.readAsText(file);
+    setColumns([...columns, newColumn]);
+    setNewColumnName('');
+    setIsAddColumnDialogOpen(false);
+    
+    toast({
+      title: "カラムを追加しました",
+      description: `「${newColumnName}」カラムを追加しました。`,
+    });
   };
 
-  // CSVデータをエクスポートする関数
+  // カラム名の編集
+  const handleEditColumn = () => {
+    if (!editColumnId || !newColumnName.trim()) return;
+    
+    const updatedColumns = columns.map(col => 
+      col.id === editColumnId ? { ...col, name: newColumnName } : col
+    );
+    
+    setColumns(updatedColumns);
+    setEditColumnId(null);
+    setNewColumnName('');
+    
+    toast({
+      title: "カラム名を更新しました",
+      description: `カラム名を「${newColumnName}」に更新しました。`,
+    });
+  };
+
+  // カラムの削除
+  const handleDeleteColumn = (id: string) => {
+    // 必須カラムは削除不可
+    const columnToDelete = columns.find(col => col.id === id);
+    if (columnToDelete?.required) {
+      toast({
+        title: "削除できません",
+        description: "必須カラムは削除できません。",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const updatedColumns = columns.filter(col => col.id !== id);
+    setColumns(updatedColumns);
+    
+    toast({
+      title: "カラムを削除しました",
+      description: "カラムを削除しました。",
+    });
+  };
+
+  // CSVとしてエクスポート
   const exportToCSV = () => {
-    const headers = [
-      "製造メーカー", "機種", "エンジン型式", "部位", "装置", "手順", 
-      "確認箇所", "判断基準", "確認要領", "測定等記録", "図形記録"
-    ];
+    const headers = columns.map(col => col.name).join(',');
+    const rows = items.map(item => {
+      return columns.map(col => item[col.id as keyof InspectionItem] || '').join(',');
+    }).join('\n');
     
-    const csvContent = [
-      headers.join(','),
-      ...inspectionData.map(item => [
-        item.manufacturer,
-        item.modelType,
-        item.engineType,
-        item.part,
-        item.device,
-        item.procedure,
-        item.checkPoint,
-        item.criteria,
-        item.inspectionMethod,
-        item.measurement,
-        item.graphicRecord
-      ].join(','))
-    ].join('\n');
-    
+    const csvContent = `${headers}\n${rows}`;
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
+    
     const link = document.createElement('a');
     link.setAttribute('href', url);
     link.setAttribute('download', '仕業点検マスタ.csv');
@@ -280,341 +315,335 @@ export default function Operations() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    
+    toast({
+      title: "エクスポート完了",
+      description: "CSVファイルをエクスポートしました。",
+    });
   };
 
-  useEffect(() => {
-    if (!location.includes("?tab=")) {
-      setLocation("/operations?tab=inspection");
-    }
-  }, [location, setLocation]);
-
   return (
-    <div className="flex h-screen">
-      <Sidebar onExpandChange={setIsMenuExpanded} />
-      <div className={`flex-1 ${isMenuExpanded ? 'ml-64' : 'ml-16'} transition-all duration-300 overflow-auto`}>
-        <main className="p-6">
-          <h1 className="text-3xl font-bold mb-6">運用管理</h1>
-          <Tabs value={currentTab} onValueChange={(value) => setLocation(`/operations?tab=${value}`)}>
-            <TabsList>
-              <TabsTrigger value="inspection">仕業点検</TabsTrigger>
-              <TabsTrigger value="performance">運用実績</TabsTrigger>
-            </TabsList>
-            <TabsContent value="inspection">
+    <div className="h-screen flex bg-background">
+      <Sidebar />
+      <div className="flex-1 flex flex-col">
+        <main className="flex-1 p-6 overflow-auto">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-bold tracking-tight">運用管理</h1>
+            </div>
+            
+            <TabsContent value="operations" className="space-y-4">
               <Card>
-                <CardContent className="p-6">
-                  <div className="flex flex-col space-y-4">
-                    <div className="flex justify-between items-center">
-                      <h2 className="text-xl font-semibold">仕業点検項目管理</h2>
-                      <div className="flex items-center gap-2">
-                        <label className="relative cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring h-9 px-4 py-2">
-                          <FileUp className="mr-2 h-4 w-4" />
-                          CSVインポート
-                          <input
-                            type="file"
-                            accept=".csv"
-                            className="absolute inset-0 opacity-0 cursor-pointer"
-                            onChange={importCSV}
-                          />
-                        </label>
-                        <Button onClick={exportToCSV}>
-                          <FileDown className="mr-2 h-4 w-4" />
-                          CSVエクスポート
-                        </Button>
-                        <Button onClick={openAddDialog}>
-                          <Plus className="mr-2 h-4 w-4" />
-                          新規追加
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3 mb-4">
-                      <div>
-                        <Label htmlFor="filter-manufacturer">製造メーカー</Label>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-2xl font-bold">
+                    <ListChecks className="inline-block mr-2" />
+                    仕業点検マスタ
+                  </CardTitle>
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsAddColumnDialogOpen(true)}
+                      size="sm"
+                    >
+                      カラム追加
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={exportToCSV}
+                      size="sm"
+                    >
+                      CSVエクスポート
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {/* フィルター */}
+                    <div className="flex flex-wrap gap-4 mb-4">
+                      <div className="w-52">
+                        <Label>製造メーカー</Label>
                         <Select
                           value={filterManufacturer}
                           onValueChange={setFilterManufacturer}
                         >
-                          <SelectTrigger className="w-[180px]">
+                          <SelectTrigger>
                             <SelectValue placeholder="メーカー選択" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="all">すべて</SelectItem>
-                            {manufacturers.map((m) => (
-                              <SelectItem key={m} value={m}>{m}</SelectItem>
+                            {manufacturers.map((manufacturer) => (
+                              <SelectItem key={manufacturer} value={manufacturer}>
+                                {manufacturer}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
-                      <div>
-                        <Label htmlFor="filter-model">機種</Label>
+                      <div className="w-52">
+                        <Label>機種</Label>
                         <Select
                           value={filterModelType}
                           onValueChange={setFilterModelType}
                         >
-                          <SelectTrigger className="w-[180px]">
+                          <SelectTrigger>
                             <SelectValue placeholder="機種選択" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="all">すべて</SelectItem>
-                            {modelTypes.map((m) => (
-                              <SelectItem key={m} value={m}>{m}</SelectItem>
+                            {modelTypes.map((modelType) => (
+                              <SelectItem key={modelType} value={modelType}>
+                                {modelType}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
-                      <div>
-                        <Label htmlFor="filter-part">部位</Label>
-                        <Select
-                          value={filterPart}
-                          onValueChange={setFilterPart}
+                      <div className="flex items-end">
+                        <Button 
+                          variant="default" 
+                          className="ml-2"
+                          onClick={() => setIsAddDialogOpen(true)}
                         >
-                          <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="部位選択" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">すべて</SelectItem>
-                            {parts.map((p) => (
-                              <SelectItem key={p} value={p}>{p}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          <Plus className="w-4 h-4 mr-1" /> 新規項目
+                        </Button>
                       </div>
                     </div>
-
-                    <div className="rounded-md border overflow-x-auto">
-                      <Table>
-                        <TableHeader className="bg-muted/50">
-                          <TableRow>
-                            <TableHead className="w-[100px]">操作</TableHead>
-                            <TableHead>製造メーカー</TableHead>
-                            <TableHead>機種</TableHead>
-                            <TableHead>エンジン型式</TableHead>
-                            <TableHead>部位</TableHead>
-                            <TableHead>装置</TableHead>
-                            <TableHead>確認箇所</TableHead>
-                            <TableHead>判断基準</TableHead>
-                            <TableHead>確認要領</TableHead>
-                            <TableHead>測定等記録</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredData.length === 0 ? (
-                            <TableRow>
-                              <TableCell colSpan={10} className="text-center py-4">
-                                データがありません
-                              </TableCell>
-                            </TableRow>
-                          ) : (
-                            filteredData.map((item) => (
-                              <TableRow key={item.id} className="hover:bg-muted/50">
-                                <TableCell className="whitespace-nowrap">
-                                  <div className="flex items-center space-x-1">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => moveItem(item.id, 'up')}
-                                      className="h-7 w-7"
-                                      title="上へ移動"
-                                    >
-                                      <MoveVertical className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => openEditDialog(item)}
-                                      className="h-7 w-7"
-                                      title="編集"
-                                    >
-                                      <Edit className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => {
-                                        if (confirm("本当に削除しますか？")) {
-                                          deleteInspectionItem(item.id);
-                                        }
-                                      }}
-                                      className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                      title="削除"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                </TableCell>
-                                <TableCell>{item.manufacturer}</TableCell>
-                                <TableCell>{item.modelType}</TableCell>
-                                <TableCell>{item.engineType}</TableCell>
-                                <TableCell>{item.part}</TableCell>
-                                <TableCell>{item.device}</TableCell>
-                                <TableCell>{item.checkPoint}</TableCell>
-                                <TableCell>{item.criteria}</TableCell>
-                                <TableCell>{item.inspectionMethod}</TableCell>
-                                <TableCell>{item.measurement}</TableCell>
-                              </TableRow>
-                            ))
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
+                    
+                    {/* データテーブル */}
+                    <DragDropContext onDragEnd={handleDragEnd}>
+                      <Droppable droppableId="inspection-items">
+                        {(provided) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.droppableProps}
+                            className="border rounded-md"
+                          >
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead className="w-10"></TableHead>
+                                  {columns.map((column) => (
+                                    <TableHead key={column.id} className="min-w-32">
+                                      <div className="flex items-center gap-2">
+                                        <span>{column.name}</span>
+                                        <div className="flex space-x-1">
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-5 w-5"
+                                            onClick={() => {
+                                              setEditColumnId(column.id);
+                                              setNewColumnName(column.name);
+                                            }}
+                                          >
+                                            <Edit className="h-3 w-3" />
+                                          </Button>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-5 w-5"
+                                            onClick={() => handleDeleteColumn(column.id)}
+                                            disabled={column.required}
+                                          >
+                                            <Trash2 className="h-3 w-3" />
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    </TableHead>
+                                  ))}
+                                  <TableHead className="w-28">操作</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {filteredItems.length === 0 ? (
+                                  <TableRow>
+                                    <TableCell colSpan={columns.length + 2} className="text-center py-8">
+                                      データがありません。新しい項目を追加してください。
+                                    </TableCell>
+                                  </TableRow>
+                                ) : (
+                                  filteredItems.map((item, index) => (
+                                    <Draggable key={item.id} draggableId={item.id} index={index}>
+                                      {(provided) => (
+                                        <TableRow
+                                          ref={provided.innerRef}
+                                          {...provided.draggableProps}
+                                          {...provided.dragHandleProps}
+                                        >
+                                          <TableCell className="text-center">
+                                            {index + 1}
+                                          </TableCell>
+                                          {columns.map((column) => (
+                                            <TableCell key={`${item.id}-${column.id}`}>
+                                              {editingItem && editingItem.id === item.id ? (
+                                                <Input
+                                                  value={editingItem[column.id as keyof InspectionItem] as string || ''}
+                                                  onChange={(e) => 
+                                                    setEditingItem({
+                                                      ...editingItem,
+                                                      [column.id]: e.target.value
+                                                    })
+                                                  }
+                                                />
+                                              ) : (
+                                                item[column.id as keyof InspectionItem] || ''
+                                              )}
+                                            </TableCell>
+                                          ))}
+                                          <TableCell>
+                                            <div className="flex space-x-1">
+                                              {editingItem && editingItem.id === item.id ? (
+                                                <>
+                                                  <Button 
+                                                    variant="outline" 
+                                                    size="icon" 
+                                                    onClick={handleSaveEdit}
+                                                  >
+                                                    <Save className="h-4 w-4" />
+                                                  </Button>
+                                                  <Button 
+                                                    variant="outline" 
+                                                    size="icon" 
+                                                    onClick={() => setEditingItem(null)}
+                                                  >
+                                                    <X className="h-4 w-4" />
+                                                  </Button>
+                                                </>
+                                              ) : (
+                                                <>
+                                                  <Button 
+                                                    variant="outline" 
+                                                    size="icon" 
+                                                    onClick={() => handleEditItem(item)}
+                                                  >
+                                                    <Edit className="h-4 w-4" />
+                                                  </Button>
+                                                  <Button 
+                                                    variant="outline" 
+                                                    size="icon" 
+                                                    onClick={() => handleDeleteItem(item.id)}
+                                                  >
+                                                    <Trash2 className="h-4 w-4" />
+                                                  </Button>
+                                                </>
+                                              )}
+                                            </div>
+                                          </TableCell>
+                                        </TableRow>
+                                      )}
+                                    </Draggable>
+                                  ))
+                                )}
+                                {provided.placeholder}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        )}
+                      </Droppable>
+                    </DragDropContext>
                   </div>
                 </CardContent>
               </Card>
             </TabsContent>
-            <TabsContent value="performance">
-              <Card>
-                <CardContent className="p-6">
-                  <h2 className="text-xl font-semibold mb-4">運用実績管理</h2>
-                  <p>今後実装予定</p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+          </div>
         </main>
       </div>
 
-      {/* 項目編集用ダイアログ */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[700px]">
+      {/* 新規項目追加ダイアログ */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>
-              {dialogMode === 'add' ? '新規点検項目追加' : '点検項目編集'}
-            </DialogTitle>
+            <DialogTitle>新規点検項目の追加</DialogTitle>
             <DialogDescription>
-              点検項目の詳細情報を入力してください。
+              新しい点検項目の詳細を入力してください。
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleFormSubmit}>
-            <div className="grid grid-cols-2 gap-4 py-4">
-              <div className="col-span-1">
-                <Label htmlFor="manufacturer">製造メーカー</Label>
+          <div className="grid gap-4 py-4">
+            {columns.map((column) => (
+              <div key={column.id} className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor={column.id} className="text-right">
+                  {column.name} {column.required && <span className="text-red-500">*</span>}
+                </Label>
                 <Input
-                  id="manufacturer"
-                  value={selectedItem?.manufacturer || ''}
-                  onChange={(e) => setSelectedItem({
-                    ...selectedItem!,
-                    manufacturer: e.target.value
-                  })}
+                  id={column.id}
+                  value={newItem[column.id as keyof InspectionItem] as string || ''}
+                  onChange={(e) => 
+                    setNewItem({ ...newItem, [column.id]: e.target.value })
+                  }
+                  className="col-span-3"
+                  required={column.required}
                 />
               </div>
-              <div className="col-span-1">
-                <Label htmlFor="modelType">機種</Label>
-                <Input
-                  id="modelType"
-                  value={selectedItem?.modelType || ''}
-                  onChange={(e) => setSelectedItem({
-                    ...selectedItem!,
-                    modelType: e.target.value
-                  })}
-                />
-              </div>
-              <div className="col-span-1">
-                <Label htmlFor="engineType">エンジン型式</Label>
-                <Input
-                  id="engineType"
-                  value={selectedItem?.engineType || ''}
-                  onChange={(e) => setSelectedItem({
-                    ...selectedItem!,
-                    engineType: e.target.value
-                  })}
-                />
-              </div>
-              <div className="col-span-1">
-                <Label htmlFor="part">部位</Label>
-                <Input
-                  id="part"
-                  value={selectedItem?.part || ''}
-                  onChange={(e) => setSelectedItem({
-                    ...selectedItem!,
-                    part: e.target.value
-                  })}
-                />
-              </div>
-              <div className="col-span-1">
-                <Label htmlFor="device">装置</Label>
-                <Input
-                  id="device"
-                  value={selectedItem?.device || ''}
-                  onChange={(e) => setSelectedItem({
-                    ...selectedItem!,
-                    device: e.target.value
-                  })}
-                />
-              </div>
-              <div className="col-span-1">
-                <Label htmlFor="procedure">手順</Label>
-                <Input
-                  id="procedure"
-                  value={selectedItem?.procedure || ''}
-                  onChange={(e) => setSelectedItem({
-                    ...selectedItem!,
-                    procedure: e.target.value
-                  })}
-                />
-              </div>
-              <div className="col-span-2">
-                <Label htmlFor="checkPoint">確認箇所</Label>
-                <Input
-                  id="checkPoint"
-                  value={selectedItem?.checkPoint || ''}
-                  onChange={(e) => setSelectedItem({
-                    ...selectedItem!,
-                    checkPoint: e.target.value
-                  })}
-                />
-              </div>
-              <div className="col-span-2">
-                <Label htmlFor="criteria">判断基準</Label>
-                <Input
-                  id="criteria"
-                  value={selectedItem?.criteria || ''}
-                  onChange={(e) => setSelectedItem({
-                    ...selectedItem!,
-                    criteria: e.target.value
-                  })}
-                />
-              </div>
-              <div className="col-span-2">
-                <Label htmlFor="inspectionMethod">確認要領</Label>
-                <Input
-                  id="inspectionMethod"
-                  value={selectedItem?.inspectionMethod || ''}
-                  onChange={(e) => setSelectedItem({
-                    ...selectedItem!,
-                    inspectionMethod: e.target.value
-                  })}
-                />
-              </div>
-              <div className="col-span-1">
-                <Label htmlFor="measurement">測定等記録</Label>
-                <Input
-                  id="measurement"
-                  value={selectedItem?.measurement || ''}
-                  onChange={(e) => setSelectedItem({
-                    ...selectedItem!,
-                    measurement: e.target.value
-                  })}
-                />
-              </div>
-              <div className="col-span-1">
-                <Label htmlFor="graphicRecord">図形記録</Label>
-                <Input
-                  id="graphicRecord"
-                  value={selectedItem?.graphicRecord || ''}
-                  onChange={(e) => setSelectedItem({
-                    ...selectedItem!,
-                    graphicRecord: e.target.value
-                  })}
-                />
-              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              キャンセル
+            </Button>
+            <Button type="submit" onClick={handleAddItem}>
+              追加
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* カラム名編集ダイアログ */}
+      <Dialog open={!!editColumnId} onOpenChange={(open) => !open && setEditColumnId(null)}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>カラム名の編集</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="column-name" className="text-right">
+                カラム名
+              </Label>
+              <Input
+                id="column-name"
+                value={newColumnName}
+                onChange={(e) => setNewColumnName(e.target.value)}
+                className="col-span-3"
+              />
             </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                キャンセル
-              </Button>
-              <Button type="submit">保存</Button>
-            </DialogFooter>
-          </form>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditColumnId(null)}>
+              キャンセル
+            </Button>
+            <Button type="submit" onClick={handleEditColumn}>
+              保存
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* カラム追加ダイアログ */}
+      <Dialog open={isAddColumnDialogOpen} onOpenChange={setIsAddColumnDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>新規カラムの追加</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="new-column-name" className="text-right">
+                カラム名
+              </Label>
+              <Input
+                id="new-column-name"
+                value={newColumnName}
+                onChange={(e) => setNewColumnName(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddColumnDialogOpen(false)}>
+              キャンセル
+            </Button>
+            <Button type="submit" onClick={handleAddColumn}>
+              追加
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

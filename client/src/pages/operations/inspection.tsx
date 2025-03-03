@@ -61,68 +61,77 @@ export default function Inspection() {
 
       if (text) {
         const lines = text.split('\n');
-        const headers = lines[0].split(',').map(h => h.trim());
-
-        const manufacturerIndex = headers.indexOf('製造メーカー');
-        const modelTypeIndex = headers.indexOf('機種');
-        const engineTypeIndex = headers.indexOf('エンジン型式');
-        const partIndex = headers.indexOf('部位');
-        const deviceIndex = headers.indexOf('装置');
-        const procedureIndex = headers.indexOf('手順');
-        const checkPointIndex = headers.indexOf('確認箇所');
-        const judgmentIndex = headers.indexOf('判断基準');
-        const checkMethodIndex = headers.indexOf('確認要領');
-        const measurementIndex = headers.indexOf('測定等記録');
-        const graphicRecordIndex = headers.indexOf('図形記録');
-
-        // CSVからデータを解析
+        const headers = lines[0].split(',');
         const parsedItems: InspectionItem[] = [];
-        const uniqueManufacturers = new Set<string>();
-        const uniqueModelTypes = new Set<string>();
+        const manufacturersArray: string[] = [];
+        const modelTypesArray: string[] = [];
 
-        // 各行をパース
+        console.log(`CSVヘッダー: ${headers.join(', ')}`);
+        console.log(`総行数: ${lines.length}`);
+
+        // ヘッダー行をスキップして2行目から処理
         for (let i = 1; i < lines.length; i++) {
-          const line = lines[i].trim();
-          if (!line) continue;
+          if (!lines[i].trim()) continue; // 空行はスキップ
 
-          const values = line.split(',').map(v => v.trim());
+          const values = lines[i].split(',');
 
-          const item: InspectionItem = {
-            id: `item-${i}`,
-            manufacturer: values[manufacturerIndex] || '',
-            modelType: values[modelTypeIndex] || '',
-            engineType: values[engineTypeIndex] || '',
-            part: values[partIndex] || '',
-            device: values[deviceIndex] || '',
-            procedure: values[procedureIndex] || '',
-            checkPoint: values[checkPointIndex] || '',
-            judgmentCriteria: values[judgmentIndex] || '',
-            checkMethod: values[checkMethodIndex] || '',
-            measurement: values[measurementIndex] || '',
-            graphicRecord: values[graphicRecordIndex] || '',
-            order: i,
-            result: '' // 初期状態は空
-          };
+          // 最低限の項目数があることを確認
+          if (values.length >= 8) { // 少なくとも必要な列数があるか確認
+            const manufacturer = values[0]?.trim() || '';
+            const modelType = values[1]?.trim() || '';
+            const engineType = values[2]?.trim() || '';
 
-          // 有効な製造メーカーと機種を収集
-          if (item.manufacturer) {
-            uniqueManufacturers.add(item.manufacturer);
+            // 重複しないようにメーカーと機種を追加
+            if (manufacturer && !manufacturersArray.includes(manufacturer)) {
+              manufacturersArray.push(manufacturer);
+            }
+
+            if (modelType && !modelTypesArray.includes(modelType)) {
+              modelTypesArray.push(modelType);
+            }
+
+            // 点検項目の作成
+            const item: InspectionItem = {
+              id: `item-${i}`,
+              manufacturer: manufacturer,
+              modelType: modelType,
+              engineType: engineType,
+              part: values[3]?.trim() || '',
+              device: values[4]?.trim() || '',
+              procedure: values[5]?.trim() || '',
+              checkPoint: values[6]?.trim() || '',
+              judgmentCriteria: values[7]?.trim() || '',
+              checkMethod: values[8]?.trim() || '',
+              measurement: values[9]?.trim() || '',
+              graphicRecord: values[10]?.trim() || '',
+              order: i
+            };
+
+            // アイテムをログに出力（デバッグ用）
+            if (i < 5) {
+              console.log(`項目 ${i}: ${JSON.stringify(item)}`);
+            }
+
+            parsedItems.push(item);
           }
-          if (item.modelType) {
-            uniqueModelTypes.add(item.modelType);
-          }
-
-          parsedItems.push(item);
         }
 
-        console.log(`パースされた項目数: ${parsedItems.length}`);
+        console.log(`パース完了: ${parsedItems.length}個の項目を読み込みました`);
+        console.log(`メーカー: ${manufacturersArray.join(', ')}`);
+        console.log(`機種: ${modelTypesArray.join(', ')}`);
 
-        // メーカーと機種のリストを作成
-        const manufacturersArray = Array.from(uniqueManufacturers).filter(Boolean);
-        const modelTypesArray = Array.from(uniqueModelTypes).filter(Boolean);
+        // 空の値を持つレコードを考慮して、「未設定」オプションを追加
+        if (parsedItems.some(item => !item.manufacturer || item.manufacturer === '')) {
+          if (!manufacturersArray.includes('未設定')) {
+            manufacturersArray.push('未設定');
+          }
+        }
 
-        console.log('検出されたメーカー:', manufacturersArray);
-        console.log('検出された機種:', modelTypesArray);
+        if (parsedItems.some(item => !item.modelType || item.modelType === '')) {
+          if (!modelTypesArray.includes('未設定')) {
+            modelTypesArray.push('未設定');
+          }
+        }
 
         // 状態を更新
         setItems(parsedItems);
@@ -130,26 +139,24 @@ export default function Inspection() {
 
         if (manufacturersArray.length > 0) {
           setManufacturers(['すべて', ...manufacturersArray]);
-          // 最初のメーカーを自動選択
-          setSelectedManufacturer(manufacturersArray[0]);
+          // 初期メーカーを選択 (デフォルトは「すべて」)
+          setSelectedManufacturer('すべて');
         }
 
         if (modelTypesArray.length > 0) {
           setModelTypes(['すべて', ...modelTypesArray]);
-          // 最初の機種を自動選択
-          setSelectedModelType(modelTypesArray[0]);
+          // 初期機種を選択 (デフォルトは「すべて」)
+          setSelectedModelType('すべて');
         }
-
-        console.log(`${parsedItems.length}件の点検項目を読み込みました`);
-        console.log('選択されたメーカー:', manufacturersArray[0] || '未選択');
-        console.log('選択された機種:', modelTypesArray[0] || '未選択');
+      } else {
+        console.error('CSVデータが空です');
       }
     } catch (error) {
-      console.error('データ取得エラー:', error);
+      console.error('CSVデータの取得に失敗しました:', error);
       toast({
         title: "エラー",
-        description: "点検項目の読み込みに失敗しました",
-        variant: "destructive"
+        description: "点検データの読み込みに失敗しました",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);

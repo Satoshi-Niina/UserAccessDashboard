@@ -23,15 +23,15 @@ export default function App() {
       <AuthProvider>
         <Switch>
           <Route path="/login" component={AuthPage} />
-          <Route path="/" component={Dashboard} />
-          <Route path="/voice" component={VoiceAssistant} />
-          <Route path="/operations" component={Operations} />
-          <Route path="/messages" component={Messages} />
-          <Route path="/settings" component={Settings} />
-          <Route path="/settings/basic-data" component={BasicData} />
-          <Route path="/settings/inspection-items" component={InspectionItems} />
-          <Route path="/settings/history" component={History} />
-          <Route path="/settings/user-management" component={UserManagement} />
+          <ProtectedRoute path="/" component={Dashboard} />
+          <ProtectedRoute path="/voice-assistant" component={VoiceAssistant} />
+          <ProtectedRoute path="/operations" component={Operations} />
+          <ProtectedRoute path="/messages" component={Messages} />
+          <ProtectedRoute path="/settings" component={Settings} />
+          <ProtectedRoute path="/settings/basic-data" component={BasicData} />
+          <ProtectedRoute path="/settings/inspection-items" component={InspectionItems} />
+          <ProtectedRoute path="/settings/history" component={History} />
+          <ProtectedRoute path="/settings/user-management" component={UserManagement} />
           <Route component={NotFound} />
         </Switch>
         <Toaster />

@@ -2,37 +2,9 @@
 // チャットやメッセージングの機能を提供
 // リアルタイムコミュニケーションを実装
 import { Sidebar } from "@/components/layout/sidebar";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageSquare } from "lucide-react";
 import { useState } from "react";
-
-export default function Messages() {
-  const [isMenuExpanded, setIsMenuExpanded] = useState(false);
-
-  return (
-    <div className="flex h-screen">
-      <Sidebar onExpandChange={setIsMenuExpanded} />
-      <div className={`flex-1 ${isMenuExpanded ? 'ml-64' : 'ml-16'} transition-all duration-300`}>
-        <main className="p-6">
-          <h1 className="text-3xl font-bold mb-6">メッセージ</h1>
-          <Card>
-            <CardContent className="flex items-center justify-center p-12">
-              <div className="text-center">
-                <MessageSquare className="h-16 w-16 mx-auto mb-4 text-primary" />
-                <p className="text-muted-foreground">
-                  チーム間のリアルタイムコミュニケーションを促進します。
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </main>
-      </div>
-    </div>
-  );
-}
-import { Sidebar } from "@/components/layout/sidebar";
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExitButton } from "@/components/layout/exit-button";
 
 export default function Messages() {
@@ -64,13 +36,14 @@ export default function Messages() {
               onSave={saveMessages}
             />
           </div>
-
           <Card>
-            <CardHeader>
-              <CardTitle>メッセージ一覧</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>ここにメッセージの一覧が表示されます</p>
+            <CardContent className="flex items-center justify-center p-12">
+              <div className="text-center">
+                <MessageSquare className="h-16 w-16 mx-auto mb-4 text-primary" />
+                <p className="text-muted-foreground">
+                  チーム間のリアルタイムコミュニケーションを促進します。
+                </p>
+              </div>
             </CardContent>
           </Card>
         </main>

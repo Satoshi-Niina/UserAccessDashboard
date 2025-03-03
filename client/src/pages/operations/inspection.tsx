@@ -99,14 +99,24 @@ export default function Inspection() {
             return item as InspectionItem;
           });
 
+          console.log('Parsed items:', parsedItems.length);
           setItems(parsedItems);
 
-          // メーカーと機種のリストを作成
-          const mfrs = Array.from(new Set(parsedItems.map(item => item.manufacturer).filter(Boolean)));
-          const models = Array.from(new Set(parsedItems.map(item => item.modelType).filter(Boolean)));
+          // メーカーと機種の重複を削除したリストを作成
+          const uniqueManufacturers = [...new Set(parsedItems.map(item => item.manufacturer).filter(Boolean))];
+          const uniqueModelTypes = [...new Set(parsedItems.map(item => item.modelType).filter(Boolean))];
 
-          setManufacturers(['すべて', ...mfrs]);
-          setModelTypes(['すべて', ...models]);
+          console.log('Unique manufacturers:', uniqueManufacturers);
+          console.log('Unique model types:', uniqueModelTypes);
+
+          setManufacturers(['すべて', ...uniqueManufacturers]);
+          setModelTypes(['すべて', ...uniqueModelTypes]);
+
+          // フィルタリングされたアイテムの初期設定
+          setFilteredItems(parsedItems);
+
+          // データが取得できたことを示す
+          setShowTable(true);
         }
       })
       .catch(err => {
@@ -114,19 +124,24 @@ export default function Inspection() {
       });
   }, []);
 
-  // メーカーと機種の両方が選択されたらテーブルを表示する
+  // メーカーと機種の選択が変更された時のフィルタリング
   useEffect(() => {
-    if (selectedManufacturer !== 'すべて' && selectedModelType !== 'すべて') {
-      let filtered = [...items];
-      filtered = filtered.filter(item =>
-        item.manufacturer === selectedManufacturer &&
-        item.modelType === selectedModelType
-      );
-      setFilteredItems(filtered);
-      setShowTable(true);
-    } else {
-      setShowTable(false);
+    if (!items.length) return;
+
+    console.log('Filtering with manufacturer:', selectedManufacturer, 'model type:', selectedModelType);
+
+    let filtered = [...items];
+
+    if (selectedManufacturer !== 'すべて') {
+      filtered = filtered.filter(item => item.manufacturer === selectedManufacturer);
     }
+
+    if (selectedModelType !== 'すべて') {
+      filtered = filtered.filter(item => item.modelType === selectedModelType);
+    }
+
+    console.log('Filtered items count:', filtered.length);
+    setFilteredItems(filtered);
   }, [selectedManufacturer, selectedModelType, items]);
 
   // 点検結果を更新する関数
@@ -270,20 +285,21 @@ export default function Inspection() {
 
           {/* ここにテーブルや点検データを表示する */}
           <div className="mt-6">
-            {showTable && (
-              <div className="rounded-md border">
+            {filteredItems.length > 0 ? (
+              <div className="overflow-x-auto rounded-md border">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[100px]">メーカー</TableHead>
-                      <TableHead className="w-[100px]">機種</TableHead>
-                      <TableHead className="w-[120px]">エンジン型式</TableHead>
-                      <TableHead className="w-[80px]">部位</TableHead>
-                      <TableHead className="w-[80px]">装置</TableHead>
-                      <TableHead className="w-[150px]">確認箇所</TableHead>
-                      <TableHead className="w-[200px]">判断基準</TableHead>
-                      <TableHead className="w-[200px]">確認要領</TableHead>
-                      <TableHead className="w-[100px]">点検結果</TableHead>
+                      <TableHead className="w-1/12">製造メーカー</TableHead>
+                      <TableHead className="w-1/12">機種</TableHead>
+                      <TableHead className="w-1/12">エンジン型式</TableHead>
+                      <TableHead className="w-1/12">部位</TableHead>
+                      <TableHead className="w-1/12">装置</TableHead>
+                      <TableHead className="w-1/6">確認箇所</TableHead>
+                      <TableHead className="w-1/6">判断基準</TableHead>
+                      <TableHead className="w-1/6">確認要領</TableHead>
+                      <TableHead className="w-1/12">状態</TableHead>
+                      <TableHead className="w-1/12">アクション</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -330,10 +346,18 @@ export default function Inspection() {
                             </SelectContent>
                           </Select>
                         </TableCell>
+                        <TableCell>
+                          {/* アクションボタンを追加 */}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="text-gray-500">データが見つかりませんでした。</div>
+                <div className="text-sm text-gray-400 mt-2">製造メーカーと機種の選択を確認してください。</div>
               </div>
             )}
           </div>

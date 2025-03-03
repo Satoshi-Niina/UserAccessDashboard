@@ -12,12 +12,6 @@ import {
   DialogTrigger,
   Input,
   Label,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
   Select,
   SelectContent,
   SelectItem,
@@ -28,6 +22,14 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
 import { Plus, Edit, Trash2, Move, Upload, Save, X, FileUp, FileDown } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { Sidebar } from "@/components/layout/sidebar";

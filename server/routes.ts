@@ -86,8 +86,6 @@ app.get('/api/inspection-items', async (req, res) => {
     res.status(500).send('Error reading CSV file');
   }
 });
-    }
-  });
 
   // ユーザー情報の更新 (管理者のみ)
   app.patch("/api/users/:id", async (req, res) => {

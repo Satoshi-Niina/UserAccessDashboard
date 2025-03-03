@@ -40,8 +40,11 @@ export default function Operations() {
 
   return (
     <div className="flex h-screen overflow-hidden">
+      {/* Sidebarコンポーネント - メニュー表示用 */}
       <Sidebar onExpandChange={setIsMenuExpanded} />
-      <div className={`flex-1 overflow-auto ${isMenuExpanded ? 'ml-64' : 'ml-16'} transition-all duration-300`}>
+      
+      {/* メインコンテンツエリア - サイドバーの幅に合わせて調整 */}
+      <div className={`flex-1 overflow-auto p-0 ${isMenuExpanded ? 'ml-64' : 'ml-16'} transition-all duration-300`}>
         <div className="space-y-4 p-4 md:p-8 pt-6">
           <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight">運用管理</h2>
@@ -50,40 +53,46 @@ export default function Operations() {
               onSave={saveChanges}
             />
           </div>
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="daily-inspection">仕業点検</TabsTrigger>
-              <TabsTrigger value="engine-hours">エンジンアワー</TabsTrigger>
+              <TabsTrigger value="engine-hours">エンジンアワー記録</TabsTrigger>
             </TabsList>
             
             {/* 仕業点検タブ */}
-            <TabsContent value="daily-inspection" className="space-y-4">
+            <TabsContent value="daily-inspection" className="space-y-4 mt-4">
               <Card>
-                <CardHeader>
+                <CardHeader className="pb-2">
                   <CardTitle>仕業点検</CardTitle>
                   <CardDescription>
                     メーカーと機種を選択して点検項目を表示します。
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  {/* 仕業点検コンポーネントを直接埋め込む */}
+                <CardContent className="pt-2">
+                  {/* 仕業点検コンポーネントを埋め込む */}
                   <Inspection onChanges={handleInspectionChanges} />
                 </CardContent>
               </Card>
             </TabsContent>
             
             {/* エンジンアワータブ */}
-            <TabsContent value="engine-hours" className="space-y-4">
+            <TabsContent value="engine-hours" className="space-y-4 mt-4">
               <Card>
-                <CardHeader>
+                <CardHeader className="pb-2">
                   <CardTitle>エンジンアワー記録</CardTitle>
                   <CardDescription>
-                    エンジンの稼働時間を記録・管理します。
+                    エンジンの運転時間を記録・管理します。
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-center py-4">
-                    エンジンアワー記録機能は現在開発中です。
+                <CardContent className="pt-2">
+                  <div className="flex justify-center items-center py-10">
+                    <div className="text-center max-w-md">
+                      <h3 className="text-lg font-semibold mb-2">機能開発中</h3>
+                      <p className="text-muted-foreground">
+                        エンジンアワー記録機能は現在開発中です。今後のアップデートをお待ちください。
+                      </p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

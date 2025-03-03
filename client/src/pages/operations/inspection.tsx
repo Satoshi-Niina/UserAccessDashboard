@@ -19,6 +19,7 @@ import {
 import { Button } from '@/components/ui';
 import { Loader2 } from "lucide-react";
 
+// 点検項目の型定義
 interface InspectionItem {
   id: string;
   manufacturer: string;
@@ -39,200 +40,139 @@ interface InspectionItem {
 export default function Inspection() {
   const [items, setItems] = useState<InspectionItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<InspectionItem[]>([]);
-  const [manufacturers, setManufacturers] = useState<string[]>([]);
-  const [modelTypes, setModelTypes] = useState<string[]>([]);
+  const [manufacturers, setManufacturers] = useState<string[]>(['すべて']);
+  const [modelTypes, setModelTypes] = useState<string[]>(['すべて']);
   const [selectedManufacturer, setSelectedManufacturer] = useState<string>('すべて');
   const [selectedModelType, setSelectedModelType] = useState<string>('すべて');
   const [hasChanges, setHasChanges] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // CSV データを取得する関数
-  const fetchInspectionData = async () => {
-    try {
+  // データを取得する
+  useEffect(() => {
+    const fetchData = async () => {
       setLoading(true);
-      console.log('API を呼び出し中...');
-      const response = await fetch('/api/inspection-items');
-      if (!response.ok) {
-        throw new Error(`API エラー: ${response.status}`);
-      }
+      try {
+        const response = await fetch('/api/inspection-items');
+        const text = await response.text();
 
-      const text = await response.text();
-      console.log('CSVデータ:', text.substring(0, 200) + '...');
+        console.log('CSVデータのサンプル:', text.substring(0, 200));
 
-      if (text) {
+        if (!text) {
+          toast({
+            title: "エラー",
+            description: "データが空です",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
         const lines = text.split('\n');
-        const headers = lines[0].split(',');
-        const parsedItems: InspectionItem[] = [];
-        const manufacturersArray: string[] = [];
-        const modelTypesArray: string[] = [];
-
-        console.log(`CSVヘッダー: ${headers.join(', ')}`);
         console.log(`総行数: ${lines.length}`);
+
+        if (lines.length < 2) {
+          toast({
+            title: "警告",
+            description: "データが不足しています",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        // CSVデータをパース
+        const parsedItems: InspectionItem[] = [];
+        const manufacturerSet = new Set<string>();
+        const modelTypeSet = new Set<string>();
 
         // ヘッダー行をスキップして2行目から処理
         for (let i = 1; i < lines.length; i++) {
           if (!lines[i].trim()) continue; // 空行はスキップ
 
           const values = lines[i].split(',');
+          if (values.length < 8) continue; // 最低限の列数がない行はスキップ
 
-          // 最低限の項目数があることを確認
-          if (values.length >= 8) { // 少なくとも必要な列数があるか確認
-            const manufacturer = values[0]?.trim() || '';
-            const modelType = values[1]?.trim() || '';
-            const engineType = values[2]?.trim() || '';
+          const manufacturer = values[0]?.trim() || '';
+          const modelType = values[1]?.trim() || '';
 
-            // 重複しないようにメーカーと機種を追加
-            if (manufacturer && !manufacturersArray.includes(manufacturer)) {
-              manufacturersArray.push(manufacturer);
-            }
+          // 製造メーカーと機種をセットに追加（重複排除）
+          if (manufacturer) manufacturerSet.add(manufacturer);
+          if (modelType) modelTypeSet.add(modelType);
 
-            if (modelType && !modelTypesArray.includes(modelType)) {
-              modelTypesArray.push(modelType);
-            }
+          // 項目の作成
+          const item: InspectionItem = {
+            id: `item-${i}`,
+            manufacturer: manufacturer,
+            modelType: modelType,
+            engineType: values[2]?.trim() || '',
+            part: values[3]?.trim() || '',
+            device: values[4]?.trim() || '',
+            procedure: values[5]?.trim() || '',
+            checkPoint: values[6]?.trim() || '',
+            judgmentCriteria: values[7]?.trim() || '',
+            checkMethod: values[8]?.trim() || '',
+            measurement: values[9]?.trim() || '',
+            graphicRecord: values[10]?.trim() || '',
+            order: i
+          };
 
-            // 点検項目の作成
-            const item: InspectionItem = {
-              id: `item-${i}`,
-              manufacturer: manufacturer,
-              modelType: modelType,
-              engineType: engineType,
-              part: values[3]?.trim() || '',
-              device: values[4]?.trim() || '',
-              procedure: values[5]?.trim() || '',
-              checkPoint: values[6]?.trim() || '',
-              judgmentCriteria: values[7]?.trim() || '',
-              checkMethod: values[8]?.trim() || '',
-              measurement: values[9]?.trim() || '',
-              graphicRecord: values[10]?.trim() || '',
-              order: i
-            };
-
-            // アイテムをログに出力（デバッグ用）
-            if (i < 5) {
-              console.log(`項目 ${i}: ${JSON.stringify(item)}`);
-            }
-
-            parsedItems.push(item);
-          }
+          parsedItems.push(item);
         }
 
-        console.log(`パース完了: ${parsedItems.length}個の項目を読み込みました`);
-        console.log(`メーカー: ${manufacturersArray.join(', ')}`);
-        console.log(`機種: ${modelTypesArray.join(', ')}`);
+        // メーカーと機種の選択肢を設定
+        const manufacturerArray = Array.from(manufacturerSet);
+        const modelTypeArray = Array.from(modelTypeSet);
 
-        // 空の値を持つレコードを考慮して、「未設定」オプションを追加
-        if (parsedItems.some(item => !item.manufacturer || item.manufacturer === '')) {
-          if (!manufacturersArray.includes('未設定')) {
-            manufacturersArray.push('未設定');
-          }
-        }
+        console.log(`検出されたメーカー: ${manufacturerArray.join(', ')}`);
+        console.log(`検出された機種: ${modelTypeArray.join(', ')}`);
 
-        if (parsedItems.some(item => !item.modelType || item.modelType === '')) {
-          if (!modelTypesArray.includes('未設定')) {
-            modelTypesArray.push('未設定');
-          }
-        }
-
-        // 状態を更新
         setItems(parsedItems);
         setFilteredItems(parsedItems);
+        setManufacturers(['すべて', ...manufacturerArray]);
+        setModelTypes(['すべて', ...modelTypeArray]);
 
-        if (manufacturersArray.length > 0) {
-          setManufacturers(['すべて', ...manufacturersArray]);
-          // 初期メーカーを選択 (デフォルトは「すべて」)
-          setSelectedManufacturer('すべて');
+        // 初期メーカーと機種を設定（値があれば）
+        if (manufacturerArray.length > 0) {
+          setSelectedManufacturer(manufacturerArray[0]);
         }
-
-        if (modelTypesArray.length > 0) {
-          setModelTypes(['すべて', ...modelTypesArray]);
-          // 初期機種を選択 (デフォルトは「すべて」)
-          setSelectedModelType('すべて');
+        if (modelTypeArray.length > 0) {
+          setSelectedModelType(modelTypeArray[0]);
         }
-      } else {
-        console.error('CSVデータが空です');
-      }
-    } catch (error) {
-      console.error('CSVデータの取得に失敗しました:', error);
-      toast({
-        title: "エラー",
-        description: "点検データの読み込みに失敗しました",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // コンポーネントのマウント時に点検データを読み込む
-  useEffect(() => {
-    fetchInspectionData();
-
-    // CSVファイルの内容を直接確認
-    fetch('/api/inspection-items')
-      .then(response => response.text())
-      .then(csv => {
-        console.log('--- CSVデータの詳細 ---');
-        console.log(csv.substring(0, 1000)); // 最初の1000文字を表示
-
-        // CSVの行数を確認
-        const lines = csv.split('\n');
-        console.log(`CSVの総行数: ${lines.length}`);
-
-        // ヘッダー行を確認
-        console.log('ヘッダー行:', lines[0]);
-
-        // 最初の数行のデータを確認
-        console.log('データ行の例:');
-        lines.slice(1, 6).forEach((line, i) => {
-          console.log(`${i+1}行目:`, line);
+      } catch (error) {
+        console.error('データ取得エラー:', error);
+        toast({
+          title: "エラー",
+          description: "データの読み込みに失敗しました",
+          variant: "destructive",
         });
-      })
-      .catch(error => console.error('CSVデータの直接読み込みに失敗:', error));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
-
-  // データが読み込まれた後に最初のメーカーと機種を自動選択
-  useEffect(() => {
-    if (manufacturers.length > 1 && selectedManufacturer === 'すべて') {
-      // 最初の実際のメーカー（「すべて」の次のもの）を選択
-      setSelectedManufacturer(manufacturers[1]);
-    }
-
-    if (modelTypes.length > 1 && selectedModelType === 'すべて') {
-      // 最初の実際の機種（「すべて」の次のもの）を選択
-      setSelectedModelType(modelTypes[1]);
-    }
-  }, [manufacturers, modelTypes]);
 
   // フィルタリング
   useEffect(() => {
-    if (items.length > 0) {
-      console.log(`フィルタリング開始: 全${items.length}件, メーカー: ${selectedManufacturer}, 機種: ${selectedModelType}`);
+    if (items.length === 0) return;
 
-      let filtered = [...items];
+    console.log(`フィルタリング: メーカー=${selectedManufacturer}, 機種=${selectedModelType}`);
 
-      // メーカーでフィルタリング
-      if (selectedManufacturer !== 'すべて') {
-        filtered = filtered.filter(item => item.manufacturer === selectedManufacturer);
-        console.log(`  メーカー「${selectedManufacturer}」でフィルター後: ${filtered.length}件`);
-      }
+    let filtered = [...items];
 
-      // 機種でフィルタリング
-      if (selectedModelType !== 'すべて') {
-        filtered = filtered.filter(item => item.modelType === selectedModelType);
-        console.log(`  機種「${selectedModelType}」でフィルター後: ${filtered.length}件`);
-      }
-
-      console.log(`フィルタリング結果: ${filtered.length}件`);
-
-      // フィルタリング結果のサンプルを表示
-      if (filtered.length > 0) {
-        console.log('フィルタリング結果のサンプル:', JSON.stringify(filtered[0]));
-      } else {
-        console.log('フィルタリング結果が0件です');
-      }
-
-      setFilteredItems(filtered);
+    // メーカーでフィルタリング
+    if (selectedManufacturer !== 'すべて') {
+      filtered = filtered.filter(item => item.manufacturer === selectedManufacturer);
     }
+
+    // 機種でフィルタリング
+    if (selectedModelType !== 'すべて') {
+      filtered = filtered.filter(item => item.modelType === selectedModelType);
+    }
+
+    console.log(`フィルタリング結果: ${filtered.length}件`);
+    setFilteredItems(filtered);
   }, [selectedManufacturer, selectedModelType, items]);
 
   // 点検結果の変更
@@ -246,7 +186,6 @@ export default function Inspection() {
 
   // 保存処理
   const saveInspection = () => {
-    // 実際にはAPIでデータを保存
     console.log('保存するCSVデータ:', generateCsvFromItems(items));
     toast({
       title: "保存完了",
@@ -362,7 +301,7 @@ export default function Inspection() {
         <div className="text-center py-10">
           {selectedManufacturer !== 'すべて' || selectedModelType !== 'すべて' ? 
             '選択された条件に一致する点検項目はありません。' : 
-            '点検項目がありません。設定メニューから点検項目を追加してください。'}
+            '点検項目がありません。'}
         </div>
       )}
     </div>

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   Tabs,
@@ -26,9 +27,10 @@ export default function Operations() {
   // タブ切り替え前の確認
   const handleTabChange = (value: string) => {
     if (hasChanges) {
-      // 実際の実装では確認ダイアログを表示するなどの処理が必要
+      // 確認ダイアログを表示
       if (window.confirm('保存されていない変更があります。移動しますか？')) {
         setActiveTab(value);
+        setHasChanges(false);
       }
     } else {
       setActiveTab(value);

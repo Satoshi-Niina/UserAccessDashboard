@@ -4,6 +4,7 @@ import { setupAuth, hashPassword } from "./auth";
 import { storage } from "./storage";
 import * as fs from 'fs';
 import * as path from 'path';
+import Papa from 'papaparse'; // Added import for Papa Parse
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
@@ -170,7 +171,7 @@ app.post('/api/upload-inspection-items', (req, res) => {
       fs.writeFileSync(csvFilePath, req.file.buffer);
 
       console.log(`CSVファイルを保存しました: ${csvFilePath} (${req.file.buffer.length} バイト)`);
-      
+
       res.status(200).json({ 
         message: 'ファイルが正常にアップロードされました',
         fileName: '仕業点検マスタ.csv',

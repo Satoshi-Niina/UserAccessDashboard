@@ -3,6 +3,7 @@
 // 通知機能のためのToast（トースト）フックを提供
 // 設定可能な通知コンポーネントのためのカスタムフック
 
+import * as React from "react"
 import { type ToastActionElement, type ToastProps } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 5

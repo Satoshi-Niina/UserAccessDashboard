@@ -71,16 +71,24 @@ app.get('/api/inspection-items', (req, res) => {
   try {
     // In a real implementation, this would read from a database or file storage
     // For now, we'll read directly from the CSV file in attached_assets
-    const fs = require('fs');
-    const path = require('path');
-    const csvPath = path.join(process.cwd(), 'attached_assets', '仕業点検マスタ.csv');
-    
-    if (fs.existsSync(csvPath)) {
-      const data = fs.readFileSync(csvPath, 'utf8');
-      res.send(data);
-    } else {
-      res.status(404).send('CSV file not found');
-    }
+    import('fs').then(fs => {
+      import('path').then(async path => {
+        const csvPath = path.join(process.cwd(), 'attached_assets', '仕業点検マスタ.csv');
+        
+        if (fs.existsSync(csvPath)) {
+          const data = fs.readFileSync(csvPath, 'utf8');
+          res.send(data);
+        } else {
+          res.status(404).send('CSV file not found');
+        }
+      }).catch(error => {
+        console.error('Error importing path:', error);
+        res.status(500).send('Error reading CSV file');
+      });
+    }).catch(error => {
+      console.error('Error importing fs:', error);
+      res.status(500).send('Error reading CSV file');
+    });
   } catch (error) {
     console.error('Error reading CSV file:', error);
     res.status(500).send('Error reading CSV file');
@@ -137,22 +145,29 @@ app.get('/api/inspection-items', (req, res) => {
 
   // CSVファイルの提供
   app.get("/api/inspection-data", (req, res) => {
-    const fs = require('fs');
-    const path = require('path');
-    
-    try {
-      const csvPath = path.join(process.cwd(), 'attached_assets', '仕業点検マスタ.csv');
-      if (fs.existsSync(csvPath)) {
-        const data = fs.readFileSync(csvPath, 'utf8');
-        res.set('Content-Type', 'text/csv');
-        res.send(data);
-      } else {
-        res.status(404).json({ error: "CSVファイルが見つかりません" });
-      }
-    } catch (error) {
-      console.error("CSVファイル読み込みエラー:", error);
+    import('fs').then(fs => {
+      import('path').then(async path => {
+        try {
+          const csvPath = path.join(process.cwd(), 'attached_assets', '仕業点検マスタ.csv');
+          if (fs.existsSync(csvPath)) {
+            const data = fs.readFileSync(csvPath, 'utf8');
+            res.set('Content-Type', 'text/csv');
+            res.send(data);
+          } else {
+            res.status(404).json({ error: "CSVファイルが見つかりません" });
+          }
+        } catch (error) {
+          console.error("CSVファイル読み込みエラー:", error);
+          res.status(500).json({ error: "CSVファイルの読み込みに失敗しました" });
+        }
+      }).catch(error => {
+        console.error("Path importエラー:", error);
+        res.status(500).json({ error: "CSVファイルの読み込みに失敗しました" });
+      });
+    }).catch(error => {
+      console.error("FS importエラー:", error);
       res.status(500).json({ error: "CSVファイルの読み込みに失敗しました" });
-    }
+    });
   });
 
   // ユーザー削除 (管理者のみ)

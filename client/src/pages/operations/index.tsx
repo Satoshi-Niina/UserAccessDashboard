@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Tabs,
   TabsContent,
@@ -20,6 +20,11 @@ export default function Operations() {
   const [activeTab, setActiveTab] = useState("daily-inspection");
   const [hasChanges, setHasChanges] = useState(false);
 
+  // 仕業点検コンポーネントからの変更通知を受け取るハンドラー
+  const handleInspectionChanges = (hasChanges: boolean) => {
+    setHasChanges(hasChanges);
+  };
+
   // 保存関数
   const saveChanges = async () => {
     try {
@@ -34,9 +39,9 @@ export default function Operations() {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen overflow-hidden">
       <Sidebar onExpandChange={setIsMenuExpanded} />
-      <div className={`flex-1 ${isMenuExpanded ? 'ml-64' : 'ml-16'} transition-all duration-300`}>
+      <div className={`flex-1 overflow-auto ${isMenuExpanded ? 'ml-64' : 'ml-16'} transition-all duration-300`}>
         <div className="space-y-4 p-4 md:p-8 pt-6">
           <div className="flex items-center justify-between">
             <h2 className="text-3xl font-bold tracking-tight">運用管理</h2>
@@ -62,7 +67,7 @@ export default function Operations() {
                 </CardHeader>
                 <CardContent>
                   {/* 仕業点検コンポーネントを直接埋め込む */}
-                  <Inspection />
+                  <Inspection onChanges={handleInspectionChanges} />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -73,13 +78,12 @@ export default function Operations() {
                 <CardHeader>
                   <CardTitle>エンジンアワー記録</CardTitle>
                   <CardDescription>
-                    エンジンの稼働時間を記録します。
+                    エンジンの稼働時間を記録・管理します。
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {/* エンジンアワーコンポーネントの実装（現在は未実装） */}
                   <div className="text-center py-4">
-                    エンジンアワー記録機能は開発中です。
+                    エンジンアワー記録機能は現在開発中です。
                   </div>
                 </CardContent>
               </Card>

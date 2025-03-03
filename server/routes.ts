@@ -74,6 +74,18 @@ app.get('/api/inspection-items', async (req, res) => {
     const fs = await import('fs');
     const path = await import('path');
 
+    // プロセスの現在の作業ディレクトリを表示（デバッグ用）
+    console.log('現在の作業ディレクトリ:', process.cwd());
+    
+    // attached_assetsディレクトリの内容を確認
+    const attachedDir = path.join(process.cwd(), 'attached_assets');
+    if (fs.existsSync(attachedDir)) {
+      const files = fs.readdirSync(attachedDir);
+      console.log('attached_assetsディレクトリの内容:', files);
+    } else {
+      console.log('attached_assetsディレクトリが存在しません');
+    }
+
     const csvPath = path.join(process.cwd(), 'attached_assets', '仕業点検マスタ.csv');
     console.log(`CSVファイルパス: ${csvPath}`);
 
@@ -103,10 +115,24 @@ app.get('/api/inspection-items', async (req, res) => {
       console.error(`CSVファイルが見つかりません: ${csvPath}`);
 
       // ディレクトリの確認
-      const attachedDir = path.join(process.cwd(), 'attached_assets');
       const availableFiles = fs.existsSync(attachedDir) ? fs.readdirSync(attachedDir) : [];
-
       console.log(`利用可能なファイル: ${availableFiles.join(', ')}`);
+
+      // 代替ファイル名を試す（ファイル名が日本語で文字化けしている可能性）
+      const alternativeNames = availableFiles.filter(f => f.endsWith('.csv'));
+      console.log('試す代替ファイル:', alternativeNames);
+      
+      // 代替ファイルが見つかった場合は最初のものを使用
+      if (alternativeNames.length > 0) {
+        const altPath = path.join(attachedDir, alternativeNames[0]);
+        console.log(`代替CSVファイルを使用: ${altPath}`);
+        const altData = fs.readFileSync(altPath, 'utf8');
+        console.log(`代替CSVデータ読み込み成功 (${altData.length} バイト)`);
+        
+        res.set('Content-Type', 'text/csv; charset=utf-8');
+        res.send(altData);
+        return;
+      }
 
       // サンプルCSVデータを返す（複数行のデータを設定）
       const sampleData = `製造メーカー,機種,エンジン型式,部位,装置,手順,確認箇所,判断基準,確認要領,測定等記録,図形記録
@@ -114,8 +140,11 @@ app.get('/api/inspection-items', async (req, res) => {
 堀川工機,MC300,ボルボ,エンジン,本体,,排気及び吸気,排気ガス色及びガス漏れ等の点検（マフラー等）,ほぼ透明の薄紫,,
 堀川工機,MC300,ボルボ,エンジン,スターター,,起動状態,回転及び異音の確認,イグニションスタートでスムーズに回転,,
 堀川工機,MC300,ボルボ,エンジン,スターター,,端子・配線,配線摺動による損傷及び端子ゆるみ,目視による緩み、損傷の無,,
-堀川工機,MC300,ボルボ,エンジン,燃料カットソレノイド,,作動確認,伸縮の作動,イグニションON・OFFで伸縮,,`;
+堀川工機,MC300,ボルボ,エンジン,燃料カットソレノイド,,作動確認,伸縮の作動,イグニションON・OFFで伸縮,,
+小松製作所,PC120,いすゞ,車体,フレーム,,亀裂・変形,亀裂・変形が無いこと,目視による変形・亀裂・損傷の有無,,
+小松製作所,PC120,いすゞ,車体,ウエイト,,取付ボルト,ゆるみが無いこと,増し締め,,`;
 
+      console.log('サンプルデータを提供します');
       res.set('Content-Type', 'text/csv; charset=utf-8');
       res.send(sampleData);
     }
@@ -123,7 +152,8 @@ app.get('/api/inspection-items', async (req, res) => {
     console.error('Error reading CSV file:', error);
     res.status(500).json({
       error: 'Error reading CSV file',
-      message: error instanceof Error ? error.message : '不明なエラーが発生しました'
+      message: error instanceof Error ? error.message : '不明なエラーが発生しました',
+      stack: error instanceof Error ? error.stack : undefined
     });
   }
 });

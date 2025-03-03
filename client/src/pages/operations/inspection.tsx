@@ -38,7 +38,11 @@ interface InspectionItem {
   result?: string; // 点検結果
 }
 
-export default function Inspection() {
+interface InspectionProps {
+  onChanges?: (hasChanges: boolean) => void;
+}
+
+export default function Inspection({ onChanges }: InspectionProps) {
   const [items, setItems] = useState<InspectionItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<InspectionItem[]>([]);
   const [manufacturers, setManufacturers] = useState<string[]>(['すべて']);
@@ -189,6 +193,11 @@ export default function Inspection() {
     );
     setItems(updatedItems);
     setHasChanges(true);
+    
+    // 親コンポーネントに変更を通知
+    if (onChanges) {
+      onChanges(true);
+    }
   };
 
   // 保存処理
@@ -199,6 +208,11 @@ export default function Inspection() {
       description: "点検結果が保存されました",
     });
     setHasChanges(false);
+    
+    // 親コンポーネントに保存完了を通知
+    if (onChanges) {
+      onChanges(false);
+    }
   };
 
   // CSVデータ生成関数

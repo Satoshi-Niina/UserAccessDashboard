@@ -5,7 +5,7 @@ import { Switch, Route } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import AuthPage from "@/pages/auth-page";
 import Dashboard from "@/pages/dashboard";
-import VoiceAssistant from "@/pages/voice";
+import VoiceAssistant from "@/pages/voice-assistant";
 import Operations from "@/pages/operations";
 import Messages from "@/pages/messages";
 import Settings from "@/pages/settings";

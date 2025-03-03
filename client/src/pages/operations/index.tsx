@@ -9,6 +9,7 @@ import {
   TabsTrigger
 } from '@/components/ui';
 import Inspection from './inspection';
+import OperationalPlan from "./operational-plan"; // Added import statement
 
 export default function Operations() {
   const [location] = useLocation();
@@ -37,16 +38,13 @@ export default function Operations() {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
             <TabsList>
               <TabsTrigger value="inspection">仕業点検</TabsTrigger>
-              <TabsTrigger value="operational">運用実績</TabsTrigger>
+              <TabsTrigger value="operational">運用計画</TabsTrigger> {/* Changed label */}
             </TabsList>
             <TabsContent value="inspection" className="mt-6">
               <Inspection />
             </TabsContent>
             <TabsContent value="operational" className="mt-6">
-              <div className="text-center py-10">
-                <h2 className="text-xl font-semibold mb-4">運用実績管理</h2>
-                <p className="text-muted-foreground">運用実績の記録と管理画面（開発中）</p>
-              </div>
+              <OperationalPlan /> {/* Added OperationalPlan component */}
             </TabsContent>
           </Tabs>
         </main>

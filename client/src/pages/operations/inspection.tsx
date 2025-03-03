@@ -59,11 +59,9 @@ export default function Inspection() {
 
   // 初期データの読み込み
   useEffect(() => {
-    // APIから点検データを取得
-    fetch('/api/inspection-data')
+    fetch('/api/inspection-items')
       .then(res => res.text())
-      .catch((error) => {
-        console.error("点検データ取得エラー:", error);
+      .catch(() => {
         // APIが失敗した場合、ローカルのサンプルデータを返す
         return '製造メーカー,機種,エンジン型式,部位,装置,手順,確認箇所,判断基準,確認要領,測定等記録,図形記録\n堀川工機,MC300,ボルボ,エンジン,本体,,エンジンヘッドカバー、ターボ,オイル、燃料漏れ,オイル等滲み・垂れ跡が無,,\n,,,エンジン,本体,,排気及び吸気,排気ガス色及びガス漏れ等の点検（マフラー等）,ほぼ透明の薄紫,,';
       })

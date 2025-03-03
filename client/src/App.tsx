@@ -15,6 +15,31 @@ import Settings from "@/pages/settings";
 import BasicData from "@/pages/settings/basic-data";
 import History from "@/pages/settings/history";
 import UserManagement from "@/pages/settings/user-management";
+import InspectionItems from "@/pages/settings/inspection-items";
+
+// アプリケーションのルートコンポーネント
+export default function App() {
+  return (
+    <AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <Switch>
+          <Route path="/login" component={AuthPage} />
+          <Route path="/" component={Dashboard} />
+          <Route path="/voice" component={VoiceAssistant} />
+          <Route path="/operations" component={Operations} />
+          <Route path="/messages" component={Messages} />
+          <Route path="/settings" component={Settings} />
+          <Route path="/settings/basic-data" component={BasicData} />
+          <Route path="/settings/inspection-items" component={InspectionItems} />
+          <Route path="/settings/history" component={History} />
+          <Route path="/settings/user-management" component={UserManagement} />
+          <Route component={NotFound} />
+        </Switch>
+        <Toaster />
+      </QueryClientProvider>
+    </AuthProvider>
+  );ings/user-management";
+import InspectionItems from "@/pages/settings/inspection-items";ings/user-management";
 import { ProtectedRoute } from "./lib/protected-route";
 
 function Router() {

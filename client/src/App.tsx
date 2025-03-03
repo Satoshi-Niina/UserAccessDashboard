@@ -19,8 +19,8 @@ import { ProtectedRoute } from "./lib/protected-route";
 // アプリケーションのルートコンポーネント
 export default function App() {
   return (
-    <AuthProvider>
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
         <Switch>
           <Route path="/login" component={AuthPage} />
           <Route path="/" component={Dashboard} />
@@ -35,8 +35,8 @@ export default function App() {
           <Route component={NotFound} />
         </Switch>
         <Toaster />
-      </QueryClientProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 

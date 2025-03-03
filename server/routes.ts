@@ -67,62 +67,64 @@ export function registerRoutes(app: Express): Server {
 
 // API endpoint for CSV data
 app.get('/api/inspection-items', async (req, res) => {
-  console.log('API: /api/inspection-items が呼び出されました');
+  try {
+    console.log("API: /api/inspection-items が呼び出されました");
 
-  // サンプルCSVデータの作成（実際のCSVファイルが無い場合のフォールバック）
-  const sampleCsvData = `メーカー,機種,エンジン型式,部位,装置,手順,確認箇所,判断基準,確認要領,測定等記録,図形記録
-堀川工機,MC300,ボルボ,エンジン,本体,,エンジンヘッドカバー,オイル・燃料漏れ,オイル等滲み・垂れ跡が無,,
-堀川工機,MC300,ボルボ,エンジン,本体,,排気及び吸気,排気ガス色及びガス漏れ等の点検（マフラー等）,ほぼ透明の薄紫,,
-堀川工機,MC300,ボルボ,エンジン,オイル,,エンジンオイル量,規定範囲内にあること,オイルゲージ点検,,
-堀川工機,MC300,ボルボ,エンジン,冷却水,,冷却水量,規定範囲内にあること,リザーブタンク点検,,`;
+    // ESモジュールで動的にimportする
+    const fs = await import('fs');
+    const path = await import('path');
 
-  // CSVファイルパス
-  const csvFilePath = path.join(__dirname, '..', 'attached_assets', '仕業点検マスタ.csv');
-  console.log('CSVファイルパス:', csvFilePath);
+    const csvPath = path.join(process.cwd(), 'attached_assets', '仕業点検マスタ.csv');
+    console.log(`CSVファイルパス: ${csvPath}`);
 
-  // ファイルの存在確認
-  const fs = await import('fs');
-  const path = await import('path');
+    if (fs.existsSync(csvPath)) {
+      console.log(`CSVファイルが見つかりました: ${csvPath}`);
+      const data = fs.readFileSync(csvPath, 'utf8');
+      console.log(`CSVデータ読み込み成功 (${data.length} バイト)`);
+      console.log(`CSVデータの最初の100文字: ${data.substring(0, 100)}`);
 
-
-  if (fs.existsSync(csvFilePath)) {
-    console.log('CSVファイルが見つかりました:', csvFilePath);
-
-    try {
-      // CSVファイルを読み込む
-      let csvData = fs.readFileSync(csvFilePath, 'utf8');
-      console.log(`CSVデータ読み込み成功 (${csvData.length} バイト)`);
-
-      // CSVデータが "404: Not Found" だった場合、サンプルデータを使用
-      if (csvData.trim() === '404: Not Found' || csvData.length < 10) {
-        console.log('CSVファイルの内容が不正なため、サンプルデータを使用します');
-        csvData = sampleCsvData;
-      }
-
-      console.log(`CSVデータの最初の100文字: ${csvData.substring(0, 100)}`);
-
-      // CSVデータの行数を確認
-      const lines = csvData.split('\n');
+      // データの内容をログに出力（デバッグ用）
+      const lines = data.split('\n');
       console.log(`CSVの行数: ${lines.length}`);
-
       if (lines.length > 0) {
-        // 1行目はヘッダー
         console.log(`ヘッダー: ${lines[0]}`);
       }
+      if (lines.length > 1) {
+        console.log(`最初のデータ行: ${lines[1]}`);
+      }
 
-      // CSVデータをレスポンスとして返す
-      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-      res.send(csvData);
-    } catch (error) {
-      console.error('CSVファイル読み込みエラー:', error);
-      res.send(sampleCsvData); // エラー時もサンプルデータを返す
+      // CSVファイルのヘッダー情報を設定して送信
+      res.set('Content-Type', 'text/csv; charset=utf-8');
+      res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+      res.send(data);
+    } else {
+      console.error(`CSVファイルが見つかりません: ${csvPath}`);
+
+      // ディレクトリの確認
+      const attachedDir = path.join(process.cwd(), 'attached_assets');
+      const availableFiles = fs.existsSync(attachedDir) ? fs.readdirSync(attachedDir) : [];
+
+      console.log(`利用可能なファイル: ${availableFiles.join(', ')}`);
+
+      // サンプルCSVデータを返す（複数行のデータを設定）
+      const sampleData = `製造メーカー,機種,エンジン型式,部位,装置,手順,確認箇所,判断基準,確認要領,測定等記録,図形記録
+堀川工機,MC300,ボルボ,エンジン,本体,,エンジンヘッドカバー、ターボ,オイル、燃料漏れ,オイル等滲み・垂れ跡が無,,
+堀川工機,MC300,ボルボ,エンジン,本体,,排気及び吸気,排気ガス色及びガス漏れ等の点検（マフラー等）,ほぼ透明の薄紫,,
+堀川工機,MC300,ボルボ,エンジン,スターター,,起動状態,回転及び異音の確認,イグニションスタートでスムーズに回転,,
+堀川工機,MC300,ボルボ,エンジン,スターター,,端子・配線,配線摺動による損傷及び端子ゆるみ,目視による緩み、損傷の無,,
+堀川工機,MC300,ボルボ,エンジン,燃料カットソレノイド,,作動確認,伸縮の作動,イグニションON・OFFで伸縮,,`;
+
+      res.set('Content-Type', 'text/csv; charset=utf-8');
+      res.send(sampleData);
     }
-  } else {
-    console.error('CSVファイルが見つかりません:', csvFilePath);
-    res.send(sampleCsvData); // ファイルが見つからない場合もサンプルデータを返す
+  } catch (error) {
+    console.error('Error reading CSV file:', error);
+    res.status(500).json({
+      error: 'Error reading CSV file',
+      message: error instanceof Error ? error.message : '不明なエラーが発生しました'
+    });
   }
 });
 

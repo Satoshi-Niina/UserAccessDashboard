@@ -227,7 +227,7 @@ export default function Inspection() {
   };
 
   return (
-    <div className="container mx-auto px-0 w-full">
+    <div>
       <div className="flex justify-between items-center mb-6">
         <div className="flex space-x-4">
           <Select value={selectedManufacturer} onValueChange={setSelectedManufacturer}>
@@ -268,17 +268,16 @@ export default function Inspection() {
           <span className="ml-2">データを読み込み中...</span>
         </div>
       ) : filteredItems.length > 0 ? (
-        <div className="overflow-x-auto w-full">
-          <Table className="w-full">
-            <TableCaption>仕業点検項目一覧（{filteredItems.length}件）</TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[15%]">部位</TableHead>
-                <TableHead className="w-[15%]">装置</TableHead>
-                <TableHead className="w-[25%]">確認箇所</TableHead>
-                <TableHead className="w-[30%]">判断基準</TableHead>
-                <TableHead className="w-[15%]">結果</TableHead>
-              </TableRow>
+        <Table>
+          <TableCaption>仕業点検項目一覧（{filteredItems.length}件）</TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[150px]">部位</TableHead>
+              <TableHead className="w-[150px]">装置</TableHead>
+              <TableHead className="w-[200px]">確認箇所</TableHead>
+              <TableHead className="w-[250px]">判断基準</TableHead>
+              <TableHead className="w-[150px]">結果</TableHead>
+            </TableRow>
           </TableHeader>
           <TableBody>
             {filteredItems.map((item) => (
@@ -306,7 +305,6 @@ export default function Inspection() {
             ))}
           </TableBody>
         </Table>
-        </div>
       ) : (
         <div className="text-center py-10">
           {dataLoaded ? 

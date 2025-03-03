@@ -57,6 +57,28 @@ export function registerRoutes(app: Express): Server {
 
       res.status(201).json({
         id: user.id,
+
+// API endpoint for CSV data
+app.get('/api/inspection-items', async (req, res) => {
+  try {
+    // In a real implementation, this would read from a database or file storage
+    // For now, we'll read directly from the CSV file in attached_assets
+    const fs = require('fs');
+    const path = require('path');
+    const csvPath = path.join(process.cwd(), 'attached_assets', '仕業点検マスタ.csv');
+    
+    if (fs.existsSync(csvPath)) {
+      const data = fs.readFileSync(csvPath, 'utf8');
+      res.send(data);
+    } else {
+      res.status(404).send('CSV file not found');
+    }
+  } catch (error) {
+    console.error('Error reading CSV file:', error);
+    res.status(500).send('Error reading CSV file');
+  }
+});
+
         username: user.username,
         isAdmin: user.is_admin === 1
       });

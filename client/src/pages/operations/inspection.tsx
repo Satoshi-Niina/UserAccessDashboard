@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import {
@@ -54,11 +53,8 @@ export default function Inspection() {
       setLoading(true);
       try {
         const response = await fetch('/api/inspection-items');
-        if (!response.ok) {
-          throw new Error(`APIエラー: ${response.status} ${response.statusText}`);
-        }
-        
         const text = await response.text();
+
         console.log('CSVデータのサンプル:', text.substring(0, 200));
 
         if (!text) {
@@ -99,14 +95,9 @@ export default function Inspection() {
           const manufacturer = values[0]?.trim() || '';
           const modelType = values[1]?.trim() || '';
 
-          if (manufacturer) {
-            manufacturerSet.add(manufacturer);
-            console.log(`メーカー検出: ${manufacturer}`);
-          }
-          if (modelType) {
-            modelTypeSet.add(modelType);
-            console.log(`機種検出: ${modelType}`);
-          }
+          // 製造メーカーと機種をセットに追加（重複排除）
+          if (manufacturer) manufacturerSet.add(manufacturer);
+          if (modelType) modelTypeSet.add(modelType);
 
           // 項目の作成
           const item: InspectionItem = {
@@ -128,8 +119,6 @@ export default function Inspection() {
           parsedItems.push(item);
         }
 
-        console.log(`総アイテム数: ${parsedItems.length}`);
-        
         // メーカーと機種の選択肢を設定
         const manufacturerArray = Array.from(manufacturerSet);
         const modelTypeArray = Array.from(modelTypeSet);
@@ -145,6 +134,9 @@ export default function Inspection() {
         // 初期メーカーと機種を設定（値があれば）
         if (manufacturerArray.length > 0) {
           setSelectedManufacturer(manufacturerArray[0]);
+        }
+        if (modelTypeArray.length > 0) {
+          setSelectedModelType(modelTypeArray[0]);
         }
       } catch (error) {
         console.error('データ取得エラー:', error);
@@ -194,12 +186,36 @@ export default function Inspection() {
 
   // 保存処理
   const saveInspection = () => {
-    console.log('保存するデータ:', items.filter(item => item.result));
+    console.log('保存するCSVデータ:', generateCsvFromItems(items));
     toast({
       title: "保存完了",
       description: "点検結果が保存されました",
     });
     setHasChanges(false);
+  };
+
+  // CSVデータ生成関数
+  const generateCsvFromItems = (items: InspectionItem[]): string => {
+    const headers = [
+      '製造メーカー', '機種', 'エンジン型式', '部位', '装置', '手順',
+      '確認箇所', '判断基準', '確認要領', '測定等記録', '図形記録'
+    ];
+
+    const rows = items.map(item => [
+      item.manufacturer,
+      item.modelType,
+      item.engineType,
+      item.part,
+      item.device,
+      item.procedure,
+      item.checkPoint,
+      item.judgmentCriteria,
+      item.checkMethod,
+      item.measurement,
+      item.graphicRecord
+    ].join(','));
+
+    return [headers.join(','), ...rows].join('\n');
   };
 
   return (

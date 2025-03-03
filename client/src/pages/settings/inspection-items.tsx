@@ -1,5 +1,10 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
+
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Card, CardContent } from '../../components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { Loader2 } from 'lucide-react';
 
 interface InspectionItem {
   メーカー: string;
@@ -47,18 +52,17 @@ export default function InspectionItems() {
         const parsedData = lines.slice(1).filter(line => line.trim()).map(line => {
           const values = line.split(',');
           const item: any = {};
-
           headers.forEach((header, index) => {
             item[header] = values[index] || '';
           });
-
-          return item as InspectionItem;
+          return item;
         });
 
         setItems(parsedData);
+        setError(null);
       } catch (err) {
-        console.error('Data fetching error:', err);
-        setError('データの取得に失敗しました。');
+        console.error('データ取得エラー:', err);
+        setError('点検項目データの取得に失敗しました');
       } finally {
         setLoading(false);
       }
@@ -67,88 +71,99 @@ export default function InspectionItems() {
     fetchData();
   }, []);
 
-  return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">点検項目マスタ管理</h1>
-
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
-        </div>
-      )}
-
-      <div className="mb-6 flex flex-wrap gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">メーカー</label>
-          <select
-            className="border rounded px-3 py-2 w-48"
-            value={filterMaker}
-            onChange={(e) => setFilterMaker(e.target.value)}
-          >
-            <option value="">すべて</option>
-            {uniqueMakers.map(maker => (
-              <option key={maker} value={maker}>{maker}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">機種</label>
-          <select
-            className="border rounded px-3 py-2 w-48"
-            value={filterModel}
-            onChange={(e) => setFilterModel(e.target.value)}
-          >
-            <option value="">すべて</option>
-            {uniqueModels.map(model => (
-              <option key={model} value={model}>{model}</option>
-            ))}
-          </select>
-        </div>
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">点検項目データを読み込み中...</span>
       </div>
+    );
+  }
 
-      {loading ? (
-        <div className="text-center py-10">
-          <p className="text-gray-600">データを読み込み中...</p>
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 text-red-600 rounded-md">
+        <p>{error}</p>
+      </div>
+    );
+  }
+
+  return (
+    <Card>
+      <CardContent className="p-6">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold mb-4">点検項目マスタ</h2>
+          <div className="flex space-x-4 mb-4">
+            <div className="w-1/2">
+              <label className="block text-sm font-medium mb-1">製造メーカー</label>
+              <Select value={filterMaker} onValueChange={setFilterMaker}>
+                <SelectTrigger>
+                  <SelectValue placeholder="すべてのメーカー" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">すべてのメーカー</SelectItem>
+                  {uniqueMakers.map(maker => (
+                    <SelectItem key={maker} value={maker}>{maker}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-1/2">
+              <label className="block text-sm font-medium mb-1">機種</label>
+              <Select value={filterModel} onValueChange={setFilterModel}>
+                <SelectTrigger>
+                  <SelectValue placeholder="すべての機種" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">すべての機種</SelectItem>
+                  {uniqueModels.map(model => (
+                    <SelectItem key={model} value={model}>{model}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="border px-4 py-2">メーカー</th>
-                <th className="border px-4 py-2">機種</th>
-                <th className="border px-4 py-2">エンジン型式</th>
-                <th className="border px-4 py-2">部位</th>
-                <th className="border px-4 py-2">装置</th>
-                <th className="border px-4 py-2">確認箇所</th>
-                <th className="border px-4 py-2">判断基準</th>
-              </tr>
-            </thead>
-            <tbody>
+
+        <div className="border rounded-md overflow-auto max-h-[600px]">
+          <Table>
+            <TableHeader className="sticky top-0 bg-secondary">
+              <TableRow>
+                <TableHead className="min-w-[120px]">メーカー</TableHead>
+                <TableHead className="min-w-[120px]">機種</TableHead>
+                <TableHead className="min-w-[150px]">エンジン型式</TableHead>
+                <TableHead className="min-w-[100px]">部位</TableHead>
+                <TableHead className="min-w-[100px]">装置</TableHead>
+                <TableHead className="min-w-[150px]">確認箇所</TableHead>
+                <TableHead className="min-w-[200px]">判断基準</TableHead>
+                <TableHead className="min-w-[200px]">確認要領</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {filteredItems.length > 0 ? (
                 filteredItems.map((item, index) => (
-                  <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                    <td className="border px-4 py-2">{item.メーカー}</td>
-                    <td className="border px-4 py-2">{item.機種}</td>
-                    <td className="border px-4 py-2">{item.エンジン型式}</td>
-                    <td className="border px-4 py-2">{item.部位}</td>
-                    <td className="border px-4 py-2">{item.装置}</td>
-                    <td className="border px-4 py-2">{item.確認箇所}</td>
-                    <td className="border px-4 py-2">{item.判断基準}</td>
-                  </tr>
+                  <TableRow key={index}>
+                    <TableCell>{item.メーカー}</TableCell>
+                    <TableCell>{item.機種}</TableCell>
+                    <TableCell>{item.エンジン型式}</TableCell>
+                    <TableCell>{item.部位}</TableCell>
+                    <TableCell>{item.装置}</TableCell>
+                    <TableCell>{item.確認箇所}</TableCell>
+                    <TableCell>{item.判断基準}</TableCell>
+                    <TableCell>{item.確認要領}</TableCell>
+                  </TableRow>
                 ))
               ) : (
-                <tr>
-                  <td colSpan={7} className="border px-4 py-8 text-center text-gray-500">
-                    データがありません
-                  </td>
-                </tr>
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-4">
+                    該当する点検項目がありません
+                  </TableCell>
+                </TableRow>
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 }

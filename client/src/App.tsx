@@ -3,7 +3,7 @@ import { queryClient } from "@/lib/queryClient";
 import { AuthProvider } from "@/hooks/use-auth";
 import { Switch, Route } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
-import AuthPage from "@/pages/auth";
+import AuthPage from "@/pages/auth-page";
 import Dashboard from "@/pages/dashboard";
 import VoiceAssistant from "@/pages/voice";
 import Operations from "@/pages/operations";

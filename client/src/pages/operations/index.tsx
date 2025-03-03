@@ -53,14 +53,14 @@ export default function Operations() {
             
             {/* 仕業点検タブ */}
             <TabsContent value="daily-inspection" className="space-y-4">
-              <Card>
+              <Card className="w-full">
                 <CardHeader>
                   <CardTitle>仕業点検</CardTitle>
                   <CardDescription>
                     メーカーと機種を選択して点検項目を表示します。
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-1 md:px-4">
                   {/* 仕業点検コンポーネントを直接埋め込む */}
                   <Inspection />
                 </CardContent>

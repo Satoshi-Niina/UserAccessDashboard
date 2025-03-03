@@ -59,7 +59,7 @@ export default function Inspection() {
 
   // 初期データの読み込み
   useEffect(() => {
-    fetch('/api/inspection-items')
+    fetch('/api/inspection-data')
       .then(res => res.text())
       .catch(() => {
         // APIが失敗した場合、ローカルのサンプルデータを返す

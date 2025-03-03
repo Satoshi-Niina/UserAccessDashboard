@@ -24,8 +24,8 @@ export default function InspectionItems() {
   const [items, setItems] = useState<InspectionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filterMaker, setFilterMaker] = useState<string>("");
-  const [filterModel, setFilterModel] = useState<string>("");
+  const [filterMaker, setFilterMaker] = useState<string>("all");
+  const [filterModel, setFilterModel] = useState<string>("all");
 
   // 一意のメーカーと機種のリストを取得
   const uniqueMakers = [...new Set(items.map(item => item.メーカー))].filter(Boolean).sort();
@@ -33,8 +33,8 @@ export default function InspectionItems() {
 
   // フィルタリングされたアイテム
   const filteredItems = items.filter(item => 
-    (filterMaker === "" || item.メーカー === filterMaker) &&
-    (filterModel === "" || item.機種 === filterModel)
+    (filterMaker === "all" || item.メーカー === filterMaker) &&
+    (filterModel === "all" || item.機種 === filterModel)
   );
 
   useEffect(() => {
@@ -101,7 +101,7 @@ export default function InspectionItems() {
                   <SelectValue placeholder="すべてのメーカー" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">すべてのメーカー</SelectItem>
+                  <SelectItem value="all">すべてのメーカー</SelectItem>
                   {uniqueMakers.map(maker => (
                     <SelectItem key={maker} value={maker}>{maker}</SelectItem>
                   ))}
@@ -115,7 +115,7 @@ export default function InspectionItems() {
                   <SelectValue placeholder="すべての機種" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">すべての機種</SelectItem>
+                  <SelectItem value="all">すべての機種</SelectItem>
                   {uniqueModels.map(model => (
                     <SelectItem key={model} value={model}>{model}</SelectItem>
                   ))}

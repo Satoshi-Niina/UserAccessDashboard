@@ -31,7 +31,7 @@ type MenuItem = {
 
 const menuItems: MenuItem[] = [
   { icon: Home, label: "ホーム", href: "/" },
-  { icon: Mic, label: "音声Assistant", href: "/voice-assistant" },
+  { icon: Mic, label: "技術支援サポート", href: "/voice-assistant" },
   {
     icon: ClipboardCheck,
     label: "運用管理",

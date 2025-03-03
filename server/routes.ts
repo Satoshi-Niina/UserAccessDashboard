@@ -1,4 +1,3 @@
-
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth, hashPassword } from "./auth";
@@ -70,20 +69,20 @@ export function registerRoutes(app: Express): Server {
 app.get('/api/inspection-items', async (req, res) => {
   try {
     console.log("API: /api/inspection-items が呼び出されました");
-    
+
     // ESモジュールで動的にimportする
     const fs = await import('fs');
     const path = await import('path');
-    
+
     const csvPath = path.join(process.cwd(), 'attached_assets', '仕業点検マスタ.csv');
     console.log(`CSVファイルパス: ${csvPath}`);
-    
+
     if (fs.existsSync(csvPath)) {
       console.log(`CSVファイルが見つかりました: ${csvPath}`);
       const data = fs.readFileSync(csvPath, 'utf8');
       console.log(`CSVデータ読み込み成功 (${data.length} バイト)`);
       console.log(`CSVデータの最初の100文字: ${data.substring(0, 100)}`);
-      
+
       // データの内容をログに出力（デバッグ用）
       const lines = data.split('\n');
       console.log(`CSVの行数: ${lines.length}`);
@@ -93,7 +92,7 @@ app.get('/api/inspection-items', async (req, res) => {
       if (lines.length > 1) {
         console.log(`最初のデータ行: ${lines[1]}`);
       }
-      
+
       // CSVファイルのヘッダー情報を設定して送信
       res.set('Content-Type', 'text/csv; charset=utf-8');
       res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -102,18 +101,18 @@ app.get('/api/inspection-items', async (req, res) => {
       res.send(data);
     } else {
       console.error(`CSVファイルが見つかりません: ${csvPath}`);
-      
+
       // ディレクトリの確認
       const attachedDir = path.join(process.cwd(), 'attached_assets');
       const availableFiles = fs.existsSync(attachedDir) ? fs.readdirSync(attachedDir) : [];
-      
+
       console.log(`利用可能なファイル: ${availableFiles.join(', ')}`);
-      
+
       // サンプルCSVデータを返す
       const sampleData = `製造メーカー,機種,エンジン型式,部位,装置,手順,確認箇所,判断基準,確認要領,測定等記録,図形記録
 堀川工機,MC300,ボルボ,エンジン,本体,,エンジンヘッドカバー、ターボ,オイル、燃料漏れ,オイル等滲み・垂れ跡が無,,
 ,,,エンジン,本体,,排気及び吸気,排気ガス色及びガス漏れ等の点検（マフラー等）,ほぼ透明の薄紫,,`;
-      
+
       res.set('Content-Type', 'text/csv; charset=utf-8');
       res.send(sampleData);
     }
@@ -212,7 +211,7 @@ app.get('/api/inspection-items', async (req, res) => {
 
     try {
       const userId = parseInt(req.params.id);
-      
+
       // 自分自身は削除できない
       if (userId === req.user.id) {
         return res.status(400).json({ error: "自分自身は削除できません" });

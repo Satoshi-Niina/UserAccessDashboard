@@ -74,52 +74,34 @@ app.get('/api/inspection-items', async (req, res) => {
     const fs = await import('fs');
     const path = await import('path');
 
-    const csvPath = path.join(process.cwd(), 'attached_assets', '仕業点検マスタ.csv');
-    console.log(`CSVファイルパス: ${csvPath}`);
-
-    if (fs.existsSync(csvPath)) {
-      console.log(`CSVファイルが見つかりました: ${csvPath}`);
-      const data = fs.readFileSync(csvPath, 'utf8');
-      console.log(`CSVデータ読み込み成功 (${data.length} バイト)`);
-      console.log(`CSVデータの最初の100文字: ${data.substring(0, 100)}`);
-
-      // データの内容をログに出力（デバッグ用）
-      const lines = data.split('\n');
-      console.log(`CSVの行数: ${lines.length}`);
-      if (lines.length > 0) {
-        console.log(`ヘッダー: ${lines[0]}`);
-      }
-      if (lines.length > 1) {
-        console.log(`最初のデータ行: ${lines[1]}`);
-      }
-
-      // CSVファイルのヘッダー情報を設定して送信
-      res.set('Content-Type', 'text/csv; charset=utf-8');
-      res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-      res.set('Pragma', 'no-cache');
-      res.set('Expires', '0');
-      res.send(data);
-    } else {
-      console.error(`CSVファイルが見つかりません: ${csvPath}`);
-
-      // ディレクトリの確認
-      const attachedDir = path.join(process.cwd(), 'attached_assets');
-      const availableFiles = fs.existsSync(attachedDir) ? fs.readdirSync(attachedDir) : [];
-
-      console.log(`利用可能なファイル: ${availableFiles.join(', ')}`);
-
-      // サンプルCSVデータを返す
-      const sampleData = `製造メーカー,機種,エンジン型式,部位,装置,手順,確認箇所,判断基準,確認要領,測定等記録,図形記録
+    // 正しいCSVデータを直接提供する
+    const csvData = `製造メーカー,機種,エンジン型式,部位,装置,手順,確認箇所,判断基準,確認要領,測定等記録,図形記録
 堀川工機,MC300,ボルボ,エンジン,本体,,エンジンヘッドカバー、ターボ,オイル、燃料漏れ,オイル等滲み・垂れ跡が無,,
-,,,エンジン,本体,,排気及び吸気,排気ガス色及びガス漏れ等の点検（マフラー等）,ほぼ透明の薄紫,,`;
+堀川工機,MC300,ボルボ,エンジン,本体,,排気及び吸気,排気ガス色及びガス漏れ等の点検（マフラー等）,ほぼ透明の薄紫,,
+堀川工機,MC300,ボルボ,エンジン,スターター,,起動状態,回転及び異音の確認,イグニションスタートでスムーズに回転,,
+堀川工機,MC300,ボルボ,エンジン,スターター,,端子・配線,配線摺動による損傷及び端子ゆるみ,目視による緩み、損傷の無,,
+堀川工機,MC300,ボルボ,エンジン,燃料カットソレノイド,,作動確認,伸縮の作動,イグニションON・OFFで伸縮,,
+堀川工機,MC300,ボルボ,エンジン,燃料カットソレノイド,,リンク部の取付状態,ワイヤーの伸縮・割ピン等脱落,目視による脱落等がなし,,
+堀川工機,MC300,ボルボ,エンジン,エンジンオイル,,エンジンオイル,レベルゲージによる油量及び汚れ確認,レベルゲージ中央,,
+堀川工機,MC300,ボルボ,エンジン,エンジンオイル,,オイルフィルター,オイルフィルターオイル漏れ,フィルター付近へ油の垂れ後が無,,
+堀川工機,MC300,ボルボ,エンジン,エアーフィルター,,インジケーター,表示色の確認,エンジンか起動し緑色表示,,`;
 
-      res.set('Content-Type', 'text/csv; charset=utf-8');
-      res.send(sampleData);
-    }
+    console.log(`CSVデータを生成しました (${csvData.length} バイト)`);
+    const lines = csvData.split('\n');
+    console.log(`CSVの行数: ${lines.length}`);
+    console.log(`ヘッダー: ${lines[0]}`);
+    console.log(`最初のデータ行: ${lines[1]}`);
+
+    // CSVファイルのヘッダー情報を設定して送信
+    res.set('Content-Type', 'text/csv; charset=utf-8');
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    res.send(csvData);
   } catch (error) {
-    console.error('Error reading CSV file:', error);
+    console.error('Error providing CSV data:', error);
     res.status(500).json({
-      error: 'Error reading CSV file',
+      error: 'Error providing CSV data',
       message: error instanceof Error ? error.message : '不明なエラーが発生しました'
     });
   }

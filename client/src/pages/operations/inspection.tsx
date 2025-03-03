@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import {
@@ -56,14 +55,14 @@ export default function Inspection() {
       if (!response.ok) {
         throw new Error(`API エラー: ${response.status}`);
       }
-      
+
       const text = await response.text();
       console.log('CSVデータ:', text.substring(0, 200) + '...');
-      
+
       if (text) {
         const lines = text.split('\n');
         const headers = lines[0].split(',').map(h => h.trim());
-        
+
         const manufacturerIndex = headers.indexOf('製造メーカー');
         const modelTypeIndex = headers.indexOf('機種');
         const engineTypeIndex = headers.indexOf('エンジン型式');
@@ -75,19 +74,19 @@ export default function Inspection() {
         const checkMethodIndex = headers.indexOf('確認要領');
         const measurementIndex = headers.indexOf('測定等記録');
         const graphicRecordIndex = headers.indexOf('図形記録');
-        
+
         // CSVからデータを解析
         const parsedItems: InspectionItem[] = [];
         const uniqueManufacturers = new Set<string>();
         const uniqueModelTypes = new Set<string>();
-        
+
         // 各行をパース
         for (let i = 1; i < lines.length; i++) {
           const line = lines[i].trim();
           if (!line) continue;
-          
+
           const values = line.split(',').map(v => v.trim());
-          
+
           const item: InspectionItem = {
             id: `item-${i}`,
             manufacturer: values[manufacturerIndex] || '',
@@ -104,7 +103,7 @@ export default function Inspection() {
             order: i,
             result: '' // 初期状態は空
           };
-          
+
           // 有効な製造メーカーと機種を収集
           if (item.manufacturer) {
             uniqueManufacturers.add(item.manufacturer);
@@ -112,61 +111,23 @@ export default function Inspection() {
           if (item.modelType) {
             uniqueModelTypes.add(item.modelType);
           }
-          
+
           parsedItems.push(item);
         }
-        
+
         console.log(`パースされた項目数: ${parsedItems.length}`);
-        
+
         // 状態を更新
         setItems(parsedItems);
         setFilteredItems(parsedItems);
-        
+
         // メーカーと機種のリストを作成
-        const manufacturersArray = Array.from(uniqueManufacturers);
-        const modelTypesArray = Array.from(uniqueModelTypes);
-        
-        setManufacturers(['すべて', ...manufacturersArray]);
-        setModelTypes(['すべて', ...modelTypesArray]);
-        
-        for (let i = 1; i < lines.length; i++) {
-          if (!lines[i].trim()) continue;
-          
-          const values = lines[i].split(',').map(v => v.trim());
-          
-          const manufacturer = values[manufacturerIndex] || '';
-          const modelType = values[modelTypeIndex] || '';
-          
-          if (manufacturer) uniqueManufacturers.add(manufacturer);
-          if (modelType) uniqueModelTypes.add(modelType);
-          
-          parsedItems.push({
-            id: `item-${i}`,
-            manufacturer,
-            modelType,
-            engineType: values[engineTypeIndex] || '',
-            part: values[partIndex] || '',
-            device: values[deviceIndex] || '',
-            procedure: values[procedureIndex] || '',
-            checkPoint: values[checkPointIndex] || '',
-            judgmentCriteria: values[judgmentIndex] || '',
-            checkMethod: values[checkMethodIndex] || '',
-            measurement: values[measurementIndex] || '',
-            graphicRecord: values[graphicRecordIndex] || '',
-            order: i,
-            result: '' // 初期状態では結果なし
-          });
-        }
-        
-        // メーカーと機種のリストを設定
         const manufacturersArray = Array.from(uniqueManufacturers).filter(Boolean);
         const modelTypesArray = Array.from(uniqueModelTypes).filter(Boolean);
-        
+
         setManufacturers(['すべて', ...manufacturersArray]);
         setModelTypes(['すべて', ...modelTypesArray]);
-        setItems(parsedItems);
-        setFilteredItems(parsedItems);
-        
+
         console.log(`${parsedItems.length}件の点検項目を読み込みました`);
         console.log('メーカー:', manufacturersArray);
         console.log('機種:', modelTypesArray);
@@ -205,63 +166,7 @@ export default function Inspection() {
     }
   }, [selectedManufacturer, selectedModelType, items]);
 
-  // 点検結果の変更を処理する関数
-  const handleResultChange = (itemId: string, result: string) => {
-    setItems(prevItems => {
-      const newItems = prevItems.map(item => {
-        if (item.id === itemId) {
-          return { ...item, result };
-        }
-        return item;
-      });
-      setHasChanges(true);
-      return newItems;
-    });
-  };
-
-  // 点検結果の保存処理
-  const handleSave = async () => {
-    try {
-      // 実際のAPIエンドポイントが必要な場合は実装する
-      // 現在はCSVデータとして保存する例
-      const csvData = [
-        '製造メーカー,機種,エンジン型式,部位,装置,手順,確認箇所,判断基準,確認要領,測定等記録,図形記録',
-        ...items.map(item => {
-          return [
-            item.manufacturer,
-            item.modelType,
-            item.engineType,
-            item.part,
-            item.device,
-            item.procedure,
-            item.checkPoint,
-            item.judgmentCriteria,
-            item.checkMethod,
-            item.measurement,
-            item.graphicRecord
-          ].join(',');
-        })
-      ].join('\n');
-
-      console.log('保存するCSVデータ:', csvData);
-      
-      // 変更フラグをリセット
-      setHasChanges(false);
-      
-      toast({
-        title: "保存完了",
-        description: "点検データが保存されました",
-        variant: "success" 
-      });
-    } catch (error) {
-      console.error('保存エラー:', error);
-      toast({
-        title: "エラー",
-        description: "点検データの保存に失敗しました",
-        variant: "destructive"
-      });
-    }
-  };更
+  // 点検結果の変更
   const handleResultChange = (itemId: string, result: string) => {
     const updatedItems = items.map(item =>
       item.id === itemId ? { ...item, result } : item
@@ -273,11 +178,36 @@ export default function Inspection() {
   // 保存処理
   const saveInspection = () => {
     // 実際にはAPIでデータを保存
+    console.log('保存するCSVデータ:', generateCsvFromItems(items));
     toast({
       title: "保存完了",
       description: "点検結果が保存されました",
     });
     setHasChanges(false);
+  };
+
+  // CSVデータ生成関数
+  const generateCsvFromItems = (items: InspectionItem[]): string => {
+    const headers = [
+      '製造メーカー', '機種', 'エンジン型式', '部位', '装置', '手順',
+      '確認箇所', '判断基準', '確認要領', '測定等記録', '図形記録'
+    ];
+
+    const rows = items.map(item => [
+      item.manufacturer,
+      item.modelType,
+      item.engineType,
+      item.part,
+      item.device,
+      item.procedure,
+      item.checkPoint,
+      item.judgmentCriteria,
+      item.checkMethod,
+      item.measurement,
+      item.graphicRecord
+    ].join(','));
+
+    return [headers.join(','), ...rows].join('\n');
   };
 
   return (

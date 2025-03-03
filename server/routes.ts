@@ -69,16 +69,19 @@ export function registerRoutes(app: Express): Server {
 // API endpoint for CSV data
 app.get('/api/inspection-items', (req, res) => {
   try {
+    console.log("API: /api/inspection-items が呼び出されました");
     // In a real implementation, this would read from a database or file storage
     // For now, we'll read directly from the CSV file in attached_assets
     import('fs').then(fs => {
       import('path').then(async path => {
         const csvPath = path.join(process.cwd(), 'attached_assets', '仕業点検マスタ.csv');
+        console.log(`CSVファイルパス: ${csvPath}`);
         
         if (fs.existsSync(csvPath)) {
           console.log(`CSVファイルが見つかりました: ${csvPath}`);
           const data = fs.readFileSync(csvPath, 'utf8');
           console.log(`CSVデータ読み込み成功 (${data.length} バイト)`);
+          console.log(`CSVデータの最初の100文字: ${data.substring(0, 100)}`);
           res.setHeader('Content-Type', 'text/csv; charset=utf-8');
           res.send(data);
         } else {

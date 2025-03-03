@@ -71,6 +71,11 @@ export function registerRoutes(app: Express): Server {
 app.get('/api/inspection-items', (req, res) => {
   console.log('API: /api/inspection-items が呼び出されました');
 
+  // キャッシュ制御ヘッダーを設定
+  res.set('Cache-Control', 'no-store, max-age=0');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+
   // 現在の作業ディレクトリを確認
   const currentDir = process.cwd();
   console.log('現在の作業ディレクトリ:', currentDir);
@@ -106,6 +111,8 @@ app.get('/api/inspection-items', (req, res) => {
           console.log(`ヘッダー: ${csvData.split('\n')[0]}`);
         }
 
+        // Content-Typeを明示的に設定
+        res.set('Content-Type', 'text/csv; charset=utf-8');
         return res.status(200).send(csvData);
       } else {
         console.warn('CSVファイルが空または不正なデータ形式です');
@@ -115,11 +122,13 @@ app.get('/api/inspection-items', (req, res) => {
     }
 
     // CSVが存在しないか無効な場合はサンプルデータを返す
+    res.set('Content-Type', 'text/csv; charset=utf-8');
     return res.status(200).send(getSampleInspectionData());
 
   } catch (err) {
     console.error('CSVファイル処理エラー:', err);
     // エラーが発生した場合もサンプルデータを返す
+    res.set('Content-Type', 'text/csv; charset=utf-8');
     return res.status(200).send(getSampleInspectionData());
   }
 });
@@ -128,7 +137,7 @@ app.get('/api/inspection-items', (req, res) => {
 function getSampleInspectionData() {
   // ヘッダー行
   const headers = [
-    '製造メーカー',
+    'メーカー',
     '機種',
     'エンジン型式',
     '部位',

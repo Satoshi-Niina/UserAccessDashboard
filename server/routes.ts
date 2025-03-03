@@ -95,10 +95,10 @@ app.get('/api/inspection-items', async (req, res) => {
       }
       
       // CSVファイルのヘッダー情報を設定して送信
-      res.set('Content-Type', 'text/csv; charset=utf-8');
-      res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-      res.set('Pragma', 'no-cache');
-      res.set('Expires', '0');
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       res.send(data);
     } else {
       console.error(`CSVファイルが見つかりません: ${csvPath}`);
@@ -112,9 +112,15 @@ app.get('/api/inspection-items', async (req, res) => {
       // サンプルCSVデータを返す
       const sampleData = `製造メーカー,機種,エンジン型式,部位,装置,手順,確認箇所,判断基準,確認要領,測定等記録,図形記録
 堀川工機,MC300,ボルボ,エンジン,本体,,エンジンヘッドカバー、ターボ,オイル、燃料漏れ,オイル等滲み・垂れ跡が無,,
-,,,エンジン,本体,,排気及び吸気,排気ガス色及びガス漏れ等の点検（マフラー等）,ほぼ透明の薄紫,,`;
+堀川工機,MC300,ボルボ,エンジン,本体,,排気及び吸気,排気ガス色及びガス漏れ等の点検（マフラー等）,ほぼ透明の薄紫,,
+堀川工機,MC300,ボルボ,エンジン,スターター,,起動状態,回転及び異音の確認,イグニションスタートでスムーズに回転,,
+堀川工機,MC300,ボルボ,エンジン,スターター,,端子・配線,配線摺動による損傷及び端子ゆるみ,目視による緩み、損傷の無,,
+日立建機,EX120,いすゞ,作業装置,アーム,,作業装置,作業速度,作業装置の切り替え時の動作がスムーズ,,
+日立建機,EX120,いすゞ,作業装置,アーム,,油圧シリンダ,シリンダーからの油漏れ,油滴、油溜まりなし,,
+日立建機,ZX200,クボタ,足回り,履帯,,張り具合,適正な張り具合,指2本分（約3cm）のたわみ量,,
+日立建機,ZX200,クボタ,足回り,履帯,,損傷,亀裂、破損,目視で亀裂、欠損なし,,`;
       
-      res.set('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
       res.send(sampleData);
     }
   } catch (error) {

@@ -86,9 +86,6 @@ app.get('/api/inspection-items', async (req, res) => {
     res.status(500).send('Error reading CSV file');
   }
 });
-    } catch (error) {
-      console.error("ユーザー登録エラー:", error);
-      res.status(500).json({ error: "ユーザー登録に失敗しました" });
     }
   });
 

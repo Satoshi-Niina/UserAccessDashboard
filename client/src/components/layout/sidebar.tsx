@@ -101,22 +101,42 @@ export function Sidebar({ onExpandChange }: SidebarProps) {
           const hasSubItems = item.subItems && item.subItems.length > 0;
 
           return (
-            <Link key={item.href} href={item.href}>
-              <div
-                className={cn(
-                  "flex items-center p-3 mx-3 rounded-lg cursor-pointer",
-                  isActive ? "bg-sidebar-selected text-sidebar-foreground font-medium" : "text-sidebar-muted hover:bg-sidebar-hover"
-                )}
-              >
-                <Icon className="h-5 w-5 mr-3" />
-                {isExpanded && (
-                  <div className="flex-1 flex items-center justify-between">
-                    <span>{item.label}</span>
-                    {hasSubItems && <ChevronRight className={cn("h-4 w-4 transition-transform", isActive && "rotate-90")} />}
-                  </div>
-                )}
-              </div>
-            </Link>
+            <div key={item.href}>
+              <Link href={item.href}>
+                <div
+                  className={cn(
+                    "flex items-center p-3 mx-3 rounded-lg cursor-pointer",
+                    isActive ? "bg-sidebar-selected text-sidebar-foreground font-medium" : "text-sidebar-muted hover:bg-sidebar-hover"
+                  )}
+                >
+                  <Icon className="h-5 w-5 mr-3" />
+                  {isExpanded && (
+                    <div className="flex-1 flex items-center justify-between">
+                      <span>{item.label}</span>
+                      {hasSubItems && <ChevronRight className={cn("h-4 w-4 transition-transform", isActive && "rotate-90")} />}
+                    </div>
+                  )}
+                </div>
+              </Link>
+              
+              {/* サブメニューの表示 */}
+              {isExpanded && isActive && hasSubItems && (
+                <div className="ml-10 space-y-1">
+                  {item.subItems?.filter(subItem => !subItem.adminOnly || (user && user.isAdmin)).map((subItem) => (
+                    <Link key={subItem.href} href={subItem.href}>
+                      <div 
+                        className={cn(
+                          "flex items-center p-2 rounded-md text-sm",
+                          location === subItem.href ? "bg-sidebar-selected/50 text-sidebar-foreground font-medium" : "text-sidebar-muted hover:bg-sidebar-hover"
+                        )}
+                      >
+                        {subItem.label}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           );
         })}
       </nav>

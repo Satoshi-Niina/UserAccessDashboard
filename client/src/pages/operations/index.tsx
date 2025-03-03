@@ -18,7 +18,7 @@ export default function Operations() {
       <Tabs defaultValue="inspection">
         <TabsList className="grid w-full grid-cols-2 mb-4">
           <TabsTrigger value="inspection">仕業点検</TabsTrigger>
-          <TabsTrigger value="operational-plan">運行計画</TabsTrigger>
+          <TabsTrigger value="operational-plan">運用計画</TabsTrigger>
         </TabsList>
 
         <TabsContent value="inspection">

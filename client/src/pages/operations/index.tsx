@@ -34,6 +34,28 @@ export default function Operations() {
             <ExitButton />
           </div>
 
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+            <TabsList>
+              <TabsTrigger value="inspection">仕業点検</TabsTrigger>
+              <TabsTrigger value="operational">運用実績</TabsTrigger>
+            </TabsList>
+            <TabsContent value="inspection" className="mt-6">
+              <Inspection />
+            </TabsContent>
+            <TabsContent value="operational" className="mt-6">
+              <div className="text-center py-10">
+                <h2 className="text-xl font-semibold mb-4">運用実績管理</h2>
+                <p className="text-muted-foreground">運用実績の記録と管理画面（開発中）</p>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </main>
+      </div>
+    </div>
+  );
+}on />
+          </div>
+
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
               <TabsTrigger value="inspection">仕業点検</TabsTrigger>

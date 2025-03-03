@@ -159,6 +159,28 @@ export default function Inspection() {
   // コンポーネントのマウント時に点検データを読み込む
   useEffect(() => {
     fetchInspectionData();
+    
+    // CSVファイルの内容を直接確認
+    fetch('/api/inspection-items')
+      .then(response => response.text())
+      .then(csv => {
+        console.log('--- CSVデータの詳細 ---');
+        console.log(csv.substring(0, 1000)); // 最初の1000文字を表示
+        
+        // CSVの行数を確認
+        const lines = csv.split('\n');
+        console.log(`CSVの総行数: ${lines.length}`);
+        
+        // ヘッダー行を確認
+        console.log('ヘッダー行:', lines[0]);
+        
+        // 最初の数行のデータを確認
+        console.log('データ行の例:');
+        lines.slice(1, 6).forEach((line, i) => {
+          console.log(`${i+1}行目:`, line);
+        });
+      })
+      .catch(error => console.error('CSVデータの直接読み込みに失敗:', error));
   }, []);
 
   // データが読み込まれた後に最初のメーカーと機種を自動選択

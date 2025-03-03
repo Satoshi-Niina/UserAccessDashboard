@@ -117,20 +117,32 @@ export default function Inspection() {
 
         console.log(`パースされた項目数: ${parsedItems.length}`);
 
-        // 状態を更新
-        setItems(parsedItems);
-        setFilteredItems(parsedItems);
-
         // メーカーと機種のリストを作成
         const manufacturersArray = Array.from(uniqueManufacturers).filter(Boolean);
         const modelTypesArray = Array.from(uniqueModelTypes).filter(Boolean);
 
-        setManufacturers(['すべて', ...manufacturersArray]);
-        setModelTypes(['すべて', ...modelTypesArray]);
+        console.log('検出されたメーカー:', manufacturersArray);
+        console.log('検出された機種:', modelTypesArray);
+
+        // 状態を更新
+        setItems(parsedItems);
+        setFilteredItems(parsedItems);
+        
+        if (manufacturersArray.length > 0) {
+          setManufacturers(['すべて', ...manufacturersArray]);
+          // 最初のメーカーを自動選択
+          setSelectedManufacturer(manufacturersArray[0]);
+        }
+        
+        if (modelTypesArray.length > 0) {
+          setModelTypes(['すべて', ...modelTypesArray]);
+          // 最初の機種を自動選択
+          setSelectedModelType(modelTypesArray[0]);
+        }
 
         console.log(`${parsedItems.length}件の点検項目を読み込みました`);
-        console.log('メーカー:', manufacturersArray);
-        console.log('機種:', modelTypesArray);
+        console.log('選択されたメーカー:', manufacturersArray[0] || '未選択');
+        console.log('選択された機種:', modelTypesArray[0] || '未選択');
       }
     } catch (error) {
       console.error('データ取得エラー:', error);
@@ -149,6 +161,19 @@ export default function Inspection() {
     fetchInspectionData();
   }, []);
 
+  // データが読み込まれた後に最初のメーカーと機種を自動選択
+  useEffect(() => {
+    if (manufacturers.length > 1 && selectedManufacturer === 'すべて') {
+      // 最初の実際のメーカー（「すべて」の次のもの）を選択
+      setSelectedManufacturer(manufacturers[1]);
+    }
+    
+    if (modelTypes.length > 1 && selectedModelType === 'すべて') {
+      // 最初の実際の機種（「すべて」の次のもの）を選択
+      setSelectedModelType(modelTypes[1]);
+    }
+  }, [manufacturers, modelTypes]);
+
   // フィルタリング
   useEffect(() => {
     if (items.length > 0) {
@@ -162,6 +187,7 @@ export default function Inspection() {
         filtered = filtered.filter(item => item.modelType === selectedModelType);
       }
 
+      console.log(`フィルタリング結果: ${filtered.length}件, メーカー: ${selectedManufacturer}, 機種: ${selectedModelType}`);
       setFilteredItems(filtered);
     }
   }, [selectedManufacturer, selectedModelType, items]);

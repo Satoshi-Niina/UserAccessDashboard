@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import {
@@ -46,6 +47,7 @@ export default function Inspection() {
   const [selectedModelType, setSelectedModelType] = useState<string>('すべて');
   const [hasChanges, setHasChanges] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   // データを取得する
   useEffect(() => {
@@ -53,11 +55,14 @@ export default function Inspection() {
       setLoading(true);
       try {
         const response = await fetch('/api/inspection-items');
+        if (!response.ok) {
+          throw new Error(`APIエラー: ${response.status}`);
+        }
+        
         const text = await response.text();
+        console.log('取得したCSVデータのサンプル:', text.substring(0, 200));
 
-        console.log('CSVデータのサンプル:', text.substring(0, 200));
-
-        if (!text) {
+        if (!text || text.trim() === '') {
           toast({
             title: "エラー",
             description: "データが空です",
@@ -68,7 +73,7 @@ export default function Inspection() {
         }
 
         const lines = text.split('\n');
-        console.log(`総行数: ${lines.length}`);
+        console.log(`CSVデータ: 総行数=${lines.length}`);
 
         if (lines.length < 2) {
           toast({
@@ -87,10 +92,13 @@ export default function Inspection() {
 
         // ヘッダー行をスキップして2行目から処理
         for (let i = 1; i < lines.length; i++) {
-          if (!lines[i].trim()) continue; // 空行はスキップ
+          if (!lines[i] || !lines[i].trim()) continue; // 空行はスキップ
 
           const values = lines[i].split(',');
-          if (values.length < 8) continue; // 最低限の列数がない行はスキップ
+          if (values.length < 8) {
+            console.log(`スキップされた行 ${i}: 列数不足`, values);
+            continue; // 最低限の列数がない行はスキップ
+          }
 
           const manufacturer = values[0]?.trim() || '';
           const modelType = values[1]?.trim() || '';
@@ -120,23 +128,22 @@ export default function Inspection() {
         }
 
         // メーカーと機種の選択肢を設定
-        const manufacturerArray = Array.from(manufacturerSet);
-        const modelTypeArray = Array.from(modelTypeSet);
+        const manufacturerArray = Array.from(manufacturerSet).filter(Boolean);
+        const modelTypeArray = Array.from(modelTypeSet).filter(Boolean);
 
-        console.log(`検出されたメーカー: ${manufacturerArray.join(', ')}`);
-        console.log(`検出された機種: ${modelTypeArray.join(', ')}`);
+        console.log(`検出されたメーカー (${manufacturerArray.length}): ${manufacturerArray.join(', ')}`);
+        console.log(`検出された機種 (${modelTypeArray.length}): ${modelTypeArray.join(', ')}`);
+        console.log(`パースされた点検項目: ${parsedItems.length}件`);
 
         setItems(parsedItems);
         setFilteredItems(parsedItems);
         setManufacturers(['すべて', ...manufacturerArray]);
         setModelTypes(['すべて', ...modelTypeArray]);
+        setDataLoaded(true);
 
         // 初期メーカーと機種を設定（値があれば）
         if (manufacturerArray.length > 0) {
           setSelectedManufacturer(manufacturerArray[0]);
-        }
-        if (modelTypeArray.length > 0) {
-          setSelectedModelType(modelTypeArray[0]);
         }
       } catch (error) {
         console.error('データ取得エラー:', error);
@@ -155,7 +162,7 @@ export default function Inspection() {
 
   // フィルタリング
   useEffect(() => {
-    if (items.length === 0) return;
+    if (!dataLoaded || items.length === 0) return;
 
     console.log(`フィルタリング: メーカー=${selectedManufacturer}, 機種=${selectedModelType}`);
 
@@ -173,7 +180,7 @@ export default function Inspection() {
 
     console.log(`フィルタリング結果: ${filtered.length}件`);
     setFilteredItems(filtered);
-  }, [selectedManufacturer, selectedModelType, items]);
+  }, [selectedManufacturer, selectedModelType, items, dataLoaded]);
 
   // 点検結果の変更
   const handleResultChange = (itemId: string, result: string) => {
@@ -198,7 +205,7 @@ export default function Inspection() {
   const generateCsvFromItems = (items: InspectionItem[]): string => {
     const headers = [
       '製造メーカー', '機種', 'エンジン型式', '部位', '装置', '手順',
-      '確認箇所', '判断基準', '確認要領', '測定等記録', '図形記録'
+      '確認箇所', '判断基準', '確認要領', '測定等記録', '図形記録', '結果'
     ];
 
     const rows = items.map(item => [
@@ -212,7 +219,8 @@ export default function Inspection() {
       item.judgmentCriteria,
       item.checkMethod,
       item.measurement,
-      item.graphicRecord
+      item.graphicRecord,
+      item.result || ''
     ].join(','));
 
     return [headers.join(','), ...rows].join('\n');
@@ -229,7 +237,7 @@ export default function Inspection() {
             <SelectContent>
               {manufacturers.map((manufacturer) => (
                 <SelectItem key={manufacturer} value={manufacturer}>
-                  {manufacturer}
+                  {manufacturer || "未設定"}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -241,7 +249,7 @@ export default function Inspection() {
             <SelectContent>
               {modelTypes.map((modelType) => (
                 <SelectItem key={modelType} value={modelType}>
-                  {modelType}
+                  {modelType || "未設定"}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -261,7 +269,7 @@ export default function Inspection() {
         </div>
       ) : filteredItems.length > 0 ? (
         <Table>
-          <TableCaption>仕業点検項目一覧</TableCaption>
+          <TableCaption>仕業点検項目一覧（{filteredItems.length}件）</TableCaption>
           <TableHeader>
             <TableRow>
               <TableHead className="w-[150px]">部位</TableHead>
@@ -299,9 +307,11 @@ export default function Inspection() {
         </Table>
       ) : (
         <div className="text-center py-10">
-          {selectedManufacturer !== 'すべて' || selectedModelType !== 'すべて' ? 
-            '選択された条件に一致する点検項目はありません。' : 
-            '点検項目がありません。'}
+          {dataLoaded ? 
+            (selectedManufacturer !== 'すべて' || selectedModelType !== 'すべて' ? 
+              '選択された条件に一致する点検項目はありません。' : 
+              '点検項目がありません。') :
+            'データの読み込みに失敗しました。'}
         </div>
       )}
     </div>

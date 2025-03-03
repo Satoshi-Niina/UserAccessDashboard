@@ -1,169 +1,576 @@
 
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Card, CardContent } from '../../components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Loader2 } from 'lucide-react';
+import { Sidebar } from "@/components/layout/sidebar";
+import { Card, CardContent } from "@/components/ui/card";
+import { useState, useEffect, useRef } from "react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import { Download, Upload, Plus, Trash2, Edit, Save, X } from "lucide-react";
+import Papa from 'papaparse';
 
-interface InspectionItem {
-  メーカー: string;
-  機種: string;
-  エンジン型式: string;
-  部位: string;
-  装置: string;
-  手順: string;
-  確認箇所: string;
-  判断基準: string;
-  確認要領: string;
-  測定等記録: string;
-  図形記録: string;
-}
+type InspectionItem = {
+  [key: string]: string;
+};
+
+type Column = {
+  id: string;
+  title: string;
+  visible: boolean;
+};
 
 export default function InspectionItems() {
+  const [isMenuExpanded, setIsMenuExpanded] = useState(false);
   const [items, setItems] = useState<InspectionItem[]>([]);
+  const [filteredItems, setFilteredItems] = useState<InspectionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filterMaker, setFilterMaker] = useState<string>("all");
-  const [filterModel, setFilterModel] = useState<string>("all");
+  const [columns, setColumns] = useState<Column[]>([]);
+  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [editingItem, setEditingItem] = useState<InspectionItem | null>(null);
+  const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
+  const [newColumnName, setNewColumnName] = useState("");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<number | null>(null);
+  const [columnToDelete, setColumnToDelete] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // 一意のメーカーと機種のリストを取得
-  const uniqueMakers = [...new Set(items.map(item => item.メーカー))].filter(Boolean).sort();
-  const uniqueModels = [...new Set(items.map(item => item.機種))].filter(Boolean).sort();
-
-  // フィルタリングされたアイテム
-  const filteredItems = items.filter(item => 
-    (filterMaker === "all" || item.メーカー === filterMaker) &&
-    (filterModel === "all" || item.機種 === filterModel)
-  );
-
+  // CSVデータの読み込み
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get('/api/inspection-items', {
-          headers: { 'Cache-Control': 'no-cache' }
-        });
-
-        // CSVテキストをJSONに変換
-        const lines = response.data.split('\n');
-        const headers = lines[0].split(',');
-
-        const parsedData = lines.slice(1).filter(line => line.trim()).map(line => {
-          const values = line.split(',');
-          const item: any = {};
-          headers.forEach((header, index) => {
-            item[header] = values[index] || '';
-          });
-          return item;
-        });
-
-        setItems(parsedData);
-        setError(null);
-      } catch (err) {
-        console.error('データ取得エラー:', err);
-        setError('点検項目データの取得に失敗しました');
-      } finally {
+    setLoading(true);
+    fetch('/api/inspection-items')
+      .then(response => response.text())
+      .then(csvData => {
+        const results = Papa.parse(csvData, { header: true, skipEmptyLines: true });
+        if (results.data && Array.isArray(results.data)) {
+          const parsedItems = results.data as InspectionItem[];
+          setItems(parsedItems);
+          
+          // 先頭のアイテムからカラム情報を取得
+          if (parsedItems.length > 0) {
+            const firstItem = parsedItems[0];
+            const columnList: Column[] = Object.keys(firstItem).map(key => ({
+              id: key,
+              title: key,
+              visible: true
+            }));
+            setColumns(columnList);
+          }
+        }
+      })
+      .catch(err => {
+        console.error('CSV読み込みエラー:', err);
+        setError('データの読み込みに失敗しました');
+      })
+      .finally(() => {
         setLoading(false);
-      }
-    };
-
-    fetchData();
+      });
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">点検項目データを読み込み中...</span>
-      </div>
-    );
-  }
+  // フィルターとカラム表示の変更を監視して表示アイテムを更新
+  useEffect(() => {
+    let filtered = [...items];
+    
+    // フィルターの適用
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value && value !== "all") {
+        filtered = filtered.filter(item => item[key] === value);
+      }
+    });
+    
+    setFilteredItems(filtered);
+  }, [items, filters]);
 
-  if (error) {
+  // カラムフィルター用の一意の値を取得
+  const getUniqueValuesForColumn = (columnId: string) => {
+    return [...new Set(items.map(item => item[columnId]))].filter(Boolean).sort();
+  };
+
+  // フィルター変更ハンドラー
+  const handleFilterChange = (columnId: string, value: string) => {
+    setFilters(prev => ({
+      ...prev,
+      [columnId]: value
+    }));
+  };
+
+  // CSVエクスポート
+  const handleExportCSV = () => {
+    const csv = Papa.unparse(items);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', '仕業点検マスタ.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // CSVインポート
+  const handleImportCSV = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: function(results) {
+        const parsedItems = results.data as InspectionItem[];
+        setItems(parsedItems);
+        
+        // カラム情報を更新
+        if (parsedItems.length > 0) {
+          const firstItem = parsedItems[0];
+          const columnList: Column[] = Object.keys(firstItem).map(key => ({
+            id: key,
+            title: key,
+            visible: true
+          }));
+          setColumns(columnList);
+        }
+      },
+      error: function(error) {
+        console.error('CSVパースエラー:', error);
+        setError('CSVファイルの解析に失敗しました');
+      }
+    });
+    
+    // ファイル選択をリセット
+    if (event.target) {
+      event.target.value = '';
+    }
+  };
+
+  // 新しいレコードを追加
+  const handleAddRow = () => {
+    const newItem: InspectionItem = {};
+    columns.forEach(column => {
+      newItem[column.id] = "";
+    });
+    setItems(prev => [...prev, newItem]);
+  };
+
+  // 新しいカラムを追加
+  const handleAddColumn = () => {
+    if (!newColumnName) return;
+    
+    // 新しいカラムを追加
+    setColumns(prev => [...prev, {
+      id: newColumnName,
+      title: newColumnName,
+      visible: true
+    }]);
+    
+    // 既存のアイテムに新しいカラムのフィールドを追加
+    setItems(prev => prev.map(item => ({
+      ...item,
+      [newColumnName]: ""
+    })));
+    
+    setNewColumnName("");
+  };
+
+  // アイテム編集の開始
+  const handleEditItem = (item: InspectionItem) => {
+    setEditingItem({...item});
+  };
+
+  // アイテム編集の保存
+  const handleSaveItem = () => {
+    if (!editingItem) return;
+    
+    setItems(prev => prev.map(item => {
+      // 一致するアイテムを特定するための条件
+      // 実際のアプリケーションでは、一意のIDフィールドを使うべき
+      const isMatch = Object.keys(item).every(key => 
+        key === editingColumnId ? true : item[key] === editingItem[key]
+      );
+      
+      return isMatch ? {...editingItem} : item;
+    }));
+    
+    setEditingItem(null);
+    setEditingColumnId(null);
+  };
+
+  // アイテム編集のキャンセル
+  const handleCancelEdit = () => {
+    setEditingItem(null);
+    setEditingColumnId(null);
+  };
+
+  // アイテム削除のダイアログを表示
+  const handleShowDeleteItem = (index: number) => {
+    setItemToDelete(index);
+    setIsDeleteDialogOpen(true);
+  };
+
+  // アイテム削除の実行
+  const handleDeleteItem = () => {
+    if (itemToDelete === null) return;
+    
+    setItems(prev => prev.filter((_, index) => index !== itemToDelete));
+    setItemToDelete(null);
+    setIsDeleteDialogOpen(false);
+  };
+
+  // カラム削除のダイアログを表示
+  const handleShowDeleteColumn = (columnId: string) => {
+    setColumnToDelete(columnId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  // カラム削除の実行
+  const handleDeleteColumn = () => {
+    if (!columnToDelete) return;
+    
+    // カラムリストから削除
+    setColumns(prev => prev.filter(col => col.id !== columnToDelete));
+    
+    // 各アイテムからもそのカラムのフィールドを削除
+    setItems(prev => prev.map(item => {
+      const newItem = {...item};
+      delete newItem[columnToDelete];
+      return newItem;
+    }));
+    
+    setColumnToDelete(null);
+    setIsDeleteDialogOpen(false);
+  };
+
+  // 変更をサーバーに保存
+  const handleSaveChanges = () => {
+    const csv = Papa.unparse(items);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const formData = new FormData();
+    formData.append('file', blob, '仕業点検マスタ.csv');
+    
+    fetch('/api/upload-inspection-items', {
+      method: 'POST',
+      body: formData
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('保存に失敗しました');
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('保存成功:', data);
+        alert('変更が保存されました');
+      })
+      .catch(err => {
+        console.error('保存エラー:', err);
+        setError('データの保存に失敗しました');
+      });
+  };
+
+  // ドラッグ可能な行コンポーネント
+  const DraggableRow = ({ index, item, children }: { index: number, item: InspectionItem, children: React.ReactNode }) => {
+    const [, drag] = useDrag({
+      type: 'ROW',
+      item: { index }
+    });
+
+    const [, drop] = useDrop({
+      accept: 'ROW',
+      hover(draggedItem: { index: number }) {
+        if (draggedItem.index === index) {
+          return;
+        }
+        
+        // 行の順序を入れ替え
+        setItems(prev => {
+          const newItems = [...prev];
+          const draggedRow = newItems[draggedItem.index];
+          newItems.splice(draggedItem.index, 1);
+          newItems.splice(index, 0, draggedRow);
+          draggedItem.index = index;
+          return newItems;
+        });
+      }
+    });
+
     return (
-      <div className="p-4 bg-red-50 text-red-600 rounded-md">
-        <p>{error}</p>
-      </div>
+      <TableRow ref={(node) => drag(drop(node))} className="cursor-move">
+        {children}
+      </TableRow>
     );
-  }
+  };
+
+  // ドラッグ可能なヘッダーコンポーネント
+  const DraggableHeader = ({ index, column, children }: { index: number, column: Column, children: React.ReactNode }) => {
+    const [, drag] = useDrag({
+      type: 'COLUMN',
+      item: { index }
+    });
+
+    const [, drop] = useDrop({
+      accept: 'COLUMN',
+      hover(draggedItem: { index: number }) {
+        if (draggedItem.index === index) {
+          return;
+        }
+        
+        // カラムの順序を入れ替え
+        setColumns(prev => {
+          const newColumns = [...prev];
+          const draggedColumn = newColumns[draggedItem.index];
+          newColumns.splice(draggedItem.index, 1);
+          newColumns.splice(index, 0, draggedColumn);
+          draggedItem.index = index;
+          return newColumns;
+        });
+      }
+    });
+
+    return (
+      <TableHead ref={(node) => drag(drop(node))} className="cursor-move">
+        {children}
+      </TableHead>
+    );
+  };
 
   return (
-    <Card>
-      <CardContent className="p-6">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold mb-4">点検項目マスタ</h2>
-          <div className="flex space-x-4 mb-4">
-            <div className="w-1/2">
-              <label className="block text-sm font-medium mb-1">製造メーカー</label>
-              <Select value={filterMaker} onValueChange={setFilterMaker}>
-                <SelectTrigger>
-                  <SelectValue placeholder="すべてのメーカー" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">すべてのメーカー</SelectItem>
-                  {uniqueMakers.map(maker => (
-                    <SelectItem key={maker} value={maker}>{maker}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="w-1/2">
-              <label className="block text-sm font-medium mb-1">機種</label>
-              <Select value={filterModel} onValueChange={setFilterModel}>
-                <SelectTrigger>
-                  <SelectValue placeholder="すべての機種" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">すべての機種</SelectItem>
-                  {uniqueModels.map(model => (
-                    <SelectItem key={model} value={model}>{model}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+    <div className="flex h-screen">
+      <Sidebar onExpandChange={setIsMenuExpanded} />
+      <div className={`flex-1 ${isMenuExpanded ? 'ml-64' : 'ml-16'} transition-all duration-300`}>
+        <main className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold">点検項目マスタ管理</h1>
+            <div className="flex items-center gap-2">
+              <input
+                type="file"
+                accept=".csv"
+                ref={fileInputRef}
+                onChange={handleImportCSV}
+                className="hidden"
+              />
+              <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2">
+                <Upload className="h-4 w-4" />
+                インポート
+              </Button>
+              <Button variant="outline" onClick={handleExportCSV} className="flex items-center gap-2">
+                <Download className="h-4 w-4" />
+                エクスポート
+              </Button>
+              <Button onClick={handleSaveChanges} className="flex items-center gap-2">
+                <Save className="h-4 w-4" />
+                保存
+              </Button>
             </div>
           </div>
-        </div>
 
-        <div className="border rounded-md overflow-auto max-h-[600px]">
-          <Table>
-            <TableHeader className="sticky top-0 bg-secondary">
-              <TableRow>
-                <TableHead className="min-w-[120px]">メーカー</TableHead>
-                <TableHead className="min-w-[120px]">機種</TableHead>
-                <TableHead className="min-w-[150px]">エンジン型式</TableHead>
-                <TableHead className="min-w-[100px]">部位</TableHead>
-                <TableHead className="min-w-[100px]">装置</TableHead>
-                <TableHead className="min-w-[150px]">確認箇所</TableHead>
-                <TableHead className="min-w-[200px]">判断基準</TableHead>
-                <TableHead className="min-w-[200px]">確認要領</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredItems.length > 0 ? (
-                filteredItems.map((item, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{item.メーカー}</TableCell>
-                    <TableCell>{item.機種}</TableCell>
-                    <TableCell>{item.エンジン型式}</TableCell>
-                    <TableCell>{item.部位}</TableCell>
-                    <TableCell>{item.装置}</TableCell>
-                    <TableCell>{item.確認箇所}</TableCell>
-                    <TableCell>{item.判断基準}</TableCell>
-                    <TableCell>{item.確認要領}</TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-4">
-                    該当する点検項目がありません
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+              {error}
+            </div>
+          )}
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="mb-4">
+                <h2 className="text-lg font-semibold mb-2">フィルター</h2>
+                <div className="grid grid-cols-3 gap-4">
+                  {columns.slice(0, 5).map(column => (  // 最初の5カラムだけフィルター表示
+                    <div key={column.id}>
+                      <Select
+                        value={filters[column.id] || "all"}
+                        onValueChange={(value) => handleFilterChange(column.id, value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={`すべての${column.title}`} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">{`すべての${column.title}`}</SelectItem>
+                          {getUniqueValuesForColumn(column.id).map(value => (
+                            <SelectItem key={value} value={value}>{value}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center">
+                  <Input
+                    value={newColumnName}
+                    onChange={(e) => setNewColumnName(e.target.value)}
+                    placeholder="新しいカラム名"
+                    className="w-48 mr-2"
+                  />
+                  <Button onClick={handleAddColumn} size="sm" className="flex items-center gap-1">
+                    <Plus className="h-4 w-4" />
+                    カラム追加
+                  </Button>
+                </div>
+                <Button onClick={handleAddRow} size="sm" className="flex items-center gap-1">
+                  <Plus className="h-4 w-4" />
+                  レコード追加
+                </Button>
+              </div>
+
+              <DndProvider backend={HTML5Backend}>
+                <div className="border rounded-md overflow-auto max-h-[600px]">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-secondary">
+                      <TableRow>
+                        <TableHead className="w-[100px]">操作</TableHead>
+                        {columns.map((column, index) => (
+                          column.visible && (
+                            <DraggableHeader key={column.id} index={index} column={column}>
+                              <div className="flex items-center gap-1">
+                                {column.title}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleShowDeleteColumn(column.id)}
+                                  className="p-1 h-6 w-6"
+                                >
+                                  <Trash2 className="h-3 w-3 text-red-500" />
+                                </Button>
+                              </div>
+                            </DraggableHeader>
+                          )
+                        ))}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {loading ? (
+                        <TableRow>
+                          <TableCell colSpan={columns.length + 1} className="text-center py-10">
+                            データを読み込み中...
+                          </TableCell>
+                        </TableRow>
+                      ) : filteredItems.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={columns.length + 1} className="text-center py-10">
+                            表示するデータがありません
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredItems.map((item, rowIndex) => (
+                          editingItem && Object.keys(item).every(key => 
+                            key === editingColumnId ? true : item[key] === editingItem[key]
+                          ) ? (
+                            <TableRow key={`editing-${rowIndex}`}>
+                              <TableCell>
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleSaveItem}
+                                    className="p-1 h-6 w-6"
+                                  >
+                                    <Save className="h-3 w-3 text-green-500" />
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleCancelEdit}
+                                    className="p-1 h-6 w-6"
+                                  >
+                                    <X className="h-3 w-3 text-red-500" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                              {columns.map(column => (
+                                column.visible && (
+                                  <TableCell key={column.id}>
+                                    <Input
+                                      value={editingItem[column.id] || ""}
+                                      onChange={e => setEditingItem({
+                                        ...editingItem,
+                                        [column.id]: e.target.value
+                                      })}
+                                    />
+                                  </TableCell>
+                                )
+                              ))}
+                            </TableRow>
+                          ) : (
+                            <DraggableRow key={rowIndex} index={rowIndex} item={item}>
+                              <TableCell>
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleEditItem(item)}
+                                    className="p-1 h-6 w-6"
+                                  >
+                                    <Edit className="h-3 w-3 text-blue-500" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleShowDeleteItem(rowIndex)}
+                                    className="p-1 h-6 w-6"
+                                  >
+                                    <Trash2 className="h-3 w-3 text-red-500" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                              {columns.map(column => (
+                                column.visible && (
+                                  <TableCell key={column.id}>
+                                    {item[column.id] || ""}
+                                  </TableCell>
+                                )
+                              ))}
+                            </DraggableRow>
+                          )
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </DndProvider>
+            </CardContent>
+          </Card>
+
+          {/* 削除確認ダイアログ */}
+          <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>削除の確認</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {itemToDelete !== null 
+                    ? "このレコードを削除しますか？この操作は元に戻せません。"
+                    : columnToDelete
+                      ? `「${columnToDelete}」カラムを削除しますか？この操作は元に戻せません。`
+                      : "アイテムを削除しますか？この操作は元に戻せません。"
+                  }
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => {
+                  setItemToDelete(null);
+                  setColumnToDelete(null);
+                }}>
+                  キャンセル
+                </AlertDialogCancel>
+                <AlertDialogAction onClick={() => {
+                  if (itemToDelete !== null) {
+                    handleDeleteItem();
+                  } else if (columnToDelete) {
+                    handleDeleteColumn();
+                  }
+                }}>
+                  削除する
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </main>
+      </div>
+    </div>
   );
 }

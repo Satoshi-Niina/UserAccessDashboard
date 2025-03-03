@@ -1,228 +1,277 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../../components/ui/card";
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../components/ui/select";
-import { Label } from "../../components/ui/label";
-import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 
-interface InspectionItem {
-  id: string;
-  category: string;
-  item_name: string;
-  inspection_method: string;
-}
+import { Sidebar } from "@/components/layout/sidebar";
+import { Card, CardContent } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import Papa from 'papaparse';
 
-export default function InspectionPage() {
-  const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
+type InspectionItem = {
+  [key: string]: string;
+};
+
+export default function Inspection() {
+  const [isMenuExpanded, setIsMenuExpanded] = useState(false);
+  const [items, setItems] = useState<InspectionItem[]>([]);
+  const [filteredItems, setFilteredItems] = useState<InspectionItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [inspectionResults, setInspectionResults] = useState<
-    Record<string, string>
-  >({});
-  const [vehicle, setVehicle] = useState("");
-  const [date, setDate] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedMaker, setSelectedMaker] = useState<string>("all");
+  const [selectedModel, setSelectedModel] = useState<string>("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [completedItems, setCompletedItems] = useState<Record<string, boolean>>({});
 
+  // CSVデータの読み込み
   useEffect(() => {
-    const fetchInspectionItems = async () => {
-      try {
-        const response = await axios.get("/api/inspection-items");
-        setInspectionItems(response.data);
-
-        // Initialize results with empty values
-        const initialResults: Record<string, string> = {};
-        response.data.forEach((item: InspectionItem) => {
-          initialResults[item.id] = "";
-        });
-        setInspectionResults(initialResults);
-
+    setLoading(true);
+    fetch('/api/inspection-items')
+      .then(response => response.text())
+      .then(csvData => {
+        const results = Papa.parse(csvData, { header: true, skipEmptyLines: true });
+        if (results.data && Array.isArray(results.data)) {
+          const parsedItems = results.data as InspectionItem[];
+          setItems(parsedItems);
+        }
+      })
+      .catch(err => {
+        console.error('CSV読み込みエラー:', err);
+        setError('データの読み込みに失敗しました');
+      })
+      .finally(() => {
         setLoading(false);
-      } catch (error) {
-        console.error("Error fetching inspection items:", error);
-        setLoading(false);
-      }
-    };
-
-    fetchInspectionItems();
+      });
   }, []);
 
-  const handleResultChange = (itemId: string, result: string) => {
-    setInspectionResults((prev) => ({
+  // フィルターとカラム表示の変更を監視して表示アイテムを更新
+  useEffect(() => {
+    let filtered = [...items];
+    
+    // メーカーフィルター
+    if (selectedMaker !== "all") {
+      filtered = filtered.filter(item => item["メーカー"] === selectedMaker);
+    }
+    
+    // 機種フィルター
+    if (selectedModel !== "all") {
+      filtered = filtered.filter(item => item["機種"] === selectedModel);
+    }
+    
+    // 検索語句によるフィルター
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(item => 
+        Object.values(item).some(value => 
+          value.toLowerCase().includes(term)
+        )
+      );
+    }
+    
+    setFilteredItems(filtered);
+  }, [items, selectedMaker, selectedModel, searchTerm]);
+
+  // 一意のメーカーリストの取得
+  const uniqueMakers = [...new Set(items.map(item => item["メーカー"]))].filter(Boolean).sort();
+
+  // 選択されたメーカーに基づく機種リストの取得
+  const uniqueModels = [...new Set(
+    items
+      .filter(item => selectedMaker === "all" || item["メーカー"] === selectedMaker)
+      .map(item => item["機種"])
+  )].filter(Boolean).sort();
+
+  // 点検項目の完了状態を切り替え
+  const toggleItemCompletion = (index: number) => {
+    setCompletedItems(prev => ({
       ...prev,
-      [itemId]: result,
+      [index]: !prev[index]
     }));
   };
 
-  const handleSubmit = async () => {
-    if (!vehicle || !date) {
-      alert("車両番号と日付を入力してください");
-      return;
-    }
-
-    // Check if all items have been inspected
-    const allInspected = Object.values(inspectionResults).every(
-      (result) => result !== "",
-    );
-    if (!allInspected) {
-      alert("すべての項目を点検してください");
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      await axios.post("/api/inspections", {
-        vehicle,
-        date,
-        results: inspectionResults,
-      });
-      setSubmitted(true);
-    } catch (error) {
-      console.error("Error submitting inspection:", error);
-      alert("点検記録の送信に失敗しました");
-    } finally {
-      setSubmitting(false);
-    }
+  // 全項目の完了状態をリセット
+  const resetAllCompletions = () => {
+    setCompletedItems({});
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-full">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">点検項目を読み込み中...</span>
-      </div>
-    );
-  }
+  // 印刷用にページを設定
+  const handlePrint = () => {
+    window.print();
+  };
 
-  if (submitted) {
-    return (
-      <Card className="w-full max-w-4xl mx-auto mt-8">
-        <CardContent className="pt-6">
-          <div className="flex flex-col items-center justify-center py-12">
-            <CheckCircle2 className="h-16 w-16 text-green-500 mb-4" />
-            <h2 className="text-2xl font-bold mb-2">点検完了</h2>
-            <p className="text-gray-600 mb-6">点検結果が正常に記録されました</p>
-            <Button
-              onClick={() => {
-                setSubmitted(false);
-                setVehicle("");
-                setDate("");
-                // Reset results
-                const resetResults: Record<string, string> = {};
-                inspectionItems.forEach((item) => {
-                  resetResults[item.id] = "";
-                });
-                setInspectionResults(resetResults);
-              }}
-            >
-              新しい点検を開始
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  // レポート生成（ここでは単純なCSVエクスポート）
+  const handleGenerateReport = () => {
+    // 完了状態を含めた新しい配列を作成
+    const reportItems = filteredItems.map((item, index) => ({
+      ...item,
+      "点検済み": completedItems[index] ? "完了" : "未完了"
+    }));
+    
+    const csv = Papa.unparse(reportItems);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', '点検結果.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
-    <div className="container py-8">
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>仕業点検</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex space-x-4 mb-4">
-            <div className="w-1/2">
-              <Label htmlFor="vehicle">車両番号</Label>
-              <Input
-                id="vehicle"
-                value={vehicle}
-                onChange={(e) => setVehicle(e.target.value)}
-                placeholder="車両番号を入力"
-                className="mt-1"
-              />
-            </div>
-            <div className="w-1/2">
-              <Label htmlFor="date">点検日</Label>
-              <Input
-                id="date"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="mt-1"
-              />
+    <div className="flex h-screen">
+      <Sidebar onExpandChange={setIsMenuExpanded} />
+      <div className={`flex-1 ${isMenuExpanded ? 'ml-64' : 'ml-16'} transition-all duration-300`}>
+        <main className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold">仕業点検</h1>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={resetAllCompletions}>
+                リセット
+              </Button>
+              <Button variant="outline" onClick={handlePrint}>
+                印刷
+              </Button>
+              <Button onClick={handleGenerateReport}>
+                レポート生成
+              </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {inspectionItems.map((item) => (
-          <Card key={item.id} className="overflow-hidden">
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+              {error}
+            </div>
+          )}
+
+          <Card>
             <CardContent className="p-6">
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold">{item.item_name}</h3>
-                <p className="text-sm text-gray-500">
-                  カテゴリ: {item.category}
-                </p>
-                <p className="text-sm text-gray-500">
-                  点検方法: {item.inspection_method}
-                </p>
+              <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">メーカー</label>
+                  <Select value={selectedMaker} onValueChange={setSelectedMaker}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="すべてのメーカー" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">すべてのメーカー</SelectItem>
+                      {uniqueMakers.map(maker => (
+                        <SelectItem key={maker} value={maker}>{maker}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">機種</label>
+                  <Select value={selectedModel} onValueChange={setSelectedModel}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="すべての機種" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">すべての機種</SelectItem>
+                      {uniqueModels.map(model => (
+                        <SelectItem key={model} value={model}>{model}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">検索</label>
+                  <Input
+                    placeholder="検索語句を入力..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
               </div>
-              <div className="mt-4">
-                <Label htmlFor={`result-${item.id}`}>点検結果</Label>
-                <Select
-                  value={inspectionResults[item.id]}
-                  onValueChange={(value) => handleResultChange(item.id, value)}
-                >
-                  <SelectTrigger
-                    className="w-full mt-1"
-                    id={`result-${item.id}`}
-                  >
-                    <SelectValue placeholder="結果を選択" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ok">正常</SelectItem>
-                    <SelectItem value="ng">異常あり</SelectItem>
-                    <SelectItem value="na">該当なし</SelectItem>
-                  </SelectContent>
-                </Select>
-                {inspectionResults[item.id] === "ng" && (
-                  <div className="mt-2 flex items-start space-x-2">
-                    <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
-                    <p className="text-sm text-red-500">
-                      異常が見つかりました。管理者に報告してください。
-                    </p>
-                  </div>
-                )}
+
+              <div className="border rounded-md overflow-auto max-h-[600px] print:max-h-none">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-secondary print:bg-white">
+                    <TableRow>
+                      <TableHead className="w-[50px] print:w-auto">完了</TableHead>
+                      <TableHead className="min-w-[100px]">メーカー</TableHead>
+                      <TableHead className="min-w-[100px]">機種</TableHead>
+                      <TableHead className="min-w-[120px]">エンジン型式</TableHead>
+                      <TableHead className="min-w-[100px]">部位</TableHead>
+                      <TableHead className="min-w-[100px]">装置</TableHead>
+                      <TableHead className="min-w-[150px]">確認箇所</TableHead>
+                      <TableHead className="min-w-[200px]">判断基準</TableHead>
+                      <TableHead className="min-w-[200px]">確認要領</TableHead>
+                      <TableHead className="min-w-[150px]">備考</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {loading ? (
+                      <TableRow>
+                        <TableCell colSpan={10} className="text-center py-10">
+                          データを読み込み中...
+                        </TableCell>
+                      </TableRow>
+                    ) : filteredItems.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={10} className="text-center py-10">
+                          表示するデータがありません
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredItems.map((item, index) => (
+                        <TableRow key={index} className={completedItems[index] ? "bg-green-50" : ""}>
+                          <TableCell>
+                            <Checkbox
+                              checked={completedItems[index] || false}
+                              onCheckedChange={() => toggleItemCompletion(index)}
+                              className="print:hidden"
+                            />
+                            <div className="hidden print:block">
+                              {completedItems[index] ? "✓" : "□"}
+                            </div>
+                          </TableCell>
+                          <TableCell>{item["メーカー"]}</TableCell>
+                          <TableCell>{item["機種"]}</TableCell>
+                          <TableCell>{item["エンジン型式"]}</TableCell>
+                          <TableCell>{item["部位"]}</TableCell>
+                          <TableCell>{item["装置"]}</TableCell>
+                          <TableCell>{item["確認箇所"]}</TableCell>
+                          <TableCell>{item["判断基準"]}</TableCell>
+                          <TableCell>{item["確認要領"]}</TableCell>
+                          <TableCell className="print:min-h-[30px]">{/* 現場での手書きメモ用 */}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="mt-4 text-right">
+                表示件数: {filteredItems.length} / {items.length}
               </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
 
-      <div className="mt-8 flex justify-end">
-        <Button onClick={handleSubmit} disabled={submitting} className="px-6">
-          {submitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              送信中...
-            </>
-          ) : (
-            "点検結果を送信"
-          )}
-        </Button>
+          {/* 印刷用スタイル */}
+          <style jsx global>{`
+            @media print {
+              .sidebar, button, select, input[type="text"] {
+                display: none !important;
+              }
+              body * {
+                visibility: hidden;
+              }
+              .card, .card * {
+                visibility: visible;
+              }
+              .card {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+              }
+            }
+          `}</style>
+        </main>
       </div>
     </div>
   );

@@ -133,6 +133,56 @@ app.get('/api/inspection-items', (req, res) => {
   }
 });
 
+// 仕業点検項目CSVのアップロードAPI
+app.post('/api/upload-inspection-items', (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "認証が必要です" });
+  }
+
+  // マルチパートフォームデータを処理するミドルウェア
+  const multer = require('multer');
+  const upload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB制限
+  }).single('file');
+
+  upload(req, res, function(err) {
+    if (err) {
+      console.error('ファイルアップロードエラー:', err);
+      return res.status(500).json({ error: 'ファイルアップロードに失敗しました' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'ファイルが提供されていません' });
+    }
+
+    try {
+      // attached_assetsディレクトリのチェックと作成
+      const assetsDir = path.join(process.cwd(), 'attached_assets');
+      if (!fs.existsSync(assetsDir)) {
+        fs.mkdirSync(assetsDir, { recursive: true });
+      }
+
+      // CSVファイルパス
+      const csvFilePath = path.join(assetsDir, '仕業点検マスタ.csv');
+
+      // ファイルを保存
+      fs.writeFileSync(csvFilePath, req.file.buffer);
+
+      console.log(`CSVファイルを保存しました: ${csvFilePath} (${req.file.buffer.length} バイト)`);
+      
+      res.status(200).json({ 
+        message: 'ファイルが正常にアップロードされました',
+        fileName: '仕業点検マスタ.csv',
+        size: req.file.buffer.length
+      });
+    } catch (error) {
+      console.error('ファイル保存エラー:', error);
+      res.status(500).json({ error: 'ファイルの保存に失敗しました' });
+    }
+  });
+});
+
 // 仕業点検のサンプルデータを生成する関数
 function getSampleInspectionData() {
   // ヘッダー行

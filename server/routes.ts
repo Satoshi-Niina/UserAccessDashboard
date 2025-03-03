@@ -57,6 +57,14 @@ export function registerRoutes(app: Express): Server {
 
       res.status(201).json({
         id: user.id,
+        username: user.username,
+        isAdmin: user.is_admin === 1
+      });
+    } catch (error) {
+      console.error("ユーザー登録エラー:", error);
+      res.status(500).json({ error: "ユーザー登録に失敗しました" });
+    }
+  });
 
 // API endpoint for CSV data
 app.get('/api/inspection-items', async (req, res) => {
@@ -78,10 +86,6 @@ app.get('/api/inspection-items', async (req, res) => {
     res.status(500).send('Error reading CSV file');
   }
 });
-
-        username: user.username,
-        isAdmin: user.is_admin === 1
-      });
     } catch (error) {
       console.error("ユーザー登録エラー:", error);
       res.status(500).json({ error: "ユーザー登録に失敗しました" });

@@ -53,7 +53,9 @@ export default function Settings() {
       </div>
     </div>
   );
-}omponents/ui/card";
+}
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Database, Users, History } from "lucide-react";
 import { useState } from "react";
 

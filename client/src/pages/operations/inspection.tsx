@@ -1,23 +1,22 @@
-
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '../../components/ui/table';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Button,
-  Input,
-} from '@/components/ui';
-import { Download, Save } from 'lucide-react';
+} from '../../components/ui/select';
+import { Loader2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 
-// 点検項目の型定義
 interface InspectionItem {
   id: string;
   manufacturer: string;
@@ -31,6 +30,7 @@ interface InspectionItem {
   checkMethod: string;
   measurement: string;
   graphicRecord: string;
+  order: number;
   result?: string;
 }
 
@@ -43,7 +43,7 @@ export default function Inspection({ onChanges }: InspectionProps) {
   const [filteredItems, setFilteredItems] = useState<InspectionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasChanges, setHasChanges] = useState(false);
-  
+
   // フィルター用の状態
   const [manufacturers, setManufacturers] = useState<string[]>([]);
   const [modelTypes, setModelTypes] = useState<string[]>([]);
@@ -57,15 +57,15 @@ export default function Inspection({ onChanges }: InspectionProps) {
         setLoading(true);
         const response = await fetch('/api/inspection-items');
         const csvText = await response.text();
-        
+
         if (csvText) {
           const items = parseCSVData(csvText);
           setItems(items);
-          
-          // 製造メーカーと機種の一覧を抽出
+
+          // 製造メーカーの一覧を抽出（空でないもの）
           const uniqueManufacturers = [...new Set(items.map(item => item.manufacturer))].filter(Boolean);
           setManufacturers(uniqueManufacturers);
-          
+
           if (uniqueManufacturers.length > 0) {
             setSelectedManufacturer(uniqueManufacturers[0]);
           }
@@ -76,15 +76,56 @@ export default function Inspection({ onChanges }: InspectionProps) {
         setLoading(false);
       }
     };
-    
+
     fetchInspectionItems();
   }, []);
+
+  // 選択されたメーカーが変更されたら機種の一覧を更新
+  useEffect(() => {
+    if (selectedManufacturer && items.length > 0) {
+      // 選択されたメーカーの機種一覧を取得
+      const modelTypesForManufacturer = [...new Set(
+        items
+          .filter(item => item.manufacturer === selectedManufacturer)
+          .map(item => item.modelType)
+      )].filter(Boolean);
+
+      setModelTypes(modelTypesForManufacturer);
+
+      // 機種を初期化
+      if (modelTypesForManufacturer.length > 0) {
+        setSelectedModelType(modelTypesForManufacturer[0]);
+      } else {
+        setSelectedModelType('');
+      }
+    } else {
+      setModelTypes([]);
+      setSelectedModelType('');
+    }
+  }, [selectedManufacturer, items]);
+
+  // メーカーと機種でアイテムをフィルタリング
+  useEffect(() => {
+    if (items.length === 0) return;
+
+    let filtered = [...items];
+
+    if (selectedManufacturer) {
+      filtered = filtered.filter(item => item.manufacturer === selectedManufacturer);
+    }
+
+    if (selectedModelType) {
+      filtered = filtered.filter(item => item.modelType === selectedModelType);
+    }
+
+    setFilteredItems(filtered);
+  }, [items, selectedManufacturer, selectedModelType]);
 
   // CSVデータのパース関数
   const parseCSVData = (csv: string): InspectionItem[] => {
     const lines = csv.split('\n');
     const headers = lines[0].split(',').map(h => h.trim());
-    
+
     // ヘッダーとフィールドのマッピング
     const headerMap: Record<string, string> = {
       '製造メーカー': 'manufacturer',
@@ -103,255 +144,173 @@ export default function Inspection({ onChanges }: InspectionProps) {
     return lines.slice(1)
       .filter(line => line.trim())
       .map((line, index) => {
-        const values = line.split(',').map(v => v.trim());
-        const item: any = { id: `item-${index + 1}` };
-        
+        // ダブルクォーテーションでくくられたカンマを処理するための簡易的な解析
+        let values: string[] = [];
+        let currentValue = '';
+        let inQuotes = false;
+
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            values.push(currentValue.trim());
+            currentValue = '';
+          } else {
+            currentValue += char;
+          }
+        }
+
+        // 最後の値を追加
+        values.push(currentValue.trim());
+
+        // 値が少ない場合はヘッダー数に合わせて空文字を追加
+        while (values.length < headers.length) {
+          values.push('');
+        }
+
+        const item: any = { id: `item-${index + 1}`, order: index + 1 };
+
         headers.forEach((header, i) => {
           const field = headerMap[header] || header;
           item[field] = values[i] || '';
         });
-        
+
         return item as InspectionItem;
       });
   };
 
-  // メーカー選択時の処理
-  useEffect(() => {
-    if (selectedManufacturer) {
-      // 選択されたメーカーに対応する機種一覧を抽出
-      const filteredModelTypes = [...new Set(
-        items
-          .filter(item => item.manufacturer === selectedManufacturer)
-          .map(item => item.modelType)
-      )].filter(Boolean);
-      
-      setModelTypes(filteredModelTypes);
-      
-      if (filteredModelTypes.length > 0) {
-        setSelectedModelType(filteredModelTypes[0]);
-      } else {
-        setSelectedModelType('');
-      }
-      
-      // フィルター適用
-      applyFilters(selectedManufacturer, filteredModelTypes.length > 0 ? filteredModelTypes[0] : '');
-    } else {
-      setFilteredItems([]);
-    }
-  }, [selectedManufacturer, items]);
-
-  // 機種選択時の処理
-  useEffect(() => {
-    if (selectedManufacturer && selectedModelType) {
-      applyFilters(selectedManufacturer, selectedModelType);
-    }
-  }, [selectedModelType]);
-
-  // フィルターの適用
-  const applyFilters = (manufacturer: string, modelType: string) => {
-    if (!manufacturer) {
-      setFilteredItems([]);
-      return;
-    }
-    
-    let filtered = items.filter(item => item.manufacturer === manufacturer);
-    
-    if (modelType) {
-      filtered = filtered.filter(item => item.modelType === modelType);
-    }
-    
-    setFilteredItems(filtered);
-  };
-
-  // 結果の更新処理
-  const handleResultChange = (itemId: string, result: string) => {
+  const handleResultChange = (itemId: string, value: string) => {
     setFilteredItems(prev => 
       prev.map(item => 
-        item.id === itemId 
-          ? { ...item, result } 
-          : item
+        item.id === itemId ? { ...item, result: value } : item
       )
     );
-    
-    setItems(prev => 
-      prev.map(item => 
-        item.id === itemId 
-          ? { ...item, result } 
-          : item
-      )
-    );
-    
+
     setHasChanges(true);
-    
-    // 親コンポーネントに変更を通知
-    if (onChanges) {
-      onChanges(true);
-    }
+    if (onChanges) onChanges(true);
   };
 
-  // 保存処理
-  const handleSave = async () => {
-    try {
-      // 実際のアプリケーションでは、ここでサーバーにデータを送信する処理を実装
-      // 例: await fetch('/api/inspection-results', { method: 'POST', body: JSON.stringify(items) });
-      
-      alert('点検結果を保存しました');
-      setHasChanges(false);
-      
-      if (onChanges) {
-        onChanges(false);
-      }
-    } catch (error) {
-      console.error('保存に失敗しました:', error);
-      alert('保存に失敗しました');
-    }
-  };
-
-  // CSVダウンロード処理
-  const handleDownloadCSV = () => {
-    const headers = [
-      '製造メーカー',
-      '機種',
-      'エンジン型式',
-      '部位',
-      '装置',
-      '手順',
-      '確認箇所',
-      '判断基準',
-      '確認要領',
-      '測定等記録',
-      '図形記録',
-      '結果'
-    ];
-    
-    const rows = filteredItems.map(item => [
-      item.manufacturer,
-      item.modelType,
-      item.engineType,
-      item.part,
-      item.device,
-      item.procedure,
-      item.checkPoint,
-      item.judgmentCriteria,
-      item.checkMethod,
-      item.measurement,
-      item.graphicRecord,
-      item.result || ''
-    ].join(','));
-    
-    const csvContent = [headers.join(','), ...rows].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `点検結果_${selectedManufacturer}_${selectedModelType}_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  // 点検データの保存
+  const saveInspectionResults = () => {
+    // ここで保存処理を実装
+    console.log('保存処理:', filteredItems);
+    setHasChanges(false);
+    if (onChanges) onChanges(false);
   };
 
   if (loading) {
-    return <div className="text-center py-10">データを読み込み中...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="mb-6">
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">製造メーカー</label>
-            <Select value={selectedManufacturer} onValueChange={setSelectedManufacturer}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="メーカーを選択" />
-              </SelectTrigger>
-              <SelectContent>
-                {manufacturers.map(manufacturer => (
-                  <SelectItem key={manufacturer} value={manufacturer}>
-                    {manufacturer}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>仕業点検表</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex space-x-4 mb-4">
+            <div className="w-1/2">
+              <label className="block text-sm font-medium mb-1">製造メーカー</label>
+              <Select value={selectedManufacturer} onValueChange={setSelectedManufacturer}>
+                <SelectTrigger>
+                  <SelectValue placeholder="メーカーを選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  {manufacturers.map((manufacturer) => (
+                    <SelectItem key={manufacturer} value={manufacturer}>
+                      {manufacturer}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-1/2">
+              <label className="block text-sm font-medium mb-1">機種</label>
+              <Select 
+                value={selectedModelType} 
+                onValueChange={setSelectedModelType}
+                disabled={modelTypes.length === 0}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="機種を選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  {modelTypes.map((model) => (
+                    <SelectItem key={model} value={model}>
+                      {model}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-1">機種</label>
-            <Select 
-              value={selectedModelType} 
-              onValueChange={setSelectedModelType}
-              disabled={!selectedManufacturer || modelTypes.length === 0}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="機種を選択" />
-              </SelectTrigger>
-              <SelectContent>
-                {modelTypes.map(model => (
-                  <SelectItem key={model} value={model}>
-                    {model}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        
-        <div className="flex justify-end space-x-2">
-          <Button 
-            variant="outline" 
-            onClick={handleDownloadCSV}
-            disabled={filteredItems.length === 0}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            CSVダウンロード
-          </Button>
-          <Button 
-            onClick={handleSave}
-            disabled={!hasChanges}
-          >
-            <Save className="mr-2 h-4 w-4" />
-            保存
-          </Button>
-        </div>
-      </div>
-      
-      {filteredItems.length > 0 ? (
-        <div className="border rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px]">部位</TableHead>
-                <TableHead className="w-[100px]">装置</TableHead>
-                <TableHead className="w-[150px]">確認箇所</TableHead>
-                <TableHead className="w-[200px]">判断基準</TableHead>
-                <TableHead className="w-[200px]">確認要領</TableHead>
-                <TableHead className="w-[120px]">結果</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredItems.map(item => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.part}</TableCell>
-                  <TableCell>{item.device}</TableCell>
-                  <TableCell>{item.checkPoint}</TableCell>
-                  <TableCell>{item.judgmentCriteria}</TableCell>
-                  <TableCell>{item.checkMethod}</TableCell>
-                  <TableCell>
-                    <Input
-                      value={item.result || ''}
-                      onChange={(e) => handleResultChange(item.id, e.target.value)}
-                      className="w-full"
-                    />
-                  </TableCell>
+
+          <div className="overflow-x-auto rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>No.</TableHead>
+                  <TableHead>部位</TableHead>
+                  <TableHead>装置</TableHead>
+                  <TableHead>確認箇所</TableHead>
+                  <TableHead>判断基準</TableHead>
+                  <TableHead>確認要領</TableHead>
+                  <TableHead>結果</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      ) : (
-        <div className="text-center py-10 border rounded-lg">
-          {selectedManufacturer ? '選択された条件に一致する点検項目がありません' : 'メーカーを選択してください'}
-        </div>
-      )}
+              </TableHeader>
+              <TableBody>
+                {filteredItems.length > 0 ? (
+                  filteredItems.map((item, index) => (
+                    <TableRow key={item.id}>
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>{item.part}</TableCell>
+                      <TableCell>{item.device}</TableCell>
+                      <TableCell>{item.checkPoint}</TableCell>
+                      <TableCell>{item.judgmentCriteria}</TableCell>
+                      <TableCell>{item.checkMethod}</TableCell>
+                      <TableCell>
+                        <select
+                          className="w-full p-1 border rounded"
+                          value={item.result || ''}
+                          onChange={(e) => handleResultChange(item.id, e.target.value)}
+                        >
+                          <option value="">選択</option>
+                          <option value="OK">OK</option>
+                          <option value="NG">NG</option>
+                        </select>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-4">
+                      データがありません。メーカーと機種を選択してください。
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {hasChanges && (
+            <div className="flex justify-end mt-4">
+              <button
+                className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
+                onClick={saveInspectionResults}
+              >
+                保存
+              </button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

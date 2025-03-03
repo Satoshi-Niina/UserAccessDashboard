@@ -38,7 +38,6 @@ const menuItems: MenuItem[] = [
     href: "/operations",
     subItems: [
       { icon: ClipboardCheck, label: "仕業点検", href: "/operations?tab=inspection" },
-      { icon: ClipboardCheck, label: "運用実績", href: "/operations?tab=performance" },
     ],
   },
   { icon: MessageSquare, label: "メッセージ", href: "/messages" },
@@ -49,7 +48,7 @@ const menuItems: MenuItem[] = [
     adminOnly: true,
     subItems: [
       { icon: Database, label: "基本データ処理", href: "/settings/basic-data" },
-      { icon: List, label: "点検項目管理", href: "/settings/inspection-items" },
+      { icon: List, label: "点検項目編集", href: "/settings/inspection-items" },
       { icon: BarChart2, label: "測定基準値設定", href: "/settings/measurement-standards" },
       { icon: History, label: "履歴検索", href: "/settings/history" },
       { icon: Users, label: "ユーザー登録", href: "/settings/user-management" },

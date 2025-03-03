@@ -541,7 +541,7 @@ export default function InspectionItems() {
       <div className={`flex-1 ${isMenuExpanded ? 'ml-64' : 'ml-16'} transition-all duration-300`}>
         <main className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold">点検項目管理</h1>
+            <h1 className="text-3xl font-bold">点検項目編集</h1>
             <ExitButton />
           </div>
 

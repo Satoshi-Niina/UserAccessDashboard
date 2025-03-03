@@ -76,9 +76,13 @@ app.get('/api/inspection-items', (req, res) => {
         const csvPath = path.join(process.cwd(), 'attached_assets', '仕業点検マスタ.csv');
         
         if (fs.existsSync(csvPath)) {
+          console.log(`CSVファイルが見つかりました: ${csvPath}`);
           const data = fs.readFileSync(csvPath, 'utf8');
+          console.log(`CSVデータ読み込み成功 (${data.length} バイト)`);
+          res.setHeader('Content-Type', 'text/csv; charset=utf-8');
           res.send(data);
         } else {
+          console.error(`CSVファイルが見つかりません: ${csvPath}`);
           res.status(404).send('CSV file not found');
         }
       }).catch(error => {

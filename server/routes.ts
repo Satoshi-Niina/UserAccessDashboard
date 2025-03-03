@@ -67,12 +67,13 @@ export function registerRoutes(app: Express): Server {
   });
 
 // API endpoint for CSV data
-app.get('/api/inspection-items', (req, res) => {
+app.get('/api/inspection-items', async (req, res) => {
   try {
     console.log("API: /api/inspection-items が呼び出されました");
-    // ファイルシステムとパスモジュールのインポート
-    const fs = require('fs');
-    const path = require('path');
+    
+    // ESモジュールで動的にimportする
+    const fs = await import('fs');
+    const path = await import('path');
     
     const csvPath = path.join(process.cwd(), 'attached_assets', '仕業点検マスタ.csv');
     console.log(`CSVファイルパス: ${csvPath}`);
@@ -89,11 +90,16 @@ app.get('/api/inspection-items', (req, res) => {
       res.send(data);
     } else {
       console.error(`CSVファイルが見つかりません: ${csvPath}`);
+      
+      // ディレクトリの確認
+      const attachedDir = path.join(process.cwd(), 'attached_assets');
+      const availableFiles = fs.existsSync(attachedDir) ? fs.readdirSync(attachedDir) : [];
+      
       // ファイルが見つからない場合、エラーレスポンスを返す
       res.status(404).json({
         error: 'CSV file not found',
         message: `${csvPath} が見つかりません。`,
-        availableFiles: fs.readdirSync('attached_assets')
+        availableFiles
       });
     }
   } catch (error) {

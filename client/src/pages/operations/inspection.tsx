@@ -18,6 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from '@/components/ui';
+import { Loader2 } from "lucide-react";
 
 interface InspectionItem {
   id: string;
@@ -67,96 +68,87 @@ export default function Inspection({ items: propItems }: InspectionProps) {
       '手順': 'procedure',
       '確認箇所': 'checkPoint',
       '判断基準': 'judgmentCriteria',
-      '確認方法': 'checkMethod',
-      '測定': 'measurement',
-      '記録': 'graphicRecord',
-      '順序': 'order'
+      '点検方法': 'checkMethod',
+      '測定（記録）': 'measurement',
+      '記録簿': 'graphicRecord'
     };
 
-    // 各行をオブジェクトに変換
-    const parsedItems: InspectionItem[] = lines.slice(1).map((line, index) => {
-      const values = line.split(',').map(v => v.trim());
-      const item: Partial<InspectionItem> = { id: `item-${index}` };
+    // 各行のデータをパース
+    const parsedItems: InspectionItem[] = [];
+    for (let i = 1; i < lines.length; i++) {
+      if (!lines[i].trim()) continue;
       
-      headers.forEach((header, i) => {
+      // カンマで分割するが、ダブルクォートで囲まれた部分は一つのフィールドとして扱う
+      const row = lines[i].match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || [];
+      const item: Partial<InspectionItem> = { id: `item-${i}`, order: i };
+      
+      // 各列のデータを適切なフィールドにマッピング
+      headers.forEach((header, index) => {
+        if (index >= row.length) return;
+        
         const field = fieldMap[header];
-        if (field && values[i] !== undefined) {
-          if (field === 'order' && !isNaN(Number(values[i]))) {
-            (item as any)[field] = Number(values[i]);
-          } else {
-            (item as any)[field] = values[i];
+        if (field) {
+          let value = row[index];
+          // ダブルクォートを削除
+          if (value.startsWith('"') && value.endsWith('"')) {
+            value = value.slice(1, -1);
           }
+          (item as any)[field] = value.trim();
         }
       });
       
-      return item as InspectionItem;
-    });
+      parsedItems.push(item as InspectionItem);
+    }
     
-    console.log(`${parsedItems.length}件のデータをパースしました`);
+    console.log(`パース完了: ${parsedItems.length}件のデータを読み込みました`);
     return parsedItems;
   };
 
-  // CSVデータの取得
-  useEffect(() => {
-    const fetchInspectionData = async () => {
-      try {
-        setLoading(true);
-        console.log("APIからデータを取得中...");
-        const response = await fetch('/api/inspection-items');
-        
-        if (!response.ok) {
-          throw new Error(`APIエラー: ${response.status} ${response.statusText}`);
-        }
-        
-        const text = await response.text();
-        console.log(`APIからデータを取得しました (${text.length} バイト)`);
+  // 点検データを読み込む
+  const fetchInspectionData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        if (text && text.length > 0) {
-          const parsedItems = parseCSVData(text);
-          console.log(`${parsedItems.length}件のアイテムをパースしました`);
-          setItems(parsedItems);
-
-          // メーカーと機種の一覧を抽出
-          const uniqueManufacturers = Array.from(new Set(parsedItems.map(item => item.manufacturer))).filter(Boolean);
-          const uniqueModelTypes = Array.from(new Set(parsedItems.map(item => item.modelType))).filter(Boolean);
-
-          setManufacturers(uniqueManufacturers);
-          setModelTypes(uniqueModelTypes);
-
-          // 初期表示用にフィルタリング
-          setFilteredItems(parsedItems);
-        } else {
-          console.error("空のレスポンスを受け取りました");
-          setError("データが空です");
-          // サンプルデータを使用
-          const sampleItems: InspectionItem[] = [
-            { id: "1", manufacturer: "メーカーA", modelType: "機種X", engineType: "エンジン1", part: "エンジン", device: "冷却装置", procedure: "点検手順1", checkPoint: "冷却水レベル", judgmentCriteria: "MIN以上MAX以下", checkMethod: "目視", measurement: "", graphicRecord: "", order: 1 },
-            { id: "2", manufacturer: "メーカーA", modelType: "機種X", engineType: "エンジン1", part: "電気系統", device: "バッテリー", procedure: "点検手順2", checkPoint: "端子の状態", judgmentCriteria: "腐食なし", checkMethod: "目視", measurement: "", graphicRecord: "", order: 2 },
-            { id: "3", manufacturer: "メーカーB", modelType: "機種Y", engineType: "エンジン2", part: "油圧系統", device: "オイルタンク", procedure: "点検手順3", checkPoint: "オイルレベル", judgmentCriteria: "規定値内", checkMethod: "目視", measurement: "", graphicRecord: "", order: 1 }
-          ];
-          setItems(sampleItems);
-          setManufacturers(Array.from(new Set(sampleItems.map(item => item.manufacturer))));
-          setModelTypes(Array.from(new Set(sampleItems.map(item => item.modelType))));
-          setFilteredItems(sampleItems);
-        }
-      } catch (error) {
-        console.error("データ取得エラー:", error);
-        setError(error instanceof Error ? error.message : "不明なエラーが発生しました");
-        // エラー時にサンプルデータを表示
-        const sampleItems: InspectionItem[] = [
-          { id: "1", manufacturer: "メーカーA", modelType: "機種X", engineType: "エンジン1", part: "エンジン", device: "冷却装置", procedure: "点検手順1", checkPoint: "冷却水レベル", judgmentCriteria: "MIN以上MAX以下", checkMethod: "目視", measurement: "", graphicRecord: "", order: 1 },
-          { id: "2", manufacturer: "メーカーA", modelType: "機種X", engineType: "エンジン1", part: "電気系統", device: "バッテリー", procedure: "点検手順2", checkPoint: "端子の状態", judgmentCriteria: "腐食なし", checkMethod: "目視", measurement: "", graphicRecord: "", order: 2 },
-          { id: "3", manufacturer: "メーカーB", modelType: "機種Y", engineType: "エンジン2", part: "油圧系統", device: "オイルタンク", procedure: "点検手順3", checkPoint: "オイルレベル", judgmentCriteria: "規定値内", checkMethod: "目視", measurement: "", graphicRecord: "", order: 1 }
-        ];
-        setItems(sampleItems);
-        setManufacturers(Array.from(new Set(sampleItems.map(item => item.manufacturer))));
-        setModelTypes(Array.from(new Set(sampleItems.map(item => item.modelType))));
-        setFilteredItems(sampleItems);
-      } finally {
-        setLoading(false);
+      console.log("点検データを取得中...");
+      const response = await fetch('/api/inspection-items');
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("点検データの取得に失敗:", errorText);
+        setError(`データの取得に失敗しました: ${response.status} ${response.statusText}`);
+        return;
       }
-    };
+      
+      const csvData = await response.text();
+      console.log(`CSVデータ取得成功: ${csvData.length} バイト`);
 
+      if (csvData && csvData.length > 0) {
+        // CSVデータをパース
+        const parsedItems = parseCSVData(csvData);
+        setItems(parsedItems);
+        
+        // メーカーと機種のリストを作成
+        const uniqueManufacturers = Array.from(new Set(parsedItems.map(item => item.manufacturer))).filter(Boolean);
+        const uniqueModelTypes = Array.from(new Set(parsedItems.map(item => item.modelType))).filter(Boolean);
+        
+        setManufacturers(['すべて', ...uniqueManufacturers]);
+        setModelTypes(['すべて', ...uniqueModelTypes]);
+        setFilteredItems(parsedItems);
+      } else {
+        console.error("空のCSVデータを受信しました");
+        setError("データが空です");
+      }
+    } catch (err) {
+      console.error("点検データの取得中にエラーが発生しました:", err);
+      setError("データの読み込み中にエラーが発生しました");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // コンポーネントのマウント時に点検データを読み込む
+  useEffect(() => {
     fetchInspectionData();
   }, []);
 
@@ -202,10 +194,9 @@ export default function Inspection({ items: propItems }: InspectionProps) {
         <div className="flex space-x-4">
           <Select value={selectedManufacturer} onValueChange={setSelectedManufacturer}>
             <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="メーカーを選択" />
+              <SelectValue placeholder="製造メーカー" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="すべて">すべてのメーカー</SelectItem>
               {manufacturers.map((manufacturer) => (
                 <SelectItem key={manufacturer} value={manufacturer}>
                   {manufacturer}
@@ -213,12 +204,12 @@ export default function Inspection({ items: propItems }: InspectionProps) {
               ))}
             </SelectContent>
           </Select>
+
           <Select value={selectedModelType} onValueChange={setSelectedModelType}>
             <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="機種を選択" />
+              <SelectValue placeholder="機種" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="すべて">すべての機種</SelectItem>
               {modelTypes.map((model) => (
                 <SelectItem key={model} value={model}>
                   {model}
@@ -227,64 +218,78 @@ export default function Inspection({ items: propItems }: InspectionProps) {
             </SelectContent>
           </Select>
         </div>
-        {hasChanges && (
-          <Button onClick={saveInspection}>保存</Button>
-        )}
+
+        <Button 
+          onClick={saveInspection} 
+          disabled={!hasChanges || loading}
+          className="ml-auto"
+        >
+          保存
+        </Button>
       </div>
 
       {loading ? (
-        <div className="text-center py-10">データを読み込み中...</div>
-      ) : error ? (
-        <div className="text-center py-10 text-red-500">{error}</div>
-      ) : (
-        <div className="border rounded-md">
-          <Table>
-            <TableCaption>仕業点検項目リスト</TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead>部位</TableHead>
-                <TableHead>装置</TableHead>
-                <TableHead>確認箇所</TableHead>
-                <TableHead>判断基準</TableHead>
-                <TableHead>結果</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredItems.length > 0 ? (
-                filteredItems.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>{item.part}</TableCell>
-                    <TableCell>{item.device}</TableCell>
-                    <TableCell>{item.checkPoint}</TableCell>
-                    <TableCell>{item.judgmentCriteria}</TableCell>
-                    <TableCell>
-                      <Select
-                        value={item.result || "未実施"}
-                        onValueChange={(value) => handleResultChange(item.id, value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="選択" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="未実施">未実施</SelectItem>
-                          <SelectItem value="正常">正常</SelectItem>
-                          <SelectItem value="要注意">要注意</SelectItem>
-                          <SelectItem value="要点検">要点検</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center">
-                    表示するデータがありません
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-12 w-12 animate-spin text-gray-400" />
+          <span className="ml-3 text-lg text-gray-600">データを読み込み中...</span>
         </div>
+      ) : error ? (
+        <div className="text-center p-6 border border-red-200 bg-red-50 text-red-800 rounded-md">
+          <p className="text-lg font-semibold">エラーが発生しました</p>
+          <p>{error}</p>
+          <Button onClick={fetchInspectionData} variant="outline" className="mt-4">
+            再読み込み
+          </Button>
+        </div>
+      ) : filteredItems.length === 0 ? (
+        <div className="text-center p-6 border border-gray-200 bg-gray-50 rounded-md">
+          表示するデータがありません
+        </div>
+      ) : (
+        <Table>
+          <TableCaption>点検項目 ({filteredItems.length}件)</TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead>製造メーカー</TableHead>
+              <TableHead>機種</TableHead>
+              <TableHead>エンジン型式</TableHead>
+              <TableHead>部位</TableHead>
+              <TableHead>装置</TableHead>
+              <TableHead>確認箇所</TableHead>
+              <TableHead>判断基準</TableHead>
+              <TableHead>点検結果</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredItems.map((item) => (
+              <TableRow key={item.id}>
+                <TableCell>{item.manufacturer}</TableCell>
+                <TableCell>{item.modelType}</TableCell>
+                <TableCell>{item.engineType}</TableCell>
+                <TableCell>{item.part}</TableCell>
+                <TableCell>{item.device}</TableCell>
+                <TableCell>{item.checkPoint}</TableCell>
+                <TableCell>{item.judgmentCriteria}</TableCell>
+                <TableCell>
+                  <Select
+                    value={item.result || ''}
+                    onValueChange={(value) => handleResultChange(item.id, value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="選択" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">選択</SelectItem>
+                      <SelectItem value="正常">正常</SelectItem>
+                      <SelectItem value="要点検">要点検</SelectItem>
+                      <SelectItem value="異常">異常</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       )}
     </div>
   );

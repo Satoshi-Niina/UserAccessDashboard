@@ -1,11 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Label } from '../../components/ui/label';
-import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../components/ui/select";
+import { Label } from "../../components/ui/label";
+import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 
 interface InspectionItem {
   id: string;
@@ -17,28 +28,30 @@ interface InspectionItem {
 export default function InspectionPage() {
   const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [inspectionResults, setInspectionResults] = useState<Record<string, string>>({});
-  const [vehicle, setVehicle] = useState('');
-  const [date, setDate] = useState('');
+  const [inspectionResults, setInspectionResults] = useState<
+    Record<string, string>
+  >({});
+  const [vehicle, setVehicle] = useState("");
+  const [date, setDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     const fetchInspectionItems = async () => {
       try {
-        const response = await axios.get('/api/inspection-items');
+        const response = await axios.get("/api/inspection-items");
         setInspectionItems(response.data);
 
         // Initialize results with empty values
         const initialResults: Record<string, string> = {};
         response.data.forEach((item: InspectionItem) => {
-          initialResults[item.id] = '';
+          initialResults[item.id] = "";
         });
         setInspectionResults(initialResults);
 
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching inspection items:', error);
+        console.error("Error fetching inspection items:", error);
         setLoading(false);
       }
     };
@@ -47,36 +60,38 @@ export default function InspectionPage() {
   }, []);
 
   const handleResultChange = (itemId: string, result: string) => {
-    setInspectionResults(prev => ({
+    setInspectionResults((prev) => ({
       ...prev,
-      [itemId]: result
+      [itemId]: result,
     }));
   };
 
   const handleSubmit = async () => {
     if (!vehicle || !date) {
-      alert('車両番号と日付を入力してください');
+      alert("車両番号と日付を入力してください");
       return;
     }
 
     // Check if all items have been inspected
-    const allInspected = Object.values(inspectionResults).every(result => result !== '');
+    const allInspected = Object.values(inspectionResults).every(
+      (result) => result !== "",
+    );
     if (!allInspected) {
-      alert('すべての項目を点検してください');
+      alert("すべての項目を点検してください");
       return;
     }
 
     setSubmitting(true);
     try {
-      await axios.post('/api/inspections', {
+      await axios.post("/api/inspections", {
         vehicle,
         date,
-        results: inspectionResults
+        results: inspectionResults,
       });
       setSubmitted(true);
     } catch (error) {
-      console.error('Error submitting inspection:', error);
-      alert('点検記録の送信に失敗しました');
+      console.error("Error submitting inspection:", error);
+      alert("点検記録の送信に失敗しました");
     } finally {
       setSubmitting(false);
     }
@@ -99,17 +114,19 @@ export default function InspectionPage() {
             <CheckCircle2 className="h-16 w-16 text-green-500 mb-4" />
             <h2 className="text-2xl font-bold mb-2">点検完了</h2>
             <p className="text-gray-600 mb-6">点検結果が正常に記録されました</p>
-            <Button onClick={() => {
-              setSubmitted(false);
-              setVehicle('');
-              setDate('');
-              // Reset results
-              const resetResults: Record<string, string> = {};
-              inspectionItems.forEach(item => {
-                resetResults[item.id] = '';
-              });
-              setInspectionResults(resetResults);
-            }}>
+            <Button
+              onClick={() => {
+                setSubmitted(false);
+                setVehicle("");
+                setDate("");
+                // Reset results
+                const resetResults: Record<string, string> = {};
+                inspectionItems.forEach((item) => {
+                  resetResults[item.id] = "";
+                });
+                setInspectionResults(resetResults);
+              }}
+            >
               新しい点検を開始
             </Button>
           </div>
@@ -156,8 +173,12 @@ export default function InspectionPage() {
             <CardContent className="p-6">
               <div className="mb-4">
                 <h3 className="text-lg font-semibold">{item.item_name}</h3>
-                <p className="text-sm text-gray-500">カテゴリ: {item.category}</p>
-                <p className="text-sm text-gray-500">点検方法: {item.inspection_method}</p>
+                <p className="text-sm text-gray-500">
+                  カテゴリ: {item.category}
+                </p>
+                <p className="text-sm text-gray-500">
+                  点検方法: {item.inspection_method}
+                </p>
               </div>
               <div className="mt-4">
                 <Label htmlFor={`result-${item.id}`}>点検結果</Label>
@@ -165,7 +186,10 @@ export default function InspectionPage() {
                   value={inspectionResults[item.id]}
                   onValueChange={(value) => handleResultChange(item.id, value)}
                 >
-                  <SelectTrigger className="w-full mt-1" id={`result-${item.id}`}>
+                  <SelectTrigger
+                    className="w-full mt-1"
+                    id={`result-${item.id}`}
+                  >
                     <SelectValue placeholder="結果を選択" />
                   </SelectTrigger>
                   <SelectContent>
@@ -174,10 +198,12 @@ export default function InspectionPage() {
                     <SelectItem value="na">該当なし</SelectItem>
                   </SelectContent>
                 </Select>
-                {inspectionResults[item.id] === 'ng' && (
+                {inspectionResults[item.id] === "ng" && (
                   <div className="mt-2 flex items-start space-x-2">
                     <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
-                    <p className="text-sm text-red-500">異常が見つかりました。管理者に報告してください。</p>
+                    <p className="text-sm text-red-500">
+                      異常が見つかりました。管理者に報告してください。
+                    </p>
                   </div>
                 )}
               </div>
@@ -187,17 +213,15 @@ export default function InspectionPage() {
       </div>
 
       <div className="mt-8 flex justify-end">
-        <Button 
-          onClick={handleSubmit} 
-          disabled={submitting}
-          className="px-6"
-        >
+        <Button onClick={handleSubmit} disabled={submitting} className="px-6">
           {submitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               送信中...
             </>
-          ) : '点検結果を送信'}
+          ) : (
+            "点検結果を送信"
+          )}
         </Button>
       </div>
     </div>

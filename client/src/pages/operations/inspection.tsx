@@ -1,22 +1,25 @@
 
-import { useState, useEffect } from "react";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import React, { useState, useEffect } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Save, Search } from "lucide-react";
+import Papa from 'papaparse';
 
-// 点検項目の型定義
-type InspectionItem = {
+interface InspectionItem {
   製造メーカー: string;
   機種: string;
   エンジン型式: string;
@@ -29,13 +32,14 @@ type InspectionItem = {
   測定等記録: string;
   図形記録: string;
   [key: string]: string;
-};
+}
 
 export default function Inspection({ onChanges }: { onChanges?: (hasChanges: boolean) => void }) {
   const [items, setItems] = useState<InspectionItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<InspectionItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [manufacturers, setManufacturers] = useState<string[]>([]);
+  const [models, setModels] = useState<string[]>([]);
   const [selectedManufacturer, setSelectedManufacturer] = useState<string>("all");
   const [selectedModel, setSelectedModel] = useState<string>("all");
   const [results, setResults] = useState<Record<string, string>>({});
@@ -48,73 +52,88 @@ export default function Inspection({ onChanges }: { onChanges?: (hasChanges: boo
     const fetchInspectionItems = async () => {
       setLoading(true);
       try {
+        console.log("API呼び出し: /api/inspection-items");
         const response = await fetch('/api/inspection-items');
         if (!response.ok) {
           throw new Error(`API エラー: ${response.status}`);
         }
         
         const csvText = await response.text();
-        console.log("CSV読み込み成功:", csvText.slice(0, 100) + "..."); // デバッグ用
+        console.log("CSV読み込み成功:", csvText.slice(0, 100) + "...");
         
-        // CSVをパース
-        const rows = csvText.split('\n');
-        const headers = rows[0].split(',');
+        // Papaを使用してCSVをパース
+        const { data } = Papa.parse(csvText, {
+          header: true,
+          skipEmptyLines: true
+        });
         
-        const parsedItems: InspectionItem[] = [];
-        for (let i = 1; i < rows.length; i++) {
-          if (!rows[i].trim()) continue;
-          
-          const values = rows[i].split(',');
-          const item: Record<string, string> = {};
-          
-          headers.forEach((header, index) => {
-            item[header.trim()] = values[index]?.trim() || '';
-          });
-          
-          parsedItems.push(item as InspectionItem);
-        }
+        console.log("パース結果:", data.slice(0, 2));
         
-        setItems(parsedItems);
-        console.log("パース完了:", parsedItems.length, "件のデータ");
-      } catch (err) {
-        console.error("データ読み込みエラー:", err);
-        setError(err instanceof Error ? err.message : '不明なエラーが発生しました');
+        setItems(data as InspectionItem[]);
         
-        // エラー時にデモデータをセット
-        setItems([]);
+        // 製造メーカーと機種のリストを抽出
+        const uniqueManufacturers = Array.from(new Set(data.map((item: any) => item['製造メーカー']).filter(Boolean)));
+        const uniqueModels = Array.from(new Set(data.map((item: any) => item['機種']).filter(Boolean)));
+        
+        console.log("メーカーリスト:", uniqueManufacturers);
+        console.log("機種リスト:", uniqueModels);
+        
+        setManufacturers(uniqueManufacturers);
+        setModels(uniqueModels);
+      } catch (error) {
+        console.error("データ取得エラー:", error);
+        toast({
+          title: "データ読み込みエラー",
+          description: `${error}`,
+          variant: "destructive",
+        });
       } finally {
         setLoading(false);
       }
     };
 
     fetchInspectionItems();
-  }, []);
+  }, [toast]);
 
-  // 製造メーカーと機種のリストを抽出
-  const manufacturers = Array.from(new Set(items.map(item => item.製造メーカー))).filter(Boolean);
-  const models = Array.from(new Set(items
-    .filter(item => selectedManufacturer === "all" || item.製造メーカー === selectedManufacturer)
-    .map(item => item.機種)))
-    .filter(Boolean);
-
-  // フィルター適用
+  // フィルター効果
   useEffect(() => {
-    if (loading) return;
+    if (items.length === 0) return;
     
     let filtered = [...items];
     
     if (selectedManufacturer !== "all") {
-      filtered = filtered.filter(item => item.製造メーカー === selectedManufacturer);
+      filtered = filtered.filter(item => item['製造メーカー'] === selectedManufacturer);
     }
     
     if (selectedModel !== "all") {
-      filtered = filtered.filter(item => item.機種 === selectedModel);
+      filtered = filtered.filter(item => item['機種'] === selectedModel);
     }
     
     setFilteredItems(filtered);
-  }, [selectedManufacturer, selectedModel, items, loading]);
+    console.log("フィルター適用後:", filtered.length, "件");
+  }, [items, selectedManufacturer, selectedModel]);
+  
+  // 選択されたメーカーが変更されたら関連する機種を更新
+  useEffect(() => {
+    if (selectedManufacturer !== "all") {
+      const relatedModels = Array.from(
+        new Set(
+          items
+            .filter(item => item['製造メーカー'] === selectedManufacturer)
+            .map(item => item['機種'])
+            .filter(Boolean)
+        )
+      );
+      setModels(relatedModels);
+      if (!relatedModels.includes(selectedModel) && selectedModel !== "all") {
+        setSelectedModel("all");
+      }
+    } else {
+      const allModels = Array.from(new Set(items.map(item => item['機種']).filter(Boolean)));
+      setModels(allModels);
+    }
+  }, [selectedManufacturer, items, selectedModel]);
 
-  // 結果の変更を追跡
   const handleResultChange = (itemIndex: number, value: string) => {
     const key = `${itemIndex}`;
     setResults(prev => ({ ...prev, [key]: value }));
@@ -122,20 +141,21 @@ export default function Inspection({ onChanges }: { onChanges?: (hasChanges: boo
     if (onChanges) onChanges(true);
   };
 
-  // コメントの変更を追跡
   const handleCommentChange = (itemIndex: number, value: string) => {
     const key = `${itemIndex}`;
     setComments(prev => ({ ...prev, [key]: value }));
     setHasChanges(true);
     if (onChanges) onChanges(true);
   };
-
-  // 点検結果の保存
-  const saveResults = async () => {
+  
+  // データ保存
+  const saveInspectionData = async () => {
     try {
-      // TODO: 点検結果の保存APIを実装
+      // ここで実際のデータ保存APIを呼び出す
+      // 例: await fetch('/api/save-inspection', { method: 'POST', body: JSON.stringify({ results, comments }) });
+      
       toast({
-        title: "点検結果を保存しました",
+        title: "保存完了",
         description: `${filteredItems.length}件のデータを保存しました`,
       });
       setHasChanges(false);
@@ -156,6 +176,10 @@ export default function Inspection({ onChanges }: { onChanges?: (hasChanges: boo
       description: "この機能は現在実装中です。",
     });
   };
+
+  if (loading) {
+    return <div className="p-4 text-center">データを読み込み中...</div>;
+  }
 
   return (
     <div className="space-y-4">
@@ -184,7 +208,6 @@ export default function Inspection({ onChanges }: { onChanges?: (hasChanges: boo
                 </SelectContent>
               </Select>
             </div>
-            
             <div>
               <label className="text-sm font-medium mb-1 block">機種</label>
               <Select
@@ -204,75 +227,84 @@ export default function Inspection({ onChanges }: { onChanges?: (hasChanges: boo
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="flex items-end gap-2">
-              <Button onClick={saveResults} disabled={!hasChanges} className="flex-1">
-                <Save className="mr-2 h-4 w-4" />
-                保存
-              </Button>
-              <Button variant="outline" onClick={searchPastData} className="flex-1">
-                <Search className="mr-2 h-4 w-4" />
-                検索
-              </Button>
+            <div>
+              <label className="text-sm font-medium mb-1 block">運用計画</label>
+              <input
+                type="text"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                placeholder="運用計画を入力"
+              />
             </div>
           </div>
           
-          {loading ? (
-            <div className="text-center py-8">データを読み込み中...</div>
-          ) : error ? (
-            <div className="text-center py-8 text-red-500">{error}</div>
-          ) : filteredItems.length === 0 ? (
-            <div className="text-center py-8">点検項目がありません。メーカーと機種を選択してください。</div>
-          ) : (
-            <div className="rounded-md border overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>部位</TableHead>
-                    <TableHead>装置</TableHead>
-                    <TableHead>確認箇所</TableHead>
-                    <TableHead>判断基準</TableHead>
-                    <TableHead>確認要領</TableHead>
-                    <TableHead className="w-[120px]">結果</TableHead>
-                    <TableHead className="w-[200px]">コメント</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredItems.map((item, index) => (
+          <div className="flex justify-between mb-4">
+            <Button variant="outline" onClick={searchPastData}>
+              過去のデータを検索
+            </Button>
+            <Button onClick={saveInspectionData} disabled={!hasChanges}>
+              保存
+            </Button>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>部位</TableHead>
+                  <TableHead>装置</TableHead>
+                  <TableHead>確認箇所</TableHead>
+                  <TableHead>判断基準</TableHead>
+                  <TableHead>確認要領</TableHead>
+                  <TableHead>結果</TableHead>
+                  <TableHead>コメント</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredItems.length > 0 ? (
+                  filteredItems.map((item, index) => (
                     <TableRow key={index}>
-                      <TableCell>{item.部位}</TableCell>
-                      <TableCell>{item.装置}</TableCell>
-                      <TableCell>{item.確認箇所}</TableCell>
-                      <TableCell>{item.判断基準}</TableCell>
-                      <TableCell>{item.確認要領}</TableCell>
+                      <TableCell>{item['部位']}</TableCell>
+                      <TableCell>{item['装置']}</TableCell>
+                      <TableCell>{item['確認箇所']}</TableCell>
+                      <TableCell>{item['判断基準']}</TableCell>
+                      <TableCell>{item['確認要領']}</TableCell>
                       <TableCell>
                         <Select
                           value={results[index] || ""}
                           onValueChange={(value) => handleResultChange(index, value)}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="選択" />
+                            <SelectValue placeholder="結果を選択" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="OK">OK</SelectItem>
-                            <SelectItem value="NG">NG</SelectItem>
-                            <SelectItem value="NA">対象外</SelectItem>
+                            <SelectItem value="good">良好</SelectItem>
+                            <SelectItem value="caution">要注意</SelectItem>
+                            <SelectItem value="bad">不良</SelectItem>
+                            <SelectItem value="na">該当なし</SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>
                       <TableCell>
-                        <Input
+                        <input
+                          type="text"
+                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                           value={comments[index] || ""}
                           onChange={(e) => handleCommentChange(index, e.target.value)}
                           placeholder="コメント"
                         />
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center">
+                      該当するデータがありません。フィルター条件を変更してください。
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

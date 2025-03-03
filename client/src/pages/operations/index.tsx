@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { Card } from '../../components/ui/card';
 import Inspection from './inspection';
+import OperationalPlan from "./operational-plan"; // Added import for OperationalPlan
 
 export default function Operations() {
   const [hasChanges, setHasChanges] = useState(false);
@@ -26,10 +27,7 @@ export default function Operations() {
         </TabsContent>
 
         <TabsContent value="operational-plan">
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">運行計画</h2>
-            <p>運行計画機能は開発中です。</p>
-          </Card>
+          <OperationalPlan /> {/* Updated to use OperationalPlan component */}
         </TabsContent>
       </Tabs>
     </div>

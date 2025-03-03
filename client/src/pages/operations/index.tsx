@@ -53,26 +53,4 @@ export default function Operations() {
       </div>
     </div>
   );
-}on />
-          </div>
-
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList>
-              <TabsTrigger value="inspection">仕業点検</TabsTrigger>
-              <TabsTrigger value="engine-hours">運用実績</TabsTrigger>
-            </TabsList>
-            <TabsContent value="inspection">
-              <Inspection />
-            </TabsContent>
-            <TabsContent value="engine-hours">
-              <div className="p-4 border rounded-md mt-4">
-                <h2 className="text-xl font-semibold mb-4">運用実績</h2>
-                <p>エンジンアワーの記録はここに表示されます。</p>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </main>
-      </div>
-    </div>
-  );
 }

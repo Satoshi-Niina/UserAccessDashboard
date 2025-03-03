@@ -1,4 +1,3 @@
-
 import { XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
@@ -72,7 +71,7 @@ export function ExitButton({ hasChanges = false, onSave, redirectTo = "/" }: Exi
     <Button
       variant="destructive"
       onClick={handleExit}
-      className="gap-2"
+      className="gap-2 bg-blue-600 hover:bg-blue-700" // Added blue background
       disabled={isSaving}
     >
       <XCircle className="h-4 w-4" />

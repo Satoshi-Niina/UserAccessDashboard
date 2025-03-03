@@ -67,7 +67,7 @@ export function registerRoutes(app: Express): Server {
   });
 
 // API endpoint for CSV data
-app.get('/api/inspection-items', async (req, res) => {
+app.get('/api/inspection-items', (req, res) => {
   try {
     // In a real implementation, this would read from a database or file storage
     // For now, we'll read directly from the CSV file in attached_assets

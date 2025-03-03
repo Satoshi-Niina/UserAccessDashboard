@@ -94,54 +94,29 @@ export function Sidebar({ onExpandChange }: SidebarProps) {
         </h1>
       </div>
 
-      <nav className="flex-1 relative">
-        {menuItems.map((item) => {
-          // Added check for username "niina"
-          if ((item.adminOnly && !user?.isAdmin) && user?.username !== "niina") {
-            return null;
-          }
-
+      <nav className="flex-1">
+        {menuItems.filter(item => !item.adminOnly || (user && user.isAdmin)).map((item) => {
           const Icon = item.icon;
-          const isActive = location === item.href || 
-            (item.subItems?.some(sub => location === sub.href) ?? false);
+          const isActive = location === item.href || (item.subItems && item.subItems.some(subItem => location === subItem.href));
+          const hasSubItems = item.subItems && item.subItems.length > 0;
 
           return (
-            <div key={item.href}>
-              <Link href={item.href}>
-                <a
-                  className={cn(
-                    "flex items-center gap-3 px-6 py-3 text-sidebar-foreground hover:bg-sidebar-accent transition-colors",
-                    isActive && "bg-sidebar-accent text-sidebar-accent-foreground",
-                    !isExpanded && "justify-center px-4"
-                  )}
-                >
-                  <Icon className="h-5 w-5" />
-                  {isExpanded && <span>{item.label}</span>}
-                </a>
-              </Link>
-              {item.subItems && isActive && isExpanded && (
-                <div className="pl-12 bg-sidebar-accent/50">
-                  {item.subItems.map((subItem) => {
-                    const SubIcon = subItem.icon;
-                    const isSubActive = location === subItem.href;
-
-                    return (
-                      <Link key={subItem.href} href={subItem.href}>
-                        <a
-                          className={cn(
-                            "flex items-center gap-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors",
-                            isSubActive && "text-sidebar-accent-foreground"
-                          )}
-                        >
-                          <SubIcon className="h-4 w-4" />
-                          <span>{subItem.label}</span>
-                        </a>
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+            <Link key={item.href} href={item.href}>
+              <div
+                className={cn(
+                  "flex items-center p-3 mx-3 rounded-lg cursor-pointer",
+                  isActive ? "bg-sidebar-selected text-sidebar-foreground font-medium" : "text-sidebar-muted hover:bg-sidebar-hover"
+                )}
+              >
+                <Icon className="h-5 w-5 mr-3" />
+                {isExpanded && (
+                  <div className="flex-1 flex items-center justify-between">
+                    <span>{item.label}</span>
+                    {hasSubItems && <ChevronRight className={cn("h-4 w-4 transition-transform", isActive && "rotate-90")} />}
+                  </div>
+                )}
+              </div>
+            </Link>
           );
         })}
       </nav>

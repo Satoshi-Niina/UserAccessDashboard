@@ -1,42 +1,29 @@
-// 保護されたルートコンポーネント
-// 認証済みユーザーのみアクセス可能なルートを提供
-// 未認証時は認証ページにリダイレクト
-import { Route, useLocation } from "wouter";
+import { ReactNode } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { useEffect } from "react";
-import { Loader2 } from "lucide-react";
 import { Redirect } from "wouter";
 
-
-export function ProtectedRoute({
-  path,
-  component: Component,
-}: {
+type ProtectedRouteProps = {
   path: string;
-  component: () => React.JSX.Element;
-}) {
-  const { user, isLoading } = useAuth();
-  const [, setLocation] = useLocation();
+  component: React.ComponentType<any>;
+  adminOnly?: boolean;
+};
 
-  useEffect(() => {
-    if (!user) {
-      setLocation("/auth");
-    }
-  }, [user, setLocation]);
+export const ProtectedRoute = ({ component: Component, adminOnly = false, ...rest }: ProtectedRouteProps) => {
+  const { user, loading } = useAuth();
 
-  if (isLoading) {
-    return (
-      <Route path={path}>
-        <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-border" />
-        </div>
-      </Route>
-    );
+  if (loading) {
+    return <div>Loading...</div>;
   }
 
+  // ユーザーが認証されていない場合はログインページにリダイレクト
   if (!user) {
-    return null;
+    return <Redirect to="/login" />;
   }
 
-  return <Route path={path} component={Component} />;
-}
+  // 管理者専用ルートの場合、管理者権限チェック
+  if (adminOnly && !user.isAdmin) {
+    return <Redirect to="/" />;
+  }
+
+  return <Component {...rest} />;
+};

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   TableHead, 
   TableRow, 
@@ -24,11 +24,17 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Sidebar } from "@/components/layout/sidebar";
+import { ExitButton } from "@/components/layout/exit-button";
+import { useToast } from "@/components/ui/use-toast";
 
 export function Operations() {
   const [activeTab, setActiveTab] = useState("daily-inspection");
   const [selectedManufacturer, setSelectedManufacturer] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
+  const [isMenuExpanded, setIsMenuExpanded] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  const { toast } = useToast();
 
   // 仮のデータ
   const manufacturers = ["メーカーA", "メーカーB", "メーカーC"];
@@ -44,12 +50,41 @@ export function Operations() {
     { id: 6, category: "ブレーキ", item: "ブレーキパッド磨耗", result: "要点検" },
   ];
 
+  // 保存関数
+  const saveChanges = async () => {
+    try {
+      // ここで実際のデータ保存APIを呼び出す
+      // 例: await fetch('/api/inspection-data', { method: 'POST', body: JSON.stringify(data) });
+      
+      // 保存成功を示すためにhasChangesをfalseに設定
+      setHasChanges(false);
+      return true;
+    } catch (error) {
+      console.error("データ保存エラー:", error);
+      return false;
+    }
+  };
+
+  // 選択変更時にhasChangesをtrueに設定
+  useEffect(() => {
+    if (selectedManufacturer || selectedModel) {
+      setHasChanges(true);
+    }
+  }, [selectedManufacturer, selectedModel]);
+
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">運用管理</h2>
-      </div>
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+    <div className="flex h-screen">
+      <Sidebar onExpandChange={setIsMenuExpanded} />
+      <div className={`flex-1 ${isMenuExpanded ? 'ml-64' : 'ml-16'} transition-all duration-300`}>
+        <div className="space-y-4 p-4 md:p-8 pt-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-3xl font-bold tracking-tight">運用管理</h2>
+            <ExitButton 
+              hasChanges={hasChanges}
+              onSave={saveChanges}
+            />
+          </div>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="daily-inspection">仕業点検</TabsTrigger>
           <TabsTrigger value="engine-hours">エンジンアワー</TabsTrigger>
@@ -138,6 +173,8 @@ export function Operations() {
           </Card>
         </TabsContent>
       </Tabs>
+        </div>
+      </div>
     </div>
   );
 }

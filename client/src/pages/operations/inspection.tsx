@@ -127,13 +127,13 @@ export default function Inspection() {
         // 状態を更新
         setItems(parsedItems);
         setFilteredItems(parsedItems);
-        
+
         if (manufacturersArray.length > 0) {
           setManufacturers(['すべて', ...manufacturersArray]);
           // 最初のメーカーを自動選択
           setSelectedManufacturer(manufacturersArray[0]);
         }
-        
+
         if (modelTypesArray.length > 0) {
           setModelTypes(['すべて', ...modelTypesArray]);
           // 最初の機種を自動選択
@@ -159,21 +159,21 @@ export default function Inspection() {
   // コンポーネントのマウント時に点検データを読み込む
   useEffect(() => {
     fetchInspectionData();
-    
+
     // CSVファイルの内容を直接確認
     fetch('/api/inspection-items')
       .then(response => response.text())
       .then(csv => {
         console.log('--- CSVデータの詳細 ---');
         console.log(csv.substring(0, 1000)); // 最初の1000文字を表示
-        
+
         // CSVの行数を確認
         const lines = csv.split('\n');
         console.log(`CSVの総行数: ${lines.length}`);
-        
+
         // ヘッダー行を確認
         console.log('ヘッダー行:', lines[0]);
-        
+
         // 最初の数行のデータを確認
         console.log('データ行の例:');
         lines.slice(1, 6).forEach((line, i) => {
@@ -189,7 +189,7 @@ export default function Inspection() {
       // 最初の実際のメーカー（「すべて」の次のもの）を選択
       setSelectedManufacturer(manufacturers[1]);
     }
-    
+
     if (modelTypes.length > 1 && selectedModelType === 'すべて') {
       // 最初の実際の機種（「すべて」の次のもの）を選択
       setSelectedModelType(modelTypes[1]);
@@ -199,17 +199,31 @@ export default function Inspection() {
   // フィルタリング
   useEffect(() => {
     if (items.length > 0) {
+      console.log(`フィルタリング開始: 全${items.length}件, メーカー: ${selectedManufacturer}, 機種: ${selectedModelType}`);
+
       let filtered = [...items];
 
+      // メーカーでフィルタリング
       if (selectedManufacturer !== 'すべて') {
         filtered = filtered.filter(item => item.manufacturer === selectedManufacturer);
+        console.log(`  メーカー「${selectedManufacturer}」でフィルター後: ${filtered.length}件`);
       }
 
+      // 機種でフィルタリング
       if (selectedModelType !== 'すべて') {
         filtered = filtered.filter(item => item.modelType === selectedModelType);
+        console.log(`  機種「${selectedModelType}」でフィルター後: ${filtered.length}件`);
       }
 
-      console.log(`フィルタリング結果: ${filtered.length}件, メーカー: ${selectedManufacturer}, 機種: ${selectedModelType}`);
+      console.log(`フィルタリング結果: ${filtered.length}件`);
+
+      // フィルタリング結果のサンプルを表示
+      if (filtered.length > 0) {
+        console.log('フィルタリング結果のサンプル:', JSON.stringify(filtered[0]));
+      } else {
+        console.log('フィルタリング結果が0件です');
+      }
+
       setFilteredItems(filtered);
     }
   }, [selectedManufacturer, selectedModelType, items]);

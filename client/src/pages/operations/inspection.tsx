@@ -28,6 +28,8 @@ import {
 import { Button } from '@/components/ui';
 import { Save, FileText } from 'lucide-react';
 import { toast } from "@/components/ui/use-toast";
+import Label from '@/components/ui/label';
+
 
 interface InspectionItem {
   id: string;
@@ -116,8 +118,8 @@ export default function Inspection() {
   useEffect(() => {
     if (selectedManufacturer !== 'すべて' && selectedModelType !== 'すべて') {
       let filtered = [...items];
-      filtered = filtered.filter(item => 
-        item.manufacturer === selectedManufacturer && 
+      filtered = filtered.filter(item =>
+        item.manufacturer === selectedManufacturer &&
         item.modelType === selectedModelType
       );
       setFilteredItems(filtered);
@@ -129,10 +131,11 @@ export default function Inspection() {
 
   // 点検結果を更新する関数
   const updateResult = (id: string, result: string) => {
-    const updatedItems = items.map(item => 
+    const updatedItems = items.map(item =>
       item.id === id ? { ...item, result } : item
     );
     setItems(updatedItems);
+    setFilteredItems(prev => updatedItems.filter(item => item.manufacturer === selectedManufacturer && item.modelType === selectedModelType));
     setHasChanges(true);
   };
 
@@ -188,136 +191,152 @@ export default function Inspection() {
   };
 
   return (
-    <div className="flex h-screen">
-      <Sidebar onExpandChange={setIsMenuExpanded} />
+    <div className="flex h-screen bg-background">
+      <Sidebar isExpanded={isMenuExpanded} setIsExpanded={setIsMenuExpanded} />
       <div className={`flex-1 ${isMenuExpanded ? 'ml-64' : 'ml-16'} transition-all duration-300`}>
         <main className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold">仕業点検</h1>
-            <ExitButton /> {/* Exit button styling needs to be updated separately in CSS */}
-          </div>
+          <h1 className="text-3xl font-bold mb-6">仕業点検</h1>
 
-          <Card className="mb-6">
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-2 gap-4 mb-6">
+          {/* コンテンツをここに追加する */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            {/* 左側のセレクター */}
+            <div>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">製造メーカー</label>
-                  <Select 
-                    value={selectedManufacturer} 
+                  <Label htmlFor="manufacturer">製造メーカー</Label>
+                  <Select
+                    value={selectedManufacturer}
                     onValueChange={setSelectedManufacturer}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="manufacturer">
                       <SelectValue placeholder="メーカーを選択" />
                     </SelectTrigger>
                     <SelectContent>
-                      {manufacturers.map(mfr => (
-                        <SelectItem key={mfr} value={mfr}>{mfr}</SelectItem>
+                      {manufacturers.map((manufacturer) => (
+                        <SelectItem key={manufacturer} value={manufacturer}>
+                          {manufacturer}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">機種</label>
-                  <Select 
-                    value={selectedModelType} 
+                  <Label htmlFor="model">機種</Label>
+                  <Select
+                    value={selectedModelType}
                     onValueChange={setSelectedModelType}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="model">
                       <SelectValue placeholder="機種を選択" />
                     </SelectTrigger>
                     <SelectContent>
-                      {modelTypes.map(model => (
-                        <SelectItem key={model} value={model}>{model}</SelectItem>
+                      {modelTypes.map((model) => (
+                        <SelectItem key={model} value={model}>
+                          {model}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
               </div>
+            </div>
 
-              {showTable && (
-                <>
-                  <div className="flex justify-between mb-4">
-                    <Tabs defaultValue="all">
-                      <TabsList>
-                        <TabsTrigger value="all">すべて</TabsTrigger>
-                        <TabsTrigger value="engine">エンジン</TabsTrigger>
-                        <TabsTrigger value="transmission">動力伝達</TabsTrigger>
-                        <TabsTrigger value="brake">制動装置</TabsTrigger>
-                        <TabsTrigger value="electric">電気装置</TabsTrigger>
-                      </TabsList>
-                    </Tabs>
+            {/* 右側のボタン */}
+            <div className="flex items-end justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  // リセット処理
+                  setSelectedManufacturer('すべて');
+                  setSelectedModelType('すべて');
+                  setFilteredItems([]);
+                  setShowTable(false);
+                }}
+              >
+                リセット
+              </Button>
+              <Button
+                disabled={!hasChanges}
+                onClick={() => {
+                  // 保存処理
+                  console.log("保存しました");
+                  setHasChanges(false);
+                }}
+              >
+                保存
+              </Button>
+            </div>
+          </div>
 
-                    <div className="flex space-x-2">
-                      <Button variant="outline" onClick={exportCSV}>
-                        <FileText className="h-4 w-4 mr-2" />
-                        レポート出力
-                      </Button>
-                      <Button onClick={saveResults} disabled={!hasChanges}>
-                        <Save className="h-4 w-4 mr-2" />
-                        保存
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="border rounded-md">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>部位</TableHead>
-                          <TableHead>装置</TableHead>
-                          <TableHead>確認箇所</TableHead>
-                          <TableHead>判断基準</TableHead>
-                          <TableHead>確認要領</TableHead>
-                          <TableHead className="w-32">点検結果</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredItems.length > 0 ? (
-                          filteredItems.map((item) => (
-                            <TableRow key={item.id}>
-                              <TableCell>{item.part}</TableCell>
-                              <TableCell>{item.device}</TableCell>
-                              <TableCell>{item.checkPoint}</TableCell>
-                              <TableCell>{item.judgmentCriteria}</TableCell>
-                              <TableCell>{item.checkMethod}</TableCell>
-                              <TableCell>
-                                <Select 
-                                  value={item.result || '未実施'} 
-                                  onValueChange={(value) => updateResult(item.id, value)}
-                                >
-                                  <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="選択" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="未実施">未実施</SelectItem>
-                                    <SelectItem value="良好">良好</SelectItem>
-                                    <SelectItem value="注意">注意</SelectItem>
-                                    <SelectItem value="不良">不良</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={6} className="text-center py-4">
-                              選択した製造メーカーと機種に一致する点検項目がありません。
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </>
-              )}
-
-              {!showTable && (
-                <div className="border rounded-md p-6 text-center">
-                  <p className="text-lg">製造メーカーと機種を選択すると、点検項目編集で生成されたデータが表示されます。</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {/* ここにテーブルや点検データを表示する */}
+          <div className="mt-6">
+            {showTable && (
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[100px]">メーカー</TableHead>
+                      <TableHead className="w-[100px]">機種</TableHead>
+                      <TableHead className="w-[120px]">エンジン型式</TableHead>
+                      <TableHead className="w-[80px]">部位</TableHead>
+                      <TableHead className="w-[80px]">装置</TableHead>
+                      <TableHead className="w-[150px]">確認箇所</TableHead>
+                      <TableHead className="w-[200px]">判断基準</TableHead>
+                      <TableHead className="w-[200px]">確認要領</TableHead>
+                      <TableHead className="w-[100px]">点検結果</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredItems.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>{item.manufacturer}</TableCell>
+                        <TableCell>{item.modelType}</TableCell>
+                        <TableCell>{item.engineType}</TableCell>
+                        <TableCell>{item.part}</TableCell>
+                        <TableCell>{item.device}</TableCell>
+                        <TableCell>{item.checkPoint}</TableCell>
+                        <TableCell>{item.judgmentCriteria}</TableCell>
+                        <TableCell>{item.checkMethod}</TableCell>
+                        <TableCell>
+                          <Select
+                            value={item.result}
+                            onValueChange={(value) => {
+                              const newItems = [...items];
+                              const index = newItems.findIndex(i => i.id === item.id);
+                              if (index !== -1) {
+                                newItems[index] = { ...newItems[index], result: value };
+                                setItems(newItems);
+                                setFilteredItems(prev => {
+                                  const prevIndex = prev.findIndex(i => i.id === item.id);
+                                  if (prevIndex !== -1) {
+                                    const newFilteredItems = [...prev];
+                                    newFilteredItems[prevIndex] = { ...newFilteredItems[prevIndex], result: value };
+                                    return newFilteredItems;
+                                  }
+                                  return prev;
+                                });
+                                setHasChanges(true);
+                              }
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="正常">正常</SelectItem>
+                              <SelectItem value="注意">注意</SelectItem>
+                              <SelectItem value="要修理">要修理</SelectItem>
+                              <SelectItem value="未実施">未実施</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </div>
         </main>
       </div>
     </div>

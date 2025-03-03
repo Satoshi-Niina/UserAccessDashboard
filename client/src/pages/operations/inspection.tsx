@@ -81,6 +81,54 @@ export default function Inspection() {
         const uniqueManufacturers = new Set<string>();
         const uniqueModelTypes = new Set<string>();
         
+        // 各行をパース
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          
+          const values = line.split(',').map(v => v.trim());
+          
+          const item: InspectionItem = {
+            id: `item-${i}`,
+            manufacturer: values[manufacturerIndex] || '',
+            modelType: values[modelTypeIndex] || '',
+            engineType: values[engineTypeIndex] || '',
+            part: values[partIndex] || '',
+            device: values[deviceIndex] || '',
+            procedure: values[procedureIndex] || '',
+            checkPoint: values[checkPointIndex] || '',
+            judgmentCriteria: values[judgmentIndex] || '',
+            checkMethod: values[checkMethodIndex] || '',
+            measurement: values[measurementIndex] || '',
+            graphicRecord: values[graphicRecordIndex] || '',
+            order: i,
+            result: '' // 初期状態は空
+          };
+          
+          // 有効な製造メーカーと機種を収集
+          if (item.manufacturer) {
+            uniqueManufacturers.add(item.manufacturer);
+          }
+          if (item.modelType) {
+            uniqueModelTypes.add(item.modelType);
+          }
+          
+          parsedItems.push(item);
+        }
+        
+        console.log(`パースされた項目数: ${parsedItems.length}`);
+        
+        // 状態を更新
+        setItems(parsedItems);
+        setFilteredItems(parsedItems);
+        
+        // メーカーと機種のリストを作成
+        const manufacturersArray = Array.from(uniqueManufacturers);
+        const modelTypesArray = Array.from(uniqueModelTypes);
+        
+        setManufacturers(['すべて', ...manufacturersArray]);
+        setModelTypes(['すべて', ...modelTypesArray]);
+        
         for (let i = 1; i < lines.length; i++) {
           if (!lines[i].trim()) continue;
           
@@ -157,7 +205,63 @@ export default function Inspection() {
     }
   }, [selectedManufacturer, selectedModelType, items]);
 
-  // 点検結果の変更
+  // 点検結果の変更を処理する関数
+  const handleResultChange = (itemId: string, result: string) => {
+    setItems(prevItems => {
+      const newItems = prevItems.map(item => {
+        if (item.id === itemId) {
+          return { ...item, result };
+        }
+        return item;
+      });
+      setHasChanges(true);
+      return newItems;
+    });
+  };
+
+  // 点検結果の保存処理
+  const handleSave = async () => {
+    try {
+      // 実際のAPIエンドポイントが必要な場合は実装する
+      // 現在はCSVデータとして保存する例
+      const csvData = [
+        '製造メーカー,機種,エンジン型式,部位,装置,手順,確認箇所,判断基準,確認要領,測定等記録,図形記録',
+        ...items.map(item => {
+          return [
+            item.manufacturer,
+            item.modelType,
+            item.engineType,
+            item.part,
+            item.device,
+            item.procedure,
+            item.checkPoint,
+            item.judgmentCriteria,
+            item.checkMethod,
+            item.measurement,
+            item.graphicRecord
+          ].join(',');
+        })
+      ].join('\n');
+
+      console.log('保存するCSVデータ:', csvData);
+      
+      // 変更フラグをリセット
+      setHasChanges(false);
+      
+      toast({
+        title: "保存完了",
+        description: "点検データが保存されました",
+        variant: "success" 
+      });
+    } catch (error) {
+      console.error('保存エラー:', error);
+      toast({
+        title: "エラー",
+        description: "点検データの保存に失敗しました",
+        variant: "destructive"
+      });
+    }
+  };更
   const handleResultChange = (itemId: string, result: string) => {
     const updatedItems = items.map(item =>
       item.id === itemId ? { ...item, result } : item

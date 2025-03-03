@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Tabs,
@@ -7,7 +6,6 @@ import {
   TabsTrigger,
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui';
@@ -25,80 +23,70 @@ export default function Operations() {
     setHasChanges(hasChanges);
   };
 
-  // 保存関数
-  const saveChanges = async () => {
-    try {
-      // ここで実際のデータ保存APIを呼び出す
-      // 保存成功を示すためにhasChangesをfalseに設定
-      setHasChanges(false);
-      return true;
-    } catch (error) {
-      console.error("データ保存エラー:", error);
-      return false;
+  // タブ切り替え前の確認
+  const handleTabChange = (value: string) => {
+    if (hasChanges) {
+      // 実際の実装では確認ダイアログを表示するなどの処理が必要
+      if (window.confirm('保存されていない変更があります。移動しますか？')) {
+        setActiveTab(value);
+      }
+    } else {
+      setActiveTab(value);
     }
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* Sidebarコンポーネント - メニュー表示用 */}
-      <Sidebar onExpandChange={setIsMenuExpanded} />
-      
-      {/* メインコンテンツエリア - サイドバーの幅に合わせて調整 */}
-      <div className={`flex-1 overflow-auto p-0 ${isMenuExpanded ? 'ml-64' : 'ml-16'} transition-all duration-300`}>
-        <div className="space-y-4 p-4 md:p-8 pt-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-3xl font-bold tracking-tight">運用管理</h2>
-            <ExitButton 
-              hasChanges={hasChanges}
-              onSave={saveChanges}
-            />
-          </div>
-          
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+    <div className="flex h-screen bg-background">
+      <Sidebar isExpanded={isMenuExpanded} setIsExpanded={setIsMenuExpanded} />
+
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <header className="py-4 px-6 flex justify-between items-center border-b">
+          <h1 className="text-xl font-semibold">運行管理システム</h1>
+          <ExitButton />
+        </header>
+
+        <main className="flex-1 overflow-auto p-6">
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
+            <TabsList className="mb-6">
               <TabsTrigger value="daily-inspection">仕業点検</TabsTrigger>
-              <TabsTrigger value="engine-hours">エンジンアワー記録</TabsTrigger>
+              <TabsTrigger value="operation-log">運転日誌</TabsTrigger>
+              <TabsTrigger value="operation-plan">運行計画</TabsTrigger>
             </TabsList>
-            
-            {/* 仕業点検タブ */}
-            <TabsContent value="daily-inspection" className="space-y-4 mt-4">
+
+            <TabsContent value="daily-inspection">
               <Card>
-                <CardHeader className="pb-2">
+                <CardHeader>
                   <CardTitle>仕業点検</CardTitle>
-                  <CardDescription>
-                    メーカーと機種を選択して点検項目を表示します。
-                  </CardDescription>
                 </CardHeader>
-                <CardContent className="pt-2">
-                  {/* 仕業点検コンポーネントを埋め込む */}
+                <CardContent>
                   <Inspection onChanges={handleInspectionChanges} />
                 </CardContent>
               </Card>
             </TabsContent>
-            
-            {/* エンジンアワータブ */}
-            <TabsContent value="engine-hours" className="space-y-4 mt-4">
+
+            <TabsContent value="operation-log">
               <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle>エンジンアワー記録</CardTitle>
-                  <CardDescription>
-                    エンジンの運転時間を記録・管理します。
-                  </CardDescription>
+                <CardHeader>
+                  <CardTitle>運転日誌</CardTitle>
                 </CardHeader>
-                <CardContent className="pt-2">
-                  <div className="flex justify-center items-center py-10">
-                    <div className="text-center max-w-md">
-                      <h3 className="text-lg font-semibold mb-2">機能開発中</h3>
-                      <p className="text-muted-foreground">
-                        エンジンアワー記録機能は現在開発中です。今後のアップデートをお待ちください。
-                      </p>
-                    </div>
-                  </div>
+                <CardContent>
+                  <p>運転日誌機能は現在開発中です。</p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="operation-plan">
+              <Card>
+                <CardHeader>
+                  <CardTitle>運行計画</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p>運行計画機能は現在開発中です。</p>
                 </CardContent>
               </Card>
             </TabsContent>
           </Tabs>
-        </div>
+        </main>
       </div>
     </div>
   );

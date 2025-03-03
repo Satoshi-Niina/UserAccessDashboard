@@ -35,7 +35,7 @@ interface InspectionItem {
   measurement: string;
   graphicRecord: string;
   order: number;
-  result?: string; // 点検結果
+  result?: string;
 }
 
 interface InspectionProps {
@@ -45,118 +45,75 @@ interface InspectionProps {
 export default function Inspection({ onChanges }: InspectionProps) {
   const [items, setItems] = useState<InspectionItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<InspectionItem[]>([]);
-  const [manufacturers, setManufacturers] = useState<string[]>(['すべて']);
-  const [modelTypes, setModelTypes] = useState<string[]>(['すべて']);
-  const [selectedManufacturer, setSelectedManufacturer] = useState<string>('すべて');
-  const [selectedModelType, setSelectedModelType] = useState<string>('すべて');
-  const [hasChanges, setHasChanges] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [dataLoaded, setDataLoaded] = useState(false);
+  const [manufacturers, setManufacturers] = useState<string[]>([]);
+  const [selectedManufacturer, setSelectedManufacturer] = useState<string>('');
+  const [modelTypes, setModelTypes] = useState<string[]>([]);
+  const [selectedModelType, setSelectedModelType] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(true);
+  const [hasChanges, setHasChanges] = useState<boolean>(false);
 
-  // データを取得する
+  // 点検項目データの読み込み
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
       try {
+        setLoading(true);
         const response = await fetch('/api/inspection-items');
-        if (!response.ok) {
-          throw new Error(`APIエラー: ${response.status}`);
-        }
-        
         const text = await response.text();
-        console.log('取得したCSVデータのサンプル:', text.substring(0, 200));
 
-        if (!text || text.trim() === '') {
-          toast({
-            title: "エラー",
-            description: "データが空です",
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
-        }
+        if (text) {
+          const lines = text.split('\n');
+          const headers = lines[0].split(',').map(h => h.trim());
 
-        const lines = text.split('\n');
-        console.log(`CSVデータ: 総行数=${lines.length}`);
-
-        if (lines.length < 2) {
-          toast({
-            title: "警告",
-            description: "データが不足しています",
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
-        }
-
-        // CSVデータをパース
-        const parsedItems: InspectionItem[] = [];
-        const manufacturerSet = new Set<string>();
-        const modelTypeSet = new Set<string>();
-
-        // ヘッダー行をスキップして2行目から処理
-        for (let i = 1; i < lines.length; i++) {
-          if (!lines[i] || !lines[i].trim()) continue; // 空行はスキップ
-
-          const values = lines[i].split(',');
-          if (values.length < 8) {
-            console.log(`スキップされた行 ${i}: 列数不足`, values);
-            continue; // 最低限の列数がない行はスキップ
-          }
-
-          const manufacturer = values[0]?.trim() || '';
-          const modelType = values[1]?.trim() || '';
-
-          // 製造メーカーと機種をセットに追加（重複排除）
-          if (manufacturer) manufacturerSet.add(manufacturer);
-          if (modelType) modelTypeSet.add(modelType);
-
-          // 項目の作成
-          const item: InspectionItem = {
-            id: `item-${i}`,
-            manufacturer: manufacturer,
-            modelType: modelType,
-            engineType: values[2]?.trim() || '',
-            part: values[3]?.trim() || '',
-            device: values[4]?.trim() || '',
-            procedure: values[5]?.trim() || '',
-            checkPoint: values[6]?.trim() || '',
-            judgmentCriteria: values[7]?.trim() || '',
-            checkMethod: values[8]?.trim() || '',
-            measurement: values[9]?.trim() || '',
-            graphicRecord: values[10]?.trim() || '',
-            order: i
+          // ヘッダーとカラムのマッピング
+          const headerMap: Record<string, string> = {
+            '製造メーカー': 'manufacturer',
+            '機種': 'modelType',
+            'エンジン型式': 'engineType',
+            '部位': 'part',
+            '装置': 'device',
+            '手順': 'procedure',
+            '確認箇所': 'checkPoint',
+            '判断基準': 'judgmentCriteria',
+            '確認要領': 'checkMethod',
+            '測定等記録': 'measurement',
+            '図形記録': 'graphicRecord'
           };
 
-          parsedItems.push(item);
-        }
+          // CSVデータをパース
+          const parsedItems: InspectionItem[] = [];
+          for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+            
+            const values = lines[i].split(',').map(v => v.trim());
+            const item: any = { id: `item-${i}`, order: i, result: '' };
+            
+            for (let j = 0; j < headers.length; j++) {
+              const key = headerMap[headers[j]];
+              if (key) {
+                item[key] = values[j] || '';
+              }
+            }
+            
+            parsedItems.push(item as InspectionItem);
+          }
 
-        // メーカーと機種の選択肢を設定
-        const manufacturerArray = Array.from(manufacturerSet).filter(Boolean);
-        const modelTypeArray = Array.from(modelTypeSet).filter(Boolean);
-
-        console.log(`検出されたメーカー (${manufacturerArray.length}): ${manufacturerArray.join(', ')}`);
-        console.log(`検出された機種 (${modelTypeArray.length}): ${modelTypeArray.join(', ')}`);
-        console.log(`パースされた点検項目: ${parsedItems.length}件`);
-
-        setItems(parsedItems);
-        setFilteredItems(parsedItems);
-        setManufacturers(['すべて', ...manufacturerArray]);
-        setModelTypes(['すべて', ...modelTypeArray]);
-        setDataLoaded(true);
-
-        // 初期メーカーと機種を設定（値があれば）
-        if (manufacturerArray.length > 0) {
-          setSelectedManufacturer(manufacturerArray[0]);
+          setItems(parsedItems);
+          
+          // メーカーリストの生成
+          const uniqueManufacturers = Array.from(
+            new Set(parsedItems.map(item => item.manufacturer))
+          ).filter(Boolean);
+          setManufacturers(uniqueManufacturers);
+          
+          setLoading(false);
         }
       } catch (error) {
-        console.error('データ取得エラー:', error);
+        console.error('データ読み込みエラー:', error);
         toast({
           title: "エラー",
-          description: "データの読み込みに失敗しました",
-          variant: "destructive",
+          description: "点検項目データの読み込みに失敗しました。",
+          variant: "destructive"
         });
-      } finally {
         setLoading(false);
       }
     };
@@ -164,34 +121,69 @@ export default function Inspection({ onChanges }: InspectionProps) {
     fetchData();
   }, []);
 
-  // フィルタリング
+  // メーカー選択時の処理
   useEffect(() => {
-    if (!dataLoaded || items.length === 0) return;
-
-    console.log(`フィルタリング: メーカー=${selectedManufacturer}, 機種=${selectedModelType}`);
-
-    let filtered = [...items];
-
-    // メーカーでフィルタリング
-    if (selectedManufacturer !== 'すべて') {
-      filtered = filtered.filter(item => item.manufacturer === selectedManufacturer);
+    if (selectedManufacturer) {
+      // 選択されたメーカーで機種をフィルタリング
+      const filteredByManufacturer = items.filter(
+        item => item.manufacturer === selectedManufacturer
+      );
+      
+      // 機種リストの生成
+      const uniqueModelTypes = Array.from(
+        new Set(filteredByManufacturer.map(item => item.modelType))
+      ).filter(Boolean);
+      setModelTypes(uniqueModelTypes);
+      
+      // 機種が選択されている場合はその機種でもフィルタリング
+      if (selectedModelType && !uniqueModelTypes.includes(selectedModelType)) {
+        setSelectedModelType('');
+      }
+      
+      applyFilters(selectedManufacturer, selectedModelType);
+    } else {
+      setModelTypes([]);
+      setSelectedModelType('');
+      setFilteredItems([]);
     }
+  }, [selectedManufacturer, items]);
 
-    // 機種でフィルタリング
-    if (selectedModelType !== 'すべて') {
-      filtered = filtered.filter(item => item.modelType === selectedModelType);
+  // 機種選択時の処理
+  useEffect(() => {
+    if (selectedManufacturer) {
+      applyFilters(selectedManufacturer, selectedModelType);
     }
+  }, [selectedModelType]);
 
-    console.log(`フィルタリング結果: ${filtered.length}件`);
+  // フィルター適用
+  const applyFilters = (manufacturer: string, modelType: string) => {
+    let filtered = items.filter(item => item.manufacturer === manufacturer);
+    
+    if (modelType) {
+      filtered = filtered.filter(item => item.modelType === modelType);
+    }
+    
     setFilteredItems(filtered);
-  }, [selectedManufacturer, selectedModelType, items, dataLoaded]);
+  };
 
-  // 点検結果の変更
+  // 結果の更新処理
   const handleResultChange = (itemId: string, result: string) => {
-    const updatedItems = items.map(item =>
-      item.id === itemId ? { ...item, result } : item
+    setFilteredItems(prev => 
+      prev.map(item => 
+        item.id === itemId 
+          ? { ...item, result } 
+          : item
+      )
     );
-    setItems(updatedItems);
+    
+    setItems(prev => 
+      prev.map(item => 
+        item.id === itemId 
+          ? { ...item, result } 
+          : item
+      )
+    );
+    
     setHasChanges(true);
     
     // 親コンポーネントに変更を通知
@@ -201,27 +193,45 @@ export default function Inspection({ onChanges }: InspectionProps) {
   };
 
   // 保存処理
-  const saveInspection = () => {
-    console.log('保存するCSVデータ:', generateCsvFromItems(items));
-    toast({
-      title: "保存完了",
-      description: "点検結果が保存されました",
-    });
-    setHasChanges(false);
-    
-    // 親コンポーネントに保存完了を通知
-    if (onChanges) {
-      onChanges(false);
+  const saveInspectionResults = async () => {
+    try {
+      // ここで実際のデータ保存APIを呼び出す
+      // 例: await fetch('/api/inspection-results', { 
+      //   method: 'POST', 
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(items) 
+      // });
+      
+      toast({
+        title: "保存完了",
+        description: "点検結果を保存しました。",
+      });
+      
+      setHasChanges(false);
+      
+      // 親コンポーネントに保存完了を通知
+      if (onChanges) {
+        onChanges(false);
+      }
+    } catch (error) {
+      console.error('保存エラー:', error);
+      toast({
+        title: "エラー",
+        description: "点検結果の保存に失敗しました。",
+        variant: "destructive"
+      });
     }
   };
 
-  // CSVデータ生成関数
-  const generateCsvFromItems = (items: InspectionItem[]): string => {
+  // 結果のCSVエクスポート
+  const exportResultsToCSV = () => {
+    if (items.length === 0) return;
+    
     const headers = [
       '製造メーカー', '機種', 'エンジン型式', '部位', '装置', '手順',
       '確認箇所', '判断基準', '確認要領', '測定等記録', '図形記録', '結果'
     ];
-
+    
     const rows = items.map(item => [
       item.manufacturer,
       item.modelType,
@@ -236,12 +246,22 @@ export default function Inspection({ onChanges }: InspectionProps) {
       item.graphicRecord,
       item.result || ''
     ].join(','));
-
-    return [headers.join(','), ...rows].join('\n');
+    
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `点検結果_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
-    <div>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-6">仕業点検</h1>
+      
       <div className="flex justify-between items-center mb-6">
         <div className="flex space-x-4">
           <Select value={selectedManufacturer} onValueChange={setSelectedManufacturer}>
@@ -249,52 +269,73 @@ export default function Inspection({ onChanges }: InspectionProps) {
               <SelectValue placeholder="製造メーカー" />
             </SelectTrigger>
             <SelectContent>
-              {manufacturers.map((manufacturer) => (
+              <SelectItem value="">すべて</SelectItem>
+              {manufacturers.map(manufacturer => (
                 <SelectItem key={manufacturer} value={manufacturer}>
-                  {manufacturer || "未設定"}
+                  {manufacturer}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Select value={selectedModelType} onValueChange={setSelectedModelType}>
+          
+          <Select 
+            value={selectedModelType} 
+            onValueChange={setSelectedModelType}
+            disabled={!selectedManufacturer}
+          >
             <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="機種" />
             </SelectTrigger>
             <SelectContent>
-              {modelTypes.map((modelType) => (
-                <SelectItem key={modelType} value={modelType}>
-                  {modelType || "未設定"}
+              <SelectItem value="">すべて</SelectItem>
+              {modelTypes.map(model => (
+                <SelectItem key={model} value={model}>
+                  {model}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-        {hasChanges && (
-          <Button onClick={saveInspection}>
+        
+        <div className="flex space-x-2">
+          <Button 
+            onClick={saveInspectionResults}
+            disabled={!hasChanges}
+            variant={hasChanges ? "default" : "outline"}
+          >
             保存
           </Button>
-        )}
+          <Button 
+            onClick={exportResultsToCSV}
+            variant="outline"
+            disabled={items.length === 0}
+          >
+            CSVエクスポート
+          </Button>
+        </div>
       </div>
-
+      
       {loading ? (
         <div className="flex justify-center items-center h-64">
           <Loader2 className="h-8 w-8 animate-spin" />
           <span className="ml-2">データを読み込み中...</span>
         </div>
-      ) : filteredItems.length > 0 ? (
+      ) : selectedManufacturer && filteredItems.length > 0 ? (
         <Table>
-          <TableCaption>仕業点検項目一覧（{filteredItems.length}件）</TableCaption>
+          <TableCaption>
+            {selectedManufacturer} {selectedModelType && `- ${selectedModelType}`} の仕業点検項目
+          </TableCaption>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[150px]">部位</TableHead>
-              <TableHead className="w-[150px]">装置</TableHead>
-              <TableHead className="w-[200px]">確認箇所</TableHead>
-              <TableHead className="w-[250px]">判断基準</TableHead>
-              <TableHead className="w-[150px]">結果</TableHead>
+              <TableHead>部位</TableHead>
+              <TableHead>装置</TableHead>
+              <TableHead>確認箇所</TableHead>
+              <TableHead>判断基準</TableHead>
+              <TableHead>結果</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredItems.map((item) => (
+            {filteredItems.map(item => (
               <TableRow key={item.id}>
                 <TableCell>{item.part}</TableCell>
                 <TableCell>{item.device}</TableCell>
@@ -305,12 +346,13 @@ export default function Inspection({ onChanges }: InspectionProps) {
                     value={item.result || ''}
                     onValueChange={(value) => handleResultChange(item.id, value)}
                   >
-                    <SelectTrigger className="w-[130px]">
-                      <SelectValue placeholder="選択" />
+                    <SelectTrigger className="w-[120px]">
+                      <SelectValue placeholder="結果" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="">未選択</SelectItem>
                       <SelectItem value="正常">正常</SelectItem>
-                      <SelectItem value="要注意">要注意</SelectItem>
+                      <SelectItem value="注意">注意</SelectItem>
                       <SelectItem value="要修理">要修理</SelectItem>
                     </SelectContent>
                   </Select>
@@ -319,13 +361,13 @@ export default function Inspection({ onChanges }: InspectionProps) {
             ))}
           </TableBody>
         </Table>
+      ) : selectedManufacturer ? (
+        <div className="text-center py-12 text-gray-500">
+          選択された条件に一致する点検項目がありません
+        </div>
       ) : (
-        <div className="text-center py-10">
-          {dataLoaded ? 
-            (selectedManufacturer !== 'すべて' || selectedModelType !== 'すべて' ? 
-              '選択された条件に一致する点検項目はありません。' : 
-              '点検項目がありません。') :
-            'データの読み込みに失敗しました。'}
+        <div className="text-center py-12 text-gray-500">
+          メーカーを選択して点検項目を表示してください
         </div>
       )}
     </div>

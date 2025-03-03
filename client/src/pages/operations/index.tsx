@@ -15,7 +15,6 @@ export default function Operations() {
   const [location] = useLocation();
   const [activeTab, setActiveTab] = useState('inspection');
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
-  const [inspectionItems, setInspectionItems] = useState([]); // Added state for inspection items
 
   // URLからタブを取得
   useEffect(() => {
@@ -25,23 +24,6 @@ export default function Operations() {
       setActiveTab(tab);
     }
   }, [location]);
-
-  // Load CSV data for inspection items (placeholder - needs implementation)
-  useEffect(() => {
-    const loadInspectionItems = async () => {
-      try {
-        const response = await fetch('/api/inspection-items.csv'); // Replace with actual API endpoint
-        const csvData = await response.text();
-        // Parse CSV data (e.g., using Papa Parse library)
-        const parsedData = Papa.parse(csvData, { header: true }).data; //Requires Papa Parse library
-        setInspectionItems(parsedData);
-      } catch (error) {
-        console.error('Error loading inspection items:', error);
-      }
-    };
-    loadInspectionItems();
-  }, []);
-
 
   return (
     <div className="flex h-screen">
@@ -59,7 +41,7 @@ export default function Operations() {
               <TabsTrigger value="operational">運用計画</TabsTrigger> 
             </TabsList>
             <TabsContent value="inspection" className="mt-6">
-              <Inspection items={inspectionItems} /> {/* Pass inspection items to Inspection component */}
+              <Inspection />
             </TabsContent>
             <TabsContent value="operational" className="mt-6">
               <OperationalPlan /> 

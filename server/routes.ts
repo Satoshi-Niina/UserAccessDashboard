@@ -70,35 +70,38 @@ export function registerRoutes(app: Express): Server {
 app.get('/api/inspection-items', (req, res) => {
   try {
     console.log("API: /api/inspection-items が呼び出されました");
-    // In a real implementation, this would read from a database or file storage
-    // For now, we'll read directly from the CSV file in attached_assets
-    import('fs').then(fs => {
-      import('path').then(async path => {
-        const csvPath = path.join(process.cwd(), 'attached_assets', '仕業点検マスタ.csv');
-        console.log(`CSVファイルパス: ${csvPath}`);
-        
-        if (fs.existsSync(csvPath)) {
-          console.log(`CSVファイルが見つかりました: ${csvPath}`);
-          const data = fs.readFileSync(csvPath, 'utf8');
-          console.log(`CSVデータ読み込み成功 (${data.length} バイト)`);
-          console.log(`CSVデータの最初の100文字: ${data.substring(0, 100)}`);
-          res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-          res.send(data);
-        } else {
-          console.error(`CSVファイルが見つかりません: ${csvPath}`);
-          res.status(404).send('CSV file not found');
-        }
-      }).catch(error => {
-        console.error('Error importing path:', error);
-        res.status(500).send('Error reading CSV file');
+    // ファイルシステムとパスモジュールのインポート
+    const fs = require('fs');
+    const path = require('path');
+    
+    const csvPath = path.join(process.cwd(), 'attached_assets', '仕業点検マスタ.csv');
+    console.log(`CSVファイルパス: ${csvPath}`);
+    
+    if (fs.existsSync(csvPath)) {
+      console.log(`CSVファイルが見つかりました: ${csvPath}`);
+      const data = fs.readFileSync(csvPath, 'utf8');
+      console.log(`CSVデータ読み込み成功 (${data.length} バイト)`);
+      console.log(`CSVデータの最初の100文字: ${data.substring(0, 100)}`);
+      
+      // CSVファイルのヘッダー情報を設定して送信
+      res.set('Content-Type', 'text/csv; charset=utf-8');
+      res.set('Cache-Control', 'no-store');
+      res.send(data);
+    } else {
+      console.error(`CSVファイルが見つかりません: ${csvPath}`);
+      // ファイルが見つからない場合、エラーレスポンスを返す
+      res.status(404).json({
+        error: 'CSV file not found',
+        message: `${csvPath} が見つかりません。`,
+        availableFiles: fs.readdirSync('attached_assets')
       });
-    }).catch(error => {
-      console.error('Error importing fs:', error);
-      res.status(500).send('Error reading CSV file');
-    });
+    }
   } catch (error) {
     console.error('Error reading CSV file:', error);
-    res.status(500).send('Error reading CSV file');
+    res.status(500).json({
+      error: 'Error reading CSV file',
+      message: error instanceof Error ? error.message : '不明なエラーが発生しました'
+    });
   }
 });
 

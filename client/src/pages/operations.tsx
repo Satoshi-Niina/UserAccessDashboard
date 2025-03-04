@@ -409,7 +409,7 @@ function Inspection() {
                 </div>
               )}
             </div>
-        </div>
+          </div>
       )}
     </div>
   );

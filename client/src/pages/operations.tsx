@@ -74,8 +74,19 @@ function Inspection() {
 
         console.log("CSVデータの最初の行:", csvText.split('\n')[0]);
 
+        // CSVのヘッダー行を修正（「測定等"録」などの問題を修正）
+        let fixedCsvText = csvText;
+        const lines = csvText.split('\n');
+        if (lines.length > 0) {
+          // ヘッダー行を取得して標準化
+          const standardHeader = '製造メーカー,機種,エンジン型式,部位,装置,手順,確認箇所,判断基準,確認要領,測定等記録,図形記録';
+          // 最初の行を標準ヘッダーに置き換え
+          lines[0] = standardHeader;
+          fixedCsvText = lines.join('\n');
+        }
+
         // CSVデータのパース
-        const { data, errors, meta } = Papa.parse<InspectionItem>(csvText, {
+        const { data, errors, meta } = Papa.parse<InspectionItem>(fixedCsvText, {
           header: true,
           skipEmptyLines: true,
           delimiter: ',',
@@ -193,8 +204,18 @@ function Inspection() {
                       return;
                     }
 
+                    // CSVのヘッダー行を修正
+                    let fixedCsvText = csvText;
+                    const lines = csvText.split('\n');
+                    if (lines.length > 0) {
+                      // ヘッダー行を標準化
+                      const standardHeader = '製造メーカー,機種,エンジン型式,部位,装置,手順,確認箇所,判断基準,確認要領,測定等記録,図形記録';
+                      lines[0] = standardHeader;
+                      fixedCsvText = lines.join('\n');
+                    }
+
                     // CSVデータのパース
-                    const { data, errors } = Papa.parse<InspectionItem>(csvText, {
+                    const { data, errors } = Papa.parse<InspectionItem>(fixedCsvText, {
                       header: true,
                       skipEmptyLines: true,
                       delimiter: ',',

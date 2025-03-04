@@ -113,16 +113,17 @@ app.get('/api/inspection-items', (req, res) => {
         const lines = cleanedCsvData.split('\n').filter(line => line.trim() !== '');
         console.log(`CSVの有効行数: ${lines.length}`);
 
+        // 標準ヘッダーの定義
+        const standardHeader = '製造メーカー,機種,エンジン型式,部位,装置,手順,確認箇所,判断基準,確認要領,測定等記録,図形記録';
+
         // ヘッダー行を確認
         const headerLine = lines.length > 0 ? lines[0] : '';
         console.log(`CSV最初の行: "${headerLine}"`);
         
-        // ヘッダーが空の場合、ヘッダーを追加
-        if (!headerLine.trim()) {
-          // 標準ヘッダーの定義
-          const standardHeader = '製造メーカー,機種,エンジン型式,部位,装置,手順,確認箇所,判断基準,確認要領,測定等記録,図形記録';
-          const newCsvData = standardHeader + '\n' + csvData.trimStart();
-          console.log('空のヘッダーを検出、標準ヘッダーを追加しました');
+        // ヘッダーが空またはヘッダーに問題がある場合、標準ヘッダーで置き換える
+        if (!headerLine.trim() || headerLine.includes('測定等"録')) {
+          const newCsvData = standardHeader + '\n' + cleanedCsvData.substring(cleanedCsvData.indexOf('\n') + 1);
+          console.log('問題のあるヘッダーを検出、標準ヘッダーを追加しました');
           
           // Content-Typeを明示的に設定
           res.set('Content-Type', 'text/csv; charset=utf-8');

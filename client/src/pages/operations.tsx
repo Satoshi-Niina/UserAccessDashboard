@@ -73,8 +73,15 @@ export function Operations() {
     const fetchData = async () => {
       try {
         setLoading(true);
+        setError(null); // エラー状態をリセット
+        
         // キャッシュを回避するためのタイムスタンプ付きリクエスト
         const response = await fetch('/api/inspection-items?t=' + new Date().getTime());
+        
+        if (!response.ok) {
+          throw new Error(`サーバーエラー: ${response.status} ${response.statusText}`);
+        }
+        
         const csvText = await response.text();
         
         if (!csvText || csvText.trim() === '') {
@@ -89,7 +96,8 @@ export function Operations() {
           skipEmptyLines: true,
           delimiter: ',', // 明示的にカンマを区切り文字として指定
           transformHeader: (header) => header.trim() || 'column', // 空のヘッダーに対応
-          quoteChar: '"' // 引用符を明示的に指定
+          quoteChar: '"', // 引用符を明示的に指定
+          encoding: "UTF-8" // エンコーディングを明示的に指定
         });
         
         console.log("CSVデータの最初の行:", csvText.split('\n')[1]); // 最初のデータ行を表示
@@ -152,7 +160,13 @@ export function Operations() {
           }
         }
         
-        console.log("仕業点検：データ読み込み成功", data.length, "件");
+        console.log("点検項目データ読み込み成功", data.length, "件");
+        
+        // データチェック - データが空または無効な場合、再試行またはデフォルト表示
+        if (data.length === 0) {
+          console.warn("データが空です。再試行するか、デフォルトデータを表示します");
+          // ただエラーを設定せずに続行（空の配列を使用）
+        }
         
         // データの最初の数行を表示してデバッグ
         console.log("データサンプル:", data.slice(0, 3));
@@ -192,12 +206,19 @@ export function Operations() {
         setLoading(false);
       } catch (err) {
         console.error("データ読み込みエラー:", err);
-        setError('データの読み込みに失敗しました');
+        // より詳細なエラーメッセージを表示
+        setError(`データの読み込みに失敗しました: ${err instanceof Error ? err.message : '不明なエラー'}`);
         setLoading(false);
       }
     };
     
     fetchData();
+    
+    // クリーンアップ関数
+    return () => {
+      // コンポーネントのアンマウント時に進行中のリクエストをキャンセルする必要がある場合
+      // ここに実装（例：AbortControllerなど）
+    };
   }, []);
 
   // 選択されたメーカーと機種に基づいて点検項目をフィルタリング
@@ -323,7 +344,21 @@ export function Operations() {
               </div>
               
               {loading && <div className="text-center py-4">データを読み込み中...</div>}
-              {error && <div className="text-center py-4 text-red-500">{error}</div>}
+              {error && (
+                <div className="text-center py-4">
+                  <div className="text-red-500 mb-2">{error}</div>
+                  <Button variant="outline" onClick={() => {
+                    setLoading(true);
+                    setError(null);
+                    // 少し遅延を入れてから再試行
+                    setTimeout(() => {
+                      fetchData();
+                    }, 500);
+                  }}>
+                    データを再読み込み
+                  </Button>
+                </div>
+              )}
               
               {!loading && !error && (
                 <>

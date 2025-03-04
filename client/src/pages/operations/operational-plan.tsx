@@ -1,22 +1,23 @@
-
-import { useState, useEffect } from "react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Card, CardContent } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
+import { Button } from '../../components/ui/button';
+import { Calendar } from '../../components/ui/calendar';
+import Papa from 'papaparse';
 
 interface InspectionItem {
   id: string;
-  manufacturer: string;
-  modelType: string;
-  engineType: string;
-  part: string;
-  device: string;
-  procedure: string;
-  checkPoint: string;
-  judgmentCriteria: string;
-  checkMethod: string;
-  measurement: string;
-  graphicRecord: string;
+  メーカー: string;
+  機種: string;
+  'エンジン型式': string;
+  部位: string;
+  装置: string;
+  手順: string;
+  確認箇所: string;
+  判断基準: string;
+  確認要領: string;
+  測定等記録: string;
+  図形記録: string;
   order: number;
 }
 
@@ -25,58 +26,39 @@ export default function OperationalPlan() {
   const [manufacturers, setManufacturers] = useState<string[]>([]);
   const [modelTypes, setModelTypes] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [date, setDate] = useState<Date | undefined>(new Date());
 
   // 点検項目データの読み込み
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/inspection-items');
-        const text = await response.text();
+        const response = await fetch('/api/inspection-items?t=' + new Date().getTime());
+        const csvText = await response.text();
 
-        if (text) {
-          const lines = text.split('\n');
-          const headers = lines[0].split(',').map(h => h.trim());
+        const { data } = Papa.parse<InspectionItem>(csvText, {
+          header: true,
+          skipEmptyLines: true,
+        });
 
-          // ヘッダーとカラムのマッピング
-          const headerMap: Record<string, string> = {
-            '製造メーカー': 'manufacturer',
-            '機種': 'modelType',
-            'エンジン型式': 'engineType',
-            '部位': 'part',
-            '装置': 'device',
-            '手順': 'procedure',
-            '確認箇所': 'checkPoint',
-            '判断基準': 'judgmentCriteria',
-            '確認要領': 'checkMethod',
-            '測定等記録': 'measurement',
-            '図形記録': 'graphicRecord',
-          };
+        // 項目をIDと順序で強化
+        const enhancedItems = data.map((item, index) => ({
+          ...item,
+          id: `item-${index + 1}`,
+          order: index + 1
+        }));
 
-          const parsedItems = lines.slice(1)
-            .filter(line => line.trim())
-            .map((line, index) => {
-              const values = line.split(',').map(v => v.trim());
-              const item: any = { id: `item-${index + 1}`, order: index + 1 };
+        console.log("運用計画: データ読み込み成功", enhancedItems.length, "件");
 
-              headers.forEach((header, i) => {
-                const field = headerMap[header] || header;
-                item[field] = values[i] || '';
-              });
+        // メーカーと機種の重複を削除したリストを作成
+        const uniqueManufacturers = [...new Set(enhancedItems.map(item => item.メーカー).filter(Boolean))];
+        const uniqueModelTypes = [...new Set(enhancedItems.map(item => item.機種).filter(Boolean))];
 
-              return item as InspectionItem;
-            });
-
-          // メーカーと機種の重複を削除したリストを作成
-          const uniqueManufacturers = [...new Set(parsedItems.map(item => item.manufacturer).filter(Boolean))];
-          const uniqueModelTypes = [...new Set(parsedItems.map(item => item.modelType).filter(Boolean))];
-
-          setItems(parsedItems);
-          setManufacturers(['すべて', ...uniqueManufacturers]);
-          setModelTypes(['すべて', ...uniqueModelTypes]);
-        }
+        setItems(enhancedItems);
+        setManufacturers(uniqueManufacturers);
+        setModelTypes(uniqueModelTypes);
       } catch (error) {
-        console.error('データ取得エラー:', error);
+        console.error("運用計画: データ読み込みエラー", error);
       } finally {
         setLoading(false);
       }
@@ -85,73 +67,68 @@ export default function OperationalPlan() {
     fetchData();
   }, []);
 
-  // 表示するデータをグループ化
-  const groupedData = items.reduce((acc, item) => {
-    const key = `${item.manufacturer || '未分類'}-${item.modelType || '未分類'}`;
-    if (!acc[key]) {
-      acc[key] = {
-        manufacturer: item.manufacturer || '未分類',
-        modelType: item.modelType || '未分類',
-        count: 0,
-        items: []
-      };
-    }
-    acc[key].count++;
-    acc[key].items.push(item);
-    return acc;
-  }, {} as Record<string, { manufacturer: string, modelType: string, count: number, items: InspectionItem[] }>);
-
-  // データをメーカー・機種ごとにグループ化して配列化
-  const groupedArray = Object.values(groupedData);
+  if (loading) {
+    return <div className="text-center py-8">データを読み込み中...</div>;
+  }
 
   return (
-    <div>
-      {loading ? (
-        <div className="flex justify-center items-center h-40">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="ml-2">データを読み込み中...</span>
-        </div>
-      ) : (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-semibold mb-4">運用計画</h2>
+        <p className="mb-4">保守用車の運用計画を管理します。</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
-          <CardContent className="p-4">
-            <h3 className="text-lg font-medium mb-4">機種別運用計画データ</h3>
+          <CardHeader>
+            <CardTitle>計画カレンダー</CardTitle>
+          </CardHeader>
+          <CardContent className="flex justify-center">
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={setDate}
+              className="rounded-md border"
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>登録済み機械一覧</CardTitle>
+          </CardHeader>
+          <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>製造メーカー</TableHead>
+                  <TableHead>メーカー</TableHead>
                   <TableHead>機種</TableHead>
-                  <TableHead>点検項目数</TableHead>
-                  <TableHead>最終更新</TableHead>
-                  <TableHead>状態</TableHead>
+                  <TableHead>作業状態</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {groupedArray.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-4">
-                      データがありません。まずは設定メニューから点検項目を登録してください。
+                {manufacturers.map((manufacturer, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{manufacturer}</TableCell>
+                    <TableCell>
+                      {items
+                        .filter(item => item.メーカー === manufacturer)
+                        .map(item => item.機種)
+                        .filter((value, index, self) => self.indexOf(value) === index)
+                        .join(', ')}
+                    </TableCell>
+                    <TableCell>
+                      <Button variant="outline" size="sm">
+                        詳細
+                      </Button>
                     </TableCell>
                   </TableRow>
-                ) : (
-                  groupedArray.map((group, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{group.manufacturer}</TableCell>
-                      <TableCell>{group.modelType}</TableCell>
-                      <TableCell>{group.count}項目</TableCell>
-                      <TableCell>{new Date().toLocaleDateString('ja-JP')}</TableCell>
-                      <TableCell>
-                        <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
-                          利用可能
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
+                ))}
               </TableBody>
             </Table>
           </CardContent>
         </Card>
-      )}
+      </div>
     </div>
   );
 }

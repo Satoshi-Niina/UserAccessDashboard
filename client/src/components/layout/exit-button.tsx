@@ -1,3 +1,4 @@
+
 import { XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
@@ -14,7 +15,7 @@ interface ExitButtonProps {
 }
 
 export function ExitButton({ hasChanges = false, onSave, redirectTo = "/" }: ExitButtonProps) {
-  const [_, setLocation] = useLocation();
+  const [_, navigate] = useLocation();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
 
@@ -30,7 +31,7 @@ export function ExitButton({ hasChanges = false, onSave, redirectTo = "/" }: Exi
                 title: "保存完了",
                 description: "変更が正常に保存されました。",
               });
-              setLocation(redirectTo);
+              navigate(redirectTo);
             } else {
               toast({
                 variant: "destructive",
@@ -58,24 +59,24 @@ export function ExitButton({ hasChanges = false, onSave, redirectTo = "/" }: Exi
       } else {
         // 保存せずに終了
         if (window.confirm('保存せずに終了しますか？変更は失われます。')) {
-          setLocation(redirectTo);
+          navigate(redirectTo);
         }
       }
     } else {
-      // 変更がない場合は確認なしで終了
-      setLocation(redirectTo);
+      // 変更がない場合はそのまま終了
+      navigate(redirectTo);
     }
   };
 
   return (
     <Button
-      variant="destructive"
+      variant="outline"
+      size="icon"
+      className="rounded-full"
       onClick={handleExit}
-      className="gap-2 bg-blue-600 hover:bg-blue-700" // Added blue background
       disabled={isSaving}
     >
       <XCircle className="h-4 w-4" />
-      {isSaving ? "保存中..." : "終了"}
     </Button>
   );
 }

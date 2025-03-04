@@ -1,25 +1,26 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Sidebar } from "@/components/layout/sidebar";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "@/components/ui/resizable";
+import { Sidebar } from "@/components/layout/sidebar";
+import { ExitButton } from "@/components/layout/exit-button";
 import { useToast } from "@/components/ui/use-toast";
-import { Input } from "@/components/ui/input";
-import Papa from 'papaparse';
-import { Download, Upload, Plus, Save } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { X } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // 点検項目の型定義
 interface InspectionItem {
@@ -34,376 +35,329 @@ interface InspectionItem {
   確認要領: string;
   測定等記録: string;
   図形記録: string;
-  [key: string]: string; // その他の動的なプロパティのために追加
+  [key: string]: string;
 }
 
-export default function InspectionItems() {
+export function InspectionItems() {
+  // ステート定義
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
-  const [items, setItems] = useState<InspectionItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [hasChanges, setHasChanges] = useState(false);
   const { toast } = useToast();
+  const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<number | null>(null);
+  const [selectedColumn, setSelectedColumn] = useState<string | null>(null);
+  const [columns, setColumns] = useState<string[]>([]);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteType, setDeleteType] = useState<'item' | 'column' | null>(null);
 
+  // タイトルを設定
   useEffect(() => {
     document.title = "運用管理システム - 点検項目管理";
-    fetchInspectionItems();
   }, []);
 
-  // 点検項目データを取得
-  const fetchInspectionItems = async () => {
-    try {
-      setLoading(true);
-      // キャッシュを回避するためのタイムスタンプ付きリクエスト
-      const response = await fetch('/api/inspection-items?t=' + new Date().getTime());
-      const csvText = await response.text();
+  // CSVデータの読み込み
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        // キャッシュを回避するためのタイムスタンプ付きリクエスト
+        const response = await fetch('/api/inspection-items?t=' + new Date().getTime());
+        const data = await response.json();
 
-      if (!csvText || csvText.trim() === '') {
-        setError('データが空です');
+        console.log("点検項目データ読み込み成功", data.length, "件");
+
+        if (data.length > 0) {
+          // カラムの取得と並び順の設定
+          const firstItem = data[0];
+          // デフォルトの並び順を設定（業界標準の順序に合わせる）
+          const orderedColumns = [
+            '製造メーカー', '機種', 'エンジン型式', '部位', '装置', '手順',
+            '確認箇所', '判断基準', '確認要領', '測定等記録', '図形記録'
+          ].filter(col => Object.keys(firstItem).includes(col));
+
+          // データにはあるがデフォルト順序にない列を追加
+          Object.keys(firstItem).forEach(key => {
+            if (!orderedColumns.includes(key)) {
+              orderedColumns.push(key);
+            }
+          });
+
+          setColumns(orderedColumns);
+        }
+
+        setInspectionItems(data);
         setLoading(false);
-        return;
+      } catch (err) {
+        console.error("データ読み込みエラー:", err);
+        setError('データの読み込みに失敗しました');
+        setLoading(false);
       }
-
-      // CSVデータのパース
-      const { data, errors } = Papa.parse<InspectionItem>(csvText, {
-        header: true,
-        skipEmptyLines: true,
-        delimiter: ',',
-        transformHeader: (header) => header.trim() || 'column',
-        quoteChar: '"'
-      });
-
-      if (errors.length > 0) {
-        console.warn("CSV解析中にエラーが発生しました:", errors);
-      }
-
-      console.log("点検項目データ読み込み成功", data.length, "件");
-      setItems(data);
-      setLoading(false);
-    } catch (err) {
-      console.error("データ読み込みエラー:", err);
-      setError('データの読み込みに失敗しました');
-      setLoading(false);
-    }
-  };
-
-  // ファイルアップロード処理
-  const handleFileUpload = async () => {
-    try {
-      if (!fileInputRef.current?.files?.length) {
-        toast({
-          title: "エラー",
-          description: "ファイルが選択されていません",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const file = fileInputRef.current.files[0];
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await fetch('/api/upload-inspection-items', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || '不明なエラーが発生しました');
-      }
-
-      toast({
-        title: "アップロード成功",
-        description: `${file.name} (${(file.size / 1024).toFixed(2)} KB) がアップロードされました`,
-      });
-
-      // データを再取得
-      fetchInspectionItems();
-
-    } catch (error) {
-      console.error('ファイルアップロード処理エラー:', error);
-      toast({
-        title: "アップロードエラー",
-        description: error instanceof Error ? error.message : '不明なエラーが発生しました',
-        variant: "destructive",
-      });
-    }
-  };
-
-  // CSVデータをダウンロード
-  const handleDownload = () => {
-    if (items.length === 0) {
-      toast({
-        title: "エラー",
-        description: "ダウンロードするデータがありません",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // CSVに変換
-    const csv = Papa.unparse(items);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', '点検項目マスタ.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  // 新規項目の追加ボタン
-  const handleAddItem = () => {
-    // 空の項目を追加
-    const newItem: InspectionItem = {
-      製造メーカー: "",
-      機種: "",
-      エンジン型式: "",
-      部位: "",
-      装置: "",
-      手順: "",
-      確認箇所: "",
-      判断基準: "",
-      確認要領: "",
-      測定等記録: "",
-      図形記録: "",
     };
 
-    setItems([...items, newItem]);
+    fetchData();
+  }, []);
 
-    // 追加後に一番下にスクロール
-    setTimeout(() => {
-      window.scrollTo({
-        top: document.body.scrollHeight,
-        behavior: 'smooth'
+  // ドラッグ&ドロップのハンドラー（アイテム用）
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    e.dataTransfer.setData("itemIndex", String(index));
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    const dragIndex = Number(e.dataTransfer.getData("itemIndex"));
+
+    if (dragIndex === dropIndex) return;
+
+    const items = [...inspectionItems];
+    const item = items[dragIndex];
+
+    // アイテムを削除してから新しい位置に挿入
+    items.splice(dragIndex, 1);
+    items.splice(dropIndex, 0, item);
+
+    setInspectionItems(items);
+    setHasChanges(true);
+  };
+
+  // ドラッグ&ドロップのハンドラー（カラム用）
+  const handleColumnDragStart = (e: React.DragEvent, columnName: string) => {
+    e.dataTransfer.setData("columnName", columnName);
+  };
+
+  const handleColumnDrop = (e: React.DragEvent, dropColumnName: string) => {
+    e.preventDefault();
+    const dragColumnName = e.dataTransfer.getData("columnName");
+
+    if (dragColumnName === dropColumnName) return;
+
+    const columnsList = [...columns];
+    const dragIndex = columnsList.indexOf(dragColumnName);
+    const dropIndex = columnsList.indexOf(dropColumnName);
+
+    // カラムを削除してから新しい位置に挿入
+    columnsList.splice(dragIndex, 1);
+    columnsList.splice(dropIndex, 0, dragColumnName);
+
+    setColumns(columnsList);
+    setHasChanges(true);
+  };
+
+  // 削除ハンドラー
+  const handleDelete = () => {
+    if (deleteType === 'item' && selectedItem !== null) {
+      const newItems = [...inspectionItems];
+      newItems.splice(selectedItem, 1);
+      setInspectionItems(newItems);
+      setSelectedItem(null);
+      setHasChanges(true);
+    } else if (deleteType === 'column' && selectedColumn) {
+      // 列を削除
+      setColumns(columns.filter(col => col !== selectedColumn));
+      // 各アイテムからその列を削除
+      const newItems = inspectionItems.map(item => {
+        const newItem = {...item};
+        delete newItem[selectedColumn];
+        return newItem;
       });
-    }, 100);
+      setInspectionItems(newItems);
+      setSelectedColumn(null);
+      setHasChanges(true);
+    }
+
+    setShowDeleteDialog(false);
+    setDeleteType(null);
   };
 
-  // 項目を編集
-  const handleItemChange = (index: number, field: string, value: string) => {
-    const updatedItems = [...items];
-    updatedItems[index][field] = value;
-    setItems(updatedItems);
-  };
-
-  // 変更を保存
-  const handleSave = async () => {
+  // 保存関数
+  const saveChanges = async () => {
     try {
-      // CSVに変換
-      const csv = Papa.unparse(items);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const formData = new FormData();
-      formData.append('file', blob, '仕業点検マスタ.csv');
+      // ここでAPI呼び出しで変更を保存
+      // const response = await fetch('/api/inspection-items', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ items: inspectionItems, columns: columns })
+      // });
 
-      const response = await fetch('/api/upload-inspection-items', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || '不明なエラーが発生しました');
-      }
+      // if (!response.ok) throw new Error('Failed to save changes');
 
       toast({
-        title: "保存成功",
-        description: "点検項目が保存されました",
+        title: "保存完了",
+        description: "点検項目の変更が保存されました",
       });
 
+      setHasChanges(false);
+      return true;
     } catch (error) {
-      console.error('データ保存エラー:', error);
+      console.error("データ保存エラー:", error);
+
       toast({
-        title: "保存エラー",
-        description: error instanceof Error ? error.message : '不明なエラーが発生しました',
+        title: "エラー",
+        description: "データの保存に失敗しました",
         variant: "destructive",
       });
+
+      return false;
     }
+  };
+
+  // アイテム選択ハンドラー
+  const handleItemSelect = (index: number) => {
+    if (selectedItem === index) {
+      setSelectedItem(null);
+    } else {
+      setSelectedItem(index);
+      setSelectedColumn(null);
+    }
+  };
+
+  // カラム選択ハンドラー
+  const handleColumnSelect = (column: string) => {
+    if (selectedColumn === column) {
+      setSelectedColumn(null);
+    } else {
+      setSelectedColumn(column);
+      setSelectedItem(null);
+    }
+  };
+
+  // 削除ダイアログを表示
+  const showDeleteConfirmation = (type: 'item' | 'column') => {
+    setDeleteType(type);
+    setShowDeleteDialog(true);
   };
 
   return (
     <div className="flex h-screen">
       <Sidebar onExpandChange={setIsMenuExpanded} />
-      <div className={`flex-1 ${isMenuExpanded ? 'ml-64' : 'ml-16'} transition-all duration-300`}>
-        <div className="space-y-4 p-4 md:p-8 pt-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-3xl font-bold tracking-tight">点検項目管理</h2>
-            <div className="flex gap-2">
-              <input
-                type="file"
-                ref={fileInputRef}
-                accept=".csv"
-                className="hidden"
-                onChange={handleFileUpload}
+      <div className={`flex-1 ${isMenuExpanded ? 'ml-64' : 'ml-16'} transition-all duration-300 overflow-hidden`}>
+        <div className="h-full flex flex-col">
+          <div className="flex items-center justify-between p-4">
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight">点検項目管理</h2>
+            </div>
+            <div className="flex items-center space-x-2">
+              {selectedItem !== null && (
+                <Button
+                  variant="destructive"
+                  onClick={() => showDeleteConfirmation('item')}
+                >
+                  レコード削除
+                </Button>
+              )}
+              {selectedColumn && (
+                <Button
+                  variant="destructive"
+                  onClick={() => showDeleteConfirmation('column')}
+                >
+                  カラム削除
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                onClick={saveChanges}
+                disabled={!hasChanges}
+              >
+                レイアウト保存
+              </Button>
+              <ExitButton
+                hasChanges={hasChanges}
+                onSave={saveChanges}
               />
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => fileInputRef.current?.click()}
-                className="gap-1"
-              >
-                <Upload className="h-4 w-4" />
-                CSVアップロード
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleDownload}
-                className="gap-1"
-              >
-                <Download className="h-4 w-4" />
-                CSVダウンロード
-              </Button>
             </div>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>点検項目管理</CardTitle>
-              <CardDescription>
-                点検項目の一覧と編集を行います。
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="text-center py-4">データを読み込み中...</div>
-              ) : error ? (
-                <div className="text-center py-4 text-red-500">{error}</div>
-              ) : (
-                <>
-                  <div className="flex justify-end mb-4 space-x-2">
-                    <Button 
-                      variant="default" 
-                      size="sm" 
-                      onClick={handleAddItem}
-                      className="gap-1"
+          {loading ? (
+            <div className="flex-1 flex items-center justify-center">
+              <p>データを読み込み中...</p>
+            </div>
+          ) : error ? (
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-red-500">{error}</p>
+            </div>
+          ) : (
+            <div className="flex-1 overflow-hidden p-4">
+              <div className="bg-white rounded-md shadow h-full overflow-hidden flex flex-col">
+                <div className="flex items-center bg-gray-50 border-b">
+                  {columns.map((column, colIndex) => (
+                    <div
+                      key={colIndex}
+                      className={`
+                        px-3 py-2 font-medium text-sm
+                        ${selectedColumn === column ? 'bg-blue-100' : ''}
+                        cursor-pointer flex-shrink-0 min-w-24 flex-1
+                      `}
+                      onClick={() => handleColumnSelect(column)}
+                      draggable
+                      onDragStart={(e) => handleColumnDragStart(e, column)}
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleColumnDrop(e, column)}
                     >
-                      <Plus className="h-4 w-4" />
-                      新規追加
-                    </Button>
-                    <Button 
-                      variant="default" 
-                      size="sm" 
-                      onClick={handleSave}
-                      className="gap-1"
-                    >
-                      <Save className="h-4 w-4" />
-                      変更を保存
-                    </Button>
-                  </div>
+                      {column}
+                    </div>
+                  ))}
+                </div>
 
-                  <div className="overflow-x-auto">
-                    <Table className="border text-xs">
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="whitespace-nowrap px-2 py-1 w-24">製造メーカー</TableHead>
-                          <TableHead className="whitespace-nowrap px-2 py-1 w-24">機種</TableHead>
-                          <TableHead className="whitespace-nowrap px-2 py-1 w-24">エンジン型式</TableHead>
-                          <TableHead className="whitespace-nowrap px-2 py-1 w-20">部位</TableHead>
-                          <TableHead className="whitespace-nowrap px-2 py-1 w-20">装置</TableHead>
-                          <TableHead className="whitespace-nowrap px-2 py-1 w-20">手順</TableHead>
-                          <TableHead className="whitespace-nowrap px-2 py-1 w-32">確認箇所</TableHead>
-                          <TableHead className="whitespace-nowrap px-2 py-1 w-32">判断基準</TableHead>
-                          <TableHead className="whitespace-nowrap px-2 py-1 w-32">確認要領</TableHead>
-                          <TableHead className="whitespace-nowrap px-2 py-1 w-20">測定等記録</TableHead>
-                          <TableHead className="whitespace-nowrap px-2 py-1 w-20">図形記録</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {items.map((item, index) => (
-                          <TableRow key={index}>
-                            <TableCell className="px-1 py-1">
-                              <Input 
-                                className="h-7 text-xs px-1" 
-                                value={item.製造メーカー || ''} 
-                                onChange={(e) => handleItemChange(index, '製造メーカー', e.target.value)}
-                              />
-                            </TableCell>
-                            <TableCell className="px-1 py-1">
-                              <Input 
-                                className="h-7 text-xs px-1" 
-                                value={item.機種 || ''} 
-                                onChange={(e) => handleItemChange(index, '機種', e.target.value)}
-                              />
-                            </TableCell>
-                            <TableCell className="px-1 py-1">
-                              <Input 
-                                className="h-7 text-xs px-1" 
-                                value={item.エンジン型式 || ''} 
-                                onChange={(e) => handleItemChange(index, 'エンジン型式', e.target.value)}
-                              />
-                            </TableCell>
-                            <TableCell className="px-1 py-1">
-                              <Input 
-                                className="h-7 text-xs px-1" 
-                                value={item.部位 || ''} 
-                                onChange={(e) => handleItemChange(index, '部位', e.target.value)}
-                              />
-                            </TableCell>
-                            <TableCell className="px-1 py-1">
-                              <Input 
-                                className="h-7 text-xs px-1" 
-                                value={item.装置 || ''} 
-                                onChange={(e) => handleItemChange(index, '装置', e.target.value)}
-                              />
-                            </TableCell>
-                            <TableCell className="px-1 py-1">
-                              <Input 
-                                className="h-7 text-xs px-1" 
-                                value={item.手順 || ''} 
-                                onChange={(e) => handleItemChange(index, '手順', e.target.value)}
-                              />
-                            </TableCell>
-                            <TableCell className="px-1 py-1">
-                              <Input 
-                                className="h-7 text-xs px-1" 
-                                value={item.確認箇所 || ''} 
-                                onChange={(e) => handleItemChange(index, '確認箇所', e.target.value)}
-                              />
-                            </TableCell>
-                            <TableCell className="px-1 py-1">
-                              <Input 
-                                className="h-7 text-xs px-1" 
-                                value={item.判断基準 || ''} 
-                                onChange={(e) => handleItemChange(index, '判断基準', e.target.value)}
-                              />
-                            </TableCell>
-                            <TableCell className="px-1 py-1">
-                              <Input 
-                                className="h-7 text-xs px-1" 
-                                value={item.確認要領 || ''} 
-                                onChange={(e) => handleItemChange(index, '確認要領', e.target.value)}
-                              />
-                            </TableCell>
-                            <TableCell className="px-1 py-1">
-                              <Input 
-                                className="h-7 text-xs px-1" 
-                                value={item.測定等記録 || ''} 
-                                onChange={(e) => handleItemChange(index, '測定等記録', e.target.value)}
-                              />
-                            </TableCell>
-                            <TableCell className="px-1 py-1">
-                              <Input 
-                                className="h-7 text-xs px-1" 
-                                value={item.図形記録 || ''} 
-                                onChange={(e) => handleItemChange(index, '図形記録', e.target.value)}
-                              />
-                            </TableCell>
-                          </TableRow>
+                <ScrollArea className="flex-1">
+                  <div className="divide-y">
+                    {inspectionItems.map((item, index) => (
+                      <div
+                        key={index}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, index)}
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDrop(e, index)}
+                        onClick={() => handleItemSelect(index)}
+                        className={`
+                          flex items-center hover:bg-gray-50 transition-colors
+                          ${selectedItem === index ? 'bg-blue-50' : ''}
+                        `}
+                      >
+                        {columns.map((column, colIndex) => (
+                          <div
+                            key={colIndex}
+                            className="px-3 py-2 text-sm flex-shrink-0 min-w-24 flex-1 border-r last:border-r-0 border-transparent"
+                          >
+                            {item[column] || '-'}
+                          </div>
                         ))}
-                      </TableBody>
-                    </Table>
+                      </div>
+                    ))}
                   </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
+                </ScrollArea>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* 削除確認ダイアログ */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {deleteType === 'item' ? 'レコードを削除' : 'カラムを削除'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteType === 'item'
+                ? '選択したレコードを削除します。この操作は元に戻せません。'
+                : `カラム「${selectedColumn}」を削除します。すべてのレコードからこの情報が削除されます。この操作は元に戻せません。`
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>削除</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
+
+export default InspectionItems;

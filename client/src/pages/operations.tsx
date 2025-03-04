@@ -31,12 +31,17 @@ import Papa from 'papaparse';
 
 // 点検項目の型定義
 interface InspectionItem {
-  メーカー: string;
+  製造メーカー: string;
   機種: string;
+  エンジン型式: string;
   部位: string;
   装置: string;
+  手順: string;
   確認箇所: string;
   判断基準: string;
+  確認要領: string;
+  測定等記録: string;
+  図形記録: string;
   [key: string]: string; // その他の動的なプロパティのために追加
 }
 
@@ -114,11 +119,14 @@ export function Operations() {
         console.log("仕業点検：データ読み込み成功", data.length, "件");
 
         // メーカーと機種のリストを抽出（重複なし）
-        const uniqueManufacturers = Array.from(new Set(data.map(item => item.メーカー)))
+        const uniqueManufacturers = Array.from(new Set(data.map(item => item.製造メーカー)))
           .filter(Boolean) as string[];
         
         const uniqueModels = Array.from(new Set(data.map(item => item.機種)))
           .filter(Boolean) as string[];
+        
+        console.log("メーカーリスト:", uniqueManufacturers);
+        console.log("機種リスト:", uniqueModels);
         
         setManufacturers(uniqueManufacturers);
         setModels(uniqueModels);
@@ -141,7 +149,7 @@ export function Operations() {
     let filtered = [...inspectionItems];
     
     if (selectedManufacturer) {
-      filtered = filtered.filter(item => item.メーカー === selectedManufacturer);
+      filtered = filtered.filter(item => item.製造メーカー === selectedManufacturer);
     }
     
     if (selectedModel) {

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { 
   TableHead, 
@@ -51,7 +50,7 @@ export function Operations() {
   useEffect(() => {
     document.title = "運用管理システム - 仕業点検";
   }, []);
-  
+
   // タブの初期値を設定
   const [activeTab, setActiveTab] = useState("daily-inspection");
   const [selectedManufacturer, setSelectedManufacturer] = useState("");
@@ -74,16 +73,16 @@ export function Operations() {
       try {
         setLoading(true);
         setError(null); // エラー状態をリセット
-        
+
         // キャッシュを回避するためのタイムスタンプ付きリクエスト
         const response = await fetch('/api/inspection-items?t=' + new Date().getTime());
-        
+
         if (!response.ok) {
           throw new Error(`サーバーエラー: ${response.status} ${response.statusText}`);
         }
-        
+
         const csvText = await response.text();
-        
+
         if (!csvText || csvText.trim() === '') {
           setError('データが空です');
           setLoading(false);
@@ -99,14 +98,14 @@ export function Operations() {
           quoteChar: '"', // 引用符を明示的に指定
           encoding: "UTF-8" // エンコーディングを明示的に指定
         });
-        
+
         console.log("CSVデータの最初の行:", csvText.split('\n')[1]); // 最初のデータ行を表示
-        
+
         if (errors.length > 0) {
           console.warn("CSV解析中にエラーが発生しました:", errors);
           // エラーの詳細を表示
           console.log("CSV内容サンプル:", csvText.substring(0, 400));
-          
+
           // エラーが多すぎる場合は再試行
           if (errors.some(e => e.code === "TooManyFields" || e.code === "MissingQuotes")) {
             console.log("CSV解析エラーを検出、解析オプションを変更して再試行");
@@ -114,7 +113,7 @@ export function Operations() {
             const cleanedCSV = csvText
               .replace(/\r\n/g, '\n') // CRLFをLFに統一
               .replace(/\r/g, '\n');  // CRをLFに統一
-              
+
             const retryParse = Papa.parse<InspectionItem>(cleanedCSV, {
               header: true,
               skipEmptyLines: true,
@@ -123,7 +122,7 @@ export function Operations() {
               escapeChar: '\\',
               transformHeader: (header) => header.trim() || 'column'
             });
-            
+
             if (retryParse.errors.length === 0 || retryParse.errors.length < errors.length) {
               console.log("クリーニング後の再解析成功");
               const parsedData = retryParse.data;
@@ -132,7 +131,7 @@ export function Operations() {
                 Object.values(item).some(value => value && value.trim() !== '')
               );
               console.log("フィルタリング後のデータ:", filteredData.length, "件");
-              
+
               data.length = 0; // 既存データをクリア
               data.push(...filteredData); // 新しい解析データを追加
             } else {
@@ -140,7 +139,7 @@ export function Operations() {
               // 手動パース - 改行で分割してフィールドを抽出
               const lines = cleanedCSV.split('\n').filter(line => line.trim());
               const headers = lines[0].split(',').map(h => h.trim());
-              
+
               const manuallyParsedData: InspectionItem[] = [];
               for (let i = 1; i < lines.length; i++) {
                 const values = lines[i].split(',');
@@ -152,25 +151,25 @@ export function Operations() {
                   manuallyParsedData.push(item as InspectionItem);
                 }
               }
-              
+
               console.log("手動解析結果:", manuallyParsedData.length, "件");
               data.length = 0;
               data.push(...manuallyParsedData);
             }
           }
         }
-        
+
         console.log("点検項目データ読み込み成功", data.length, "件");
-        
+
         // データチェック - データが空または無効な場合、再試行またはデフォルト表示
         if (data.length === 0) {
           console.warn("データが空です。再試行するか、デフォルトデータを表示します");
           // ただエラーを設定せずに続行（空の配列を使用）
         }
-        
+
         // データの最初の数行を表示してデバッグ
         console.log("データサンプル:", data.slice(0, 3));
-        
+
         // すべてのキーを確認
         if (data.length > 0) {
           console.log("データのキー:", Object.keys(data[0]));
@@ -182,24 +181,24 @@ export function Operations() {
           Object.keys(data[0]).find(key => 
             key === '製造メーカー' || key === 'メーカー' || key.includes('メーカー')
           ) || '製造メーカー' : '製造メーカー';
-        
+
         const modelKey = data.length > 0 ? 
           Object.keys(data[0]).find(key => 
             key === '機種' || key.includes('機種')
           ) || '機種' : '機種';
-        
+
         console.log("使用するメーカーキー:", manufacturerKey);
         console.log("使用する機種キー:", modelKey);
-        
+
         const uniqueManufacturers = Array.from(new Set(data.map(item => item[manufacturerKey])))
           .filter(Boolean) as string[];
-        
+
         const uniqueModels = Array.from(new Set(data.map(item => item[modelKey])))
           .filter(Boolean) as string[];
-        
+
         console.log("メーカーリスト:", uniqueManufacturers);
         console.log("機種リスト:", uniqueModels);
-        
+
         setManufacturers(uniqueManufacturers);
         setModels(uniqueModels);
         setInspectionItems(data);
@@ -211,9 +210,9 @@ export function Operations() {
         setLoading(false);
       }
     };
-    
+
     fetchData();
-    
+
     // クリーンアップ関数
     return () => {
       // コンポーネントのアンマウント時に進行中のリクエストをキャンセルする必要がある場合
@@ -224,27 +223,27 @@ export function Operations() {
   // 選択されたメーカーと機種に基づいて点検項目をフィルタリング
   useEffect(() => {
     if (inspectionItems.length === 0) return;
-    
+
     let filtered = [...inspectionItems];
-    
+
     // すべてのキーを取得して、適切なキーを見つける
     const keys = filtered.length > 0 ? Object.keys(filtered[0]) : [];
     const manufacturerKey = keys.find(key => 
       key === '製造メーカー' || key === 'メーカー' || key.includes('メーカー')
     ) || '製造メーカー';
-    
+
     const modelKey = keys.find(key => 
       key === '機種' || key.includes('機種')
     ) || '機種';
-    
+
     if (selectedManufacturer) {
       filtered = filtered.filter(item => item[manufacturerKey] === selectedManufacturer);
     }
-    
+
     if (selectedModel) {
       filtered = filtered.filter(item => item[modelKey] === selectedModel);
     }
-    
+
     setFilteredItems(filtered);
   }, [inspectionItems, selectedManufacturer, selectedModel]);
 
@@ -253,24 +252,24 @@ export function Operations() {
     try {
       // ここで実際のデータ保存APIを呼び出す
       // 例: await fetch('/api/inspection-results', { method: 'POST', body: JSON.stringify(data) });
-      
+
       toast({
         title: "保存完了",
         description: "点検結果が保存されました",
       });
-      
+
       // 保存成功を示すためにhasChangesをfalseに設定
       setHasChanges(false);
       return true;
     } catch (error) {
       console.error("データ保存エラー:", error);
-      
+
       toast({
         title: "エラー",
         description: "データの保存に失敗しました",
         variant: "destructive",
       });
-      
+
       return false;
     }
   };
@@ -299,7 +298,7 @@ export function Operations() {
           <TabsTrigger value="daily-inspection">仕業点検</TabsTrigger>
           <TabsTrigger value="operational-plan">運用計画</TabsTrigger>
         </TabsList>
-        
+
         {/* 仕業点検タブ */}
         <TabsContent value="daily-inspection" className="space-y-4">
           <Card>
@@ -342,7 +341,7 @@ export function Operations() {
                   </Select>
                 </div>
               </div>
-              
+
               {loading && <div className="text-center py-4">データを読み込み中...</div>}
               {error && (
                 <div className="text-center py-4">
@@ -359,7 +358,7 @@ export function Operations() {
                   </Button>
                 </div>
               )}
-              
+
               {!loading && !error && (
                 <>
                   {selectedManufacturer && selectedModel ? (
@@ -429,7 +428,7 @@ export function Operations() {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         {/* 運用計画タブ */}
         <TabsContent value="operational-plan" className="space-y-4">
           <Card>

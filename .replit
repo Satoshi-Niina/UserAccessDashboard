@@ -21,8 +21,12 @@ externalPort = 3000
 localPort = 5002
 externalPort = 3001
 
+[[ports]]
+localPort = 5003
+externalPort = 3002
+
 [workflows]
-runButton = "Start application"
+runButton = "Start Clean"
 
 [[workflows.workflow]]
 name = "Project"
@@ -47,3 +51,11 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
+
+[[workflows.workflow]]
+name = "Start Clean"
+author = 39467490
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f node || true && npm run dev"

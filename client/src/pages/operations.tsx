@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Loader2 } from "lucide-react";
@@ -228,7 +229,7 @@ function Inspection() {
           </AlertDescription>
         </Alert>
       ) : (
-        <>
+        <div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="manufacturer">製造メーカー</Label>
@@ -369,47 +370,48 @@ function Inspection() {
                 </Button>
               </div>
             </div>
+          </div>
 
-            <div className="mt-2">
-              {Object.keys(groupedByPart).length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
-                  該当する点検項目がありません。フィルターを変更してください。
-                </p>
-              ) : (
-                <div className="space-y-6">
-                  {Object.entries(groupedByPart).map(([part, items]) => (
-                    <Card key={part} className="overflow-hidden">
-                      <CardContent className="p-0">
-                        <div className="bg-primary/10 p-3 font-medium">
-                          {part}
-                        </div>
-                        <div className="divide-y">
-                          {items.map((item, idx) => (
-                            <div key={idx} className="p-4 hover:bg-muted/50 transition-colors">
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
-                                  <p className="text-sm text-muted-foreground">確認箇所:</p>
-                                  <p>{item.確認箇所 || "-"}</p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-muted-foreground">判断基準:</p>
-                                  <p>{item.判断基準 || "-"}</p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-muted-foreground">確認要領:</p>
-                                  <p>{item.確認要領 || "-"}</p>
-                                </div>
+          <div className="mt-2">
+            {Object.keys(groupedByPart).length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">
+                該当する点検項目がありません。フィルターを変更してください。
+              </p>
+            ) : (
+              <div className="space-y-6">
+                {Object.entries(groupedByPart).map(([part, items]) => (
+                  <Card key={part} className="overflow-hidden">
+                    <CardContent className="p-0">
+                      <div className="bg-primary/10 p-3 font-medium">
+                        {part}
+                      </div>
+                      <div className="divide-y">
+                        {items.map((item, idx) => (
+                          <div key={idx} className="p-4 hover:bg-muted/50 transition-colors">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div>
+                                <p className="text-sm text-muted-foreground">確認箇所:</p>
+                                <p>{item.確認箇所 || "-"}</p>
+                              </div>
+                              <div>
+                                <p className="text-sm text-muted-foreground">判断基準:</p>
+                                <p>{item.判断基準 || "-"}</p>
+                              </div>
+                              <div>
+                                <p className="text-sm text-muted-foreground">確認要領:</p>
+                                <p>{item.確認要領 || "-"}</p>
                               </div>
                             </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
+        </div>
       )}
     </div>
   );

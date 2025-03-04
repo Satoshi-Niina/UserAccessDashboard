@@ -331,41 +331,43 @@ export function Operations() {
                     ) : (
                       <div className="mt-4">
                         <h3 className="text-lg font-medium mb-2">点検項目一覧</h3>
-                        <Table className="border">
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>部位</TableHead>
-                              <TableHead>装置</TableHead>
-                              <TableHead>確認箇所</TableHead>
-                              <TableHead>判断基準</TableHead>
-                              <TableHead>確認要領</TableHead>
-                              <TableHead>結果</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {filteredItems.map((item, index) => (
-                              <TableRow key={index}>
-                                <TableCell>{item.部位}</TableCell>
-                                <TableCell>{item.装置}</TableCell>
-                                <TableCell>{item.確認箇所}</TableCell>
-                                <TableCell>{item.判断基準}</TableCell>
-                                <TableCell>{item.確認要領}</TableCell>
-                                <TableCell>
-                                  <Select>
-                                    <SelectTrigger className="w-32">
-                                      <SelectValue placeholder="選択" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="ok">正常</SelectItem>
-                                      <SelectItem value="check">要点検</SelectItem>
-                                      <SelectItem value="ng">不良</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </TableCell>
+                        <div className="overflow-auto max-w-full">
+                          <Table className="border w-full text-xs">
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className="whitespace-nowrap px-2 py-1">部位</TableHead>
+                                <TableHead className="whitespace-nowrap px-2 py-1">装置</TableHead>
+                                <TableHead className="whitespace-nowrap px-2 py-1">確認箇所</TableHead>
+                                <TableHead className="whitespace-nowrap px-2 py-1">判断基準</TableHead>
+                                <TableHead className="whitespace-nowrap px-2 py-1">確認要領</TableHead>
+                                <TableHead className="whitespace-nowrap px-2 py-1">結果</TableHead>
                               </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
+                            </TableHeader>
+                            <TableBody>
+                              {filteredItems.map((item, index) => (
+                                <TableRow key={index}>
+                                  <TableCell className="px-2 py-1">{item.部位}</TableCell>
+                                  <TableCell className="px-2 py-1">{item.装置}</TableCell>
+                                  <TableCell className="px-2 py-1">{item.確認箇所}</TableCell>
+                                  <TableCell className="px-2 py-1">{item.判断基準}</TableCell>
+                                  <TableCell className="px-2 py-1">{item.確認要領}</TableCell>
+                                  <TableCell className="px-2 py-1">
+                                    <Select>
+                                      <SelectTrigger className="w-20 h-8 text-xs px-2">
+                                        <SelectValue placeholder="選択" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="ok">正常</SelectItem>
+                                        <SelectItem value="check">要点検</SelectItem>
+                                        <SelectItem value="ng">不良</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
                       </div>
                     )
                   ) : (

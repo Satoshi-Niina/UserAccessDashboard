@@ -340,6 +340,8 @@ export function Operations() {
                                 <TableHead className="whitespace-nowrap px-2 py-1">確認箇所</TableHead>
                                 <TableHead className="whitespace-nowrap px-2 py-1">判断基準</TableHead>
                                 <TableHead className="whitespace-nowrap px-2 py-1">確認要領</TableHead>
+                                <TableHead className="whitespace-nowrap px-2 py-1">測定等記録</TableHead>
+                                <TableHead className="whitespace-nowrap px-2 py-1">図形記録</TableHead>
                                 <TableHead className="whitespace-nowrap px-2 py-1">結果</TableHead>
                               </TableRow>
                             </TableHeader>
@@ -351,6 +353,8 @@ export function Operations() {
                                   <TableCell className="px-2 py-1">{item.確認箇所}</TableCell>
                                   <TableCell className="px-2 py-1">{item.判断基準}</TableCell>
                                   <TableCell className="px-2 py-1">{item.確認要領}</TableCell>
+                                  <TableCell className="px-2 py-1">{item.測定等記録}</TableCell>
+                                  <TableCell className="px-2 py-1">{item.図形記録}</TableCell>
                                   <TableCell className="px-2 py-1">
                                     <Select>
                                       <SelectTrigger className="w-20 h-8 text-xs px-2">

@@ -75,31 +75,55 @@ app.use((req, res, next) => {
 
   // サーバーの起動（ポート5000または環境変数から）
   const PORT = process.env.PORT || 5000;
-  let attemptPort = PORT;
-  let maxAttempts = 5;
-  let attempts = 0;
   
-  function startServer(port: number) {
-    attempts++;
-    server.listen(port, "0.0.0.0")
-      .on('listening', () => {
+  // 既存のすべてのプロセスを終了するためのクリーンアップ関数
+  let serverInstance: any = null;
+  
+  // 一度のみサーバーを起動する
+  function startServer() {
+    // 使用するポートを順番に試す
+    const tryPort = (port: number, maxPort: number) => {
+      if (port > maxPort) {
+        log(`Failed to find an available port between ${PORT} and ${maxPort}`);
+        process.exit(1);
+        return;
+      }
+      
+      const instance = server.listen(port, "0.0.0.0");
+      
+      instance.on('listening', () => {
+        serverInstance = instance;
         log(`serving on port ${port}`);
-      })
-      .on('error', (err: any) => {
-        if (err.code === 'EADDRINUSE' && attempts < maxAttempts) {
-          // Try next port
-          const nextPort = Number(port) + 1;
-          log(`Port ${port} is already in use. Trying port ${nextPort}...`);
-          startServer(nextPort);
-        } else if (attempts >= maxAttempts) {
-          log(`Failed to find an available port after ${maxAttempts} attempts.`);
-          throw new Error('No available ports found');
+      });
+      
+      instance.on('error', (err: any) => {
+        if (err.code === 'EADDRINUSE') {
+          log(`Port ${port} is already in use. Trying port ${port + 1}...`);
+          instance.close();
+          tryPort(port + 1, maxPort);
         } else {
           log(`Server error: ${err.message}`);
           throw err;
         }
       });
+    };
+    
+    tryPort(Number(PORT), Number(PORT) + 10); // Try up to 10 ports
   }
   
-  startServer(Number(attemptPort));
+  // サーバーの起動
+  startServer();
+  
+  // グレースフルシャットダウンの処理
+  const shutdown = () => {
+    if (serverInstance) {
+      log('Shutting down server...');
+      serverInstance.close();
+    }
+    process.exit(0);
+  };
+  
+  // シグナルハンドラの設定
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
 })();

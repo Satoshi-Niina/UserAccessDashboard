@@ -1,8 +1,8 @@
+
 import { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { Card } from '../../components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Inspection from './inspection';
-import OperationalPlan from "./operational-plan"; // Added import for OperationalPlan
+import OperationalPlan from "./operational-plan";
 
 export default function Operations() {
   const [hasChanges, setHasChanges] = useState(false);
@@ -27,7 +27,7 @@ export default function Operations() {
         </TabsContent>
 
         <TabsContent value="operational-plan">
-          <OperationalPlan /> {/* Updated to use OperationalPlan component */}
+          <OperationalPlan />
         </TabsContent>
       </Tabs>
     </div>

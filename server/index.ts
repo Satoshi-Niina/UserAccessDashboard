@@ -74,52 +74,71 @@ app.use((req, res, next) => {
   }
 
   // サーバーの起動（ポート5000または環境変数から）
-  const PORT = process.env.PORT || 5000;
+  const BASE_PORT = Number(process.env.PORT || 5000);
+  let server_started = false;
   
-  // 既存のすべてのプロセスを終了するためのクリーンアップ関数
-  let serverInstance: any = null;
-  
-  // 一度のみサーバーを起動する
-  function startServer() {
-    // 使用するポートを順番に試す
-    const tryPort = (port: number, maxPort: number) => {
-      if (port > maxPort) {
-        log(`Failed to find an available port between ${PORT} and ${maxPort}`);
-        process.exit(1);
-        return;
-      }
-      
-      const instance = server.listen(port, "0.0.0.0");
-      
-      instance.on('listening', () => {
-        serverInstance = instance;
-        log(`serving on port ${port}`);
-      });
-      
-      instance.on('error', (err: any) => {
-        if (err.code === 'EADDRINUSE') {
-          log(`Port ${port} is already in use. Trying port ${port + 1}...`);
-          instance.close();
-          tryPort(port + 1, maxPort);
-        } else {
-          log(`Server error: ${err.message}`);
-          throw err;
+  // ポートをチェックする関数（非同期で1つずつ）
+  const findAvailablePort = async () => {
+    for (let port = BASE_PORT; port < BASE_PORT + 20; port++) {
+      try {
+        // サーバーを起動してみる
+        await new Promise((resolve, reject) => {
+          const tempServer = require('http').createServer();
+          
+          tempServer.once('error', (err: any) => {
+            tempServer.close();
+            if (err.code === 'EADDRINUSE') {
+              log(`Port ${port} is already in use.`);
+              reject(new Error(`Port ${port} is already in use`));
+            } else {
+              reject(err);
+            }
+          });
+          
+          tempServer.once('listening', () => {
+            log(`Found available port: ${port}`);
+            tempServer.close(() => resolve(port));
+          });
+          
+          tempServer.listen(port, '0.0.0.0');
+        });
+        
+        // 使用可能なポートが見つかった
+        if (!server_started) {
+          server_started = true;
+          startServer(port);
         }
-      });
-    };
+        return;
+      } catch (err) {
+        // このポートは使用中なので、次のポートを試す
+        continue;
+      }
+    }
     
-    tryPort(Number(PORT), Number(PORT) + 10); // Try up to 10 ports
-  }
+    // すべてのポートが使用中
+    log(`Failed to find an available port in range ${BASE_PORT}-${BASE_PORT + 19}`);
+    process.exit(1);
+  };
   
-  // サーバーの起動
-  startServer();
+  // サーバーを単一のポートで起動する関数
+  const startServer = (port: number) => {
+    try {
+      server.listen(port, '0.0.0.0', () => {
+        log(`Server is running on port ${port}`);
+      });
+    } catch (err) {
+      log(`Failed to start server: ${err}`);
+      process.exit(1);
+    }
+  };
+  
+  // サーバー起動プロセスを開始
+  findAvailablePort();
   
   // グレースフルシャットダウンの処理
   const shutdown = () => {
-    if (serverInstance) {
-      log('Shutting down server...');
-      serverInstance.close();
-    }
+    log('Shutting down server...');
+    server.close();
     process.exit(0);
   };
   

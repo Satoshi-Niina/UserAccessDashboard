@@ -27,6 +27,18 @@ import { Separator } from "@/components/ui/separator";
 import { Sidebar } from "@/components/layout/sidebar";
 import { ExitButton } from "@/components/layout/exit-button";
 import { useToast } from "@/components/ui/use-toast";
+import Papa from 'papaparse';
+
+// 点検項目の型定義
+interface InspectionItem {
+  メーカー: string;
+  機種: string;
+  部位: string;
+  装置: string;
+  確認箇所: string;
+  判断基準: string;
+  [key: string]: string; // その他の動的なプロパティのために追加
+}
 
 export function Operations() {
   // タイトルを設定
@@ -41,31 +53,98 @@ export function Operations() {
   const [hasChanges, setHasChanges] = useState(false);
   const { toast } = useToast();
 
-  // 実データ
-  const manufacturers = ["コマツ", "日立建機", "キャタピラー", "コベルコ", "住友建機"];
-  const models = ["油圧ショベル ZX120", "ブルドーザー D51PX", "ホイールローダー WA100", "クローラクレーン SCX900", "バックホウ PC200"];
-  
-  // 点検項目データ
-  const inspectionItems = [
-    { id: 1, category: "エンジン", item: "エンジンオイル量", result: "正常" },
-    { id: 2, category: "エンジン", item: "冷却水量", result: "正常" },
-    { id: 3, category: "油圧系統", item: "作動油量", result: "正常" },
-    { id: 4, category: "電気系統", item: "バッテリー電圧", result: "要点検" },
-    { id: 5, category: "足回り", item: "キャタピラの張り具合", result: "正常" },
-    { id: 6, category: "ブレーキ", item: "ブレーキパッド磨耗", result: "要点検" },
-  ];
+  // データ状態
+  const [manufacturers, setManufacturers] = useState<string[]>([]);
+  const [models, setModels] = useState<string[]>([]);
+  const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
+  const [filteredItems, setFilteredItems] = useState<InspectionItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // CSVデータの読み込み
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        // キャッシュを回避するためのタイムスタンプ付きリクエスト
+        const response = await fetch('/api/inspection-items?t=' + new Date().getTime());
+        const csvText = await response.text();
+        
+        if (!csvText || csvText.trim() === '') {
+          setError('データが空です');
+          setLoading(false);
+          return;
+        }
+
+        // CSVデータのパース
+        const { data } = Papa.parse<InspectionItem>(csvText, {
+          header: true,
+          skipEmptyLines: true,
+        });
+        
+        console.log("仕業点検：データ読み込み成功", data.length, "件");
+
+        // メーカーと機種のリストを抽出（重複なし）
+        const uniqueManufacturers = Array.from(new Set(data.map(item => item.メーカー)))
+          .filter(Boolean) as string[];
+        
+        const uniqueModels = Array.from(new Set(data.map(item => item.機種)))
+          .filter(Boolean) as string[];
+        
+        setManufacturers(uniqueManufacturers);
+        setModels(uniqueModels);
+        setInspectionItems(data);
+        setLoading(false);
+      } catch (err) {
+        console.error("データ読み込みエラー:", err);
+        setError('データの読み込みに失敗しました');
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
+
+  // 選択されたメーカーと機種に基づいて点検項目をフィルタリング
+  useEffect(() => {
+    if (inspectionItems.length === 0) return;
+    
+    let filtered = [...inspectionItems];
+    
+    if (selectedManufacturer) {
+      filtered = filtered.filter(item => item.メーカー === selectedManufacturer);
+    }
+    
+    if (selectedModel) {
+      filtered = filtered.filter(item => item.機種 === selectedModel);
+    }
+    
+    setFilteredItems(filtered);
+  }, [inspectionItems, selectedManufacturer, selectedModel]);
 
   // 保存関数
   const saveChanges = async () => {
     try {
       // ここで実際のデータ保存APIを呼び出す
-      // 例: await fetch('/api/inspection-data', { method: 'POST', body: JSON.stringify(data) });
+      // 例: await fetch('/api/inspection-results', { method: 'POST', body: JSON.stringify(data) });
+      
+      toast({
+        title: "保存完了",
+        description: "点検結果が保存されました",
+      });
       
       // 保存成功を示すためにhasChangesをfalseに設定
       setHasChanges(false);
       return true;
     } catch (error) {
       console.error("データ保存エラー:", error);
+      
+      toast({
+        title: "エラー",
+        description: "データの保存に失敗しました",
+        variant: "destructive",
+      });
+      
       return false;
     }
   };
@@ -138,25 +217,49 @@ export function Operations() {
                 </div>
               </div>
               
-              {selectedManufacturer && selectedModel && (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>カテゴリ</TableHead>
-                      <TableHead>点検項目</TableHead>
-                      <TableHead>結果</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {inspectionItems.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell>{item.category}</TableCell>
-                        <TableCell>{item.item}</TableCell>
-                        <TableCell>{item.result}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              {loading && <div className="text-center py-4">データを読み込み中...</div>}
+              {error && <div className="text-center py-4 text-red-500">{error}</div>}
+              
+              {!loading && !error && selectedManufacturer && selectedModel && (
+                <>
+                  {filteredItems.length === 0 ? (
+                    <div className="text-center py-4">選択された条件に一致する点検項目がありません</div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>部位</TableHead>
+                          <TableHead>装置</TableHead>
+                          <TableHead>確認箇所</TableHead>
+                          <TableHead>判断基準</TableHead>
+                          <TableHead>結果</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredItems.map((item, index) => (
+                          <TableRow key={index}>
+                            <TableCell>{item.部位}</TableCell>
+                            <TableCell>{item.装置}</TableCell>
+                            <TableCell>{item.確認箇所}</TableCell>
+                            <TableCell>{item.判断基準}</TableCell>
+                            <TableCell>
+                              <Select>
+                                <SelectTrigger className="w-32">
+                                  <SelectValue placeholder="選択" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="ok">正常</SelectItem>
+                                  <SelectItem value="check">要点検</SelectItem>
+                                  <SelectItem value="ng">不良</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>

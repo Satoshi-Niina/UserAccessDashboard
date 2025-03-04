@@ -52,6 +52,7 @@ export function Operations() {
     document.title = "運用管理システム - 仕業点検";
   }, []);
   
+  // タブの初期値を設定
   const [activeTab, setActiveTab] = useState("daily-inspection");
   const [selectedManufacturer, setSelectedManufacturer] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
@@ -275,7 +276,7 @@ export function Operations() {
           <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="daily-inspection">仕業点検</TabsTrigger>
-          <TabsTrigger value="engine-hours">エンジンアワー</TabsTrigger>
+          <TabsTrigger value="operational-plan">運用計画</TabsTrigger>
         </TabsList>
         
         {/* 仕業点検タブ */}
@@ -394,18 +395,18 @@ export function Operations() {
           </Card>
         </TabsContent>
         
-        {/* エンジンアワータブ */}
-        <TabsContent value="engine-hours" className="space-y-4">
+        {/* 運用計画タブ */}
+        <TabsContent value="operational-plan" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>エンジンアワー</CardTitle>
+              <CardTitle>運用計画</CardTitle>
               <CardDescription>
-                エンジンアワーを記録・管理します。
+                運用計画の立案と管理を行います。
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {/* エンジンアワー管理の内容をここに実装 */}
-              <p>エンジンアワー管理画面（開発中）</p>
+              {/* 運用計画の内容をここに実装 */}
+              <p>運用計画管理画面（開発中）</p>
             </CardContent>
           </Card>
         </TabsContent>

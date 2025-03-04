@@ -77,22 +77,16 @@ app.get('/api/inspection-items', (req, res) => {
   res.set('Pragma', 'no-cache');
   res.set('Expires', '0');
 
-  // 現在の作業ディレクトリを確認
-  const currentDir = process.cwd();
-  console.log('現在の作業ディレクトリ:', currentDir);
-
   try {
-    // attached_assetsディレクトリのチェック
+    // 現在の作業ディレクトリと設定
+    const currentDir = process.cwd();
     const assetsDir = path.join(currentDir, 'attached_assets');
+    
+    // ディレクトリが存在しない場合はサンプルデータを返す
     if (!fs.existsSync(assetsDir)) {
       console.error('attached_assetsディレクトリが存在しません');
-      // ディレクトリが存在しない場合はサンプルデータを返す
       return res.status(200).send(getSampleInspectionData());
     }
-
-    // ディレクトリの内容を確認
-    const files = fs.readdirSync(assetsDir);
-    console.log('attached_assetsディレクトリの内容:', files);
 
     // CSVファイルパス
     const csvFilePath = path.join(assetsDir, '仕業点検マスタ.csv');
@@ -106,11 +100,13 @@ app.get('/api/inspection-items', (req, res) => {
 
       if (csvData && csvData.trim().length > 0 && !csvData.includes('404: Not Found')) {
         console.log(`CSVデータ読み込み成功 (${csvData.length} バイト)`);
-        console.log(`CSVの行数: ${csvData.split('\n').length}`);
+        
+        // 改行で分割して実際の行数をカウント（空行を除外）
+        const lines = csvData.split('\n').filter(line => line.trim() !== '');
+        console.log(`CSVの有効行数: ${lines.length}`);
 
         // ヘッダー行を確認
-        const headerLine = csvData.split('\n')[0] || '';
-        console.log(`ヘッダー: ${headerLine}`);
+        const headerLine = lines.length > 0 ? lines[0] : '';
         
         // ヘッダーが空の場合、ヘッダーを追加
         if (!headerLine.trim()) {
@@ -124,6 +120,8 @@ app.get('/api/inspection-items', (req, res) => {
           return res.status(200).send(newCsvData);
         }
 
+        console.log(`ヘッダー: ${headerLine}`);
+        
         // Content-Typeを明示的に設定
         res.set('Content-Type', 'text/csv; charset=utf-8');
         return res.status(200).send(csvData);

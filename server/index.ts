@@ -75,18 +75,31 @@ app.use((req, res, next) => {
 
   // サーバーの起動（ポート5000または環境変数から）
   const PORT = process.env.PORT || 5000;
-  server.listen(PORT, "0.0.0.0", () => {
-    log(`serving on port ${PORT}`);
-  })
-  .on('error', (err: any) => {
-    if (err.code === 'EADDRINUSE') {
-      const newPort = Number(PORT) + 1;
-      log(`Port ${PORT} is already in use. Trying port ${newPort}...`);
-      server.listen(newPort, "0.0.0.0", () => {
-        log(`serving on port ${newPort}`);
+  let attemptPort = PORT;
+  let maxAttempts = 5;
+  let attempts = 0;
+  
+  function startServer(port: number) {
+    attempts++;
+    server.listen(port, "0.0.0.0")
+      .on('listening', () => {
+        log(`serving on port ${port}`);
+      })
+      .on('error', (err: any) => {
+        if (err.code === 'EADDRINUSE' && attempts < maxAttempts) {
+          // Try next port
+          const nextPort = Number(port) + 1;
+          log(`Port ${port} is already in use. Trying port ${nextPort}...`);
+          startServer(nextPort);
+        } else if (attempts >= maxAttempts) {
+          log(`Failed to find an available port after ${maxAttempts} attempts.`);
+          throw new Error('No available ports found');
+        } else {
+          log(`Server error: ${err.message}`);
+          throw err;
+        }
       });
-    } else {
-      throw err;
-    }
-  });
+  }
+  
+  startServer(Number(attemptPort));
 })();

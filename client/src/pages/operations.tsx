@@ -86,43 +86,99 @@ export function Operations() {
           header: true,
           skipEmptyLines: true,
           delimiter: ',', // 明示的にカンマを区切り文字として指定
-          transformHeader: (header) => header.trim() || 'column' // 空のヘッダーに対応
+          transformHeader: (header) => header.trim() || 'column', // 空のヘッダーに対応
+          quoteChar: '"' // 引用符を明示的に指定
         });
+        
+        console.log("CSVデータの最初の行:", csvText.split('\n')[1]); // 最初のデータ行を表示
         
         if (errors.length > 0) {
           console.warn("CSV解析中にエラーが発生しました:", errors);
           // エラーの詳細を表示
-          console.log("CSV内容サンプル:", csvText.substring(0, 200));
+          console.log("CSV内容サンプル:", csvText.substring(0, 400));
           
           // エラーが多すぎる場合は再試行
-          if (errors.some(e => e.code === "TooManyFields")) {
-            console.log("フィールド数の不一致エラーを検出、区切り文字を変更して再試行");
-            // 区切り文字を推測して再パース
-            const possibleDelimiters = [',', ';', '\t'];
-            for (const delimiter of possibleDelimiters) {
-              const retryParse = Papa.parse<InspectionItem>(csvText, {
-                header: true,
-                skipEmptyLines: true,
-                delimiter,
-                transformHeader: (header) => header.trim() || 'column'
-              });
-              if (retryParse.errors.length === 0 || retryParse.errors.length < errors.length) {
-                console.log(`区切り文字 "${delimiter}" で再解析成功`);
-                data.length = 0; // 既存データをクリア
-                data.push(...retryParse.data); // 新しい解析データを追加
-                break;
+          if (errors.some(e => e.code === "TooManyFields" || e.code === "MissingQuotes")) {
+            console.log("CSV解析エラーを検出、解析オプションを変更して再試行");
+            // CSVテキストのクリーニングと再パース
+            const cleanedCSV = csvText
+              .replace(/\r\n/g, '\n') // CRLFをLFに統一
+              .replace(/\r/g, '\n');  // CRをLFに統一
+              
+            const retryParse = Papa.parse<InspectionItem>(cleanedCSV, {
+              header: true,
+              skipEmptyLines: true,
+              delimiter: ',',
+              quoteChar: '"',
+              escapeChar: '\\',
+              transformHeader: (header) => header.trim() || 'column'
+            });
+            
+            if (retryParse.errors.length === 0 || retryParse.errors.length < errors.length) {
+              console.log("クリーニング後の再解析成功");
+              const parsedData = retryParse.data;
+              // 空の行をフィルタリング
+              const filteredData = parsedData.filter(item => 
+                Object.values(item).some(value => value && value.trim() !== '')
+              );
+              console.log("フィルタリング後のデータ:", filteredData.length, "件");
+              
+              data.length = 0; // 既存データをクリア
+              data.push(...filteredData); // 新しい解析データを追加
+            } else {
+              console.log("再解析も失敗。手動で解析を行います");
+              // 手動パース - 改行で分割してフィールドを抽出
+              const lines = cleanedCSV.split('\n').filter(line => line.trim());
+              const headers = lines[0].split(',').map(h => h.trim());
+              
+              const manuallyParsedData: InspectionItem[] = [];
+              for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',');
+                if (values.length >= headers.length) {
+                  const item: {[key: string]: string} = {};
+                  headers.forEach((header, index) => {
+                    item[header || `column${index}`] = values[index] || '';
+                  });
+                  manuallyParsedData.push(item as InspectionItem);
+                }
               }
+              
+              console.log("手動解析結果:", manuallyParsedData.length, "件");
+              data.length = 0;
+              data.push(...manuallyParsedData);
             }
           }
         }
         
         console.log("仕業点検：データ読み込み成功", data.length, "件");
+        
+        // データの最初の数行を表示してデバッグ
+        console.log("データサンプル:", data.slice(0, 3));
+        
+        // すべてのキーを確認
+        if (data.length > 0) {
+          console.log("データのキー:", Object.keys(data[0]));
+        }
 
         // メーカーと機種のリストを抽出（重複なし）
-        const uniqueManufacturers = Array.from(new Set(data.map(item => item.製造メーカー)))
+        // オブジェクトのすべてのキーから該当するものを探す
+        const manufacturerKey = data.length > 0 ? 
+          Object.keys(data[0]).find(key => 
+            key === '製造メーカー' || key === 'メーカー' || key.includes('メーカー')
+          ) || '製造メーカー' : '製造メーカー';
+        
+        const modelKey = data.length > 0 ? 
+          Object.keys(data[0]).find(key => 
+            key === '機種' || key.includes('機種')
+          ) || '機種' : '機種';
+        
+        console.log("使用するメーカーキー:", manufacturerKey);
+        console.log("使用する機種キー:", modelKey);
+        
+        const uniqueManufacturers = Array.from(new Set(data.map(item => item[manufacturerKey])))
           .filter(Boolean) as string[];
         
-        const uniqueModels = Array.from(new Set(data.map(item => item.機種)))
+        const uniqueModels = Array.from(new Set(data.map(item => item[modelKey])))
           .filter(Boolean) as string[];
         
         console.log("メーカーリスト:", uniqueManufacturers);
@@ -148,12 +204,22 @@ export function Operations() {
     
     let filtered = [...inspectionItems];
     
+    // すべてのキーを取得して、適切なキーを見つける
+    const keys = filtered.length > 0 ? Object.keys(filtered[0]) : [];
+    const manufacturerKey = keys.find(key => 
+      key === '製造メーカー' || key === 'メーカー' || key.includes('メーカー')
+    ) || '製造メーカー';
+    
+    const modelKey = keys.find(key => 
+      key === '機種' || key.includes('機種')
+    ) || '機種';
+    
     if (selectedManufacturer) {
-      filtered = filtered.filter(item => item.製造メーカー === selectedManufacturer);
+      filtered = filtered.filter(item => item[manufacturerKey] === selectedManufacturer);
     }
     
     if (selectedModel) {
-      filtered = filtered.filter(item => item.機種 === selectedModel);
+      filtered = filtered.filter(item => item[modelKey] === selectedModel);
     }
     
     setFilteredItems(filtered);

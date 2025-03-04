@@ -323,44 +323,55 @@ export function Operations() {
               {loading && <div className="text-center py-4">データを読み込み中...</div>}
               {error && <div className="text-center py-4 text-red-500">{error}</div>}
               
-              {!loading && !error && selectedManufacturer && selectedModel && (
+              {!loading && !error && (
                 <>
-                  {filteredItems.length === 0 ? (
-                    <div className="text-center py-4">選択された条件に一致する点検項目がありません</div>
+                  {selectedManufacturer && selectedModel ? (
+                    filteredItems.length === 0 ? (
+                      <div className="text-center py-4">選択された条件に一致する点検項目がありません</div>
+                    ) : (
+                      <div className="mt-4">
+                        <h3 className="text-lg font-medium mb-2">点検項目一覧</h3>
+                        <Table className="border">
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>部位</TableHead>
+                              <TableHead>装置</TableHead>
+                              <TableHead>確認箇所</TableHead>
+                              <TableHead>判断基準</TableHead>
+                              <TableHead>確認要領</TableHead>
+                              <TableHead>結果</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {filteredItems.map((item, index) => (
+                              <TableRow key={index}>
+                                <TableCell>{item.部位}</TableCell>
+                                <TableCell>{item.装置}</TableCell>
+                                <TableCell>{item.確認箇所}</TableCell>
+                                <TableCell>{item.判断基準}</TableCell>
+                                <TableCell>{item.確認要領}</TableCell>
+                                <TableCell>
+                                  <Select>
+                                    <SelectTrigger className="w-32">
+                                      <SelectValue placeholder="選択" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="ok">正常</SelectItem>
+                                      <SelectItem value="check">要点検</SelectItem>
+                                      <SelectItem value="ng">不良</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )
                   ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>部位</TableHead>
-                          <TableHead>装置</TableHead>
-                          <TableHead>確認箇所</TableHead>
-                          <TableHead>判断基準</TableHead>
-                          <TableHead>結果</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredItems.map((item, index) => (
-                          <TableRow key={index}>
-                            <TableCell>{item.部位}</TableCell>
-                            <TableCell>{item.装置}</TableCell>
-                            <TableCell>{item.確認箇所}</TableCell>
-                            <TableCell>{item.判断基準}</TableCell>
-                            <TableCell>
-                              <Select>
-                                <SelectTrigger className="w-32">
-                                  <SelectValue placeholder="選択" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="ok">正常</SelectItem>
-                                  <SelectItem value="check">要点検</SelectItem>
-                                  <SelectItem value="ng">不良</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                    <div className="text-center py-4 text-muted-foreground">
+                      製造メーカーと機種を選択すると、点検項目が表示されます
+                    </div>
                   )}
                 </>
               )}

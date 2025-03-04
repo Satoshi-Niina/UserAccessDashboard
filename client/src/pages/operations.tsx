@@ -350,8 +350,51 @@ export function Operations() {
                     setLoading(true);
                     setError(null);
                     // 少し遅延を入れてから再試行
-                    setTimeout(() => {
-                      fetchData();
+                    setTimeout(async () => {
+                      try {
+                        // キャッシュを回避するためのタイムスタンプ付きリクエスト
+                        const response = await fetch('/api/inspection-items?t=' + new Date().getTime());
+
+                        if (!response.ok) {
+                          throw new Error(`サーバーエラー: ${response.status} ${response.statusText}`);
+                        }
+
+                        const csvText = await response.text();
+
+                        if (!csvText || csvText.trim() === '') {
+                          setError('データが空です');
+                          setLoading(false);
+                          return;
+                        }
+
+                        // CSVデータのパース
+                        const { data, errors } = Papa.parse<InspectionItem>(csvText, {
+                          header: true,
+                          skipEmptyLines: true,
+                          delimiter: ',',
+                          transformHeader: (header) => header.trim() || 'column',
+                          quoteChar: '"',
+                          encoding: "UTF-8"
+                        });
+
+                        console.log("CSVデータを再読み込みしました:", data.length, "件");
+
+                        // メーカーと機種のリストを抽出
+                        const uniqueManufacturers = Array.from(new Set(data.map(item => item.製造メーカー)))
+                          .filter(Boolean) as string[];
+
+                        const uniqueModels = Array.from(new Set(data.map(item => item.機種)))
+                          .filter(Boolean) as string[];
+
+                        setManufacturers(uniqueManufacturers);
+                        setModels(uniqueModels);
+                        setInspectionItems(data);
+                        setLoading(false);
+                      } catch (err) {
+                        console.error("データ再読み込みエラー:", err);
+                        setError(`データの読み込みに失敗しました: ${err instanceof Error ? err.message : '不明なエラー'}`);
+                        setLoading(false);
+                      }
                     }, 500);
                   }}>
                     データを再読み込み

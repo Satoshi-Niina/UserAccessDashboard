@@ -77,10 +77,15 @@ export function Operations() {
         }
 
         // CSVデータのパース
-        const { data } = Papa.parse<InspectionItem>(csvText, {
+        const { data, errors } = Papa.parse<InspectionItem>(csvText, {
           header: true,
           skipEmptyLines: true,
+          transformHeader: (header) => header.trim() || 'column' // 空のヘッダーに対応
         });
+        
+        if (errors.length > 0) {
+          console.warn("CSV解析中にエラーが発生しました:", errors);
+        }
         
         console.log("仕業点検：データ読み込み成功", data.length, "件");
 

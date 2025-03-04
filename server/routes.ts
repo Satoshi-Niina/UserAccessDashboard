@@ -108,8 +108,20 @@ app.get('/api/inspection-items', (req, res) => {
         console.log(`CSVデータ読み込み成功 (${csvData.length} バイト)`);
         console.log(`CSVの行数: ${csvData.split('\n').length}`);
 
-        if (csvData.split('\n').length > 0) {
-          console.log(`ヘッダー: ${csvData.split('\n')[0]}`);
+        // ヘッダー行を確認
+        const headerLine = csvData.split('\n')[0] || '';
+        console.log(`ヘッダー: ${headerLine}`);
+        
+        // ヘッダーが空の場合、ヘッダーを追加
+        if (!headerLine.trim()) {
+          // 標準ヘッダーの定義
+          const standardHeader = '製造メーカー,機種,エンジン型式,部位,装置,手順,確認箇所,判断基準,確認要領,測定等記録,図形記録';
+          const newCsvData = standardHeader + '\n' + csvData.trimStart();
+          console.log('空のヘッダーを検出、標準ヘッダーを追加しました');
+          
+          // Content-Typeを明示的に設定
+          res.set('Content-Type', 'text/csv; charset=utf-8');
+          return res.status(200).send(newCsvData);
         }
 
         // Content-Typeを明示的に設定

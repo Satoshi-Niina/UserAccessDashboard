@@ -45,7 +45,11 @@ export default function InspectionItems() {
     fetch('/api/inspection-items')
       .then(response => response.text())
       .then(csvData => {
-        const results = Papa.parse(csvData, { header: true, skipEmptyLines: true });
+        const results = Papa.parse(csvData, { 
+          header: true, 
+          skipEmptyLines: true,
+          transformHeader: (header) => header.trim() || 'column' // 空のヘッダーに対応
+        });
         if (results.data && Array.isArray(results.data)) {
           const parsedItems = results.data as InspectionItem[];
           setItems(parsedItems);

@@ -71,6 +71,10 @@ export function registerRoutes(app: Express): Server {
 // 仕業点検項目のCSVを返すAPI
 app.get('/api/inspection-items', (req, res) => {
   console.log('API: /api/inspection-items が呼び出されました');
+  
+  // ファイル名をクエリパラメータから取得（デフォルトは仕業点検マスタ.csv）
+  const requestedFile = req.query.file as string || '仕業点検マスタ.csv';
+  console.log('リクエストされたファイル:', requestedFile);
 
   // キャッシュ制御ヘッダーを設定
   res.set('Cache-Control', 'no-store, max-age=0');
@@ -89,9 +93,10 @@ app.get('/api/inspection-items', (req, res) => {
     }
 
     // CSVファイルパス
-    const csvFilePath = path.join(assetsDir, '仕業点検マスタ.csv');
+    const csvFilePath = path.join(assetsDir, requestedFile);
+    const defaultFilePath = path.join(assetsDir, '仕業点検マスタ.csv');
 
-    // CSVファイルが存在し、かつ空でないか確認
+    // 指定されたCSVファイルが存在するか確認
     if (fs.existsSync(csvFilePath)) {
       console.log('CSVファイルが見つかりました:', csvFilePath);
 
@@ -133,10 +138,22 @@ app.get('/api/inspection-items', (req, res) => {
         console.warn('CSVファイルが空または不正なデータ形式です');
       }
     } else {
-      console.warn('CSVファイルが見つかりません:', csvFilePath);
+      console.warn('指定されたCSVファイルが見つかりません:', csvFilePath);
+      
+      // 代わりにデフォルトファイルを使用
+      if (fs.existsSync(defaultFilePath)) {
+        console.log('デフォルトCSVファイルを使用します:', defaultFilePath);
+        const csvData = fs.readFileSync(defaultFilePath, 'utf8');
+        
+        if (csvData && csvData.trim().length > 0) {
+          res.set('Content-Type', 'text/csv; charset=utf-8');
+          return res.status(200).send(csvData);
+        }
+      }
     }
 
     // CSVが存在しないか無効な場合はサンプルデータを返す
+    console.log('サンプルデータを返します');
     res.set('Content-Type', 'text/csv; charset=utf-8');
     return res.status(200).send(getSampleInspectionData());
 
@@ -178,8 +195,11 @@ app.post('/api/upload-inspection-items', (req, res) => {
         fs.mkdirSync(assetsDir, { recursive: true });
       }
 
+      // ファイル名をクエリパラメータから取得（デフォルトは仕業点検マスタ.csv）
+      const fileName = req.query.fileName as string || '仕業点検マスタ.csv';
+      
       // CSVファイルパス
-      const csvFilePath = path.join(assetsDir, '仕業点検マスタ.csv');
+      const csvFilePath = path.join(assetsDir, fileName);
 
       // ファイルを保存
       fs.writeFileSync(csvFilePath, req.file.buffer);
@@ -188,7 +208,7 @@ app.post('/api/upload-inspection-items', (req, res) => {
 
       res.status(200).json({ 
         message: 'ファイルが正常にアップロードされました',
-        fileName: '仕業点検マスタ.csv',
+        fileName: fileName,
         size: req.file.buffer.length
       });
     } catch (error) {
@@ -196,6 +216,86 @@ app.post('/api/upload-inspection-items', (req, res) => {
       res.status(500).json({ error: 'ファイルの保存に失敗しました' });
     }
   });
+});
+
+// CSVデータを保存するAPI
+app.post('/api/save-inspection-data', (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "認証が必要です" });
+  }
+
+  try {
+    const { data, fileName } = req.body;
+    
+    if (!data) {
+      return res.status(400).json({ error: '保存するデータがありません' });
+    }
+    
+    // ファイル名が指定されていない場合はデフォルト名
+    const outputFileName = fileName || `仕業点検_編集済_${new Date().toISOString().slice(0, 10)}.csv`;
+    
+    // CSV形式に変換
+    let csvContent;
+    if (typeof data === 'string') {
+      csvContent = data;  // すでにCSV文字列の場合
+    } else {
+      // JSONデータの場合はCSV形式に変換
+      csvContent = Papa.unparse(data, {
+        header: true,
+        delimiter: ',',
+        quoteChar: '"'
+      });
+    }
+    
+    // attached_assetsディレクトリのチェックと作成
+    const assetsDir = path.join(process.cwd(), 'attached_assets');
+    if (!fs.existsSync(assetsDir)) {
+      fs.mkdirSync(assetsDir, { recursive: true });
+    }
+    
+    // CSVファイルパス
+    const csvFilePath = path.join(assetsDir, outputFileName);
+    
+    // ファイルを保存
+    fs.writeFileSync(csvFilePath, csvContent, 'utf8');
+    
+    console.log(`CSVデータを保存しました: ${csvFilePath}`);
+    
+    res.status(200).json({
+      message: 'データが正常に保存されました',
+      fileName: outputFileName
+    });
+    
+  } catch (error) {
+    console.error('データ保存エラー:', error);
+    res.status(500).json({ error: 'データの保存に失敗しました' });
+  }
+});
+
+// 利用可能なCSVファイル一覧を取得するAPI
+app.get('/api/inspection-files', (req, res) => {
+  try {
+    const assetsDir = path.join(process.cwd(), 'attached_assets');
+    
+    if (!fs.existsSync(assetsDir)) {
+      return res.status(200).json({ files: [] });
+    }
+    
+    // CSVファイルのみをフィルタリング
+    const files = fs.readdirSync(assetsDir)
+      .filter(file => file.endsWith('.csv'))
+      .map(file => ({
+        name: file,
+        size: fs.statSync(path.join(assetsDir, file)).size,
+        modified: fs.statSync(path.join(assetsDir, file)).mtime
+      }));
+    
+    res.status(200).json({ files });
+    
+  } catch (error) {
+    console.error('ファイル一覧取得エラー:', error);
+    res.status(500).json({ error: 'ファイル一覧の取得に失敗しました' });
+  }
 });
 
 // 仕業点検のサンプルデータを生成する関数

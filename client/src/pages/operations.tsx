@@ -80,11 +80,35 @@ export function Operations() {
         const { data, errors } = Papa.parse<InspectionItem>(csvText, {
           header: true,
           skipEmptyLines: true,
+          delimiter: ',', // 明示的にカンマを区切り文字として指定
           transformHeader: (header) => header.trim() || 'column' // 空のヘッダーに対応
         });
         
         if (errors.length > 0) {
           console.warn("CSV解析中にエラーが発生しました:", errors);
+          // エラーの詳細を表示
+          console.log("CSV内容サンプル:", csvText.substring(0, 200));
+          
+          // エラーが多すぎる場合は再試行
+          if (errors.some(e => e.code === "TooManyFields")) {
+            console.log("フィールド数の不一致エラーを検出、区切り文字を変更して再試行");
+            // 区切り文字を推測して再パース
+            const possibleDelimiters = [',', ';', '\t'];
+            for (const delimiter of possibleDelimiters) {
+              const retryParse = Papa.parse<InspectionItem>(csvText, {
+                header: true,
+                skipEmptyLines: true,
+                delimiter,
+                transformHeader: (header) => header.trim() || 'column'
+              });
+              if (retryParse.errors.length === 0 || retryParse.errors.length < errors.length) {
+                console.log(`区切り文字 "${delimiter}" で再解析成功`);
+                data.length = 0; // 既存データをクリア
+                data.push(...retryParse.data); // 新しい解析データを追加
+                break;
+              }
+            }
+          }
         }
         
         console.log("仕業点検：データ読み込み成功", data.length, "件");

@@ -101,12 +101,16 @@ app.get('/api/inspection-items', (req, res) => {
       if (csvData && csvData.trim().length > 0 && !csvData.includes('404: Not Found')) {
         console.log(`CSVデータ読み込み成功 (${csvData.length} バイト)`);
         
+        // BOMを削除（存在する場合）
+        const cleanedCsvData = csvData.replace(/^\uFEFF/, '');
+        
         // 改行で分割して実際の行数をカウント（空行を除外）
-        const lines = csvData.split('\n').filter(line => line.trim() !== '');
+        const lines = cleanedCsvData.split('\n').filter(line => line.trim() !== '');
         console.log(`CSVの有効行数: ${lines.length}`);
 
         // ヘッダー行を確認
         const headerLine = lines.length > 0 ? lines[0] : '';
+        console.log(`CSV最初の行: "${headerLine}"`);
         
         // ヘッダーが空の場合、ヘッダーを追加
         if (!headerLine.trim()) {

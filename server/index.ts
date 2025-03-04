@@ -9,6 +9,16 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// キャッシュ無効化ミドルウェア
+app.use((req, res, next) => {
+  // キャッシュを無効化するヘッダーを設定
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  next();
+});
+
 // リクエストロギングミドルウェア
 app.use((req, res, next) => {
   const start = Date.now();

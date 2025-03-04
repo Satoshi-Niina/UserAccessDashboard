@@ -1,321 +1,445 @@
 
-import { useEffect, useState } from 'react';
-import { Button } from '../../components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
-import { Checkbox } from '../../components/ui/checkbox';
-import { Input } from '../../components/ui/input';
-import { useToast } from '../../components/ui/use-toast';
-import Papa from 'papaparse';
+import React, { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { PenSquare, Plus, Save, Trash2 } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 
+// 仕業点検の型定義
 interface InspectionItem {
-  メーカー: string;
-  機種: string;
-  'エンジン型式': string;
-  部位: string;
-  装置: string;
-  手順: string;
-  確認箇所: string;
-  判断基準: string;
-  確認要領: string;
-  測定等記録: string;
-  図形記録: string;
-  [key: string]: string;
+  id: number;
+  manufacturer: string;
+  model: string;
+  category: string;
+  item: string;
+  method: string;
+  criteria: string;
 }
 
+// サンプルデータ - 本来はAPIから取得する
+const sampleManufacturers = ["コマツ", "日立建機", "キャタピラー", "コベルコ", "住友建機"];
+const sampleModels = ["油圧ショベル ZX120", "ブルドーザー D51PX", "ホイールローダー WA100", "クローラクレーン SCX900", "バックホウ PC200"];
+
 export default function Inspection() {
-  const [manufacturers, setManufacturers] = useState<string[]>([]);
-  const [modelTypes, setModelTypes] = useState<string[]>([]);
-  const [selectedManufacturer, setSelectedManufacturer] = useState<string>('');
-  const [selectedModel, setSelectedModel] = useState<string>('');
-  const [displayItems, setDisplayItems] = useState<InspectionItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [results, setResults] = useState<Record<string, string>>({});
-  const [hasChanges, setHasChanges] = useState(false);
-  const { toast } = useToast();
+  // 状態管理
+  const [manufacturer, setManufacturer] = useState<string>("");
+  const [model, setModel] = useState<string>("");
+  const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [currentItem, setCurrentItem] = useState<InspectionItem | null>(null);
+  const [newItem, setNewItem] = useState<Partial<InspectionItem>>({
+    category: "",
+    item: "",
+    method: "",
+    criteria: "",
+  });
 
-  // CSVデータの読み込み
+  // 初期データロード - 実際のアプリではAPIから取得する
   useEffect(() => {
-    const fetchInspectionItems = async () => {
-      setLoading(true);
-      try {
-        console.log("APIコール：仕業点検項目を取得します");
-        const response = await fetch('/api/inspection-items?t=' + new Date().getTime());
-        
-        if (!response.ok) {
-          throw new Error(`API エラー: ${response.status}`);
-        }
-        
-        const csvText = await response.text();
-        console.log("CSV取得成功:", csvText.substring(0, 100) + "...");
-        
-        // CSVパース
-        const { data } = Papa.parse<InspectionItem>(csvText, {
-          header: true,
-          skipEmptyLines: true,
-        });
-        
-        console.log("パース成功:", data.length, "件のレコード");
-        
-        if (data.length === 0) {
-          setError("点検項目データが見つかりませんでした");
-          return;
-        }
-        
-        // 製造メーカーと機種の一覧を取得
-        const uniqueManufacturers = [...new Set(data.map(item => item['メーカー']).filter(Boolean))];
-        const uniqueModels = [...new Set(data.map(item => item['機種']).filter(Boolean))];
-        
-        console.log("製造メーカー:", uniqueManufacturers);
-        console.log("機種:", uniqueModels);
-        
-        setManufacturers(uniqueManufacturers);
-        setModelTypes(uniqueModels);
-        
-        // 初期選択の設定
-        if (uniqueManufacturers.length > 0) {
-          setSelectedManufacturer(uniqueManufacturers[0]);
-          
-          // 選択したメーカーに対応する機種を抽出
-          const relatedModels = data
-            .filter(item => item['メーカー'] === uniqueManufacturers[0])
-            .map(item => item['機種'])
-            .filter((value, index, self) => self.indexOf(value) === index);
-            
-          if (relatedModels.length > 0) {
-            setSelectedModel(relatedModels[0]);
-          }
-        }
-        
-        setError(null);
-      } catch (err) {
-        console.error("データ取得エラー:", err);
-        setError("点検項目データの取得に失敗しました");
-      } finally {
-        setLoading(false);
-      }
-    };
+    const sampleData: InspectionItem[] = [
+      {
+        id: 1,
+        manufacturer: "コマツ",
+        model: "油圧ショベル ZX120",
+        category: "エンジン",
+        item: "エンジンオイル量",
+        method: "目視点検",
+        criteria: "オイルゲージの範囲内であること",
+      },
+      {
+        id: 2,
+        manufacturer: "コマツ",
+        model: "油圧ショベル ZX120",
+        category: "油圧系統",
+        item: "作動油量",
+        method: "目視点検",
+        criteria: "タンク上部のゲージで確認",
+      },
+      {
+        id: 3,
+        manufacturer: "コマツ",
+        model: "油圧ショベル ZX120",
+        category: "足回り",
+        item: "キャタピラの張り具合",
+        method: "目視・触診",
+        criteria: "適切なテンションがあること",
+      },
+      {
+        id: 4,
+        manufacturer: "日立建機",
+        model: "ブルドーザー D51PX",
+        category: "エンジン",
+        item: "冷却水量",
+        method: "目視点検",
+        criteria: "リザーブタンクの範囲内",
+      },
+      {
+        id: 5,
+        manufacturer: "日立建機",
+        model: "ブルドーザー D51PX",
+        category: "電装品",
+        item: "ライト点灯確認",
+        method: "操作確認",
+        criteria: "すべてのライトが点灯すること",
+      },
+    ];
 
-    fetchInspectionItems();
-  }, []);
+    if (manufacturer && model) {
+      const filteredItems = sampleData.filter(
+        (item) => item.manufacturer === manufacturer && item.model === model
+      );
+      setInspectionItems(filteredItems);
+    } else {
+      setInspectionItems([]);
+    }
+  }, [manufacturer, model]);
 
-  // 選択したメーカーに基づいて機種リストをフィルタリング
-  useEffect(() => {
-    if (!selectedManufacturer) return;
-    
-    const fetchInspectionItems = async () => {
-      try {
-        const response = await fetch('/api/inspection-items?t=' + new Date().getTime());
-        const csvText = await response.text();
-        
-        const { data } = Papa.parse<InspectionItem>(csvText, {
-          header: true,
-          skipEmptyLines: true,
-        });
-        
-        // 選択したメーカーの機種を取得
-        const filteredModels = [...new Set(
-          data
-            .filter(item => item['メーカー'] === selectedManufacturer)
-            .map(item => item['機種'])
-            .filter(Boolean)
-        )];
-        
-        setModelTypes(filteredModels);
-        
-        // 機種リストが更新されたとき、最初の機種を選択
-        if (filteredModels.length > 0 && !filteredModels.includes(selectedModel)) {
-          setSelectedModel(filteredModels[0]);
-        }
-      } catch (err) {
-        console.error("機種リスト取得エラー:", err);
-      }
-    };
-    
-    fetchInspectionItems();
-  }, [selectedManufacturer]);
+  // 点検項目の追加・編集ダイアログを開く
+  const openAddDialog = () => {
+    setIsEditMode(false);
+    setNewItem({
+      category: "",
+      item: "",
+      method: "",
+      criteria: "",
+    });
+    setIsDialogOpen(true);
+  };
 
-  // 表示アイテムの更新
-  useEffect(() => {
-    if (!selectedManufacturer || !selectedModel) return;
-    
-    const fetchFilteredItems = async () => {
-      try {
-        const response = await fetch('/api/inspection-items?t=' + new Date().getTime());
-        const csvText = await response.text();
-        
-        const { data } = Papa.parse<InspectionItem>(csvText, {
-          header: true,
-          skipEmptyLines: true,
-        });
-        
-        // 選択されたメーカーと機種で点検項目をフィルタリング
-        const filtered = data.filter(item => 
-          item['メーカー'] === selectedManufacturer && 
-          item['機種'] === selectedModel
-        );
-        
-        setDisplayItems(filtered);
-      } catch (err) {
-        console.error("点検項目フィルタリングエラー:", err);
-      }
-    };
-    
-    fetchFilteredItems();
-  }, [selectedManufacturer, selectedModel]);
+  // 点検項目の編集ダイアログを開く
+  const openEditDialog = (item: InspectionItem) => {
+    setIsEditMode(true);
+    setCurrentItem(item);
+    setNewItem({
+      category: item.category,
+      item: item.item,
+      method: item.method,
+      criteria: item.criteria,
+    });
+    setIsDialogOpen(true);
+  };
 
-  // 点検結果の保存
-  const handleSaveResults = () => {
-    // 点検結果の保存処理を実装
+  // 点検項目を追加する
+  const addInspectionItem = () => {
+    if (
+      !manufacturer ||
+      !model ||
+      !newItem.category ||
+      !newItem.item ||
+      !newItem.method ||
+      !newItem.criteria
+    ) {
+      toast({
+        title: "入力エラー",
+        description: "すべての項目を入力してください",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isEditMode && currentItem) {
+      // 既存項目の編集
+      const updatedItems = inspectionItems.map((item) =>
+        item.id === currentItem.id
+          ? {
+              ...item,
+              category: newItem.category || "",
+              item: newItem.item || "",
+              method: newItem.method || "",
+              criteria: newItem.criteria || "",
+            }
+          : item
+      );
+      setInspectionItems(updatedItems);
+      toast({
+        title: "更新完了",
+        description: "点検項目を更新しました",
+      });
+    } else {
+      // 新規項目の追加
+      const newId =
+        inspectionItems.length > 0
+          ? Math.max(...inspectionItems.map((item) => item.id)) + 1
+          : 1;
+      const newInspectionItem: InspectionItem = {
+        id: newId,
+        manufacturer,
+        model,
+        category: newItem.category || "",
+        item: newItem.item || "",
+        method: newItem.method || "",
+        criteria: newItem.criteria || "",
+      };
+      setInspectionItems([...inspectionItems, newInspectionItem]);
+      toast({
+        title: "追加完了",
+        description: "新しい点検項目を追加しました",
+      });
+    }
+
+    setIsDialogOpen(false);
+  };
+
+  // 点検項目を削除する
+  const deleteInspectionItem = (id: number) => {
+    if (window.confirm("この点検項目を削除してもよろしいですか？")) {
+      const updatedItems = inspectionItems.filter((item) => item.id !== id);
+      setInspectionItems(updatedItems);
+      toast({
+        title: "削除完了",
+        description: "点検項目を削除しました",
+      });
+    }
+  };
+
+  // 変更を保存する（実際のアプリではAPI呼び出し）
+  const saveChanges = () => {
+    // APIを呼び出して変更を保存する処理
     toast({
       title: "保存完了",
-      description: "点検結果が保存されました",
+      description: "変更内容を保存しました",
     });
-    setHasChanges(false);
   };
-
-  // 結果の変更ハンドラ
-  const handleResultChange = (itemId: string, value: string) => {
-    setResults(prev => ({
-      ...prev,
-      [itemId]: value
-    }));
-    setHasChanges(true);
-  };
-
-  if (loading) {
-    return <div className="text-center py-8">データを読み込み中...</div>;
-  }
-
-  if (error) {
-    return <div className="text-center py-8 text-red-500">{error}</div>;
-  }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold mb-4">仕業点検</h2>
-        <p className="mb-4">メーカーと機種を選択して点検項目を表示します。</p>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">製造メーカー</label>
-          <Select 
-            value={selectedManufacturer} 
-            onValueChange={setSelectedManufacturer}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="メーカーを選択" />
-            </SelectTrigger>
-            <SelectContent>
-              {manufacturers.map(manufacturer => (
-                <SelectItem key={manufacturer} value={manufacturer}>
-                  {manufacturer}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium mb-1">機種</label>
-          <Select 
-            value={selectedModel} 
-            onValueChange={setSelectedModel}
-            disabled={modelTypes.length === 0}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="機種を選択" />
-            </SelectTrigger>
-            <SelectContent>
-              {modelTypes.map(model => (
-                <SelectItem key={model} value={model}>
-                  {model}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      
-      {displayItems.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>点検項目</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>部位</TableHead>
-                    <TableHead>装置</TableHead>
-                    <TableHead>確認箇所</TableHead>
-                    <TableHead>判断基準</TableHead>
-                    <TableHead>結果</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {displayItems.map((item, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{item.部位}</TableCell>
-                      <TableCell>{item.装置}</TableCell>
-                      <TableCell>{item.確認箇所}</TableCell>
-                      <TableCell>{item.判断基準}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <div className="flex items-center space-x-2">
-                            <Checkbox 
-                              id={`ok-${index}`}
-                              checked={results[`${index}`] === 'OK'}
-                              onCheckedChange={() => handleResultChange(`${index}`, 'OK')}
-                            />
-                            <label htmlFor={`ok-${index}`}>OK</label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Checkbox 
-                              id={`ng-${index}`}
-                              checked={results[`${index}`] === 'NG'}
-                              onCheckedChange={() => handleResultChange(`${index}`, 'NG')}
-                            />
-                            <label htmlFor={`ng-${index}`}>NG</label>
-                          </div>
-                          {item.測定等記録 === '要記録' && (
-                            <Input 
-                              placeholder="測定値"
-                              value={results[`${index}-value`] || ''}
-                              onChange={(e) => handleResultChange(`${index}-value`, e.target.value)}
-                              className="w-24"
-                            />
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            
-            <div className="mt-6 flex justify-end">
-              <Button 
-                onClick={handleSaveResults}
-                disabled={!hasChanges}
+    <Card>
+      <CardContent className="p-6">
+        <div className="space-y-6">
+          <h2 className="text-2xl font-bold">仕業点検</h2>
+          <p className="text-muted-foreground">
+            メーカーと機種を選択して、点検項目を表示します。
+          </p>
+
+          {/* 製造メーカーと機種選択 */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="manufacturer">製造メーカー</Label>
+              <Select
+                value={manufacturer}
+                onValueChange={(value) => {
+                  setManufacturer(value);
+                  setModel(""); // メーカーが変わったら機種をリセット
+                }}
               >
-                点検結果を保存
-              </Button>
+                <SelectTrigger id="manufacturer">
+                  <SelectValue placeholder="メーカーを選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sampleManufacturers.map((mfr) => (
+                    <SelectItem key={mfr} value={mfr}>
+                      {mfr}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          </CardContent>
-        </Card>
-      ) : (
-        selectedManufacturer && selectedModel ? (
-          <div className="text-center py-4">
-            選択されたメーカーと機種の点検項目がありません
+
+            <div className="space-y-2">
+              <Label htmlFor="model">機種</Label>
+              <Select
+                value={model}
+                onValueChange={setModel}
+                disabled={!manufacturer}
+              >
+                <SelectTrigger id="model">
+                  <SelectValue placeholder="機種を選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sampleModels.map((mdl) => (
+                    <SelectItem key={mdl} value={mdl}>
+                      {mdl}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        ) : null
-      )}
-    </div>
+
+          {/* 点検項目一覧と操作ボタン */}
+          {manufacturer && model ? (
+            <>
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold">
+                  点検項目一覧 ({inspectionItems.length}件)
+                </h3>
+                <div className="space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={openAddDialog}
+                    className="gap-1"
+                  >
+                    <Plus className="h-4 w-4" />
+                    新規追加
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={saveChanges}
+                    className="gap-1"
+                  >
+                    <Save className="h-4 w-4" />
+                    変更を保存
+                  </Button>
+                </div>
+              </div>
+
+              {/* 点検項目テーブル */}
+              {inspectionItems.length > 0 ? (
+                <div className="border rounded-md">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>カテゴリ</TableHead>
+                        <TableHead>点検項目</TableHead>
+                        <TableHead>点検方法</TableHead>
+                        <TableHead>判定基準</TableHead>
+                        <TableHead className="w-[100px]">操作</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {inspectionItems.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell>{item.category}</TableCell>
+                          <TableCell>{item.item}</TableCell>
+                          <TableCell>{item.method}</TableCell>
+                          <TableCell>{item.criteria}</TableCell>
+                          <TableCell>
+                            <div className="flex space-x-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => openEditDialog(item)}
+                              >
+                                <PenSquare className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => deleteInspectionItem(item.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="flex justify-center items-center p-12 border rounded-md">
+                  <p className="text-muted-foreground">
+                    選択したメーカーと機種の点検項目がありません。
+                    <br />
+                    「新規追加」から点検項目を登録してください。
+                  </p>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="flex justify-center items-center p-12 border rounded-md">
+              <p className="text-muted-foreground">
+                メーカーと機種を選択して点検項目を表示します。
+              </p>
+            </div>
+          )}
+        </div>
+      </CardContent>
+
+      {/* 点検項目追加・編集ダイアログ */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {isEditMode ? "点検項目を編集" : "点検項目を追加"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="category">カテゴリ</Label>
+              <Input
+                id="category"
+                value={newItem.category}
+                onChange={(e) =>
+                  setNewItem({ ...newItem, category: e.target.value })
+                }
+                placeholder="例: エンジン、油圧系統など"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="item">点検項目</Label>
+              <Input
+                id="item"
+                value={newItem.item}
+                onChange={(e) =>
+                  setNewItem({ ...newItem, item: e.target.value })
+                }
+                placeholder="例: エンジンオイル量、冷却水量など"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="method">点検方法</Label>
+              <Input
+                id="method"
+                value={newItem.method}
+                onChange={(e) =>
+                  setNewItem({ ...newItem, method: e.target.value })
+                }
+                placeholder="例: 目視点検、操作確認など"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="criteria">判定基準</Label>
+              <Input
+                id="criteria"
+                value={newItem.criteria}
+                onChange={(e) =>
+                  setNewItem({ ...newItem, criteria: e.target.value })
+                }
+                placeholder="例: 正常範囲内、異音がないことなど"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDialogOpen(false)}
+            >
+              キャンセル
+            </Button>
+            <Button onClick={addInspectionItem}>
+              {isEditMode ? "更新" : "追加"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Card>
   );
 }

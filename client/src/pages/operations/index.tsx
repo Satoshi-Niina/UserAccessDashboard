@@ -1,13 +1,39 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from "../../components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
 import { Button } from '../../components/ui/button';
 import Inspection from './inspection';
 import OperationalPlan from './operational-plan';
 
+// キャッシュを強制的にクリアする関数
+const clearCache = () => {
+  if ('caches' in window) {
+    caches.keys().then((names) => {
+      names.forEach(name => {
+        caches.delete(name);
+      });
+    });
+  }
+  // ローカルストレージとセッションストレージもクリア
+  localStorage.clear();
+  sessionStorage.clear();
+};
+
 export default function Operations() {
   const [activeTab, setActiveTab] = useState("inspection");
+
+  // コンポーネントマウント時にキャッシュをクリア
+  useEffect(() => {
+    clearCache();
+    console.log("キャッシュをクリアしました");
+
+    // 強制的にページをリロード（最初の1回のみ）
+    const hasReloaded = sessionStorage.getItem('hasReloaded');
+    if (!hasReloaded) {
+      sessionStorage.setItem('hasReloaded', 'true');
+      window.location.reload();
+    }
+  }, []);
 
   return (
     <div className="container mx-auto py-6">
@@ -17,7 +43,7 @@ export default function Operations() {
           終了
         </Button>
       </div>
-      
+
       <Card>
         <CardContent className="p-0">
           <Tabs 
@@ -29,11 +55,11 @@ export default function Operations() {
               <TabsTrigger value="inspection">仕業点検</TabsTrigger>
               <TabsTrigger value="operational-plan">運用計画</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="inspection" className="p-4">
               <Inspection />
             </TabsContent>
-            
+
             <TabsContent value="operational-plan" className="p-4">
               <OperationalPlan />
             </TabsContent>

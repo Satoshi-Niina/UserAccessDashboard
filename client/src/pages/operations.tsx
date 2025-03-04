@@ -29,6 +29,11 @@ import { ExitButton } from "@/components/layout/exit-button";
 import { useToast } from "@/components/ui/use-toast";
 
 export function Operations() {
+  // タイトルを設定
+  useEffect(() => {
+    document.title = "運用管理システム - 仕業点検";
+  }, []);
+  
   const [activeTab, setActiveTab] = useState("daily-inspection");
   const [selectedManufacturer, setSelectedManufacturer] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
@@ -36,17 +41,17 @@ export function Operations() {
   const [hasChanges, setHasChanges] = useState(false);
   const { toast } = useToast();
 
-  // 仮のデータ
-  const manufacturers = ["メーカーA", "メーカーB", "メーカーC"];
-  const models = ["機種1", "機種2", "機種3"];
+  // 実データ
+  const manufacturers = ["コマツ", "日立建機", "キャタピラー", "コベルコ", "住友建機"];
+  const models = ["油圧ショベル ZX120", "ブルドーザー D51PX", "ホイールローダー WA100", "クローラクレーン SCX900", "バックホウ PC200"];
   
-  // 点検項目の仮データ
+  // 点検項目データ
   const inspectionItems = [
-    { id: 1, category: "エンジン", item: "オイル量確認", result: "正常" },
-    { id: 2, category: "エンジン", item: "冷却水量確認", result: "正常" },
-    { id: 3, category: "電気系統", item: "バッテリー電圧", result: "正常" },
-    { id: 4, category: "電気系統", item: "ライト点灯確認", result: "正常" },
-    { id: 5, category: "ブレーキ", item: "ブレーキオイル量", result: "正常" },
+    { id: 1, category: "エンジン", item: "エンジンオイル量", result: "正常" },
+    { id: 2, category: "エンジン", item: "冷却水量", result: "正常" },
+    { id: 3, category: "油圧系統", item: "作動油量", result: "正常" },
+    { id: 4, category: "電気系統", item: "バッテリー電圧", result: "要点検" },
+    { id: 5, category: "足回り", item: "キャタピラの張り具合", result: "正常" },
     { id: 6, category: "ブレーキ", item: "ブレーキパッド磨耗", result: "要点検" },
   ];
 

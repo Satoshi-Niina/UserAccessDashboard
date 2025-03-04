@@ -22,6 +22,11 @@ interface InspectionItem {
 }
 
 export default function OperationalPlan() {
+  // タイトルを設定
+  useEffect(() => {
+    document.title = "運用管理システム - 運用計画";
+  }, []);
+  
   const [items, setItems] = useState<InspectionItem[]>([]);
   const [manufacturers, setManufacturers] = useState<string[]>([]);
   const [modelTypes, setModelTypes] = useState<string[]>([]);

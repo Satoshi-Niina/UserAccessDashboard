@@ -46,6 +46,11 @@ const sampleManufacturers = ["コマツ", "日立建機", "キャタピラー", 
 const sampleModels = ["油圧ショベル ZX120", "ブルドーザー D51PX", "ホイールローダー WA100", "クローラクレーン SCX900", "バックホウ PC200"];
 
 export default function Inspection() {
+  // タイトルを設定
+  useEffect(() => {
+    document.title = "運用管理システム - 仕業点検";
+  }, []);
+  
   // 状態管理
   const [manufacturer, setManufacturer] = useState<string>("");
   const [model, setModel] = useState<string>("");

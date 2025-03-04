@@ -24,6 +24,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
 import { Sidebar } from "@/components/layout/sidebar";
 import { ExitButton } from "@/components/layout/exit-button";
 import { useToast } from "@/components/ui/use-toast";
@@ -353,8 +354,16 @@ export function Operations() {
                                   <TableCell className="px-2 py-1">{item.確認箇所}</TableCell>
                                   <TableCell className="px-2 py-1">{item.判断基準}</TableCell>
                                   <TableCell className="px-2 py-1">{item.確認要領}</TableCell>
-                                  <TableCell className="px-2 py-1">{item.測定等記録}</TableCell>
-                                  <TableCell className="px-2 py-1">{item.図形記録}</TableCell>
+                                  <TableCell className="px-2 py-1">
+                                    <Input 
+                                      placeholder="数値を入力" 
+                                      className="w-24 h-8 text-xs px-2" 
+                                      defaultValue={item.測定等記録}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="px-2 py-1 w-32 h-10 border border-dashed border-gray-300">
+                                    {item.図形記録 ? item.図形記録 : "図形表示エリア"}
+                                  </TableCell>
                                   <TableCell className="px-2 py-1">
                                     <Select>
                                       <SelectTrigger className="w-20 h-8 text-xs px-2">

@@ -73,9 +73,20 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // サーバーの起動（ポート5000固定）
-  const PORT = 5000;
+  // サーバーの起動（ポート5000または環境変数から）
+  const PORT = process.env.PORT || 5000;
   server.listen(PORT, "0.0.0.0", () => {
     log(`serving on port ${PORT}`);
+  })
+  .on('error', (err: any) => {
+    if (err.code === 'EADDRINUSE') {
+      const newPort = Number(PORT) + 1;
+      log(`Port ${PORT} is already in use. Trying port ${newPort}...`);
+      server.listen(newPort, "0.0.0.0", () => {
+        log(`serving on port ${newPort}`);
+      });
+    } else {
+      throw err;
+    }
   });
 })();

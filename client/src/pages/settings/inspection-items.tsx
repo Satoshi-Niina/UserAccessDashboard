@@ -252,6 +252,8 @@ export function InspectionItems() {
     });
   }, [inspectionItems, selectedManufacturer, selectedModel]);
 
+  const filterEmptyValues = (arr: string[]) => arr.filter(item => item.trim() !== "");
+
   return (
     <div className="flex h-screen">
       <Sidebar onExpandChange={setIsMenuExpanded} />
@@ -268,10 +270,10 @@ export function InspectionItems() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">すべて</SelectItem>
-                  {manufacturers.map((manufacturer) => (
-                    manufacturer ? <SelectItem key={manufacturer} value={manufacturer}>
+                  {filterEmptyValues(manufacturers).map((manufacturer) => (
+                    <SelectItem key={manufacturer} value={manufacturer}>
                       {manufacturer}
-                    </SelectItem> : null
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -281,10 +283,10 @@ export function InspectionItems() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">すべて</SelectItem>
-                  {models.map((model) => (
-                    model ? <SelectItem key={model} value={model}>
+                  {filterEmptyValues(models).map((model) => (
+                    <SelectItem key={model} value={model}>
                       {model}
-                    </SelectItem> : null
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>

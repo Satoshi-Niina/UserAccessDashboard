@@ -256,11 +256,13 @@ export default function Inspection() {
                   <SelectValue placeholder="メーカーを選択" />
                 </SelectTrigger>
                 <SelectContent>
-                  {sampleManufacturers.map((mfr) => (
-                    <SelectItem key={mfr} value={mfr}>
-                      {mfr}
-                    </SelectItem>
-                  ))}
+                  {sampleManufacturers
+                    .filter(mfr => mfr && mfr.trim() !== '')
+                    .map((mfr) => (
+                      <SelectItem key={mfr} value={mfr}>
+                        {mfr}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -276,8 +278,12 @@ export default function Inspection() {
                   <SelectValue placeholder="機種を選択" />
                 </SelectTrigger>
                 <SelectContent>
-                  {sampleModels.map((mdl) => (
-                    mdl ? <SelectItem key={mdl} value={mdl}>
+                  {sampleModels
+                    .filter(mdl => mdl && mdl.trim() !== '')
+                    .map((mdl) => (
+                    <SelectItem key={mdl} value={mdl}>
+                      {mdl}
+                    </SelectItem>Item key={mdl} value={mdl}>
                       {mdl}
                     </SelectItem> : null
                   ))}

@@ -26,7 +26,7 @@ export default function OperationalPlan() {
   useEffect(() => {
     document.title = "運用管理システム - 運用計画";
   }, []);
-  
+
   const [items, setItems] = useState<InspectionItem[]>([]);
   const [manufacturers, setManufacturers] = useState<string[]>([]);
   const [modelTypes, setModelTypes] = useState<string[]>([]);
@@ -55,9 +55,9 @@ export default function OperationalPlan() {
 
         console.log("運用計画: データ読み込み成功", enhancedItems.length, "件");
 
-        // メーカーと機種の重複を削除したリストを作成
-        const uniqueManufacturers = [...new Set(enhancedItems.map(item => item.メーカー).filter(Boolean))];
-        const uniqueModelTypes = [...new Set(enhancedItems.map(item => item.機種).filter(Boolean))];
+        // メーカーとモデルタイプのリストを作成（空の値を確実に除外）
+        const uniqueManufacturers = [...new Set(enhancedItems.map(item => item.メーカー).filter(value => value && value.trim() !== ''))];
+        const uniqueModelTypes = [...new Set(enhancedItems.map(item => item.機種).filter(value => value && value.trim() !== ''))];
 
         setItems(enhancedItems);
         setManufacturers(uniqueManufacturers);

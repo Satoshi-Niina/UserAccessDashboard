@@ -761,28 +761,28 @@ export default function InspectionItems() {
           {/* 点検項目テーブル */}
           {filteredItems.length > 0 ? (
             <div className="border rounded-md overflow-x-auto" style={{ maxWidth: '100%' }}>
-              <Table className="min-w-[1000px]">
+              <Table className="min-w-[1000px] border-collapse">
                 <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[100px] py-2">部位</TableHead>
-                    <TableHead className="w-[180px] py-2">点検項目</TableHead>
-                    <TableHead className="w-[180px] py-2">点検方法</TableHead>
-                    <TableHead className="w-[180px] py-2">判定基準</TableHead>
-                    <TableHead className="w-[120px] py-2">測定等記録</TableHead>
-                    <TableHead className="w-[120px] py-2">図形記録</TableHead>
-                    <TableHead className="w-[80px] sticky right-0 bg-background py-2">操作</TableHead>
+                  <TableRow className="border-b border-gray-200">
+                    <TableHead className="w-[100px] py-2 border border-gray-200">部位</TableHead>
+                    <TableHead className="w-[180px] py-2 border border-gray-200">点検項目</TableHead>
+                    <TableHead className="w-[180px] py-2 border border-gray-200">点検方法</TableHead>
+                    <TableHead className="w-[180px] py-2 border border-gray-200">判定基準</TableHead>
+                    <TableHead className="w-[120px] py-2 border border-gray-200">測定等記録</TableHead>
+                    <TableHead className="w-[120px] py-2 border border-gray-200">図形記録</TableHead>
+                    <TableHead className="w-[80px] sticky right-0 bg-background py-2 border border-gray-200">操作</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredItems.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="whitespace-normal py-2 break-words" title={item.category}>{item.category}</TableCell>
-                      <TableCell className="whitespace-normal py-2 break-words" title={item.item}>{item.item}</TableCell>
-                      <TableCell className="whitespace-normal py-2 break-words" title={item.method}>{item.method}</TableCell>
-                      <TableCell className="whitespace-normal py-2 break-words" title={item.criteria}>{item.criteria}</TableCell>
-                      <TableCell className="whitespace-normal py-2 break-words" title={item.measurementRecord}>{item.measurementRecord}</TableCell>
-                      <TableCell className="whitespace-normal py-2 break-words" title={item.diagramRecord}>{item.diagramRecord}</TableCell>
-                      <TableCell className="sticky right-0 bg-background py-2">
+                    <TableRow key={item.id} className="border-b border-gray-200">
+                      <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.category}>{item.category}</TableCell>
+                      <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.item}>{item.item}</TableCell>
+                      <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.method}>{item.method}</TableCell>
+                      <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.criteria}>{item.criteria}</TableCell>
+                      <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.measurementRecord}>{item.measurementRecord}</TableCell>
+                      <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.diagramRecord}>{item.diagramRecord}</TableCell>
+                      <TableCell className="sticky right-0 bg-background py-2 border border-gray-200">
                         <div className="flex space-x-1">
                           <Button
                             variant="ghost"

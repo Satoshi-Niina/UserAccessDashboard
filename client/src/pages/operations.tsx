@@ -56,15 +56,15 @@ function Inspection() {
       try {
         const response = await fetch('/api/inspection-files');
         const data = await response.json();
-        
+
         if (data.files && Array.isArray(data.files)) {
           const fileList = data.files.map(file => ({
             name: file.name,
             modified: new Date(file.modified).toLocaleString()
           }));
-          
+
           setAvailableFiles(fileList);
-          
+
           // 仕業点検マスタ.csvがない場合は、利用可能な最初のファイルを選択
           if (fileList.length > 0 && !fileList.some(f => f.name === "仕業点検マスタ.csv")) {
             setCurrentFileName(fileList[0].name);
@@ -74,7 +74,7 @@ function Inspection() {
         console.error("ファイル一覧取得エラー:", err);
       }
     };
-    
+
     fetchAvailableFiles();
   }, []);
 
@@ -323,19 +323,17 @@ function Inspection() {
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">仕業点検項目一覧</h2>
             <div className="flex gap-2">
-              <select 
-                className="px-3 py-1 border rounded text-sm"
-                value={currentFileName} 
-                onChange={(e) => setCurrentFileName(e.target.value)}
-              >
-                {availableFiles.length > 0 ? (
-                  availableFiles.map((file) =>(file => (
-                    <option key={file.name} value={file.name}>{file.name}</option>
-                  ))
-                ) : (
-                  <option value="仕業点検マスタ.csv">仕業点検マスタ.csv</option>
-                )}
-              </select>
+              <Select value={currentFileName} onValueChange={(e) => setCurrentFileName(e.target.value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="ファイルを選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableFiles.map((file) => (
+                    <SelectItem key={file.name} value={file.name}>{file.name}</SelectItem>
+                  ))}
+                  {availableFiles.length === 0 && <SelectItem value="仕業点検マスタ.csv">仕業点検マスタ.csv</SelectItem>}
+                </SelectContent>
+              </Select>
 
               <div className="flex gap-2">
                 <Button 

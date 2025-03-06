@@ -291,9 +291,11 @@ function Inspection() {
                 <SelectContent>
                   <SelectItem value="">すべて</SelectItem>
                   {manufacturers.filter(manufacturer => manufacturer && manufacturer.trim() !== '').map((manufacturer) => (
+                    manufacturer && manufacturer.trim() !== "" && (
                     <SelectItem key={manufacturer} value={manufacturer}>
                       {manufacturer}
                     </SelectItem>
+                  )
                   ))}
                 </SelectContent>
               </Select>
@@ -311,9 +313,11 @@ function Inspection() {
                 <SelectContent>
                   <SelectItem value="all">すべて</SelectItem>
                   {models.map((model) => (
-                    model ? <SelectItem key={model} value={model}>
+                    model && model.trim() !== "" && (
+                    <SelectItem key={model} value={model}>
                       {model}
-                    </SelectItem> : null
+                    </SelectItem>
+                  )
                   ))}
                 </SelectContent>
               </Select>

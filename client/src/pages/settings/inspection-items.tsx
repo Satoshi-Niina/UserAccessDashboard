@@ -40,40 +40,7 @@ interface InspectionItem {
   diagramRecord?: string;     // Optional diagram record
 }
 
-// 仮のサンプルデータ（メーカーと機種）
-const sampleManufacturers = ["日立", "三菱", "東芝", "富士電機", "明電舎"];
-const sampleModels = ["HM-100", "HM-200", "MT-300", "TB-150", "FJ-400", "MD-500"];
-
-// 仮の点検項目データ
-const sampleInspectionItems: InspectionItem[] = [
-  {
-    id: 1,
-    manufacturer: "日立",
-    model: "HM-100",
-    category: "エンジン",
-    item: "エンジンオイル確認",
-    method: "目視確認",
-    criteria: "規定値（L〜H）の間にあること",
-  },
-  {
-    id: 2,
-    manufacturer: "日立",
-    model: "HM-100",
-    category: "ブレーキ",
-    item: "ブレーキパッド確認",
-    method: "厚み測定",
-    criteria: "5mm以上あること",
-  },
-  {
-    id: 3,
-    manufacturer: "三菱",
-    model: "MT-300",
-    category: "油圧",
-    item: "作動油量確認",
-    method: "目視確認",
-    criteria: "タンクのレベルゲージで適正範囲内",
-  },
-];
+// メーカーと機種は実データから動的に取得
 
 export default function InspectionItems() {
   // 状態管理
@@ -201,8 +168,8 @@ export default function InspectionItems() {
           description: `データの読み込みに失敗しました: ${err instanceof Error ? err.message : '不明なエラー'}`,
           variant: "destructive",
         });
-        // エラー時はサンプルデータを表示
-        setInspectionItems(sampleInspectionItems);
+        // エラー時は空の配列を表示
+        setInspectionItems([]);
       }
     };
 
@@ -631,7 +598,7 @@ export default function InspectionItems() {
                   <SelectValue placeholder="メーカーを選択" />
                 </SelectTrigger>
                 <SelectContent>
-                  {sampleManufacturers
+                  {[...new Set(inspectionItems.map(item => item.manufacturer))]
                     .filter((mfr) => mfr && mfr.trim() !== "")
                     .map((mfr) => (
                       <SelectItem key={mfr} value={mfr}>
@@ -653,7 +620,9 @@ export default function InspectionItems() {
                   <SelectValue placeholder="機種を選択" />
                 </SelectTrigger>
                 <SelectContent>
-                  {sampleModels
+                  {[...new Set(inspectionItems
+                    .filter(item => item.manufacturer === manufacturer)
+                    .map(item => item.model))]
                     .filter((mdl) => mdl && mdl.trim() !== "")
                     .map((mdl) => (
                       <SelectItem key={mdl} value={mdl}>

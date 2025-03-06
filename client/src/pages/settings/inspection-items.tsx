@@ -761,27 +761,27 @@ export default function InspectionItems() {
           {/* 点検項目テーブル */}
           {filteredItems.length > 0 ? (
             <div className="border rounded-md overflow-x-auto" style={{ maxWidth: '100%' }}>
-              <Table className="min-w-[1200px]">
+              <Table className="min-w-[1000px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[120px] py-2">部位</TableHead>
-                    <TableHead className="w-[250px] py-2">点検項目</TableHead>
-                    <TableHead className="w-[250px] py-2">点検方法</TableHead>
-                    <TableHead className="w-[250px] py-2">判定基準</TableHead>
-                    <TableHead className="w-[150px] py-2">測定等記録</TableHead>
-                    <TableHead className="w-[150px] py-2">図形記録</TableHead>
-                    <TableHead className="w-[100px] sticky right-0 bg-background py-2">操作</TableHead>
+                    <TableHead className="w-[100px] py-2">部位</TableHead>
+                    <TableHead className="w-[180px] py-2">点検項目</TableHead>
+                    <TableHead className="w-[180px] py-2">点検方法</TableHead>
+                    <TableHead className="w-[180px] py-2">判定基準</TableHead>
+                    <TableHead className="w-[120px] py-2">測定等記録</TableHead>
+                    <TableHead className="w-[120px] py-2">図形記録</TableHead>
+                    <TableHead className="w-[80px] sticky right-0 bg-background py-2">操作</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredItems.map((item) => (
                     <TableRow key={item.id}>
-                      <TableCell className="whitespace-normal py-2">{item.category}</TableCell>
-                      <TableCell className="whitespace-normal py-2">{item.item}</TableCell>
-                      <TableCell className="whitespace-normal py-2">{item.method}</TableCell>
-                      <TableCell className="whitespace-normal py-2">{item.criteria}</TableCell>
-                      <TableCell className="whitespace-normal py-2">{item.measurementRecord}</TableCell>
-                      <TableCell className="whitespace-normal py-2">{item.diagramRecord}</TableCell>
+                      <TableCell className="whitespace-normal py-2 break-words" title={item.category}>{item.category}</TableCell>
+                      <TableCell className="whitespace-normal py-2 break-words" title={item.item}>{item.item}</TableCell>
+                      <TableCell className="whitespace-normal py-2 break-words" title={item.method}>{item.method}</TableCell>
+                      <TableCell className="whitespace-normal py-2 break-words" title={item.criteria}>{item.criteria}</TableCell>
+                      <TableCell className="whitespace-normal py-2 break-words" title={item.measurementRecord}>{item.measurementRecord}</TableCell>
+                      <TableCell className="whitespace-normal py-2 break-words" title={item.diagramRecord}>{item.diagramRecord}</TableCell>
                       <TableCell className="sticky right-0 bg-background py-2">
                         <div className="flex space-x-1">
                           <Button

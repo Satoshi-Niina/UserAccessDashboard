@@ -559,9 +559,18 @@ export default function InspectionItems() {
                     <p className="text-sm text-gray-500 mt-1">指定しない場合はアップロードファイル名が使用されます</p>
                   </div>
 
-                  <Button type="submit" disabled={loading}>
-                    {loading ? "アップロード中..." : "アップロード"}
-                  </Button>
+                  <div className="flex space-x-2">
+                    <Button type="submit" disabled={loading}>
+                      {loading ? "アップロード中..." : "アップロード"}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => window.history.back()}
+                      type="button"
+                    >
+                      戻る
+                    </Button>
+                  </div>
                 </form>
               </div>
             </TabsContent>

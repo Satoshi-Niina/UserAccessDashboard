@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -114,7 +113,7 @@ export default function MeasurementStandards() {
   const [selectedItemId, setSelectedItemId] = useState<string>('');
   const [selectedPart, setSelectedPart] = useState<string>('すべて');
   const [activeTab, setActiveTab] = useState('all');
-  
+
   // 部位のリスト（フィルター用）
   const [parts, setParts] = useState<string[]>(['すべて']);
 
@@ -123,7 +122,7 @@ export default function MeasurementStandards() {
     // 実際の実装ではAPI呼び出しになる
     setStandards(sampleStandards);
     setItems(sampleItems);
-    
+
     // 部位のリストを作成
     const uniqueParts = Array.from(new Set(sampleItems.map(item => item.part)));
     setParts(['すべて', ...uniqueParts]);
@@ -132,14 +131,14 @@ export default function MeasurementStandards() {
   // フィルター後の基準値リスト
   const filteredStandards = standards.filter(std => {
     if (selectedPart !== 'すべて' && std.part !== selectedPart) return false;
-    
+
     // タブによるフィルタリング
     if (activeTab === 'all') return true;
     if (activeTab === 'engine' && std.part === 'エンジン') return true;
     if (activeTab === 'transmission' && std.part === '動力伝達') return true;
     if (activeTab === 'brake' && (std.part === '制動装置' || std.part === '駐車ブレーキ')) return true;
     if (activeTab === 'electric' && std.part === '電気装置') return true;
-    
+
     return false;
   });
 
@@ -153,7 +152,7 @@ export default function MeasurementStandards() {
   // 点検項目の選択
   const handleItemSelect = (itemId: string) => {
     setSelectedItemId(itemId);
-    
+
     const selectedItem = items.find(item => item.id === itemId);
     if (selectedItem) {
       setNewStandard({
@@ -177,9 +176,9 @@ export default function MeasurementStandards() {
       });
       return;
     }
-    
+
     const newId = (Math.max(...standards.map(std => parseInt(std.id)), 0) + 1).toString();
-    
+
     const standard: MeasurementStandard = {
       id: newId,
       itemId: newStandard.itemId || '',
@@ -192,10 +191,10 @@ export default function MeasurementStandards() {
       unit: newStandard.unit || '',
       warningThreshold: newStandard.warningThreshold || '',
     };
-    
+
     setStandards([...standards, standard]);
     setIsAddOpen(false);
-    
+
     toast({
       title: "基準値を追加しました",
       description: `「${standard.itemName}」の基準値を追加しました。`,
@@ -213,7 +212,7 @@ export default function MeasurementStandards() {
   // 基準値の編集
   const handleEditStandard = () => {
     if (!currentStandard) return;
-    
+
     if (!newStandard.minValue || !newStandard.maxValue) {
       toast({
         title: "入力エラー",
@@ -222,7 +221,7 @@ export default function MeasurementStandards() {
       });
       return;
     }
-    
+
     const updatedStandard: MeasurementStandard = {
       ...currentStandard,
       minValue: newStandard.minValue || '',
@@ -230,15 +229,15 @@ export default function MeasurementStandards() {
       unit: newStandard.unit || '',
       warningThreshold: newStandard.warningThreshold || '',
     };
-    
+
     const updatedStandards = standards.map(std => 
       std.id === currentStandard.id ? updatedStandard : std
     );
-    
+
     setStandards(updatedStandards);
     setIsEditOpen(false);
     setCurrentStandard(null);
-    
+
     toast({
       title: "基準値を更新しました",
       description: `「${updatedStandard.itemName}」の基準値を更新しました。`,
@@ -249,7 +248,7 @@ export default function MeasurementStandards() {
   const handleDeleteStandard = (id: string) => {
     const updatedStandards = standards.filter(std => std.id !== id);
     setStandards(updatedStandards);
-    
+
     toast({
       title: "基準値を削除しました",
       description: "測定基準値を削除しました。",
@@ -263,9 +262,9 @@ export default function MeasurementStandards() {
     const rows = standards.map(std => {
       return `${std.itemId},${std.itemName},${std.part},${std.device},${std.checkPoint},${std.minValue},${std.maxValue},${std.unit},${std.warningThreshold}`;
     }).join('\n');
-    
+
     const csv = `${headers}\n${rows}`;
-    
+
     // ダウンロード
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -276,7 +275,7 @@ export default function MeasurementStandards() {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    
+
     toast({
       title: "エクスポート完了",
       description: "CSVファイルをエクスポートしました。",

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import Papa from 'papaparse';
 
 interface InspectionItem {
@@ -569,7 +569,7 @@ import {
 } from "@/components/ui/resizable";
 import { Sidebar } from "@/components/layout/sidebar";
 import { ExitButton } from "@/components/layout/exit-button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -958,8 +958,7 @@ function SecondaryInspectionItems() {
               {deleteType === 'item' ? 'レコードを削除' : 'カラムを削除'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {deleteType === 'item'
-                ? '選択したレコードを削除します。この操作は元に戻せません。'
+              {deleteType === 'item                ? '選択したレコードを削除します。この操作は元に戻せません。'
                 :`カラム「${selectedColumn}」を削除します。すべてのレコードからこの情報が削除されます。この操作は元に戻せません。`
               }
             </AlertDialogDescription>

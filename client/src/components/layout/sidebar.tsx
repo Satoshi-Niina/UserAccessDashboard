@@ -4,6 +4,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
+import { useRoute } from "wouter"; // Assuming this hook exists
 import {
   Home,
   Mic,
@@ -63,11 +64,40 @@ interface SidebarProps {
 export function Sidebar({ onExpandChange }: SidebarProps) {
   const { user, logoutMutation } = useAuth();
   const [location] = useLocation();
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [isSettingsRoute] = useRoute("/settings*");
 
   useEffect(() => {
     onExpandChange?.(isExpanded);
   }, [isExpanded, onExpandChange]);
+
+  // サイドバーの展開/折りたたみを切り替える
+  const toggleSidebar = () => {
+    // 設定ページの場合はサイドバーを常に展開する
+    if (isSettingsRoute && !isExpanded) {
+      setIsExpanded(true);
+      if (onExpandChange) {
+        onExpandChange(true);
+      }
+      return;
+    }
+
+    setIsExpanded(!isExpanded);
+    if (onExpandChange) {
+      onExpandChange(!isExpanded);
+    }
+  };
+
+  // 設定ページの場合、サイドバーを常に展開する
+  useEffect(() => {
+    if (isSettingsRoute && !isExpanded) {
+      setIsExpanded(true);
+      if (onExpandChange) {
+        onExpandChange(true);
+      }
+    }
+  }, [isSettingsRoute, isExpanded, onExpandChange]);
+
 
   return (
     <div
@@ -75,8 +105,8 @@ export function Sidebar({ onExpandChange }: SidebarProps) {
         "fixed h-screen bg-sidebar border-r border-sidebar-border flex flex-col transition-all duration-300 z-50",
         isExpanded ? "w-64" : "w-16"
       )}
-      onMouseEnter={() => setIsExpanded(true)}
-      onMouseLeave={() => setIsExpanded(false)}
+      //onMouseEnter={() => setIsExpanded(true)}
+      //onMouseLeave={() => setIsExpanded(false)}
     >
       {/* サイドバーの展開・収納トリガー */}
       <div
@@ -84,6 +114,7 @@ export function Sidebar({ onExpandChange }: SidebarProps) {
           "absolute top-1/2 -right-3 w-6 h-12 bg-sidebar border border-sidebar-border rounded-r-lg flex items-center justify-center cursor-pointer transition-opacity",
           isExpanded ? "opacity-0" : "opacity-100"
         )}
+        onClick={toggleSidebar}
       >
         <ChevronRight className="h-4 w-4 text-sidebar-foreground" />
       </div>
@@ -118,7 +149,7 @@ export function Sidebar({ onExpandChange }: SidebarProps) {
                   )}
                 </div>
               </Link>
-              
+
               {/* サブメニューの表示 */}
               {isExpanded && isActive && hasSubItems && (
                 <div className="ml-10 space-y-1">

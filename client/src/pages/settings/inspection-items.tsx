@@ -83,6 +83,8 @@ export default function InspectionItems() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingAction, setPendingAction] = useState<'back' | 'save' | null>(null);
   const [_, navigate] = useLocation();
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
+  const [saveFileName, setSaveFileName] = useState("");
 
   const { toast } = useToast();
 
@@ -360,15 +362,29 @@ export default function InspectionItems() {
   // 変更を保存して戻る
   const handleSaveAndNavigate = () => {
     if (hasChanges) {
-      setShowConfirmDialog(true);
+      // 変更がある場合、保存ダイアログを開く
       setPendingAction('save');
+      openSaveDialog();
     } else {
       navigate('/settings');
     }
   };
 
+  // ファイル保存ダイアログを開く
+  const openSaveDialog = () => {
+    setIsSaveDialogOpen(true);
+    setSaveFileName(currentFileName); //初期値は現在のファイル名
+  };
+
+  // ファイル保存ダイアログを閉じる
+  const closeSaveDialog = () => {
+    setIsSaveDialogOpen(false);
+    setPendingAction(null);
+  };
+
+
   // 変更を保存する
-  const saveChanges = async () => {
+  const saveChanges = async (newFileName?: string) => {
     try {
       // 現在の点検項目データをCSV形式に変換
       const headers = ['製造メーカー', '機種', '部位', '確認箇所', '確認要領', '判断基準', '測定等記録', '図形記録'];
@@ -391,7 +407,7 @@ export default function InspectionItems() {
       const csvContent = csvRows.join('\n');
 
       // 保存するファイル名
-      const saveFileName = `仕業点検_${new Date().toISOString().slice(0, 10)}.csv`;
+      const fileName = newFileName || (currentFileName.startsWith("仕業点検_") ? currentFileName : `仕業点検_${new Date().toISOString().slice(0, 10)}.csv`);
 
       // APIを呼び出して変更を保存する処理
       const response = await fetch('/api/save-inspection-items', {
@@ -400,7 +416,7 @@ export default function InspectionItems() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          fileName: saveFileName,
+          fileName: fileName,
           content: csvContent
         }),
       });
@@ -418,12 +434,12 @@ export default function InspectionItems() {
           modified: new Date(file.modified).toLocaleString()
         }));
         setAvailableFiles(fileList);
-        setCurrentFileName(saveFileName);
+        setCurrentFileName(fileName);
       }
 
       toast({
         title: "保存完了",
-        description: `変更内容を ${saveFileName} に保存しました`,
+        description: `変更内容を ${fileName} に保存しました`,
       });
 
       // 初期状態を更新
@@ -452,10 +468,7 @@ export default function InspectionItems() {
     setShowConfirmDialog(false);
 
     if (pendingAction === 'save') {
-      const success = await saveChanges();
-      if (success) {
-        navigate('/settings');
-      }
+      // 保存ダイアログは別で開くので、ここでは何もしない
     } else if (pendingAction === 'back') {
       navigate('/settings');
     }
@@ -952,7 +965,7 @@ export default function InspectionItems() {
                 placeholder="例: ○○mm以上あること、××の範囲内など"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space<div className="space-y-2">
               <Label htmlFor="measurementRecord">測定等記録</Label>
               <Input
                 id="measurementRecord"
@@ -982,6 +995,33 @@ export default function InspectionItems() {
             <Button onClick={addInspectionItem}>
               {isEditMode ? "更新" : "追加"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ファイル保存ダイアログ */}
+      <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>ファイル名を入力してください</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="saveFileName">ファイル名</Label>
+              <Input
+                id="saveFileName"
+                type="text"
+                value={saveFileName}
+                onChange={(e) => setSaveFileName(e.target.value)}
+                placeholder="ファイル名を入力してください"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={closeSaveDialog}>
+              キャンセル
+            </Button>
+            <Button onClick={() => saveChanges(saveFileName)}>保存</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

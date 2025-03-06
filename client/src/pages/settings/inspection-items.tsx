@@ -45,6 +45,7 @@ export default function InspectionItems() {
   // 状態管理
   const [manufacturer, setManufacturer] = useState<string>("");
   const [model, setModel] = useState<string>("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("");
   const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<InspectionItem[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -173,15 +174,16 @@ export default function InspectionItems() {
     fetchInspectionData();
   }, [currentFileName, toast]);
 
-  // メーカーと機種でフィルタリング
+  // メーカーと機種と部位でフィルタリング
   useEffect(() => {
     const filtered = inspectionItems.filter(
       (item) => 
-        (!manufacturer || item.manufacturer === manufacturer) && 
-        (!model || item.model === model)
+        (!manufacturer || manufacturer === "all" || item.manufacturer === manufacturer) && 
+        (!model || model === "all" || item.model === model) &&
+        (!categoryFilter || categoryFilter === "all" || item.category === categoryFilter)
     );
     setFilteredItems(filtered);
-  }, [manufacturer, model, inspectionItems]);
+  }, [manufacturer, model, categoryFilter, inspectionItems]);
 
   // 点検項目の追加ダイアログを開く
   const openAddDialog = () => {
@@ -514,7 +516,7 @@ export default function InspectionItems() {
 
         {/* 点検項目のメインエリア */}
         <div className="border p-4 rounded-md space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="manufacturer">メーカー</Label>
               <Select
@@ -552,12 +554,39 @@ export default function InspectionItems() {
                 <SelectContent>
                   <SelectItem value="all">すべて</SelectItem>
                   {[...new Set(inspectionItems
-                    .filter(item => !manufacturer || item.manufacturer === manufacturer)
+                    .filter(item => !manufacturer || manufacturer === "all" || item.manufacturer === manufacturer)
                     .map(item => item.model))]
                     .filter((mdl) => mdl && mdl.trim() !== "")
                     .map((mdl) => (
                       <SelectItem key={mdl} value={mdl}>
                         {mdl || "未設定"}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="category">部位</Label>
+              <Select
+                value={categoryFilter}
+                onValueChange={setCategoryFilter}
+              >
+                <SelectTrigger id="category">
+                  <SelectValue placeholder="部位を選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">すべて</SelectItem>
+                  {[...new Set(inspectionItems
+                    .filter(item => 
+                      (!manufacturer || manufacturer === "all" || item.manufacturer === manufacturer) &&
+                      (!model || model === "all" || item.model === model)
+                    )
+                    .map(item => item.category))]
+                    .filter((cat) => cat && cat.trim() !== "")
+                    .map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat || "未設定"}
                       </SelectItem>
                     ))}
                 </SelectContent>
@@ -598,7 +627,7 @@ export default function InspectionItems() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>カテゴリ</TableHead>
+                    <TableHead>部位</TableHead>
                     <TableHead>点検項目</TableHead>
                     <TableHead>点検方法</TableHead>
                     <TableHead>判定基準</TableHead>
@@ -661,7 +690,7 @@ export default function InspectionItems() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="category">カテゴリ</Label>
+              <Label htmlFor="category">部位</Label>
               <Input
                 id="category"
                 value={newItem.category}

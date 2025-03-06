@@ -174,16 +174,37 @@ export default function InspectionItems() {
     fetchInspectionData();
   }, [currentFileName, toast]);
 
+  // 検索状態を保持する
+  const [searchQuery, setSearchQuery] = useState<string>("");
+
   // メーカーと機種と部位でフィルタリング
   useEffect(() => {
-    const filtered = inspectionItems.filter(
+    let filtered = inspectionItems;
+    
+    // 検索クエリがある場合
+    if (searchQuery) {
+      filtered = filtered.filter(item => 
+        (item.manufacturer && item.manufacturer.toLowerCase().includes(searchQuery)) ||
+        (item.model && item.model.toLowerCase().includes(searchQuery)) ||
+        (item.category && item.category.toLowerCase().includes(searchQuery)) ||
+        (item.item && item.item.toLowerCase().includes(searchQuery)) ||
+        (item.method && item.method.toLowerCase().includes(searchQuery)) ||
+        (item.criteria && item.criteria.toLowerCase().includes(searchQuery)) ||
+        (item.measurementRecord && item.measurementRecord.toLowerCase().includes(searchQuery)) ||
+        (item.diagramRecord && item.diagramRecord.toLowerCase().includes(searchQuery))
+      );
+    }
+    
+    // メーカー、機種、部位でフィルタリング
+    filtered = filtered.filter(
       (item) => 
         (!manufacturer || manufacturer === "all" || item.manufacturer === manufacturer) && 
         (!model || model === "all" || item.model === model) &&
         (!categoryFilter || categoryFilter === "all" || item.category === categoryFilter)
     );
+    
     setFilteredItems(filtered);
-  }, [manufacturer, model, categoryFilter, inspectionItems]);
+  }, [manufacturer, model, categoryFilter, inspectionItems, searchQuery]);
 
   // 点検項目の追加ダイアログを開く
   const openAddDialog = () => {
@@ -516,6 +537,16 @@ export default function InspectionItems() {
 
         {/* 点検項目のメインエリア */}
         <div className="border p-4 rounded-md space-y-4">
+          {/* 検索フィールド追加 */}
+          <div className="mb-4">
+            <Label htmlFor="search">検索</Label>
+            <Input
+              id="search"
+              placeholder="キーワードで検索（部位、点検項目、点検方法、判定基準など）"
+              onChange={(e) => setSearchQuery(e.target.value.toLowerCase())}
+            />
+          </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="manufacturer">メーカー</Label>

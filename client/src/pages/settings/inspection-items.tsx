@@ -208,6 +208,18 @@ export default function InspectionItems() {
     setHasChanges(true);
   };
 
+  const handleEditItem = (index: number) => {
+    //Add your edit logic here if needed
+  };
+
+  const handleDeleteItemClick = (index: number) => {
+    const updatedItems = [...inspectionItems];
+    updatedItems.splice(index, 1);
+    setInspectionItems(updatedItems);
+    setHasChanges(true);
+  };
+
+
   // 新しいアイテムの追加
   const handleAddItem = () => {
     // 空のアイテムを作成
@@ -229,12 +241,7 @@ export default function InspectionItems() {
   };
 
   // アイテムの削除
-  const handleDeleteItem = (index: number) => {
-    const updatedItems = [...inspectionItems];
-    updatedItems.splice(index, 1);
-    setInspectionItems(updatedItems);
-    setHasChanges(true);
-  };
+  
 
   // フィルター適用済みのアイテム
   const filteredItems = inspectionItems.filter(item => {
@@ -425,7 +432,6 @@ export default function InspectionItems() {
                   <table className="w-full border-collapse">
                     <thead>
                       <tr>
-                        <th className="px-4 py-2 bg-gray-100 text-left text-xs text-gray-600 uppercase">操作</th>
                         {columns.map(column => (
                           <th
                             key={column}
@@ -442,30 +448,26 @@ export default function InspectionItems() {
                     </thead>
                     <tbody>
                       {filteredItems.map((item, index) => (
-                        <tr
-                          key={index}
-                          className="hover:bg-gray-50"
+                        <tr 
+                          key={index} 
+                          className="hover:bg-gray-50 cursor-pointer"
                           draggable
-                          onDragStart={(e) => handleDragStart(e, inspectionItems.indexOf(item))}
+                          onDragStart={(e) => handleDragStart(e, index)}
                           onDragOver={handleDragOver}
-                          onDrop={(e) => handleDrop(e, inspectionItems.indexOf(item))}
+                          onDrop={(e) => handleDrop(e, index)}
+                          onClick={() => handleEditItem(index)}
+                          onContextMenu={(e) => {
+                            e.preventDefault();
+                            handleDeleteItemClick(index);
+                          }}
                         >
-                          <td className="border px-4 py-2">
-                            <button
-                              onClick={() => handleDeleteItem(inspectionItems.indexOf(item))}
-                              className="text-red-500 hover:text-red-700"
-                            >
-                              削除
-                            </button>
-                          </td>
                           {columns.map(column => (
-                            <td key={`${index}-${column}`} className="border px-4 py-2">
-                              <input
-                                type="text"
-                                value={item[column] || ''}
-                                onChange={(e) => handleItemChange(inspectionItems.indexOf(item), column, e.target.value)}
-                                className="w-full p-1 border rounded"
-                              />
+                            <td 
+                              key={column} 
+                              className="px-3 py-1 text-xs border-r last:border-r-0"
+                              style={{ maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                            >
+                              <span title={String(item[column] || '')}>{String(item[column] || '')}</span>
                             </td>
                           ))}
                         </tr>
@@ -797,6 +799,11 @@ function SecondaryInspectionItems() {
 
     setShowDeleteDialog(false);
     setDeleteType(null);
+  };
+
+  const handleDeleteItemClick = (index: number) => {
+    setSelectedItem(index);
+    showDeleteConfirmation('item');
   };
 
   // 保存関数

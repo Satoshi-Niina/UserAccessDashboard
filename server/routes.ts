@@ -125,10 +125,14 @@ app.get('/api/inspection-items', (req, res) => {
             headerLine.includes('測定等"録') || 
             headerLine.includes('--XX') ||
             headerLine.includes('--XX"形記録') ||
+            headerLine.includes('"形記録') ||
+            headerLine.includes(' 形記録') ||
             !headerLine.endsWith('図形記録')) {
           
           const newCsvData = standardHeader + '\n' + cleanedCsvData.substring(cleanedCsvData.indexOf('\n') + 1);
           console.log('問題のあるヘッダーを検出、標準ヘッダーを追加しました');
+          console.log('元のヘッダー:', headerLine);
+          console.log('修正後ヘッダー:', standardHeader);
           
           // Content-Typeを明示的に設定
           res.set('Content-Type', 'text/csv; charset=utf-8');

@@ -178,16 +178,12 @@ export default function InspectionItems() {
 
   // メーカーと機種でフィルタリング
   useEffect(() => {
-    if (manufacturer && model) {
-      const filtered = inspectionItems.filter(
-        (item) => 
-          item.manufacturer === manufacturer && 
-          item.model === model
-      );
-      setFilteredItems(filtered);
-    } else {
-      setFilteredItems([]);
-    }
+    const filtered = inspectionItems.filter(
+      (item) => 
+        (!manufacturer || item.manufacturer === manufacturer) && 
+        (!model || item.model === model)
+    );
+    setFilteredItems(filtered);
   }, [manufacturer, model, inspectionItems]);
 
   // フィルター用の機種リスト
@@ -506,7 +502,7 @@ export default function InspectionItems() {
               </Select>
             </div>
 
-            {/* 新規CSVファイル選択 */}
+            {/* 新規CSVファイル選択 (インポートボタンと統合) */}
             <div className="flex-1 min-w-[300px]">
               <Label htmlFor="csv-file" className="mb-2 block">新規CSVファイル</Label>
               <div className="flex gap-2">
@@ -518,60 +514,11 @@ export default function InspectionItems() {
                 />
                 <Button 
                   onClick={importCSVData} 
-                  disabled={csvData.length === 0}
                   size="sm"
                 >
                   インポート
                 </Button>
               </div>
-            </div>
-
-            {/* メーカーフィルター */}
-            <div className="w-[200px]">
-              <Label htmlFor="filter-manufacturer" className="mb-2 block">メーカー選択</Label>
-              <Select
-                value={filterManufacturer}
-                onValueChange={(value) => {
-                  setFilterManufacturer(value);
-                  setFilterModel("all");
-                }}
-              >
-                <SelectTrigger id="filter-manufacturer">
-                  <SelectValue placeholder="メーカーを選択" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">すべて</SelectItem>
-                  {[...new Set(inspectionItems.map(item => item.manufacturer))]
-                    .filter(mfr => mfr && mfr.trim() !== "")
-                    .map(mfr => (
-                      <SelectItem key={mfr} value={mfr || "未設定"}>
-                        {mfr}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* 機種フィルター */}
-            <div className="w-[200px]">
-              <Label htmlFor="filter-model" className="mb-2 block">機種</Label>
-              <Select
-                value={filterModel}
-                onValueChange={setFilterModel}
-                disabled={!filterManufacturer}
-              >
-                <SelectTrigger id="filter-model">
-                  <SelectValue placeholder="機種を選択" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">すべて</SelectItem>
-                  {getFilteredModels().map(mdl => (
-                    <SelectItem key={mdl} value={mdl || "未設定"}>
-                      {mdl}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
           </div>
 
@@ -598,6 +545,7 @@ export default function InspectionItems() {
                   <SelectValue placeholder="メーカーを選択" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="">すべて</SelectItem>
                   {[...new Set(inspectionItems.map(item => item.manufacturer))]
                     .filter((mfr) => mfr && mfr.trim() !== "")
                     .map((mfr) => (
@@ -614,14 +562,14 @@ export default function InspectionItems() {
               <Select
                 value={model}
                 onValueChange={setModel}
-                disabled={!manufacturer}
               >
                 <SelectTrigger id="model">
                   <SelectValue placeholder="機種を選択" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="">すべて</SelectItem>
                   {[...new Set(inspectionItems
-                    .filter(item => item.manufacturer === manufacturer)
+                    .filter(item => !manufacturer || item.manufacturer === manufacturer)
                     .map(item => item.model))]
                     .filter((mdl) => mdl && mdl.trim() !== "")
                     .map((mdl) => (
@@ -635,7 +583,7 @@ export default function InspectionItems() {
           </div>
 
           {/* 点検項目一覧と操作ボタン */}
-          {manufacturer && model ? (
+          {filteredItems.length > 0 ? (
             <>
               <div className="flex justify-between items-center mt-4">
                 <h3 className="text-lg font-semibold">
@@ -650,15 +598,6 @@ export default function InspectionItems() {
                   >
                     <Plus className="h-4 w-4" />
                     新規追加
-                  </Button>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={saveChanges}
-                    className="gap-1"
-                  >
-                    <Save className="h-4 w-4" />
-                    レイアウト保存
                   </Button>
                 </div>
               </div>

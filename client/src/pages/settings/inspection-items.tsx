@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -40,8 +41,6 @@ interface InspectionItem {
   diagramRecord?: string;     // Optional diagram record
 }
 
-// メーカーと機種は実データから動的に取得
-
 export default function InspectionItems() {
   // 状態管理
   const [manufacturer, setManufacturer] = useState<string>("");
@@ -56,14 +55,12 @@ export default function InspectionItems() {
     item: "",
     method: "",
     criteria: "",
-    measurementRecord: "", // Added fields for optional records
+    measurementRecord: "",
     diagramRecord: ""
   });
 
   // CSVデータ読み込み用の状態
   const [csvData, setCsvData] = useState<InspectionItem[]>([]);
-  const [filterManufacturer, setFilterManufacturer] = useState<string>("all");
-  const [filterModel, setFilterModel] = useState<string>("all");
   const [availableFiles, setAvailableFiles] = useState<{name: string, modified: string}[]>([]);
   const [currentFileName, setCurrentFileName] = useState("仕業点検マスタ.csv");
 
@@ -147,8 +144,8 @@ export default function InspectionItems() {
             item: item['確認箇所'] || '',
             method: item['確認要領'] || '',
             criteria: item['判断基準'] || '',
-            measurementRecord: item['測定等記録'] || '', // Added fields
-            diagramRecord: item['図形記録'] || ''      // Added fields
+            measurementRecord: item['測定等記録'] || '',
+            diagramRecord: item['図形記録'] || ''
           };
 
           items.push(inspectionItem);
@@ -186,16 +183,6 @@ export default function InspectionItems() {
     setFilteredItems(filtered);
   }, [manufacturer, model, inspectionItems]);
 
-  // フィルター用の機種リスト
-  const getFilteredModels = () => {
-    const uniqueModels = [...new Set(
-      inspectionItems
-        .filter(item => !filterManufacturer || filterManufacturer === "all" || item.manufacturer === filterManufacturer)
-        .map(item => item.model)
-    )];
-    return uniqueModels;
-  };
-
   // 点検項目の追加ダイアログを開く
   const openAddDialog = () => {
     setIsEditMode(false);
@@ -205,8 +192,8 @@ export default function InspectionItems() {
       item: "",
       method: "",
       criteria: "",
-      measurementRecord: "", // Added fields
-      diagramRecord: ""      // Added fields
+      measurementRecord: "",
+      diagramRecord: ""
     });
     setIsDialogOpen(true);
   };
@@ -220,8 +207,8 @@ export default function InspectionItems() {
       item: item.item,
       method: item.method,
       criteria: item.criteria,
-      measurementRecord: item.measurementRecord || "", // Added fields
-      diagramRecord: item.diagramRecord || ""       // Added fields
+      measurementRecord: item.measurementRecord || "",
+      diagramRecord: item.diagramRecord || ""
     });
     setIsDialogOpen(true);
   };
@@ -254,8 +241,8 @@ export default function InspectionItems() {
               item: newItem.item || "",
               method: newItem.method || "",
               criteria: newItem.criteria || "",
-              measurementRecord: newItem.measurementRecord || "", // Added fields
-              diagramRecord: newItem.diagramRecord || ""       // Added fields
+              measurementRecord: newItem.measurementRecord || "",
+              diagramRecord: newItem.diagramRecord || ""
             }
           : item
       );
@@ -278,8 +265,8 @@ export default function InspectionItems() {
         item: newItem.item || "",
         method: newItem.method || "",
         criteria: newItem.criteria || "",
-        measurementRecord: newItem.measurementRecord || "", // Added fields
-        diagramRecord: newItem.diagramRecord || ""       // Added fields
+        measurementRecord: newItem.measurementRecord || "",
+        diagramRecord: newItem.diagramRecord || ""
       };
       setInspectionItems([...inspectionItems, newInspectionItem]);
       toast({
@@ -307,7 +294,7 @@ export default function InspectionItems() {
   const saveChanges = async () => {
     try {
       // 現在の点検項目データをCSV形式に変換
-      const headers = ['製造メーカー', '機種', '部位', '確認箇所', '確認要領', '判断基準', '測定等記録', '図形記録']; // Added columns
+      const headers = ['製造メーカー', '機種', '部位', '確認箇所', '確認要領', '判断基準', '測定等記録', '図形記録'];
       const csvRows = [headers.join(',')];
 
       inspectionItems.forEach(item => {
@@ -318,8 +305,8 @@ export default function InspectionItems() {
           item.item,
           item.method,
           item.criteria,
-          item.measurementRecord,  // Added columns
-          item.diagramRecord       // Added columns
+          item.measurementRecord,
+          item.diagramRecord
         ].map(val => `${val}`).join(',');
         csvRows.push(row);
       });
@@ -382,9 +369,6 @@ export default function InspectionItems() {
           const lines = text.split('\n');
           const headers = lines[0].split(',');
 
-          console.log("CSVデータの最初の行:", lines[0]);
-          console.log("データのキー:", headers);
-
           // CSVから点検項目データを変換
           const items: InspectionItem[] = [];
           let nextId = inspectionItems.length > 0
@@ -410,8 +394,8 @@ export default function InspectionItems() {
               item: item['確認箇所'] || '',
               method: item['確認要領'] || '',
               criteria: item['判断基準'] || '',
-              measurementRecord: item['測定等記録'] || '', // Added fields
-              diagramRecord: item['図形記録'] || ''      // Added fields
+              measurementRecord: item['測定等記録'] || '',
+              diagramRecord: item['図形記録'] || ''
             };
 
             items.push(inspectionItem);
@@ -479,7 +463,7 @@ export default function InspectionItems() {
         <CardTitle className="text-2xl">点検項目マスタ</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* ファイル選択とフィルター */}
+        {/* ファイル選択とインポート（統合） */}
         <div className="border p-4 rounded-md space-y-4">
           <div className="flex flex-wrap gap-4 items-end">
             {/* 保存済みCSVファイル選択 */}
@@ -502,9 +486,9 @@ export default function InspectionItems() {
               </Select>
             </div>
 
-            {/* 新規CSVファイル選択 (インポートボタンと統合) */}
+            {/* 新規CSVファイル選択とインポートボタン */}
             <div className="flex-1 min-w-[300px]">
-              <Label htmlFor="csv-file" className="mb-2 block">新規CSVファイル</Label>
+              <Label htmlFor="csv-file" className="mb-2 block">CSVファイルインポート</Label>
               <div className="flex gap-2">
                 <Input 
                   id="csv-file"
@@ -513,8 +497,7 @@ export default function InspectionItems() {
                   onChange={handleCSVUpload} 
                 />
                 <Button 
-                  onClick={importCSVData} 
-                  size="sm"
+                  onClick={importCSVData}
                 >
                   インポート
                 </Button>
@@ -545,12 +528,12 @@ export default function InspectionItems() {
                   <SelectValue placeholder="メーカーを選択" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">すべて</SelectItem>
+                  <SelectItem value="all">すべて</SelectItem>
                   {[...new Set(inspectionItems.map(item => item.manufacturer))]
                     .filter((mfr) => mfr && mfr.trim() !== "")
                     .map((mfr) => (
-                      <SelectItem key={mfr} value={mfr || "未設定"}>
-                        {mfr}
+                      <SelectItem key={mfr} value={mfr}>
+                        {mfr || "未設定"}
                       </SelectItem>
                     ))}
                 </SelectContent>
@@ -567,14 +550,14 @@ export default function InspectionItems() {
                   <SelectValue placeholder="機種を選択" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">すべて</SelectItem>
+                  <SelectItem value="all">すべて</SelectItem>
                   {[...new Set(inspectionItems
                     .filter(item => !manufacturer || item.manufacturer === manufacturer)
                     .map(item => item.model))]
                     .filter((mdl) => mdl && mdl.trim() !== "")
                     .map((mdl) => (
-                      <SelectItem key={mdl} value={mdl || "未設定"}>
-                        {mdl}
+                      <SelectItem key={mdl} value={mdl}>
+                        {mdl || "未設定"}
                       </SelectItem>
                     ))}
                 </SelectContent>
@@ -583,86 +566,85 @@ export default function InspectionItems() {
           </div>
 
           {/* 点検項目一覧と操作ボタン */}
-          {filteredItems.length > 0 ? (
-            <>
-              <div className="flex justify-between items-center mt-4">
-                <h3 className="text-lg font-semibold">
-                  点検項目一覧 ({filteredItems.length}件)
-                </h3>
-                <div className="space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={openAddDialog}
-                    className="gap-1"
-                  >
-                    <Plus className="h-4 w-4" />
-                    新規追加
-                  </Button>
-                </div>
-              </div>
+          <div className="flex justify-between items-center mt-4">
+            <h3 className="text-lg font-semibold">
+              点検項目一覧 ({filteredItems.length}件)
+            </h3>
+            <div className="space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={openAddDialog}
+                className="gap-1"
+              >
+                <Plus className="h-4 w-4" />
+                新規追加
+              </Button>
+              <Button 
+                variant="default" 
+                size="sm" 
+                onClick={saveChanges}
+                className="gap-1"
+              >
+                <Save className="h-4 w-4" />
+                変更を保存
+              </Button>
+            </div>
+          </div>
 
-              {/* 点検項目テーブル */}
-              {filteredItems.length > 0 ? (
-                <div className="border rounded-md">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>カテゴリ</TableHead>
-                        <TableHead>点検項目</TableHead>
-                        <TableHead>点検方法</TableHead>
-                        <TableHead>判定基準</TableHead>
-                        <TableHead>測定等記録</TableHead>
-                        <TableHead>図形記録</TableHead>
-                        <TableHead className="w-[100px]">操作</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredItems.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell>{item.category}</TableCell>
-                          <TableCell>{item.item}</TableCell>
-                          <TableCell>{item.method}</TableCell>
-                          <TableCell>{item.criteria}</TableCell>
-                          <TableCell>{item.measurementRecord}</TableCell>
-                          <TableCell>{item.diagramRecord}</TableCell>
-                          <TableCell>
-                            <div className="flex space-x-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => openEditDialog(item)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => deleteInspectionItem(item.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                <div className="flex justify-center items-center p-12 border rounded-md">
-                  <p className="text-muted-foreground">
-                    選択したメーカーと機種の点検項目がありません。
-                    <br />
-                    「新規追加」から点検項目を登録してください。
-                  </p>
-                </div>
-              )}
-            </>
+          {/* 点検項目テーブル */}
+          {filteredItems.length > 0 ? (
+            <div className="border rounded-md">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>カテゴリ</TableHead>
+                    <TableHead>点検項目</TableHead>
+                    <TableHead>点検方法</TableHead>
+                    <TableHead>判定基準</TableHead>
+                    <TableHead>測定等記録</TableHead>
+                    <TableHead>図形記録</TableHead>
+                    <TableHead className="w-[100px]">操作</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredItems.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell>{item.category}</TableCell>
+                      <TableCell>{item.item}</TableCell>
+                      <TableCell>{item.method}</TableCell>
+                      <TableCell>{item.criteria}</TableCell>
+                      <TableCell>{item.measurementRecord}</TableCell>
+                      <TableCell>{item.diagramRecord}</TableCell>
+                      <TableCell>
+                        <div className="flex space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openEditDialog(item)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => deleteInspectionItem(item.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
             <div className="flex justify-center items-center p-12 border rounded-md">
               <p className="text-muted-foreground">
-                メーカーと機種を選択して点検項目を表示します。
+                選択したメーカーと機種の点検項目がありません。
+                <br />
+                「新規追加」から点検項目を登録してください。
               </p>
             </div>
           )}

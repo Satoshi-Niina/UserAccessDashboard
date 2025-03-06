@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   ResizablePanelGroup,
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // 点検項目の型定義
 interface InspectionItem {
@@ -51,6 +52,11 @@ export function InspectionItems() {
   const [columns, setColumns] = useState<string[]>([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteType, setDeleteType] = useState<'item' | 'column' | null>(null);
+  const [manufacturers, setManufacturers] = useState<string[]>([]);
+  const [models, setModels] = useState<string[]>([]);
+  const [selectedManufacturer, setSelectedManufacturer] = useState<string>("all");
+  const [selectedModel, setSelectedModel] = useState<string>("all");
+
 
   // タイトルを設定
   useEffect(() => {
@@ -85,6 +91,11 @@ export function InspectionItems() {
           });
 
           setColumns(orderedColumns);
+          //メーカーと機種のリストを作成
+          const uniqueManufacturers = [...new Set(data.map(item => item.製造メーカー))];
+          const uniqueModels = [...new Set(data.map(item => item.機種))];
+          setManufacturers(uniqueManufacturers);
+          setModels(uniqueModels);
         }
 
         setInspectionItems(data);
@@ -232,6 +243,15 @@ export function InspectionItems() {
     setShowDeleteDialog(true);
   };
 
+  // フィルタリング処理
+  const filteredItems = useMemo(() => {
+    return inspectionItems.filter((item) => {
+      const manufacturerMatch = selectedManufacturer === "all" || item.製造メーカー === selectedManufacturer;
+      const modelMatch = selectedModel === "all" || item.機種 === selectedModel;
+      return manufacturerMatch && modelMatch;
+    });
+  }, [inspectionItems, selectedManufacturer, selectedModel]);
+
   return (
     <div className="flex h-screen">
       <Sidebar onExpandChange={setIsMenuExpanded} />
@@ -242,6 +262,32 @@ export function InspectionItems() {
               <h2 className="text-3xl font-bold tracking-tight">点検項目管理</h2>
             </div>
             <div className="flex items-center space-x-2">
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="メーカーを選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">すべて</SelectItem>
+                  {manufacturers.map((manufacturer) => (
+                    manufacturer ? <SelectItem key={manufacturer} value={manufacturer}>
+                      {manufacturer}
+                    </SelectItem> : null
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="機種を選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">すべて</SelectItem>
+                  {models.map((model) => (
+                    model ? <SelectItem key={model} value={model}>
+                      {model}
+                    </SelectItem> : null
+                  ))}
+                </SelectContent>
+              </Select>
               {selectedItem !== null && (
                 <Button
                   variant="destructive"
@@ -305,7 +351,7 @@ export function InspectionItems() {
 
                 <ScrollArea className="flex-1">
                   <div className="divide-y">
-                    {inspectionItems.map((item, index) => (
+                    {filteredItems.map((item, index) => (
                       <div
                         key={index}
                         draggable

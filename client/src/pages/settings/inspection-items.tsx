@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -26,7 +25,7 @@ import {
   SelectValue,
 } from '@/components/ui';
 import { Plus, Edit, Trash2, Save } from 'lucide-react';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 
 // 点検項目の型定義
 interface InspectionItem {
@@ -89,11 +88,13 @@ export default function InspectionItems() {
     method: "",
     criteria: "",
   });
-  
+
   // CSVデータ読み込み用の状態
   const [csvData, setCsvData] = useState<InspectionItem[]>([]);
   const [filterManufacturer, setFilterManufacturer] = useState<string>("");
   const [filterModel, setFilterModel] = useState<string>("");
+
+  const { toast } = useToast();
 
   // 初期データ読み込み（実際のアプリではAPIから取得）
   useEffect(() => {
@@ -242,26 +243,26 @@ export default function InspectionItems() {
           const text = e.target?.result as string;
           const lines = text.split('\n');
           const headers = lines[0].split(',');
-          
+
           console.log("CSVデータの最初の行:", lines[0]);
           console.log("データのキー:", headers);
-          
+
           // CSVから点検項目データを変換
           const items: InspectionItem[] = [];
           let nextId = inspectionItems.length > 0
             ? Math.max(...inspectionItems.map(item => item.id)) + 1
             : 1;
-            
+
           for (let i = 1; i < lines.length; i++) {
             if (!lines[i].trim()) continue;
-            
+
             const values = lines[i].split(',');
             const item: any = {};
-            
+
             for (let j = 0; j < headers.length; j++) {
               item[headers[j]] = values[j];
             }
-            
+
             // CSVのデータ構造を点検項目の構造に変換
             const inspectionItem: InspectionItem = {
               id: nextId++,
@@ -272,10 +273,10 @@ export default function InspectionItems() {
               method: item['確認要領'] || '',
               criteria: item['判断基準'] || '',
             };
-            
+
             items.push(inspectionItem);
           }
-          
+
           setCsvData(items);
           toast({
             title: "CSV読み込み完了",
@@ -308,7 +309,7 @@ export default function InspectionItems() {
     // 既存データとマージ
     const mergedData = [...inspectionItems];
     let addedCount = 0;
-    
+
     csvData.forEach(newItem => {
       const exists = mergedData.some(item => 
         item.manufacturer === newItem.manufacturer &&
@@ -316,16 +317,16 @@ export default function InspectionItems() {
         item.category === newItem.category &&
         item.item === newItem.item
       );
-      
+
       if (!exists) {
         mergedData.push(newItem);
         addedCount++;
       }
     });
-    
+
     setInspectionItems(mergedData);
     setCsvData([]);
-    
+
     toast({
       title: "インポート完了",
       description: `${addedCount}件のデータをインポートしました`,

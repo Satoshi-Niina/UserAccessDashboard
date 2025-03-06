@@ -965,7 +965,7 @@ export default function InspectionItems() {
                 placeholder="例: ○○mm以上あること、××の範囲内など"
               />
             </div>
-            <div className="space<div className="space-y-2">
+            <div className="space-y-2">
               <Label htmlFor="measurementRecord">測定等記録</Label>
               <Input
                 id="measurementRecord"

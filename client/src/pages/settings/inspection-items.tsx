@@ -969,7 +969,7 @@ export default function InspectionItems() {
                 placeholder="測定値などを記録"
               />
             </div>
-            <div className="space-y-2"><div className="space-y-2">
+            <div className="space-y-2">
               <Label htmlFor="diagramRecord">図形記録</Label>
               <Input
                 id="diagramRecord"

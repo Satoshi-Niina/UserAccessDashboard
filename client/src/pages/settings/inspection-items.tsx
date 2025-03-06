@@ -764,25 +764,25 @@ export default function InspectionItems() {
               <Table className="min-w-[1200px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[120px]">部位</TableHead>
-                    <TableHead className="w-[250px]">点検項目</TableHead>
-                    <TableHead className="w-[250px]">点検方法</TableHead>
-                    <TableHead className="w-[250px]">判定基準</TableHead>
-                    <TableHead className="w-[150px]">測定等記録</TableHead>
-                    <TableHead className="w-[150px]">図形記録</TableHead>
-                    <TableHead className="w-[100px] sticky right-0 bg-background">操作</TableHead>
+                    <TableHead className="w-[120px] py-2">部位</TableHead>
+                    <TableHead className="w-[250px] py-2">点検項目</TableHead>
+                    <TableHead className="w-[250px] py-2">点検方法</TableHead>
+                    <TableHead className="w-[250px] py-2">判定基準</TableHead>
+                    <TableHead className="w-[150px] py-2">測定等記録</TableHead>
+                    <TableHead className="w-[150px] py-2">図形記録</TableHead>
+                    <TableHead className="w-[100px] sticky right-0 bg-background py-2">操作</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredItems.map((item) => (
                     <TableRow key={item.id}>
-                      <TableCell className="whitespace-normal">{item.category}</TableCell>
-                      <TableCell className="whitespace-normal">{item.item}</TableCell>
-                      <TableCell className="whitespace-normal">{item.method}</TableCell>
-                      <TableCell className="whitespace-normal">{item.criteria}</TableCell>
-                      <TableCell className="whitespace-normal">{item.measurementRecord}</TableCell>
-                      <TableCell className="whitespace-normal">{item.diagramRecord}</TableCell>
-                      <TableCell className="sticky right-0 bg-background">
+                      <TableCell className="whitespace-normal py-2">{item.category}</TableCell>
+                      <TableCell className="whitespace-normal py-2">{item.item}</TableCell>
+                      <TableCell className="whitespace-normal py-2">{item.method}</TableCell>
+                      <TableCell className="whitespace-normal py-2">{item.criteria}</TableCell>
+                      <TableCell className="whitespace-normal py-2">{item.measurementRecord}</TableCell>
+                      <TableCell className="whitespace-normal py-2">{item.diagramRecord}</TableCell>
+                      <TableCell className="sticky right-0 bg-background py-2">
                         <div className="flex space-x-1">
                           <Button
                             variant="ghost"

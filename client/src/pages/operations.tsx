@@ -276,17 +276,17 @@ function Inspection() {
               <Label htmlFor="model">機種</Label>
               <Select 
                 value={selectedModel} 
-                onValueChange={setSelectedModel}
+                onValueChange={(value) => setSelectedModel(value === "all" ? "" : value)}
               >
                 <SelectTrigger id="model">
                   <SelectValue placeholder="機種を選択" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">すべて</SelectItem>
+                  <SelectItem value="all">すべて</SelectItem>
                   {models.map((model) => (
-                    <SelectItem key={model} value={model}>
+                    model ? <SelectItem key={model} value={model}>
                       {model}
-                    </SelectItem>
+                    </SelectItem> : null
                   ))}
                 </SelectContent>
               </Select>

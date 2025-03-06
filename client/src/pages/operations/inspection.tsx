@@ -277,9 +277,9 @@ export default function Inspection() {
                 </SelectTrigger>
                 <SelectContent>
                   {sampleModels.map((mdl) => (
-                    <SelectItem key={mdl} value={mdl}>
+                    mdl ? <SelectItem key={mdl} value={mdl}>
                       {mdl}
-                    </SelectItem>
+                    </SelectItem> : null
                   ))}
                 </SelectContent>
               </Select>

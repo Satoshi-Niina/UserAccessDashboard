@@ -121,11 +121,35 @@ app.get('/api/inspection-items', (req, res) => {
         console.log(`CSV最初の行: "${headerLine}"`);
         
         // ヘッダーが空またはヘッダーに問題がある場合、標準ヘッダーで置き換える
-        if (!headerLine.trim() || headerLine.includes('測定等"録')) {
+        if (!headerLine.trim() || 
+            headerLine.includes('測定等"録') || 
+            headerLine.includes('--XX') ||
+            !headerLine.endsWith('図形記録')) {
+          
           const newCsvData = standardHeader + '\n' + cleanedCsvData.substring(cleanedCsvData.indexOf('\n') + 1);
           console.log('問題のあるヘッダーを検出、標準ヘッダーを追加しました');
           
           // Content-Typeを明示的に設定
+          res.set('Content-Type', 'text/csv; charset=utf-8');
+          return res.status(200).send(newCsvData);
+        }
+
+        // さらに厳密なチェック - CSVとして正しくパースできるか確認
+        try {
+          const parsedHeader = Papa.parse(headerLine).data[0];
+          const expectedColumns = standardHeader.split(',');
+          
+          // カラム数が一致しない、または最後のカラムが図形記録でない場合は修正
+          if (parsedHeader.length !== expectedColumns.length || 
+              parsedHeader[parsedHeader.length - 1] !== '図形記録') {
+            console.log('ヘッダーのカラム数または構造に問題があります。標準ヘッダーを使用します。');
+            const newCsvData = standardHeader + '\n' + cleanedCsvData.substring(cleanedCsvData.indexOf('\n') + 1);
+            res.set('Content-Type', 'text/csv; charset=utf-8');
+            return res.status(200).send(newCsvData);
+          }
+        } catch (parseErr) {
+          console.warn('ヘッダーのパースに失敗しました:', parseErr);
+          const newCsvData = standardHeader + '\n' + cleanedCsvData.substring(cleanedCsvData.indexOf('\n') + 1);
           res.set('Content-Type', 'text/csv; charset=utf-8');
           return res.status(200).send(newCsvData);
         }

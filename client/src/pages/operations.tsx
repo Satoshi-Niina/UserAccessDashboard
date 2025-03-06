@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -263,7 +262,7 @@ function Inspection() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">すべて</SelectItem>
-                  {manufacturers.map((manufacturer) => (
+                  {manufacturers.filter(manufacturer => manufacturer && manufacturer.trim() !== '').map((manufacturer) => (
                     <SelectItem key={manufacturer} value={manufacturer}>
                       {manufacturer}
                     </SelectItem>

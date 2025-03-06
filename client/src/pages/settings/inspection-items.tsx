@@ -93,13 +93,115 @@ export default function InspectionItems() {
   const [csvData, setCsvData] = useState<InspectionItem[]>([]);
   const [filterManufacturer, setFilterManufacturer] = useState<string>("all");
   const [filterModel, setFilterModel] = useState<string>("all");
+  const [availableFiles, setAvailableFiles] = useState<{name: string, modified: string}[]>([]);
+  const [currentFileName, setCurrentFileName] = useState("仕業点検マスタ.csv");
 
   const { toast } = useToast();
 
-  // 初期データ読み込み（実際のアプリではAPIから取得）
+  // 利用可能なCSVファイル一覧を取得
   useEffect(() => {
-    setInspectionItems(sampleInspectionItems);
+    const fetchAvailableFiles = async () => {
+      try {
+        const response = await fetch('/api/inspection-files');
+        const data = await response.json();
+
+        if (data.files && Array.isArray(data.files)) {
+          const fileList = data.files.map(file => ({
+            name: file.name,
+            modified: new Date(file.modified).toLocaleString()
+          }));
+
+          setAvailableFiles(fileList);
+          
+          // 初期ファイルが存在するか確認
+          if (!fileList.some(f => f.name === "仕業点検マスタ.csv")) {
+            if (fileList.length > 0) {
+              setCurrentFileName(fileList[0].name);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("ファイル一覧取得エラー:", err);
+        toast({
+          title: "エラー",
+          description: "ファイル一覧の取得に失敗しました",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchAvailableFiles();
   }, []);
+
+  // CSVデータ読み込み
+  useEffect(() => {
+    const fetchInspectionData = async () => {
+      try {
+        const response = await fetch(`/api/inspection-items?file=${currentFileName}&t=${new Date().getTime()}`);
+        
+        if (!response.ok) {
+          throw new Error(`サーバーエラー: ${response.status} ${response.statusText}`);
+        }
+        
+        const csvText = await response.text();
+        
+        if (!csvText || csvText.trim() === '') {
+          throw new Error('データが空です');
+        }
+        
+        // CSVパース処理
+        const lines = csvText.split('\n');
+        const headers = lines[0].split(',');
+        
+        // CSVから点検項目データを変換
+        const items: InspectionItem[] = [];
+        let nextId = 1;
+        
+        for (let i = 1; i < lines.length; i++) {
+          if (!lines[i].trim()) continue;
+          
+          const values = lines[i].split(',');
+          const item: any = {};
+          
+          for (let j = 0; j < headers.length; j++) {
+            item[headers[j].trim()] = values[j]?.trim() || '';
+          }
+          
+          // CSVのデータ構造を点検項目の構造に変換
+          const inspectionItem: InspectionItem = {
+            id: nextId++,
+            manufacturer: item['製造メーカー'] || '',
+            model: item['機種'] || '',
+            category: item['部位'] || '',
+            item: item['確認箇所'] || '',
+            method: item['確認要領'] || '',
+            criteria: item['判断基準'] || '',
+          };
+          
+          items.push(inspectionItem);
+        }
+        
+        setInspectionItems(items);
+        
+        toast({
+          title: "データ読み込み完了",
+          description: `${items.length}件の点検項目を読み込みました`,
+          duration: 3000,
+        });
+      } catch (err) {
+        console.error("データ読み込みエラー:", err);
+        toast({
+          title: "エラー",
+          description: `データの読み込みに失敗しました: ${err instanceof Error ? err.message : '不明なエラー'}`,
+          variant: "destructive",
+        });
+        // エラー時はサンプルデータを表示
+        setInspectionItems(sampleInspectionItems);
+      }
+    };
+    
+    fetchInspectionData();
+  }, [currentFileName, toast]);
 
   // メーカーと機種でフィルタリング
   useEffect(() => {
@@ -224,13 +326,70 @@ export default function InspectionItems() {
     }
   };
 
-  // 変更を保存する（実際のアプリではAPI呼び出し）
-  const saveChanges = () => {
-    // APIを呼び出して変更を保存する処理
-    toast({
-      title: "保存完了",
-      description: "変更内容を保存しました",
-    });
+  // 変更を保存する
+  const saveChanges = async () => {
+    try {
+      // 現在の点検項目データをCSV形式に変換
+      const headers = ['製造メーカー', '機種', '部位', '確認箇所', '確認要領', '判断基準'];
+      const csvRows = [headers.join(',')];
+      
+      inspectionItems.forEach(item => {
+        const row = [
+          item.manufacturer,
+          item.model,
+          item.category,
+          item.item,
+          item.method,
+          item.criteria
+        ].map(val => `${val}`).join(',');
+        csvRows.push(row);
+      });
+      
+      const csvContent = csvRows.join('\n');
+      
+      // 保存するファイル名
+      const saveFileName = `仕業点検_${new Date().toISOString().slice(0, 10)}.csv`;
+      
+      // APIを呼び出して変更を保存する処理
+      const response = await fetch('/api/save-inspection-items', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fileName: saveFileName,
+          content: csvContent
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`保存に失敗しました: ${response.status} ${response.statusText}`);
+      }
+      
+      // ファイル一覧を更新
+      const filesResponse = await fetch('/api/inspection-files');
+      const data = await filesResponse.json();
+      if (data.files && Array.isArray(data.files)) {
+        const fileList = data.files.map(file => ({
+          name: file.name,
+          modified: new Date(file.modified).toLocaleString()
+        }));
+        setAvailableFiles(fileList);
+        setCurrentFileName(saveFileName);
+      }
+      
+      toast({
+        title: "保存完了",
+        description: `変更内容を ${saveFileName} に保存しました`,
+      });
+    } catch (error) {
+      console.error('保存エラー:', error);
+      toast({
+        title: "保存エラー",
+        description: error instanceof Error ? error.message : "不明なエラーが発生しました",
+        variant: "destructive",
+      });
+    }
   };
 
   // CSVファイルを読み込む関数
@@ -342,9 +501,29 @@ export default function InspectionItems() {
         {/* ファイル選択とフィルター */}
         <div className="border p-4 rounded-md space-y-4">
           <div className="flex flex-wrap gap-4 items-end">
-            {/* CSVファイル選択 */}
+            {/* 保存済みCSVファイル選択 */}
+            <div className="flex-1 min-w-[200px]">
+              <Label htmlFor="saved-csv-file" className="mb-2 block">保存済みCSVファイル</Label>
+              <Select
+                value={currentFileName}
+                onValueChange={setCurrentFileName}
+              >
+                <SelectTrigger id="saved-csv-file">
+                  <SelectValue placeholder="ファイルを選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableFiles.map(file => (
+                    <SelectItem key={file.name} value={file.name}>
+                      {file.name} ({file.modified})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* 新規CSVファイル選択 */}
             <div className="flex-1 min-w-[300px]">
-              <Label htmlFor="csv-file" className="mb-2 block">CSVファイル</Label>
+              <Label htmlFor="csv-file" className="mb-2 block">新規CSVファイル</Label>
               <div className="flex gap-2">
                 <Input 
                   id="csv-file"

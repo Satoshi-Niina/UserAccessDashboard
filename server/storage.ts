@@ -1,11 +1,14 @@
 import { users, type User, type InsertUser } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
 import session from "express-session";
-import connectPg from "connect-pg-simple";
-import { pool } from "./db";
+import SQLiteStore from "connect-sqlite3";
+const SQLiteSessionStore = SQLiteStore(session);
+import { randomBytes, scrypt } from "crypto";
+import { promisify } from "util";
 
-const PostgresSessionStore = connectPg(session);
+const scryptAsync = promisify(scrypt);
+import { eq } from "drizzle-orm";
+
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -13,6 +16,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<User>): Promise<User>;
   getAllUsers(): Promise<User[]>;
+  deleteUser(id: number): Promise<void>; // Added deleteUser method
   sessionStore: session.Store;
 }
 
@@ -20,42 +24,109 @@ export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
-    this.sessionStore = new PostgresSessionStore({ 
-      pool, 
-      createTableIfMissing: true 
-    });
+    this.sessionStore = new SQLiteSessionStore({ 
+      createDatabaseTable: true
+    }, db);
   }
 
   async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+    return new Promise((resolve, reject) => {
+      db.get('SELECT * FROM users WHERE id = ?', [id], (err, row) => {
+        if (err) reject(err);
+        resolve(row);
+      });
+    });
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user;
+    return new Promise((resolve, reject) => {
+      db.get('SELECT * FROM users WHERE username = ?', [username], (err, row) => {
+        if (err) reject(err);
+        resolve(row);
+      });
+    });
   }
 
   async getAllUsers(): Promise<User[]> {
-    return await db.select().from(users);
+    return new Promise((resolve, reject) => {
+      db.all('SELECT * FROM users', [], (err, rows) => {
+        if (err) reject(err);
+        resolve(rows);
+      });
+    });
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(insertUser)
-      .returning();
-    return user;
+    return new Promise((resolve, reject) => {
+      db.run('INSERT INTO users (username, password, is_admin) VALUES (?, ?, ?)',
+        [insertUser.username, insertUser.password, insertUser.is_admin ? 1 : 0], // Corrected this line
+        function(err) {
+          if (err) reject(err);
+          resolve({ ...insertUser, id: this.lastID });
+        });
+    });
   }
 
   async updateUser(id: number, updateData: Partial<User>): Promise<User> {
-    const [user] = await db
-      .update(users)
-      .set(updateData)
-      .where(eq(users.id, id))
-      .returning();
-    return user;
+    const fields = Object.keys(updateData).map(key => `${key} = ?`).join(', ');
+    const values = [...Object.values(updateData), id];
+
+    return new Promise((resolve, reject) => {
+      db.run(`UPDATE users SET ${fields} WHERE id = ?`, values, (err) => {
+        if (err) reject(err);
+        this.getUser(id).then(resolve).catch(reject);
+      });
+    });
+  }
+
+  async deleteUser(id: number): Promise<void> {
+    return new Promise((resolve, reject) => {
+      db.run('DELETE FROM users WHERE id = ?', [id], (err) => {
+        if (err) reject(err);
+        resolve();
+      });
+    });
   }
 }
+
+// 初期管理者ユーザーのセットアップ
+const setupInitialAdmin = async () => {
+  db.serialize(() => {
+    db.get('SELECT * FROM users WHERE username = ?', ['niina'], async (err, row) => {
+      if (err) {
+        console.error('Error checking admin:', err);
+        return;
+      }
+
+      if (!row) {
+        const salt = randomBytes(16).toString("hex");
+        const buf = (await scryptAsync("0077", salt, 64)) as Buffer;
+        const hashedPassword = `${buf.toString("hex")}.${salt}`;
+
+        db.run(
+          'INSERT INTO users (username, password, is_admin) VALUES (?, ?, ?)',
+          ['niina', hashedPassword, 1],
+          (err) => {
+            if (err) {
+              console.error('Error creating admin:', err);
+            } else {
+              console.log('Initial admin user created');
+            }
+          }
+        );
+      } else if (!row.is_admin) {
+        db.run('UPDATE users SET is_admin = 1 WHERE username = ?', ['niina'], (err) => {
+          if (err) {
+            console.error('Error updating admin status:', err);
+          } else {
+            console.log('Admin status updated for niina');
+          }
+        });
+      }
+    });
+  });
+};
+
+setupInitialAdmin().catch(console.error);
 
 export const storage = new DatabaseStorage();

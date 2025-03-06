@@ -1,3 +1,6 @@
+// 履歴ページコンポーネント
+// システムの操作履歴とログを表示
+// フィルタリングと検索機能を実装
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { History as HistoryIcon } from "lucide-react";

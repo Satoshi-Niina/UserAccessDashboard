@@ -1,3 +1,6 @@
+// ワンタイムパスワード(OTP)入力コンポーネント
+// セキュアな認証コードの入力機能を提供
+// 入力フィールドのグループ化と状態管理を実装
 import * as React from "react"
 import { OTPInput, OTPInputContext } from "input-otp"
 import { Dot } from "lucide-react"

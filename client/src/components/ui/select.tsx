@@ -1,3 +1,9 @@
+// セレクトコンポーネント
+// ドロップダウンメニューによる選択機能を提供
+// キーボード操作とスクリーンリーダーに対応
+// セレクトコンポーネント
+// ドロップダウンによる選択機能を提供
+// キーボード操作とカスタマイズ可能なスタイルをサポート
 import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { Check, ChevronDown, ChevronUp } from "lucide-react"

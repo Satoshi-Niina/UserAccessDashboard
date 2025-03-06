@@ -1,15 +1,28 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
-import * as schema from "@shared/schema";
 
-neonConfig.webSocketConstructor = ws;
+import sqlite3 from 'sqlite3';
+import { open } from 'sqlite3';
 
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
-}
+// SQLiteデータベースの接続設定
+const db = new sqlite3.Database('./database.sqlite', (err) => {
+  if (err) {
+    console.error('Error opening database:', err);
+    return;
+  }
+  console.log('Connected to SQLite database');
+});
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle({ client: pool, schema });
+// ユーザーテーブルの作成
+// - id: 主キー（自動増分）
+// - username: ユーザー名（一意）
+// - password: ハッシュ化されたパスワード
+// - is_admin: 管理者フラグ
+db.run(`
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    is_admin BOOLEAN NOT NULL DEFAULT 0
+  )
+`);
+
+export { db };

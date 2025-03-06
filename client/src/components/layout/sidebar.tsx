@@ -1,3 +1,6 @@
+// サイドバーコンポーネント
+// アプリケーションのナビゲーションメニューを提供
+// 展開/折りたたみ可能なレスポンシブなデザイン
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
@@ -12,6 +15,8 @@ import {
   History,
   Users,
   ChevronRight,
+  BarChart2,
+  List,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
@@ -26,14 +31,13 @@ type MenuItem = {
 
 const menuItems: MenuItem[] = [
   { icon: Home, label: "ホーム", href: "/" },
-  { icon: Mic, label: "音声Assistant", href: "/voice-assistant" },
+  { icon: Mic, label: "技術支援サポート", href: "/voice-assistant" },
   {
     icon: ClipboardCheck,
     label: "運用管理",
     href: "/operations",
     subItems: [
       { icon: ClipboardCheck, label: "仕業点検", href: "/operations?tab=inspection" },
-      { icon: ClipboardCheck, label: "運用実績", href: "/operations?tab=performance" },
     ],
   },
   { icon: MessageSquare, label: "メッセージ", href: "/messages" },
@@ -44,6 +48,8 @@ const menuItems: MenuItem[] = [
     adminOnly: true,
     subItems: [
       { icon: Database, label: "基本データ処理", href: "/settings/basic-data" },
+      { icon: List, label: "点検項目編集", href: "/settings/inspection-items" },
+      { icon: BarChart2, label: "測定基準値設定", href: "/settings/measurement-standards" },
       { icon: History, label: "履歴検索", href: "/settings/history" },
       { icon: Users, label: "ユーザー登録", href: "/settings/user-management" },
     ],
@@ -88,50 +94,46 @@ export function Sidebar({ onExpandChange }: SidebarProps) {
         </h1>
       </div>
 
-      <nav className="flex-1 relative">
-        {menuItems.map((item) => {
-          if (item.adminOnly && !user?.isAdmin) {
-            return null;
-          }
-
+      <nav className="flex-1">
+        {menuItems.filter(item => !item.adminOnly || (user && user.isAdmin)).map((item) => {
           const Icon = item.icon;
-          const isActive = location === item.href || 
-            (item.subItems?.some(sub => location === sub.href) ?? false);
+          const isActive = location === item.href || (item.subItems && item.subItems.some(subItem => location === subItem.href));
+          const hasSubItems = item.subItems && item.subItems.length > 0;
 
           return (
             <div key={item.href}>
               <Link href={item.href}>
-                <a
+                <div
                   className={cn(
-                    "flex items-center gap-3 px-6 py-3 text-sidebar-foreground hover:bg-sidebar-accent transition-colors",
-                    isActive && "bg-sidebar-accent text-sidebar-accent-foreground",
-                    !isExpanded && "justify-center px-4"
+                    "flex items-center p-3 mx-3 rounded-lg cursor-pointer",
+                    isActive ? "bg-sidebar-selected text-sidebar-foreground font-medium" : "text-sidebar-muted hover:bg-sidebar-hover"
                   )}
                 >
-                  <Icon className="h-5 w-5" />
-                  {isExpanded && <span>{item.label}</span>}
-                </a>
+                  <Icon className="h-5 w-5 mr-3" />
+                  {isExpanded && (
+                    <div className="flex-1 flex items-center justify-between">
+                      <span>{item.label}</span>
+                      {hasSubItems && <ChevronRight className={cn("h-4 w-4 transition-transform", isActive && "rotate-90")} />}
+                    </div>
+                  )}
+                </div>
               </Link>
-              {item.subItems && isActive && isExpanded && (
-                <div className="pl-12 bg-sidebar-accent/50">
-                  {item.subItems.map((subItem) => {
-                    const SubIcon = subItem.icon;
-                    const isSubActive = location === subItem.href;
-
-                    return (
-                      <Link key={subItem.href} href={subItem.href}>
-                        <a
-                          className={cn(
-                            "flex items-center gap-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors",
-                            isSubActive && "text-sidebar-accent-foreground"
-                          )}
-                        >
-                          <SubIcon className="h-4 w-4" />
-                          <span>{subItem.label}</span>
-                        </a>
-                      </Link>
-                    );
-                  })}
+              
+              {/* サブメニューの表示 */}
+              {isExpanded && isActive && hasSubItems && (
+                <div className="ml-10 space-y-1">
+                  {item.subItems?.filter(subItem => !subItem.adminOnly || (user && user.isAdmin)).map((subItem) => (
+                    <Link key={subItem.href} href={subItem.href}>
+                      <div 
+                        className={cn(
+                          "flex items-center p-2 rounded-md text-sm",
+                          location === subItem.href ? "bg-sidebar-selected/50 text-sidebar-foreground font-medium" : "text-sidebar-muted hover:bg-sidebar-hover"
+                        )}
+                      >
+                        {subItem.label}
+                      </div>
+                    </Link>
+                  ))}
                 </div>
               )}
             </div>

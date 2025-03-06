@@ -1,3 +1,6 @@
+// ページネーションコンポーネント
+// ページ分割された内容のナビゲーションを提供
+// アクセシビリティに配慮した実装
 import * as React from "react"
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
 

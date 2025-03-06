@@ -1,7 +1,12 @@
+// ボタンコンポーネント
+// クリック可能なアクション要素を提供
+// バリアント、サイズ、状態に応じたスタイルを実装
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
+// ボタンコンポーネント
+// アプリケーション全体で使用される標準的なボタン
+// バリアント、サイズ、状態などのスタイルを提供
 import { cva, type VariantProps } from "class-variance-authority"
-
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(

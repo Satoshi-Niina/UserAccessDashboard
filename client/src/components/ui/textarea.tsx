@@ -1,3 +1,6 @@
+// テキストエリアコンポーネント
+// 複数行のテキスト入力を提供
+// リサイズ可能なテキスト入力領域を実装
 import * as React from "react"
 
 import { cn } from "@/lib/utils"

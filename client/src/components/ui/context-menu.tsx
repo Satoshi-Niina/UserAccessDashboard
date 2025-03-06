@@ -1,3 +1,9 @@
+// コンテキストメニューコンポーネント
+// 右クリックで表示されるメニューを提供
+// 階層構造とキーボードナビゲーションをサポート
+// コンテキストメニューコンポーネント
+// 右クリックメニューを提供
+// サブメニューとキーボードナビゲーションをサポート
 import * as React from "react"
 import * as ContextMenuPrimitive from "@radix-ui/react-context-menu"
 import { Check, ChevronRight, Circle } from "lucide-react"

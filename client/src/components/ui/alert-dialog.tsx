@@ -1,3 +1,6 @@
+// アラートダイアログコンポーネント
+// 重要な操作の確認や警告メッセージの表示に使用
+// キーボード操作とアクセシビリティに対応
 import * as React from "react"
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
 

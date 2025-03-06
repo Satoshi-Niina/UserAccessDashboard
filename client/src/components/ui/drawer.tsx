@@ -1,3 +1,6 @@
+// ドロワーコンポーネント
+// スライドインパネルを提供し、追加のコンテンツやナビゲーションを表示
+// モバイルフレンドリーなインターフェースを実現
 import * as React from "react"
 import { Drawer as DrawerPrimitive } from "vaul"
 

@@ -1,3 +1,8 @@
+
+// トーストコンポーネント
+// 一時的な通知を表示
+// アニメーション付きの表示/非表示を実装
+// カスタマイズ可能な通知システム
 import * as React from "react"
 import * as ToastPrimitives from "@radix-ui/react-toast"
 import { cva, type VariantProps } from "class-variance-authority"

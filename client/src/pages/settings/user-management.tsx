@@ -1,3 +1,6 @@
+// ユーザー管理ページコンポーネント
+// ユーザーの追加、編集、削除機能を提供
+// 権限管理とアクセス制御を実装
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -174,9 +177,45 @@ export default function UserManagement() {
                       {selectedUser ? "更新" : "登録"}
                     </Button>
                     {selectedUser && (
-                      <Button type="button" variant="outline" onClick={clearForm}>
-                        キャンセル
-                      </Button>
+                      <>
+                        <Button type="button" variant="outline" onClick={clearForm}>
+                          キャンセル
+                        </Button>
+                        {selectedUser.id !== user?.id && (
+                          <Button 
+                            type="button" 
+                            variant="destructive"
+                            onClick={async () => {
+                              if (!confirm("このユーザーを削除しますか？")) {
+                                return;
+                              }
+                              try {
+                                const response = await fetch(`/api/users/${selectedUser.id}`, {
+                                  method: "DELETE"
+                                });
+                                if (!response.ok) {
+                                  const error = await response.json();
+                                  throw new Error(error.error);
+                                }
+                                toast({
+                                  title: "成功",
+                                  description: "ユーザーを削除しました"
+                                });
+                                clearForm();
+                                loadUsers();
+                              } catch (error) {
+                                toast({
+                                  title: "エラー",
+                                  description: error instanceof Error ? error.message : "削除に失敗しました",
+                                  variant: "destructive"
+                                });
+                              }
+                            }}
+                          >
+                            削除
+                          </Button>
+                        )}
+                      </>
                     )}
                   </div>
                 </form>

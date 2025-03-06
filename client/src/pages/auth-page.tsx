@@ -1,3 +1,6 @@
+// 認証ページコンポーネント
+// ログインフォームとユーザー認証の処理を提供
+// zodによるフォームバリデーションを実装
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";

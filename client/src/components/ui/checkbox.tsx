@@ -1,3 +1,6 @@
+// チェックボックスコンポーネント
+// 選択状態の切り替えを提供
+// アクセシビリティに準拠した実装
 import * as React from "react"
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox"
 import { Check } from "lucide-react"

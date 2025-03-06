@@ -1,3 +1,6 @@
+
+import sqlite3 from "sqlite3";
+const { Database } = sqlite3;
 import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
 
@@ -10,8 +13,20 @@ async function hashPassword(password: string) {
 }
 
 async function main() {
+  const db = new Database('./database.sqlite');
   const hashedPassword = await hashPassword("0077");
-  console.log(`INSERT INTO users (username, password, is_admin) VALUES ('niina', '${hashedPassword}', true) ON CONFLICT (username) DO UPDATE SET password = '${hashedPassword}', is_admin = true;`);
+  
+  db.run(`
+    INSERT OR REPLACE INTO users (username, password, is_admin) 
+    VALUES ('admin', ?, 1)
+  `, [hashedPassword], (err) => {
+    if (err) {
+      console.error('Error:', err);
+    } else {
+      console.log('Admin user created successfully');
+    }
+    db.close();
+  });
 }
 
-main();
+main().catch(console.error);

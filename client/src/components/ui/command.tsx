@@ -1,3 +1,6 @@
+// コマンドコンポーネント
+// コマンドパレットUIを提供
+// キーボードナビゲーションとコマンド実行の機能を実装
 import * as React from "react"
 import { type DialogProps } from "@radix-ui/react-dialog"
 import { Command as CommandPrimitive } from "cmdk"

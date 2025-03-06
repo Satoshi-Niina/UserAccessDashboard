@@ -1,3 +1,7 @@
+// シートコンポーネント
+// スライドインパネルを提供し、補足情報や設定を表示
+// レスポンシブな表示に対応
+// モバイルフレンドリーなUIを実現
 import * as React from "react"
 import * as SheetPrimitive from "@radix-ui/react-dialog"
 import { cva, type VariantProps } from "class-variance-authority"
@@ -47,6 +51,8 @@ const sheetVariants = cva(
   }
 )
 
+// シートコンポーネントのコンテンツ部分の型定義
+// side属性で表示位置を指定可能
 interface SheetContentProps
   extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
     VariantProps<typeof sheetVariants> {}

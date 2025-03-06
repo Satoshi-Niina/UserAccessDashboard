@@ -1,3 +1,6 @@
+// 音声アシスタントページコンポーネント
+// 音声認識と対話型インターフェースを提供
+// WebSocketを使用したリアルタイム通信を実装
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -51,7 +54,7 @@ export default function VoiceAssistant() {
   };
 
   const handleExit = () => {
-    if (window.confirm('音声アシスタントを終了しますか？')) {
+    if (window.confirm('技術支援サポートを終了しますか？')) {
       setLocation("/");
     }
   };
@@ -63,14 +66,14 @@ export default function VoiceAssistant() {
       <div className={`flex-1 ${isMenuExpanded ? 'ml-64' : 'ml-16'} transition-all duration-300`}>
         <main className="p-6">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold">音声アシスタント</h1>
+            <h1 className="text-3xl font-bold">技術支援サポート</h1>
             <Button
               variant="destructive"
               onClick={handleExit}
               className="gap-2"
             >
               <XCircle className="h-4 w-4" />
-              音声アシスタント終了
+              技術支援サポート終了
             </Button>
           </div>
           <Card className="h-[calc(100vh-12rem)]">

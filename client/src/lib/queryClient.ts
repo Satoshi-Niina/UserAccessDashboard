@@ -1,5 +1,10 @@
+// APIリクエスト処理とキャッシュ管理を行うクエリクライアント
+// React Queryを使用した効率的なデータフェッチングを実装
+// エラーハンドリングと認証状態の管理を統合
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+// HTTPレスポンスの状態をチェックするヘルパー関数
+// ステータスコードが200以外の場合、エラーをスローする
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
@@ -7,6 +12,9 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+// APIリクエストを行うための関数
+// fetch APIを使用して、指定されたURLとメソッドでリクエストを行う
+// ヘッダーとボディを必要に応じて設定する
 export async function apiRequest(
   method: string,
   url: string,
@@ -23,7 +31,10 @@ export async function apiRequest(
   return res;
 }
 
+// 認証エラーの処理方法を指定するための型
 type UnauthorizedBehavior = "returnNull" | "throw";
+// React Queryのクエリ関数を作成するための関数
+// 認証エラーの処理方法を指定できる
 export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
@@ -40,6 +51,11 @@ export const getQueryFn: <T>(options: {
     await throwIfResNotOk(res);
     return await res.json();
   };
+
+// React Queryクライアントの設定
+// サーバーステート管理とキャッシュの設定を提供
+// エラーハンドリングとリトライポリシーを実装
+import { QueryClient } from "@tanstack/react-query";
 
 export const queryClient = new QueryClient({
   defaultOptions: {

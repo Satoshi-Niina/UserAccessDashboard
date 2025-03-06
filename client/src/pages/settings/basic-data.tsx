@@ -1,3 +1,6 @@
+// 基本データ設定ページ
+// システムの基本設定と初期データの管理を行う
+// フォーム入力によるデータ更新機能を提供
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Database } from "lucide-react";

@@ -1,3 +1,9 @@
+// メニューバーコンポーネント
+// 階層的なナビゲーションメニューを提供
+// キーボード操作に対応したアクセシブルな実装
+// メニューバーコンポーネント
+// アプリケーションのトップレベルナビゲーションを提供
+// キーボード操作とサブメニューをサポート
 import * as React from "react"
 import * as MenubarPrimitive from "@radix-ui/react-menubar"
 import { Check, ChevronRight, Circle } from "lucide-react"

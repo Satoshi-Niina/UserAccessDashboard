@@ -1,3 +1,7 @@
+// スライダーコンポーネント
+// 数値範囲の選択機能を提供
+// ドラッグ操作とキーボードナビゲーション対応
+// アクセシブルな入力インターフェースを実装
 import * as React from "react"
 import * as SliderPrimitive from "@radix-ui/react-slider"
 

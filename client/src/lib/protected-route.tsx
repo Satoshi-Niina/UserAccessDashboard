@@ -1,33 +1,29 @@
+import { ReactNode } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2 } from "lucide-react";
-import { Redirect, Route } from "wouter";
+import { Redirect } from "wouter";
 
-export function ProtectedRoute({
-  path,
-  component: Component,
-}: {
+type ProtectedRouteProps = {
   path: string;
-  component: () => React.JSX.Element;
-}) {
-  const { user, isLoading } = useAuth();
+  component: React.ComponentType<any>;
+  adminOnly?: boolean;
+};
 
-  if (isLoading) {
-    return (
-      <Route path={path}>
-        <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-border" />
-        </div>
-      </Route>
-    );
+export const ProtectedRoute = ({ component: Component, adminOnly = false, ...rest }: ProtectedRouteProps) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <div>Loading...</div>;
   }
 
+  // ユーザーが認証されていない場合はログインページにリダイレクト
   if (!user) {
-    return (
-      <Route path={path}>
-        <Redirect to="/auth" />
-      </Route>
-    );
+    return <Redirect to="/login" />;
   }
 
-  return <Route path={path} component={Component} />;
-}
+  // 管理者専用ルートの場合、管理者権限チェック
+  if (adminOnly && !user.isAdmin) {
+    return <Redirect to="/" />;
+  }
+
+  return <Component {...rest} />;
+};

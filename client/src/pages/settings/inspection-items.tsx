@@ -569,7 +569,6 @@ import {
 } from "@/components/ui/resizable";
 import { Sidebar } from "@/components/layout/sidebar";
 import { ExitButton } from "@/components/layout/exit-button";
-import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
   AlertDialogAction,

@@ -46,6 +46,7 @@ interface InspectionItem {
   manufacturer: string;
   model: string;
   category: string;
+  equipment?: string;        // 装置
   item: string;
   method: string;
   criteria: string;
@@ -58,6 +59,7 @@ export default function InspectionItems() {
   const [manufacturer, setManufacturer] = useState<string>("");
   const [model, setModel] = useState<string>("");
   const [categoryFilter, setCategoryFilter] = useState<string>("");
+  const [equipmentFilter, setEquipmentFilter] = useState<string>("");
   const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<InspectionItem[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -65,6 +67,7 @@ export default function InspectionItems() {
   const [currentItem, setCurrentItem] = useState<InspectionItem | null>(null);
   const [newItem, setNewItem] = useState({
     category: "",
+    equipment: "",
     item: "",
     method: "",
     criteria: "",
@@ -179,6 +182,7 @@ export default function InspectionItems() {
             manufacturer: item['製造メーカー'] || '',
             model: item['機種'] || '',
             category: item['部位'] || '',
+            equipment: item['装置'] || '',
             item: item['確認箇所'] || '',
             method: item['確認要領'] || '',
             criteria: item['判断基準'] || '',
@@ -232,12 +236,13 @@ export default function InspectionItems() {
       );
     }
 
-    // メーカー、機種、部位でフィルタリング
+    // メーカー、機種、部位、装置でフィルタリング
     filtered = filtered.filter(
       (item) => 
         (!manufacturer || manufacturer === "all" || item.manufacturer === manufacturer) && 
         (!model || model === "all" || item.model === model) &&
-        (!categoryFilter || categoryFilter === "all" || item.category === categoryFilter)
+        (!categoryFilter || categoryFilter === "all" || item.category === categoryFilter) &&
+        (!equipmentFilter || equipmentFilter === "all" || item.equipment === equipmentFilter)
     );
 
     setFilteredItems(filtered);
@@ -264,6 +269,7 @@ export default function InspectionItems() {
     setCurrentItem(item);
     setNewItem({
       category: item.category,
+      equipment: item.equipment || "",
       item: item.item,
       method: item.method,
       criteria: item.criteria,
@@ -297,6 +303,7 @@ export default function InspectionItems() {
           ? {
               ...item,
               category: newItem.category || "",
+              equipment: newItem.equipment || "",
               item: newItem.item || "",
               method: newItem.method || "",
               criteria: newItem.criteria || "",
@@ -321,6 +328,7 @@ export default function InspectionItems() {
         manufacturer,
         model,
         category: newItem.category || "",
+        equipment: newItem.equipment || "",
         item: newItem.item || "",
         method: newItem.method || "",
         criteria: newItem.criteria || "",
@@ -395,6 +403,7 @@ export default function InspectionItems() {
           item.manufacturer,
           item.model,
           item.category,
+          item.equipment || "",
           item.item,
           item.method,
           item.criteria,
@@ -658,6 +667,7 @@ export default function InspectionItems() {
             {item.category}
           </div>
         </TableCell>
+        <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.equipment}>{item.equipment}</TableCell>
         <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.item}>{item.item}</TableCell>
         <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.method}>{item.method}</TableCell>
         <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.criteria}>{item.criteria}</TableCell>
@@ -766,7 +776,7 @@ export default function InspectionItems() {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label htmlFor="manufacturer">メーカー</Label>
               <Select
@@ -842,6 +852,34 @@ export default function InspectionItems() {
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="equipment">装置</Label>
+              <Select
+                value={equipmentFilter}
+                onValueChange={setEquipmentFilter}
+              >
+                <SelectTrigger id="equipment">
+                  <SelectValue placeholder="装置を選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">すべて</SelectItem>
+                  {[...new Set(inspectionItems
+                    .filter(item =>
+                      (!manufacturer || manufacturer === "all" || item.manufacturer === manufacturer) &&
+                      (!model || model === "all" || item.model === model) &&
+                      (!categoryFilter || categoryFilter === "all" || item.category === categoryFilter)
+                    )
+                    .map(item => item.equipment))]
+                    .filter((equip) => equip && equip.trim() !== "")
+                    .map((equip) => (
+                      <SelectItem key={equip} value={equip}>
+                        {equip || "未設定"}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* 点検項目一覧と操作ボタン */}
@@ -874,10 +912,11 @@ export default function InspectionItems() {
           {/* 点検項目テーブル */}
           {filteredItems.length > 0 ? (
             <div className="border rounded-md overflow-x-auto" style={{ maxWidth: '100%' }}>
-              <Table className="min-w-[1000px] border-collapse">
+              <Table className="min-w-[1200px] border-collapse">
                 <TableHeader>
                   <TableRow className="border-b border-gray-200">
                     <TableHead className="w-[100px] py-2 border border-gray-200">部位</TableHead>
+                    <TableHead className="w-[100px] py-2 border border-gray-200">装置</TableHead>
                     <TableHead className="w-[180px] py-2 border border-gray-200">点検項目</TableHead>
                     <TableHead className="w-[180px] py-2 border border-gray-200">点検方法</TableHead>
                     <TableHead className="w-[180px] py-2 border border-gray-200">判定基準</TableHead>
@@ -930,6 +969,17 @@ export default function InspectionItems() {
                   setNewItem({ ...newItem, category: e.target.value })
                 }
                 placeholder="例: エンジン、油圧系統など"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="equipment">装置</Label>
+              <Input
+                id="equipment"
+                value={newItem.equipment}
+                onChange={(e) =>
+                  setNewItem({ ...newItem, equipment: e.target.value })
+                }
+                placeholder="例: 本体、スターターなど"
               />
             </div>
             <div className="space-y-2">

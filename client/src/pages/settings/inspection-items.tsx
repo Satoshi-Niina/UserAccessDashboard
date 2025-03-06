@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import Papa from 'papaparse';
@@ -22,8 +21,10 @@ export default function InspectionItems() {
   const [manufacturers, setManufacturers] = useState<string[]>([]);
   const [models, setModels] = useState<string[]>([]);
   const [selectedManufacturer, setSelectedManufacturer] = useState<string>("all");
+  const [selectedModel, setSelectedModel] = useState<string>("all");
   const [availableFiles, setAvailableFiles] = useState<{name: string, modified: string}[]>([]);
   const [currentFileName, setCurrentFileName] = useState("仕業点検マスタ.csv");
+  const [showUploadForm, setShowUploadForm] = useState(false);
   const { toast } = useToast();
 
   // タイトルを設定
@@ -219,6 +220,9 @@ export default function InspectionItems() {
     if (selectedManufacturer && selectedManufacturer !== "all") {
       newItem['製造メーカー'] = selectedManufacturer;
     }
+    if (selectedModel && selectedModel !== "all") {
+      newItem['機種'] = selectedModel;
+    }
 
     setInspectionItems([...inspectionItems, newItem]);
     setHasChanges(true);
@@ -234,8 +238,9 @@ export default function InspectionItems() {
 
   // フィルター適用済みのアイテム
   const filteredItems = inspectionItems.filter(item => {
-    if (selectedManufacturer === "all") return true;
-    return item['製造メーカー'] === selectedManufacturer;
+    const manufacturerMatch = selectedManufacturer === "all" || item['製造メーカー'] === selectedManufacturer;
+    const modelMatch = selectedModel === "all" || item['機種'] === selectedModel;
+    return manufacturerMatch && modelMatch;
   });
 
   // データの保存
@@ -309,168 +314,187 @@ export default function InspectionItems() {
         </CardHeader>
         <CardContent>
           <div>
-              <div className="mb-4 space-y-4">
-                <div className="flex gap-4 mb-4">
-                  <div className="w-1/3">
-                    <Label htmlFor="file-select">ファイル選択</Label>
-                    <select 
-                      id="file-select"
-                      className="w-full p-2 border rounded"
-                      value={currentFileName}
-                      onChange={(e) => setCurrentFileName(e.target.value)}
-                    >
-                      {availableFiles.map(file => (
-                        <option key={file.name} value={file.name}>
-                          {file.name} ({file.modified})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="w-1/3">
-                    <Label htmlFor="manufacturer-filter">メーカーで絞り込み</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="メーカーを選択" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">すべて表示</SelectItem>
-                        {manufacturers
-                          .filter(manufacturer => manufacturer && manufacturer.trim() !== "")
-                          .map((manufacturer) => (
-                            <SelectItem key={manufacturer} value={manufacturer}>
-                              {manufacturer}
-                            </SelectItem>
-                          ))}
-                        {manufacturers.some(manufacturer => !manufacturer || manufacturer.trim() === "") && (
-                          <SelectItem key="未設定" value="未設定">
-                            未設定
-                          </SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex items-end space-x-2">
-                    <Button
-                      onClick={handleAddItem}
-                      disabled={loading}
-                    >
-                      新規追加
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={handleSaveData}
-                      disabled={loading || !hasChanges}
-                    >
-                      変更を保存
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        const uploadForm = document.getElementById('fileUploadForm');
-                        if (uploadForm) uploadForm.classList.remove('hidden');
-                      }}
-                      disabled={loading}
-                    >
-                      CSVアップロード
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      onClick={() => window.history.back()}
-                    >
-                      閉じる
-                    </Button>
-                  </div>
+            <div className="mb-4 space-y-4">
+              <div className="flex flex-wrap gap-4 mb-4">
+                <div className="w-1/4">
+                  <Label htmlFor="file-select">ファイル選択</Label>
+                  <select 
+                    id="file-select"
+                    className="w-full p-2 border rounded"
+                    value={currentFileName}
+                    onChange={(e) => setCurrentFileName(e.target.value)}
+                  >
+                    {availableFiles.map(file => (
+                      <option key={file.name} value={file.name}>
+                        {file.name} ({file.modified})
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
-                {error && (
-                  <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
-                    <p>{error}</p>
-                  </div>
-                )}
-
-                {loading ? (
-                  <div className="flex justify-center items-center p-8">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr>
-                          <th className="px-4 py-2 bg-gray-100 text-left text-xs text-gray-600 uppercase">操作</th>
-                          {columns.map(column => (
-                            <th
-                              key={column}
-                              className="px-4 py-2 bg-gray-100 text-left text-xs text-gray-600 uppercase cursor-move"
-                              draggable
-                              onDragStart={(e) => handleColumnDragStart(e, column)}
-                              onDragOver={handleDragOver}
-                              onDrop={(e) => handleColumnDrop(e, column)}
-                            >
-                              {column}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredItems.map((item, index) => (
-                          <tr
-                            key={index}
-                            className="hover:bg-gray-50"
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, inspectionItems.indexOf(item))}
-                            onDragOver={handleDragOver}
-                            onDrop={(e) => handleDrop(e, inspectionItems.indexOf(item))}
-                          >
-                            <td className="border px-4 py-2">
-                              <button
-                                onClick={() => handleDeleteItem(inspectionItems.indexOf(item))}
-                                className="text-red-500 hover:text-red-700"
-                              >
-                                削除
-                              </button>
-                            </td>
-                            {columns.map(column => (
-                              <td key={`${index}-${column}`} className="border px-4 py-2">
-                                <input
-                                  type="text"
-                                  value={item[column] || ''}
-                                  onChange={(e) => handleItemChange(inspectionItems.indexOf(item), column, e.target.value)}
-                                  className="w-full p-1 border rounded"
-                                />
-                              </td>
-                            ))}
-                          </tr>
+                <div className="w-1/4">
+                  <Label htmlFor="manufacturer-filter">メーカー選択</Label>
+                  <Select value={selectedManufacturer} onValueChange={setSelectedManufacturer}>
+                    <SelectTrigger id="manufacturer-filter">
+                      <SelectValue placeholder="メーカーを選択" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">すべて表示</SelectItem>
+                      {manufacturers
+                        .filter(manufacturer => manufacturer && manufacturer.trim() !== "")
+                        .map((manufacturer) => (
+                          <SelectItem key={manufacturer} value={manufacturer}>
+                            {manufacturer}
+                          </SelectItem>
                         ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                      {manufacturers.some(manufacturer => !manufacturer || manufacturer.trim() === "") && (
+                        <SelectItem key="未設定" value="未設定">
+                          未設定
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="w-1/4">
+                  <Label htmlFor="model-filter">機種選択</Label>
+                  <Select value={selectedModel} onValueChange={setSelectedModel}>
+                    <SelectTrigger id="model-filter">
+                      <SelectValue placeholder="機種を選択" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">すべて表示</SelectItem>
+                      {models
+                        .filter(model => model && model.trim() !== "")
+                        .map((model) => (
+                          <SelectItem key={model} value={model}>
+                            {model}
+                          </SelectItem>
+                        ))}
+                      {models.some(model => !model || model.trim() === "") && (
+                        <SelectItem key="未設定" value="未設定">
+                          未設定
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-end space-x-2">
+                  <Button
+                    onClick={handleAddItem}
+                    disabled={loading}
+                  >
+                    新規追加
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleSaveData}
+                    disabled={loading || !hasChanges}
+                  >
+                    変更を保存
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowUploadForm(true)}
+                    disabled={loading}
+                  >
+                    CSVアップロード
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => window.history.back()}
+                  >
+                    閉じる
+                  </Button>
+                </div>
               </div>
 
-              {/* ファイルアップロードフォーム（ダイアログ形式） */}
-              <div id="fileUploadForm" className="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+              {error && (
+                <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+                  <p>{error}</p>
+                </div>
+              )}
+
+              {loading ? (
+                <div className="flex justify-center items-center p-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr>
+                        <th className="px-4 py-2 bg-gray-100 text-left text-xs text-gray-600 uppercase">操作</th>
+                        {columns.map(column => (
+                          <th
+                            key={column}
+                            className="px-4 py-2 bg-gray-100 text-left text-xs text-gray-600 uppercase cursor-move"
+                            draggable
+                            onDragStart={(e) => handleColumnDragStart(e, column)}
+                            onDragOver={handleDragOver}
+                            onDrop={(e) => handleColumnDrop(e, column)}
+                          >
+                            {column}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredItems.map((item, index) => (
+                        <tr
+                          key={index}
+                          className="hover:bg-gray-50"
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, inspectionItems.indexOf(item))}
+                          onDragOver={handleDragOver}
+                          onDrop={(e) => handleDrop(e, inspectionItems.indexOf(item))}
+                        >
+                          <td className="border px-4 py-2">
+                            <button
+                              onClick={() => handleDeleteItem(inspectionItems.indexOf(item))}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              削除
+                            </button>
+                          </td>
+                          {columns.map(column => (
+                            <td key={`${index}-${column}`} className="border px-4 py-2">
+                              <input
+                                type="text"
+                                value={item[column] || ''}
+                                onChange={(e) => handleItemChange(inspectionItems.indexOf(item), column, e.target.value)}
+                                className="w-full p-1 border rounded"
+                              />
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* ファイルアップロードフォーム（ダイアログ形式） */}
+            {showUploadForm && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                 <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-bold">CSVファイルのアップロード</h3>
                     <button 
-                      onClick={() => {
-                        const uploadForm = document.getElementById('fileUploadForm');
-                        if (uploadForm) uploadForm.classList.add('hidden');
-                      }}
+                      onClick={() => setShowUploadForm(false)}
                       className="text-gray-500 hover:text-gray-700"
                     >
                       ✕
                     </button>
                   </div>
-                  
+
                   <p className="text-sm text-gray-600 mb-4">
                     点検項目データのCSVファイルをアップロードします。<br/>
                     必要な列: 製造メーカー,機種,エンジン型式,部位,装置,手順,確認箇所,判断基準,確認要領,測定等記録,図形記録
                   </p>
-                  
+
                   <form
                     onSubmit={async (e) => {
                       e.preventDefault();
@@ -544,9 +568,7 @@ export default function InspectionItems() {
 
                         // フォームをリセットして閉じる
                         e.currentTarget.reset();
-                        const uploadForm = document.getElementById('fileUploadForm');
-                        if (uploadForm) uploadForm.classList.add('hidden');
-
+                        setShowUploadForm(false);
                         setLoading(false);
                       } catch (err) {
                         console.error("アップロードエラー:", err);
@@ -583,20 +605,25 @@ export default function InspectionItems() {
                       <Button 
                         type="button" 
                         variant="secondary"
-                        onClick={() => {
-                          const uploadForm = document.getElementById('fileUploadForm');
-                          if (uploadForm) uploadForm.classList.add('hidden');
-                        }}
+                        onClick={() => setShowUploadForm(false)}
                       >
                         キャンセル
                       </Button>
                       <Button type="submit" disabled={loading}>
                         {loading ? "アップロード中..." : "アップロード"}
                       </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => window.history.back()}
+                      >
+                        戻る
+                      </Button>
                     </div>
                   </form>
                 </div>
               </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -625,22 +652,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
-// 点検項目の型定義
-interface InspectionItem {
-  製造メーカー: string;
-  機種: string;
-  エンジン型式: string;
-  部位: string;
-  装置: string;
-  手順: string;
-  確認箇所: string;
-  判断基準: string;
-  確認要領: string;
-  測定等記録: string;
-  図形記録: string;
-  [key: string]: string;
-}
 
 function SecondaryInspectionItems() {
   // ステート定義
@@ -867,7 +878,7 @@ function SecondaryInspectionItems() {
               <h2 className="text-3xl font-bold tracking-tight">点検項目管理</h2>
             </div>
             <div className="flex items-center space-x-2">
-              <Select>
+              <Select value={selectedManufacturer} onValueChange={setSelectedManufacturer}>
                 <SelectTrigger>
                   <SelectValue placeholder="メーカーを選択" />
                 </SelectTrigger>
@@ -882,7 +893,7 @@ function SecondaryInspectionItems() {
                     ))}
                 </SelectContent>
               </Select>
-              <Select>
+              <Select value={selectedModel} onValueChange={setSelectedModel}>
                 <SelectTrigger>
                   <SelectValue placeholder="機種を選択" />
                 </SelectTrigger>

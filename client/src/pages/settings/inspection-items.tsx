@@ -971,5 +971,3 @@ function SecondaryInspectionItems() {
     </div>
   );
 }
-
-export default InspectionItems;

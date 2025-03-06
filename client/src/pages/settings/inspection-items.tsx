@@ -235,6 +235,7 @@ export default function InspectionItems() {
   // フィルター適用済みのアイテム
   const filteredItems = inspectionItems.filter(item => {
     if (selectedManufacturer === "all") return true;
+    if (selectedManufacturer === "未設定") return !item['製造メーカー'] || item['製造メーカー'].trim() === "";
     return item['製造メーカー'] === selectedManufacturer;
   });
 
@@ -335,7 +336,10 @@ export default function InspectionItems() {
 
                   <div className="w-1/3">
                     <Label htmlFor="manufacturer-filter">メーカーで絞り込み</Label>
-                    <Select>
+                    <Select 
+                      value={selectedManufacturer}
+                      onValueChange={setSelectedManufacturer}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="メーカーを選択" />
                       </SelectTrigger>
@@ -349,7 +353,7 @@ export default function InspectionItems() {
                             </SelectItem>
                           ))}
                         {manufacturers.some(manufacturer => !manufacturer || manufacturer.trim() === "") && (
-                          <SelectItem key="未設定" value="未設定">
+                          <SelectItem value="未設定">
                             未設定
                           </SelectItem>
                         )}

@@ -336,42 +336,41 @@ export default function InspectionItems() {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="text-2xl">点検項目設定</CardTitle>
+        <CardTitle className="text-2xl">点検項目マスタ</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* インポート機能 */}
+        {/* ファイル選択とフィルター */}
         <div className="border p-4 rounded-md space-y-4">
-          <h3 className="text-lg font-semibold">CSV一括インポート</h3>
-          <div className="flex items-center gap-4">
-            <Input 
-              type="file" 
-              accept=".csv" 
-              onChange={handleCSVUpload} 
-              className="max-w-md" 
-            />
-            <Button 
-              onClick={importCSVData} 
-              disabled={csvData.length === 0}
-            >
-              CSVデータをインポート
-            </Button>
-          </div>
-          {csvData.length > 0 && (
-            <p className="text-sm text-muted-foreground">
-              {csvData.length}件のデータが読み込まれています。「CSVデータをインポート」ボタンを押してインポートしてください。
-            </p>
-          )}
-        </div>
-
-        {/* 検索/フィルター */}
-        <div className="border p-4 rounded-md space-y-4">
-          <h3 className="text-lg font-semibold">点検項目検索</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="filter-manufacturer">メーカー</Label>
+          <div className="flex flex-wrap gap-4 items-end">
+            {/* CSVファイル選択 */}
+            <div className="flex-1 min-w-[300px]">
+              <Label htmlFor="csv-file" className="mb-2 block">CSVファイル</Label>
+              <div className="flex gap-2">
+                <Input 
+                  id="csv-file"
+                  type="file" 
+                  accept=".csv" 
+                  onChange={handleCSVUpload} 
+                />
+                <Button 
+                  onClick={importCSVData} 
+                  disabled={csvData.length === 0}
+                  size="sm"
+                >
+                  インポート
+                </Button>
+              </div>
+            </div>
+            
+            {/* メーカーフィルター */}
+            <div className="w-[200px]">
+              <Label htmlFor="filter-manufacturer" className="mb-2 block">メーカー選択</Label>
               <Select
                 value={filterManufacturer}
-                onValueChange={setFilterManufacturer}
+                onValueChange={(value) => {
+                  setFilterManufacturer(value);
+                  setFilterModel("");
+                }}
               >
                 <SelectTrigger id="filter-manufacturer">
                   <SelectValue placeholder="メーカーを選択" />
@@ -388,8 +387,10 @@ export default function InspectionItems() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="filter-model">機種</Label>
+            
+            {/* 機種フィルター */}
+            <div className="w-[200px]">
+              <Label htmlFor="filter-model" className="mb-2 block">機種</Label>
               <Select
                 value={filterModel}
                 onValueChange={setFilterModel}
@@ -409,11 +410,16 @@ export default function InspectionItems() {
               </Select>
             </div>
           </div>
+          
+          {csvData.length > 0 && (
+            <p className="text-sm text-muted-foreground mt-2">
+              {csvData.length}件のデータが読み込まれています。「インポート」ボタンを押してインポートしてください。
+            </p>
+          )}
         </div>
 
-        {/* メーカーと機種の選択 */}
+        {/* 点検項目のメインエリア */}
         <div className="border p-4 rounded-md space-y-4">
-          <h3 className="text-lg font-semibold">点検項目編集</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="manufacturer">メーカー</Label>

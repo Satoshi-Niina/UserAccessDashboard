@@ -601,7 +601,7 @@ interface InspectionItem {
   [key: string]: string;
 }
 
-export function InspectionItems() {
+function SecondaryInspectionItems() {
   // ステート定義
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);

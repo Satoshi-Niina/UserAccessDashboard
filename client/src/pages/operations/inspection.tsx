@@ -255,6 +255,7 @@ export default function Inspection() {
                   <SelectValue placeholder="メーカーを選択" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="all">すべて</SelectItem>
                   {sampleManufacturers
                     .filter((mfr) => mfr && mfr.trim() !== "")
                     .map((mfr) => (
@@ -277,6 +278,7 @@ export default function Inspection() {
                   <SelectValue placeholder="機種を選択" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="all">すべて</SelectItem>
                   {sampleModels
                     .filter((mdl) => mdl && mdl.trim() !== "")
                     .map((mdl) => (

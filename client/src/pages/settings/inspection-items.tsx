@@ -112,7 +112,7 @@ export default function InspectionItems() {
           }));
 
           setAvailableFiles(fileList);
-          
+
           // 初期ファイルが存在するか確認
           if (!fileList.some(f => f.name === "仕業点検マスタ.csv")) {
             if (fileList.length > 0) {
@@ -138,35 +138,35 @@ export default function InspectionItems() {
     const fetchInspectionData = async () => {
       try {
         const response = await fetch(`/api/inspection-items?file=${currentFileName}&t=${new Date().getTime()}`);
-        
+
         if (!response.ok) {
           throw new Error(`サーバーエラー: ${response.status} ${response.statusText}`);
         }
-        
+
         const csvText = await response.text();
-        
+
         if (!csvText || csvText.trim() === '') {
           throw new Error('データが空です');
         }
-        
+
         // CSVパース処理
         const lines = csvText.split('\n');
         const headers = lines[0].split(',');
-        
+
         // CSVから点検項目データを変換
         const items: InspectionItem[] = [];
         let nextId = 1;
-        
+
         for (let i = 1; i < lines.length; i++) {
           if (!lines[i].trim()) continue;
-          
+
           const values = lines[i].split(',');
           const item: any = {};
-          
+
           for (let j = 0; j < headers.length; j++) {
             item[headers[j].trim()] = values[j]?.trim() || '';
           }
-          
+
           // CSVのデータ構造を点検項目の構造に変換
           const inspectionItem: InspectionItem = {
             id: nextId++,
@@ -177,12 +177,12 @@ export default function InspectionItems() {
             method: item['確認要領'] || '',
             criteria: item['判断基準'] || '',
           };
-          
+
           items.push(inspectionItem);
         }
-        
+
         setInspectionItems(items);
-        
+
         toast({
           title: "データ読み込み完了",
           description: `${items.length}件の点検項目を読み込みました`,
@@ -199,7 +199,7 @@ export default function InspectionItems() {
         setInspectionItems(sampleInspectionItems);
       }
     };
-    
+
     fetchInspectionData();
   }, [currentFileName, toast]);
 
@@ -332,7 +332,7 @@ export default function InspectionItems() {
       // 現在の点検項目データをCSV形式に変換
       const headers = ['製造メーカー', '機種', '部位', '確認箇所', '確認要領', '判断基準'];
       const csvRows = [headers.join(',')];
-      
+
       inspectionItems.forEach(item => {
         const row = [
           item.manufacturer,
@@ -344,12 +344,12 @@ export default function InspectionItems() {
         ].map(val => `${val}`).join(',');
         csvRows.push(row);
       });
-      
+
       const csvContent = csvRows.join('\n');
-      
+
       // 保存するファイル名
       const saveFileName = `仕業点検_${new Date().toISOString().slice(0, 10)}.csv`;
-      
+
       // APIを呼び出して変更を保存する処理
       const response = await fetch('/api/save-inspection-items', {
         method: 'POST',
@@ -361,11 +361,11 @@ export default function InspectionItems() {
           content: csvContent
         }),
       });
-      
+
       if (!response.ok) {
         throw new Error(`保存に失敗しました: ${response.status} ${response.statusText}`);
       }
-      
+
       // ファイル一覧を更新
       const filesResponse = await fetch('/api/inspection-files');
       const data = await filesResponse.json();
@@ -377,7 +377,7 @@ export default function InspectionItems() {
         setAvailableFiles(fileList);
         setCurrentFileName(saveFileName);
       }
-      
+
       toast({
         title: "保存完了",
         description: `変更内容を ${saveFileName} に保存しました`,
@@ -520,7 +520,7 @@ export default function InspectionItems() {
                 </SelectContent>
               </Select>
             </div>
-            
+
             {/* 新規CSVファイル選択 */}
             <div className="flex-1 min-w-[300px]">
               <Label htmlFor="csv-file" className="mb-2 block">新規CSVファイル</Label>
@@ -540,7 +540,7 @@ export default function InspectionItems() {
                 </Button>
               </div>
             </div>
-            
+
             {/* メーカーフィルター */}
             <div className="w-[200px]">
               <Label htmlFor="filter-manufacturer" className="mb-2 block">メーカー選択</Label>
@@ -566,7 +566,7 @@ export default function InspectionItems() {
                 </SelectContent>
               </Select>
             </div>
-            
+
             {/* 機種フィルター */}
             <div className="w-[200px]">
               <Label htmlFor="filter-model" className="mb-2 block">機種</Label>
@@ -589,7 +589,7 @@ export default function InspectionItems() {
               </Select>
             </div>
           </div>
-          
+
           {csvData.length > 0 && (
             <p className="text-sm text-muted-foreground mt-2">
               {csvData.length}件のデータが読み込まれています。「インポート」ボタンを押してインポートしてください。

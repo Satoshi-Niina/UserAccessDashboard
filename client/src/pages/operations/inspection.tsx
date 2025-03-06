@@ -256,9 +256,9 @@ export default function Inspection() {
                 </SelectTrigger>
                 <SelectContent>
                   {sampleManufacturers
-                    .filter(mfr => mfr && mfr.trim() !== '')
+                    .filter((mfr) => mfr && mfr.trim() !== "")
                     .map((mfr) => (
-                      <SelectItem key={mfr} value={mfr || "unknown"}> {/* Added safety check */}
+                      <SelectItem key={mfr} value={mfr}>
                         {mfr}
                       </SelectItem>
                     ))}
@@ -278,9 +278,9 @@ export default function Inspection() {
                 </SelectTrigger>
                 <SelectContent>
                   {sampleModels
-                    .filter(mdl => mdl && mdl.trim() !== '')
+                    .filter((mdl) => mdl && mdl.trim() !== "")
                     .map((mdl) => (
-                      <SelectItem key={mdl} value={mdl || "unknown"}> {/* Added safety check */}
+                      <SelectItem key={mdl} value={mdl}>
                         {mdl}
                       </SelectItem>
                     ))}

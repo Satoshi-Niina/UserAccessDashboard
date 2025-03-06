@@ -560,7 +560,7 @@ export default function InspectionItems() {
   );
 }
 
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   ResizablePanelGroup,

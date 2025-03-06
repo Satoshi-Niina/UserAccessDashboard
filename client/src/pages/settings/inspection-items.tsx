@@ -270,11 +270,13 @@ export function InspectionItems() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">すべて</SelectItem>
-                  {filterEmptyValues(manufacturers).map((manufacturer) => (
-                    <SelectItem key={manufacturer} value={manufacturer}>
-                      {manufacturer}
-                    </SelectItem>
-                  ))}
+                  {filterEmptyValues(manufacturers)
+                    .filter(manufacturer => manufacturer && manufacturer.trim() !== '')
+                    .map((manufacturer) => (
+                      <SelectItem key={manufacturer} value={manufacturer || "unknown"}>
+                        {manufacturer || "未設定"}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
               <Select>
@@ -283,11 +285,13 @@ export function InspectionItems() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">すべて</SelectItem>
-                  {filterEmptyValues(models).map((model) => (
-                    <SelectItem key={model} value={model}>
-                      {model}
-                    </SelectItem>
-                  ))}
+                  {filterEmptyValues(models)
+                    .filter(model => model && model.trim() !== '')
+                    .map((model) => (
+                      <SelectItem key={model} value={model || "unknown"}>
+                        {model || "未設定"}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
               {selectedItem !== null && (

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,7 +49,7 @@ export default function Inspection() {
   useEffect(() => {
     document.title = "運用管理システム - 仕業点検";
   }, []);
-  
+
   // 状態管理
   const [manufacturer, setManufacturer] = useState<string>("");
   const [model, setModel] = useState<string>("");
@@ -259,7 +258,7 @@ export default function Inspection() {
                   {sampleManufacturers
                     .filter(mfr => mfr && mfr.trim() !== '')
                     .map((mfr) => (
-                      <SelectItem key={mfr} value={mfr}>
+                      <SelectItem key={mfr} value={mfr || "unknown"}> {/* Added safety check */}
                         {mfr}
                       </SelectItem>
                     ))}
@@ -281,12 +280,10 @@ export default function Inspection() {
                   {sampleModels
                     .filter(mdl => mdl && mdl.trim() !== '')
                     .map((mdl) => (
-                    <SelectItem key={mdl} value={mdl}>
-                      {mdl}
-                    </SelectItem>Item key={mdl} value={mdl}>
-                      {mdl}
-                    </SelectItem> : null
-                  ))}
+                      <SelectItem key={mdl} value={mdl || "unknown"}> {/* Added safety check */}
+                        {mdl}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>

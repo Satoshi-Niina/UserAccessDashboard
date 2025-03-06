@@ -36,6 +36,8 @@ interface InspectionItem {
   item: string;
   method: string;
   criteria: string;
+  measurementRecord?: string; // Optional measurement record
+  diagramRecord?: string;     // Optional diagram record
 }
 
 // 仮のサンプルデータ（メーカーと機種）
@@ -87,6 +89,8 @@ export default function InspectionItems() {
     item: "",
     method: "",
     criteria: "",
+    measurementRecord: "", // Added fields for optional records
+    diagramRecord: ""
   });
 
   // CSVデータ読み込み用の状態
@@ -176,6 +180,8 @@ export default function InspectionItems() {
             item: item['確認箇所'] || '',
             method: item['確認要領'] || '',
             criteria: item['判断基準'] || '',
+            measurementRecord: item['測定等記録'] || '', // Added fields
+            diagramRecord: item['図形記録'] || ''      // Added fields
           };
 
           items.push(inspectionItem);
@@ -236,6 +242,8 @@ export default function InspectionItems() {
       item: "",
       method: "",
       criteria: "",
+      measurementRecord: "", // Added fields
+      diagramRecord: ""      // Added fields
     });
     setIsDialogOpen(true);
   };
@@ -249,6 +257,8 @@ export default function InspectionItems() {
       item: item.item,
       method: item.method,
       criteria: item.criteria,
+      measurementRecord: item.measurementRecord || "", // Added fields
+      diagramRecord: item.diagramRecord || ""       // Added fields
     });
     setIsDialogOpen(true);
   };
@@ -281,6 +291,8 @@ export default function InspectionItems() {
               item: newItem.item || "",
               method: newItem.method || "",
               criteria: newItem.criteria || "",
+              measurementRecord: newItem.measurementRecord || "", // Added fields
+              diagramRecord: newItem.diagramRecord || ""       // Added fields
             }
           : item
       );
@@ -303,6 +315,8 @@ export default function InspectionItems() {
         item: newItem.item || "",
         method: newItem.method || "",
         criteria: newItem.criteria || "",
+        measurementRecord: newItem.measurementRecord || "", // Added fields
+        diagramRecord: newItem.diagramRecord || ""       // Added fields
       };
       setInspectionItems([...inspectionItems, newInspectionItem]);
       toast({
@@ -330,7 +344,7 @@ export default function InspectionItems() {
   const saveChanges = async () => {
     try {
       // 現在の点検項目データをCSV形式に変換
-      const headers = ['製造メーカー', '機種', '部位', '確認箇所', '確認要領', '判断基準'];
+      const headers = ['製造メーカー', '機種', '部位', '確認箇所', '確認要領', '判断基準', '測定等記録', '図形記録']; // Added columns
       const csvRows = [headers.join(',')];
 
       inspectionItems.forEach(item => {
@@ -340,7 +354,9 @@ export default function InspectionItems() {
           item.category,
           item.item,
           item.method,
-          item.criteria
+          item.criteria,
+          item.measurementRecord,  // Added columns
+          item.diagramRecord       // Added columns
         ].map(val => `${val}`).join(',');
         csvRows.push(row);
       });
@@ -431,6 +447,8 @@ export default function InspectionItems() {
               item: item['確認箇所'] || '',
               method: item['確認要領'] || '',
               criteria: item['判断基準'] || '',
+              measurementRecord: item['測定等記録'] || '', // Added fields
+              diagramRecord: item['図形記録'] || ''      // Added fields
             };
 
             items.push(inspectionItem);
@@ -686,6 +704,8 @@ export default function InspectionItems() {
                         <TableHead>点検項目</TableHead>
                         <TableHead>点検方法</TableHead>
                         <TableHead>判定基準</TableHead>
+                        <TableHead>測定等記録</TableHead>
+                        <TableHead>図形記録</TableHead>
                         <TableHead className="w-[100px]">操作</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -696,6 +716,8 @@ export default function InspectionItems() {
                           <TableCell>{item.item}</TableCell>
                           <TableCell>{item.method}</TableCell>
                           <TableCell>{item.criteria}</TableCell>
+                          <TableCell>{item.measurementRecord}</TableCell>
+                          <TableCell>{item.diagramRecord}</TableCell>
                           <TableCell>
                             <div className="flex space-x-1">
                               <Button
@@ -790,6 +812,28 @@ export default function InspectionItems() {
                   setNewItem({ ...newItem, criteria: e.target.value })
                 }
                 placeholder="例: ○○mm以上あること、××の範囲内など"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="measurementRecord">測定等記録</Label>
+              <Input
+                id="measurementRecord"
+                value={newItem.measurementRecord}
+                onChange={(e) =>
+                  setNewItem({ ...newItem, measurementRecord: e.target.value })
+                }
+                placeholder="測定値などを記録"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="diagramRecord">図形記録</Label>
+              <Input
+                id="diagramRecord"
+                value={newItem.diagramRecord}
+                onChange={(e) =>
+                  setNewItem({ ...newItem, diagramRecord: e.target.value })
+                }
+                placeholder="図形に関する記録"
               />
             </div>
           </div>

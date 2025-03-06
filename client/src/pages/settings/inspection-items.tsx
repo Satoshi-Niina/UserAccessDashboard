@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'wouter';
+import { DndProvider, HTML5Backend } from 'react-dnd';
 import {
   Card,
   CardContent,
@@ -671,7 +672,8 @@ export default function InspectionItems() {
   };
 
   return (
-    <Card className="w-full">
+    <DndProvider backend={HTML5Backend}>
+      <Card className="w-full">
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle className="text-2xl">点検項目マスタ</CardTitle>
@@ -1019,5 +1021,6 @@ export default function InspectionItems() {
         </AlertDialogContent>
       </AlertDialog>
     </Card>
+    </DndProvider>
   );
 }

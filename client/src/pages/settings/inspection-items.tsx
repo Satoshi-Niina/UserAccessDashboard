@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'wouter';
 import {
   Card,
@@ -34,8 +33,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui';
-import { Plus, Edit, Trash2, Save, ArrowLeft, Check } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, ArrowLeft, Check, GripVertical } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useDrag, useDrop } from 'react-dnd';
+
 
 // 点検項目の型定義
 interface InspectionItem {
@@ -73,7 +74,7 @@ export default function InspectionItems() {
   const [csvData, setCsvData] = useState<InspectionItem[]>([]);
   const [availableFiles, setAvailableFiles] = useState<{name: string, modified: string}[]>([]);
   const [currentFileName, setCurrentFileName] = useState("仕業点検マスタ.csv");
-  
+
   // 変更追跡と確認ダイアログ用の状態
   const [hasChanges, setHasChanges] = useState(false);
   const [initialItems, setInitialItems] = useState<InspectionItem[]>([]);
@@ -212,7 +213,7 @@ export default function InspectionItems() {
   // メーカーと機種と部位でフィルタリング
   useEffect(() => {
     let filtered = inspectionItems;
-    
+
     // 検索クエリがある場合
     if (searchQuery) {
       filtered = filtered.filter(item => 
@@ -226,7 +227,7 @@ export default function InspectionItems() {
         (item.diagramRecord && item.diagramRecord.toLowerCase().includes(searchQuery))
       );
     }
-    
+
     // メーカー、機種、部位でフィルタリング
     filtered = filtered.filter(
       (item) => 
@@ -234,7 +235,7 @@ export default function InspectionItems() {
         (!model || model === "all" || item.model === model) &&
         (!categoryFilter || categoryFilter === "all" || item.category === categoryFilter)
     );
-    
+
     setFilteredItems(filtered);
   }, [manufacturer, model, categoryFilter, inspectionItems, searchQuery]);
 
@@ -363,7 +364,7 @@ export default function InspectionItems() {
       navigate('/settings');
     }
   };
-  
+
   // 変更を保存する
   const saveChanges = async () => {
     try {
@@ -422,16 +423,16 @@ export default function InspectionItems() {
         title: "保存完了",
         description: `変更内容を ${saveFileName} に保存しました`,
       });
-      
+
       // 初期状態を更新
       setInitialItems(JSON.parse(JSON.stringify(inspectionItems)));
       setHasChanges(false);
-      
+
       // 保存して戻る場合は画面遷移
       if (pendingAction === 'save') {
         navigate('/settings');
       }
-      
+
       return true;
     } catch (error) {
       console.error('保存エラー:', error);
@@ -443,11 +444,11 @@ export default function InspectionItems() {
       return false;
     }
   };
-  
+
   // 確認ダイアログの処理
   const handleConfirmAction = async () => {
     setShowConfirmDialog(false);
-    
+
     if (pendingAction === 'save') {
       const success = await saveChanges();
       if (success) {
@@ -456,10 +457,10 @@ export default function InspectionItems() {
     } else if (pendingAction === 'back') {
       navigate('/settings');
     }
-    
+
     setPendingAction(null);
   };
-  
+
   const handleCancelAction = () => {
     setShowConfirmDialog(false);
     setPendingAction(null);
@@ -564,24 +565,129 @@ export default function InspectionItems() {
     });
   };
 
+  // 行の移動処理
+  const moveRow = (dragIndex, hoverIndex) => {
+    const newItems = Array.from(inspectionItems);
+    const [removed] = newItems.splice(dragIndex, 1);
+    newItems.splice(hoverIndex, 0, removed);
+    setInspectionItems(newItems);
+  };
+
+  // ドラッグ可能な行コンポーネント
+  const DraggableTableRow = ({ item, index, openEditDialog, deleteInspectionItem }) => {
+    const ref = useRef(null);
+
+    const [{ isDragging }, drag] = useDrag({
+      type: 'TABLE_ROW',
+      item: { index },
+      collect: (monitor) => ({
+        isDragging: monitor.isDragging(),
+      }),
+    });
+
+    const [, drop] = useDrop({
+      accept: 'TABLE_ROW',
+      hover(draggedItem, monitor) {
+        if (!ref.current) {
+          return;
+        }
+
+        const dragIndex = draggedItem.index;
+        const hoverIndex = index;
+
+        // 自分自身にドロップしようとしている場合は何もしない
+        if (dragIndex === hoverIndex) {
+          return;
+        }
+
+        // 行の位置を決定
+        const hoverBoundingRect = ref.current.getBoundingClientRect();
+        const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+        const clientOffset = monitor.getClientOffset();
+        const hoverClientY = clientOffset.y - hoverBoundingRect.top;
+
+        // ドラッグしている行が上から下へ移動する場合
+        if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
+          return;
+        }
+
+        // ドラッグしている行が下から上へ移動する場合
+        if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
+          return;
+        }
+
+        // 実際に行を移動する
+        moveRow(dragIndex, hoverIndex);
+
+        // ドラッグしているアイテムのインデックスを更新
+        draggedItem.index = hoverIndex;
+      },
+    });
+
+    // ドラッグ中のスタイルを適用
+    const opacity = isDragging ? 0.5 : 1;
+
+    // 参照を組み合わせる
+    drag(drop(ref));
+
+    return (
+      <TableRow
+        ref={ref}
+        key={item.id}
+        className="border-b border-gray-200"
+        style={{ opacity, cursor: 'move' }}
+      >
+        <TableCell className="whitespace-normal py-2 break-words border border-gray-200">
+          <div className="flex items-center">
+            <GripVertical className="h-4 w-4 mr-2 cursor-grab" />
+            {item.category}
+          </div>
+        </TableCell>
+        <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.item}>{item.item}</TableCell>
+        <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.method}>{item.method}</TableCell>
+        <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.criteria}>{item.criteria}</TableCell>
+        <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.measurementRecord}>{item.measurementRecord}</TableCell>
+        <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.diagramRecord}>{item.diagramRecord}</TableCell>
+        <TableCell className="sticky right-0 bg-background py-2 border border-gray-200">
+          <div className="flex space-x-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => openEditDialog(item)}
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => deleteInspectionItem(item.id)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        </TableCell>
+      </TableRow>
+    );
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle className="text-2xl">点検項目マスタ</CardTitle>
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               className="gap-1"
               onClick={handleNavigateAway}
             >
               <ArrowLeft className="h-4 w-4" />
               戻る
             </Button>
-            <Button 
-              variant="default" 
-              size="sm" 
+            <Button
+              variant="default"
+              size="sm"
               className="gap-1"
               onClick={handleSaveAndNavigate}
             >
@@ -619,13 +725,13 @@ export default function InspectionItems() {
             <div className="flex-1 min-w-[300px]">
               <Label htmlFor="csv-file" className="mb-2 block">CSVファイルインポート</Label>
               <div className="flex gap-2">
-                <Input 
+                <Input
                   id="csv-file"
-                  type="file" 
-                  accept=".csv" 
-                  onChange={handleCSVUpload} 
+                  type="file"
+                  accept=".csv"
+                  onChange={handleCSVUpload}
                 />
-                <Button 
+                <Button
                   onClick={importCSVData}
                 >
                   インポート
@@ -652,7 +758,7 @@ export default function InspectionItems() {
               onChange={(e) => setSearchQuery(e.target.value.toLowerCase())}
             />
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="manufacturer">メーカー</Label>
@@ -715,7 +821,7 @@ export default function InspectionItems() {
                 <SelectContent>
                   <SelectItem value="all">すべて</SelectItem>
                   {[...new Set(inspectionItems
-                    .filter(item => 
+                    .filter(item =>
                       (!manufacturer || manufacturer === "all" || item.manufacturer === manufacturer) &&
                       (!model || model === "all" || item.model === model)
                     )
@@ -746,9 +852,9 @@ export default function InspectionItems() {
                 <Plus className="h-4 w-4" />
                 新規追加
               </Button>
-              <Button 
-                variant="default" 
-                size="sm" 
+              <Button
+                variant="default"
+                size="sm"
                 onClick={saveChanges}
                 className="gap-1"
               >
@@ -774,33 +880,15 @@ export default function InspectionItems() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredItems.map((item) => (
-                    <TableRow key={item.id} className="border-b border-gray-200">
-                      <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.category}>{item.category}</TableCell>
-                      <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.item}>{item.item}</TableCell>
-                      <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.method}>{item.method}</TableCell>
-                      <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.criteria}>{item.criteria}</TableCell>
-                      <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.measurementRecord}>{item.measurementRecord}</TableCell>
-                      <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.diagramRecord}>{item.diagramRecord}</TableCell>
-                      <TableCell className="sticky right-0 bg-background py-2 border border-gray-200">
-                        <div className="flex space-x-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openEditDialog(item)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => deleteInspectionItem(item.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                  {filteredItems.map((item, index) => (
+                    <DraggableTableRow
+                      item={item}
+                      index={index}
+                      key={item.id}
+                      openEditDialog={openEditDialog}
+                      deleteInspectionItem={deleteInspectionItem}
+                      moveRow={moveRow}
+                    />
                   ))}
                 </TableBody>
               </Table>
@@ -881,7 +969,7 @@ export default function InspectionItems() {
                 placeholder="測定値などを記録"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2"><div className="space-y-2">
               <Label htmlFor="diagramRecord">図形記録</Label>
               <Input
                 id="diagramRecord"
@@ -903,7 +991,7 @@ export default function InspectionItems() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
+
       {/* 変更確認ダイアログ */}
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>

@@ -74,15 +74,21 @@ app.use((req, res, next) => {
   }
 
   // サーバーの起動（ポート5000または環境変数から）
-  const PORT = Number(process.env.PORT || 5000);
+  let PORT = Number(process.env.PORT || 5000);
   
   // サーバーをシンプルに起動する関数
   const startServer = () => {
     // ポート使用時のエラーハンドリングを追加
     server.on('error', (err: any) => {
       if (err.code === 'EADDRINUSE') {
-        log(`Port ${PORT} is already in use. Please kill any processes using this port and try again.`);
-        process.exit(1);
+        // Try alternative ports if 5000 is in use
+        PORT = PORT + 1;
+        log(`Port ${PORT - 1} is already in use. Trying port ${PORT} instead...`);
+        setTimeout(() => {
+          server.listen(PORT, '0.0.0.0', () => {
+            log(`Server is running on port ${PORT}`);
+          });
+        }, 1000);
       } else {
         log(`Server error: ${err}`);
         process.exit(1);

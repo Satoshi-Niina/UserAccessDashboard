@@ -582,7 +582,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // 点検項目の型定義
 interface InspectionItem {

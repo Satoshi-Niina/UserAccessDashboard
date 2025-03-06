@@ -371,6 +371,12 @@ export default function InspectionItems() {
                     >
                       変更を保存
                     </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => window.history.back()}
+                    >
+                      閉じる
+                    </Button>
                   </div>
                 </div>
 
@@ -515,6 +521,11 @@ export default function InspectionItems() {
 
                       // フォームをリセット
                       e.currentTarget.reset();
+                      
+                      // 編集タブに切り替え
+                      document.querySelector('[value="edit"]')?.dispatchEvent(
+                        new MouseEvent('click', { bubbles: true })
+                      );
 
                       setLoading(false);
                     } catch (err) {
@@ -876,6 +887,12 @@ function SecondaryInspectionItems() {
                 disabled={!hasChanges}
               >
                 レイアウト保存
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => window.history.back()}
+              >
+                閉じる
               </Button>
               <ExitButton
                 hasChanges={hasChanges}

@@ -680,15 +680,6 @@ export default function InspectionItems() {
           <CardTitle className="text-2xl">点検項目マスタ</CardTitle>
           <div className="flex gap-2">
             <Button
-              variant="outline"
-              size="sm"
-              className="gap-1"
-              onClick={handleNavigateAway}
-            >
-              <ArrowLeft className="h-4 w-4" />
-              戻る
-            </Button>
-            <Button
               variant="default"
               size="sm"
               className="gap-1"

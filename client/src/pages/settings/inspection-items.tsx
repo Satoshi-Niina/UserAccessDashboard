@@ -198,6 +198,7 @@ export default function InspectionItems() {
     columnsCopy.splice(targetIndex, 0, sourceColumnName);
 
     setColumns(columnsCopy);
+    setHasChanges(true);
   };
 
   // アイテムの編集ハンドラー
@@ -241,7 +242,7 @@ export default function InspectionItems() {
   };
 
   // アイテムの削除
-  
+
 
   // フィルター適用済みのアイテム
   const filteredItems = inspectionItems.filter(item => {
@@ -250,7 +251,6 @@ export default function InspectionItems() {
     return manufacturerMatch && modelMatch;
   });
 
-  // データの保存
   const handleSaveData = async () => {
     try {
       setLoading(true);
@@ -312,6 +312,25 @@ export default function InspectionItems() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    let saveTimer: NodeJS.Timeout;
+
+    if (hasChanges) {
+      // 変更がある場合、30秒後に自動保存
+      saveTimer = setTimeout(() => {
+        console.log("変更を自動保存します");
+        handleSaveData();
+      }, 30000);
+    }
+
+    return () => {
+      if (saveTimer) {
+        clearTimeout(saveTimer);
+      }
+    };
+  }, [hasChanges, inspectionItems]);
+
 
   return (
     <div className="container mx-auto py-8">
@@ -396,13 +415,6 @@ export default function InspectionItems() {
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={handleSaveData}
-                    disabled={loading || !hasChanges}
-                  >
-                    変更を保存
-                  </Button>
-                  <Button
-                    variant="outline"
                     onClick={() => setShowUploadForm(true)}
                     disabled={loading}
                   >
@@ -461,15 +473,32 @@ export default function InspectionItems() {
                             handleDeleteItemClick(index);
                           }}
                         >
-                          {columns.map(column => (
-                            <td 
-                              key={column} 
-                              className="px-3 py-1 text-xs border-r last:border-r-0"
-                              style={{ maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis' }}
-                            >
-                              <span title={String(item[column] || '')}>{String(item[column] || '')}</span>
-                            </td>
-                          ))}
+                          {columns.map(column => {
+                            // カラムに応じて幅を調整
+                            let columnWidth = '150px';
+                            if (column === '確認箇所' || column === '判断基準' || column === '確認要領') {
+                              columnWidth = '300px'; // 特定のカラムは広めに設定
+                            } else if (column === '製造メーカー' || column === '機種') {
+                              columnWidth = '120px';
+                            }
+
+                            return (
+                              <td 
+                                key={column} 
+                                className="px-3 py-1 text-xs border-r last:border-r-0"
+                                style={{ 
+                                  width: columnWidth,
+                                  minWidth: columnWidth,
+                                  maxWidth: columnWidth,
+                                  overflow: 'hidden', 
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
+                                }}
+                              >
+                                <span title={String(item[column] || '')}>{String(item[column] || '')}</span>
+                              </td>
+                            );
+                          })}
                         </tr>
                       ))}
                     </tbody>
@@ -936,6 +965,8 @@ function SecondaryInspectionItems() {
                 onClick={saveChanges}
                 disabled={!hasChanges}
               >
+                レイアウト保存
+              </Button>
                 レイアウト保存
               </Button>
               <Button

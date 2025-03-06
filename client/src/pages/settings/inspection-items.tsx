@@ -246,7 +246,7 @@ export default function InspectionItems() {
     );
 
     setFilteredItems(filtered);
-  }, [manufacturer, model, categoryFilter, inspectionItems, searchQuery]);
+  }, [manufacturer, model, categoryFilter, equipmentFilter, inspectionItems, searchQuery]);
 
   // 点検項目の追加ダイアログを開く
   const openAddDialog = () => {
@@ -785,7 +785,15 @@ export default function InspectionItems() {
                 value={manufacturer}
                 onValueChange={(value) => {
                   setManufacturer(value);
-                  setModel("");
+                  if (value === "all") {
+                    // すべてを選択した場合は関連フィルターもリセット
+                    setModel("");
+                    setCategoryFilter("");
+                    setEquipmentFilter("");
+                  } else {
+                    // 特定のメーカーを選択した場合は機種のみリセット
+                    setModel("");
+                  }
                 }}
               >
                 <SelectTrigger id="manufacturer">
@@ -808,7 +816,14 @@ export default function InspectionItems() {
               <Label htmlFor="model">機種</Label>
               <Select
                 value={model}
-                onValueChange={setModel}
+                onValueChange={(value) => {
+                  setModel(value);
+                  if (value === "all") {
+                    // すべてを選択した場合は後続フィルターをリセット
+                    setCategoryFilter("");
+                    setEquipmentFilter("");
+                  }
+                }}
               >
                 <SelectTrigger id="model">
                   <SelectValue placeholder="機種を選択" />
@@ -832,7 +847,13 @@ export default function InspectionItems() {
               <Label htmlFor="category">部位</Label>
               <Select
                 value={categoryFilter}
-                onValueChange={setCategoryFilter}
+                onValueChange={(value) => {
+                  setCategoryFilter(value);
+                  if (value === "all") {
+                    // すべてを選択した場合は装置フィルターをリセット
+                    setEquipmentFilter("");
+                  }
+                }}
               >
                 <SelectTrigger id="category">
                   <SelectValue placeholder="部位を選択" />
@@ -859,7 +880,9 @@ export default function InspectionItems() {
               <Label htmlFor="equipment">装置</Label>
               <Select
                 value={equipmentFilter}
-                onValueChange={setEquipmentFilter}
+                onValueChange={(value) => {
+                  setEquipmentFilter(value);
+                }}
               >
                 <SelectTrigger id="equipment">
                   <SelectValue placeholder="装置を選択" />

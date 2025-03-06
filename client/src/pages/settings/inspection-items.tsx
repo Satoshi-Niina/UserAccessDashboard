@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,13 +36,13 @@ export default function InspectionItems() {
       try {
         const response = await fetch('/api/inspection-files');
         const data = await response.json();
-        
+
         if (data.files && Array.isArray(data.files)) {
           setAvailableFiles(data.files.map(file => ({
             name: file.name,
             modified: new Date(file.modified).toLocaleString()
           })));
-          
+
           // 仕業点検マスタ.csvがない場合は、利用可能な最初のファイルを選択
           if (data.files.length > 0 && !data.files.some(f => f.name === "仕業点検マスタ.csv")) {
             setCurrentFileName(data.files[0].name);
@@ -53,7 +52,7 @@ export default function InspectionItems() {
         console.error("ファイル一覧取得エラー:", err);
       }
     };
-    
+
     fetchAvailableFiles();
   }, []);
 
@@ -63,36 +62,36 @@ export default function InspectionItems() {
       try {
         setLoading(true);
         setError(null);
-        
+
         // キャッシュを回避するためのタイムスタンプ付きリクエスト
         const response = await fetch(`/api/inspection-items?file=${currentFileName}&t=${new Date().getTime()}`);
-        
+
         if (!response.ok) {
           throw new Error(`サーバーエラー: ${response.status}`);
         }
-        
+
         const csvText = await response.text();
-        
+
         if (!csvText || csvText.trim() === '') {
           throw new Error('データが空です');
         }
-        
+
         console.log("CSVデータの最初の行:", csvText.split('\n')[0]);
-        
+
         // CSVデータのパース
         const { data, errors } = Papa.parse<InspectionItem>(csvText, {
           header: true,
           skipEmptyLines: true,
           transformHeader: header => header.trim()
         });
-        
+
         if (errors.length > 0) {
           console.error("CSVパースエラー:", errors);
           throw new Error(`CSVパースエラー: ${errors[0].message}`);
         }
-        
+
         console.log("点検項目データ読み込み成功", data.length, "件");
-        
+
         if (data.length > 0) {
           // カラムの取得と並び順の設定
           const firstItem = data[0];
@@ -101,42 +100,42 @@ export default function InspectionItems() {
             '製造メーカー', '機種', 'エンジン型式', '部位', '装置', '手順',
             '確認箇所', '判断基準', '確認要領', '測定等記録', '図形記録'
           ].filter(col => Object.keys(firstItem).includes(col));
-          
+
           // データにはあるがデフォルト順序にない列を追加
           Object.keys(firstItem).forEach(key => {
             if (!orderedColumns.includes(key)) {
               orderedColumns.push(key);
             }
           });
-          
+
           setColumns(orderedColumns);
-          
+
           // メーカーと機種のリストを作成（空文字を除外）
           const uniqueManufacturers = [...new Set(data.map(item => item['製造メーカー'] || ''))]
             .filter(Boolean)
             .sort();
-            
+
           const uniqueModels = [...new Set(data.map(item => item['機種'] || ''))]
             .filter(Boolean)
             .sort();
-            
+
           setManufacturers(uniqueManufacturers);
           setModels(uniqueModels);
-          
+
           toast({
             title: "データ読み込み完了",
             description: `${data.length}件の点検項目を読み込みました`,
             duration: 3000,
           });
         }
-        
+
         setInspectionItems(data);
         setLoading(false);
       } catch (err) {
         console.error("データ読み込みエラー:", err);
         setError(`データの読み込みに失敗しました: ${err instanceof Error ? err.message : '不明なエラー'}`);
         setLoading(false);
-        
+
         toast({
           variant: "destructive",
           title: "エラー",
@@ -145,7 +144,7 @@ export default function InspectionItems() {
         });
       }
     };
-    
+
     fetchData();
   }, [currentFileName, toast]);
 
@@ -242,10 +241,10 @@ export default function InspectionItems() {
   const handleSaveData = async () => {
     try {
       setLoading(true);
-      
+
       // 保存するファイル名（現在のファイル名または新しいファイル名）
       const saveFileName = `仕業点検_編集済_${new Date().toISOString().slice(0, 10)}.csv`;
-      
+
       // サーバーにデータを保存
       const response = await fetch('/api/save-inspection-data', {
         method: 'POST',
@@ -263,14 +262,14 @@ export default function InspectionItems() {
       }
 
       const result = await response.json();
-      
+
       // 保存したファイルを現在のファイルとして設定
       setCurrentFileName(result.fileName);
-      
+
       // 利用可能なファイル一覧を更新
       const filesResponse = await fetch('/api/inspection-files');
       const filesData = await filesResponse.json();
-      
+
       if (filesData.files && Array.isArray(filesData.files)) {
         setAvailableFiles(filesData.files.map(file => ({
           name: file.name,
@@ -279,24 +278,24 @@ export default function InspectionItems() {
       }
 
       setHasChanges(false);
-      
+
       toast({
         title: "保存完了",
         description: `${inspectionItems.length}件のデータを ${result.fileName} に保存しました`,
         duration: 3000,
       });
-      
+
       setLoading(false);
     } catch (err) {
       console.error("データ保存エラー:", err);
-      
+
       toast({
         variant: "destructive",
         title: "保存エラー",
         description: err instanceof Error ? err.message : "データの保存中にエラーが発生しました",
         duration: 5000,
       });
-      
+
       setLoading(false);
     }
   };
@@ -313,7 +312,7 @@ export default function InspectionItems() {
               <TabsTrigger value="edit">編集</TabsTrigger>
               <TabsTrigger value="upload">アップロード</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="edit">
               <div className="mb-4 space-y-4">
                 <div className="flex gap-4 mb-4">
@@ -332,24 +331,31 @@ export default function InspectionItems() {
                       ))}
                     </select>
                   </div>
-                  
+
                   <div className="w-1/3">
                     <Label htmlFor="manufacturer-filter">メーカーで絞り込み</Label>
-                    <select 
-                      id="manufacturer-filter"
-                      className="w-full p-2 border rounded"
-                      value={selectedManufacturer}
-                      onChange={(e) => setSelectedManufacturer(e.target.value)}
-                    >
-                      <option value="all">すべて表示</option>
-                      {manufacturers.map(manufacturer => (
-                        <option key={manufacturer} value={manufacturer}>
-                          {manufacturer}
-                        </option>
-                      ))}
-                    </select>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="メーカーを選択" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">すべて表示</SelectItem>
+                        {manufacturers
+                          .filter(manufacturer => manufacturer && manufacturer.trim() !== "")
+                          .map((manufacturer) => (
+                            <SelectItem key={manufacturer} value={manufacturer}>
+                              {manufacturer}
+                            </SelectItem>
+                          ))}
+                        {manufacturers.some(manufacturer => !manufacturer || manufacturer.trim() === "") && (
+                          <SelectItem key="未設定" value="未設定">
+                            未設定
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  
+
                   <div className="flex items-end space-x-2">
                     <Button
                       onClick={handleAddItem}
@@ -433,7 +439,7 @@ export default function InspectionItems() {
                 )}
               </div>
             </TabsContent>
-            
+
             <TabsContent value="upload">
               <div className="space-y-4">
                 <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 mb-4" role="alert">
@@ -441,13 +447,13 @@ export default function InspectionItems() {
                   <p>点検項目データのCSVファイルをアップロードできます。</p>
                   <p>ヘッダー行に以下の列が必要です: 製造メーカー,機種,エンジン型式,部位,装置,手順,確認箇所,判断基準,確認要領,測定等記録,図形記録</p>
                 </div>
-                
+
                 <form
                   onSubmit={async (e) => {
                     e.preventDefault();
                     const formData = new FormData(e.currentTarget);
                     const fileInput = e.currentTarget.querySelector('input[type="file"]') as HTMLInputElement;
-                    
+
                     if (!fileInput.files || fileInput.files.length === 0) {
                       toast({
                         variant: "destructive",
@@ -457,7 +463,7 @@ export default function InspectionItems() {
                       });
                       return;
                     }
-                    
+
                     const file = fileInput.files[0];
                     if (!file.name.endsWith('.csv')) {
                       toast({
@@ -468,58 +474,58 @@ export default function InspectionItems() {
                       });
                       return;
                     }
-                    
+
                     try {
                       setLoading(true);
                       const fileName = formData.get('fileName') as string || file.name;
-                      
+
                       formData.append('file', file);
-                      
+
                       const response = await fetch(`/api/upload-inspection-items?fileName=${encodeURIComponent(fileName)}`, {
                         method: 'POST',
                         body: formData,
                       });
-                      
+
                       if (!response.ok) {
                         throw new Error('アップロードに失敗しました');
                       }
-                      
+
                       const result = await response.json();
-                      
+
                       toast({
                         title: "アップロード完了",
                         description: `${result.fileName} を保存しました (${result.size} バイト)`,
                         duration: 3000,
                       });
-                      
+
                       // 現在のファイル名をアップロードしたファイルに設定
                       setCurrentFileName(result.fileName);
-                      
+
                       // 利用可能なファイル一覧を更新
                       const filesResponse = await fetch('/api/inspection-files');
                       const filesData = await filesResponse.json();
-                      
+
                       if (filesData.files && Array.isArray(filesData.files)) {
                         setAvailableFiles(filesData.files.map(file => ({
                           name: file.name,
                           modified: new Date(file.modified).toLocaleString()
                         })));
                       }
-                      
+
                       // フォームをリセット
                       e.currentTarget.reset();
-                      
+
                       setLoading(false);
                     } catch (err) {
                       console.error("アップロードエラー:", err);
-                      
+
                       toast({
                         variant: "destructive",
                         title: "アップロードエラー",
                         description: err instanceof Error ? err.message : "ファイルのアップロード中にエラーが発生しました",
                         duration: 5000,
                       });
-                      
+
                       setLoading(false);
                     }
                   }}
@@ -529,7 +535,7 @@ export default function InspectionItems() {
                     <Label htmlFor="file">CSVファイル</Label>
                     <Input id="file" name="file" type="file" accept=".csv" required />
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="fileName">保存ファイル名（オプション）</Label>
                     <Input 
@@ -540,7 +546,7 @@ export default function InspectionItems() {
                     />
                     <p className="text-sm text-gray-500 mt-1">指定しない場合はアップロードファイル名が使用されます</p>
                   </div>
-                  
+
                   <Button type="submit" disabled={loading}>
                     {loading ? "アップロード中..." : "アップロード"}
                   </Button>

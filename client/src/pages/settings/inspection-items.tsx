@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'wouter';
 import {
   Card,
   CardContent,
@@ -24,8 +25,16 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from '@/components/ui';
-import { Plus, Edit, Trash2, Save } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, ArrowLeft, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 // 点検項目の型定義
@@ -64,8 +73,29 @@ export default function InspectionItems() {
   const [csvData, setCsvData] = useState<InspectionItem[]>([]);
   const [availableFiles, setAvailableFiles] = useState<{name: string, modified: string}[]>([]);
   const [currentFileName, setCurrentFileName] = useState("仕業点検マスタ.csv");
+  
+  // 変更追跡と確認ダイアログ用の状態
+  const [hasChanges, setHasChanges] = useState(false);
+  const [initialItems, setInitialItems] = useState<InspectionItem[]>([]);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'back' | 'save' | null>(null);
+  const [_, navigate] = useLocation();
 
   const { toast } = useToast();
+
+  // 変更を追跡する
+  useEffect(() => {
+    // 初期データ読み込み後に初期状態を保存
+    if (inspectionItems.length > 0 && initialItems.length === 0) {
+      setInitialItems(JSON.parse(JSON.stringify(inspectionItems)));
+      setHasChanges(false);
+    } else if (initialItems.length > 0) {
+      // データに変更があるかチェック
+      const currentData = JSON.stringify(inspectionItems);
+      const initialData = JSON.stringify(initialItems);
+      setHasChanges(currentData !== initialData);
+    }
+  }, [inspectionItems, initialItems]);
 
   // 利用可能なCSVファイル一覧を取得
   useEffect(() => {
@@ -105,6 +135,8 @@ export default function InspectionItems() {
   // CSVデータ読み込み
   useEffect(() => {
     const fetchInspectionData = async () => {
+      // 変更があればリセット
+      setInitialItems([]);
       try {
         const response = await fetch(`/api/inspection-items?file=${currentFileName}&t=${new Date().getTime()}`);
 
@@ -239,8 +271,7 @@ export default function InspectionItems() {
   // 点検項目を追加または更新する
   const addInspectionItem = () => {
     if (
-      !manufacturer ||
-      !model ||
+      (!isEditMode && (!manufacturer || !model)) ||
       !newItem.category ||
       !newItem.item ||
       !newItem.method ||
@@ -248,7 +279,7 @@ export default function InspectionItems() {
     ) {
       toast({
         title: "入力エラー",
-        description: "すべての項目を入力してください",
+        description: "すべての必須項目を入力してください",
         variant: "destructive",
       });
       return;
@@ -313,6 +344,26 @@ export default function InspectionItems() {
     }
   };
 
+  // 画面を離れる前の確認
+  const handleNavigateAway = () => {
+    if (hasChanges) {
+      setShowConfirmDialog(true);
+      setPendingAction('back');
+    } else {
+      navigate('/settings');
+    }
+  };
+
+  // 変更を保存して戻る
+  const handleSaveAndNavigate = () => {
+    if (hasChanges) {
+      setShowConfirmDialog(true);
+      setPendingAction('save');
+    } else {
+      navigate('/settings');
+    }
+  };
+  
   // 変更を保存する
   const saveChanges = async () => {
     try {
@@ -371,6 +422,17 @@ export default function InspectionItems() {
         title: "保存完了",
         description: `変更内容を ${saveFileName} に保存しました`,
       });
+      
+      // 初期状態を更新
+      setInitialItems(JSON.parse(JSON.stringify(inspectionItems)));
+      setHasChanges(false);
+      
+      // 保存して戻る場合は画面遷移
+      if (pendingAction === 'save') {
+        navigate('/settings');
+      }
+      
+      return true;
     } catch (error) {
       console.error('保存エラー:', error);
       toast({
@@ -378,7 +440,29 @@ export default function InspectionItems() {
         description: error instanceof Error ? error.message : "不明なエラーが発生しました",
         variant: "destructive",
       });
+      return false;
     }
+  };
+  
+  // 確認ダイアログの処理
+  const handleConfirmAction = async () => {
+    setShowConfirmDialog(false);
+    
+    if (pendingAction === 'save') {
+      const success = await saveChanges();
+      if (success) {
+        navigate('/settings');
+      }
+    } else if (pendingAction === 'back') {
+      navigate('/settings');
+    }
+    
+    setPendingAction(null);
+  };
+  
+  const handleCancelAction = () => {
+    setShowConfirmDialog(false);
+    setPendingAction(null);
   };
 
   // CSVファイルを読み込む関数
@@ -483,7 +567,29 @@ export default function InspectionItems() {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="text-2xl">点検項目マスタ</CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-2xl">点検項目マスタ</CardTitle>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-1"
+              onClick={handleNavigateAway}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              戻る
+            </Button>
+            <Button 
+              variant="default" 
+              size="sm" 
+              className="gap-1"
+              onClick={handleSaveAndNavigate}
+            >
+              <Check className="h-4 w-4" />
+              変更を保存して戻る
+            </Button>
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* ファイル選択とインポート（統合） */}
@@ -797,6 +903,33 @@ export default function InspectionItems() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* 変更確認ダイアログ */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>変更が保存されていません</AlertDialogTitle>
+            <AlertDialogDescription>
+              変更を保存しますか？保存せずに戻ると、変更内容は失われます。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelAction}>キャンセル</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (pendingAction === 'back') {
+                navigate('/settings');
+              } else {
+                handleConfirmAction();
+              }
+            }}>
+              保存せずに戻る
+            </AlertDialogAction>
+            <Button onClick={handleConfirmAction} variant="default">
+              保存して戻る
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

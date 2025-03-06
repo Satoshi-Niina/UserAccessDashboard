@@ -661,6 +661,8 @@ export default function InspectionItems() {
         className="border-b border-gray-200"
         style={{ opacity, cursor: 'move' }}
       >
+        <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.manufacturer}>{item.manufacturer}</TableCell>
+        <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.model}>{item.model}</TableCell>
         <TableCell className="whitespace-normal py-2 break-words border border-gray-200">
           <div className="flex items-center">
             <GripVertical className="h-4 w-4 mr-2 cursor-grab" />
@@ -912,9 +914,11 @@ export default function InspectionItems() {
           {/* 点検項目テーブル */}
           {filteredItems.length > 0 ? (
             <div className="border rounded-md overflow-x-auto" style={{ maxWidth: '100%' }}>
-              <Table className="min-w-[1200px] border-collapse">
+              <Table className="min-w-[1500px] border-collapse">
                 <TableHeader>
                   <TableRow className="border-b border-gray-200">
+                    <TableHead className="w-[100px] py-2 border border-gray-200">製造メーカー</TableHead>
+                    <TableHead className="w-[100px] py-2 border border-gray-200">機種</TableHead>
                     <TableHead className="w-[100px] py-2 border border-gray-200">部位</TableHead>
                     <TableHead className="w-[100px] py-2 border border-gray-200">装置</TableHead>
                     <TableHead className="w-[180px] py-2 border border-gray-200">点検項目</TableHead>

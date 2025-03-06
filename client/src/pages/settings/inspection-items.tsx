@@ -91,8 +91,8 @@ export default function InspectionItems() {
 
   // CSVデータ読み込み用の状態
   const [csvData, setCsvData] = useState<InspectionItem[]>([]);
-  const [filterManufacturer, setFilterManufacturer] = useState<string>("");
-  const [filterModel, setFilterModel] = useState<string>("");
+  const [filterManufacturer, setFilterManufacturer] = useState<string>("all");
+  const [filterModel, setFilterModel] = useState<string>("all");
 
   const { toast } = useToast();
 
@@ -119,7 +119,7 @@ export default function InspectionItems() {
   const getFilteredModels = () => {
     const uniqueModels = [...new Set(
       inspectionItems
-        .filter(item => !filterManufacturer || item.manufacturer === filterManufacturer)
+        .filter(item => !filterManufacturer || filterManufacturer === "all" || item.manufacturer === filterManufacturer)
         .map(item => item.model)
     )];
     return uniqueModels;
@@ -369,14 +369,14 @@ export default function InspectionItems() {
                 value={filterManufacturer}
                 onValueChange={(value) => {
                   setFilterManufacturer(value);
-                  setFilterModel("");
+                  setFilterModel("all");
                 }}
               >
                 <SelectTrigger id="filter-manufacturer">
                   <SelectValue placeholder="メーカーを選択" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">すべて</SelectItem>
+                  <SelectItem value="all">すべて</SelectItem>
                   {[...new Set(inspectionItems.map(item => item.manufacturer))]
                     .filter(mfr => mfr && mfr.trim() !== "")
                     .map(mfr => (
@@ -400,7 +400,7 @@ export default function InspectionItems() {
                   <SelectValue placeholder="機種を選択" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">すべて</SelectItem>
+                  <SelectItem value="all">すべて</SelectItem>
                   {getFilteredModels().map(mdl => (
                     <SelectItem key={mdl} value={mdl}>
                       {mdl}

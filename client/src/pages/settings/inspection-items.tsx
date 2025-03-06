@@ -958,8 +958,9 @@ function SecondaryInspectionItems() {
               {deleteType === 'item' ? 'レコードを削除' : 'カラムを削除'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {deleteType === 'item                ? '選択したレコードを削除します。この操作は元に戻せません。'
-                :`カラム「${selectedColumn}」を削除します。すべてのレコードからこの情報が削除されます。この操作は元に戻せません。`
+              {deleteType === 'item' 
+                ? '選択したレコードを削除します。この操作は元に戻せません。'
+                : `カラム「${selectedColumn}」を削除します。すべてのレコードからこの情報が削除されます。この操作は元に戻せません。`
               }
             </AlertDialogDescription>
           </AlertDialogHeader>

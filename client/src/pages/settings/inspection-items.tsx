@@ -760,29 +760,29 @@ export default function InspectionItems() {
 
           {/* 点検項目テーブル */}
           {filteredItems.length > 0 ? (
-            <div className="border rounded-md">
-              <Table>
+            <div className="border rounded-md overflow-x-auto" style={{ maxWidth: '100%' }}>
+              <Table className="min-w-[1200px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>部位</TableHead>
-                    <TableHead>点検項目</TableHead>
-                    <TableHead>点検方法</TableHead>
-                    <TableHead>判定基準</TableHead>
-                    <TableHead>測定等記録</TableHead>
-                    <TableHead>図形記録</TableHead>
-                    <TableHead className="w-[100px]">操作</TableHead>
+                    <TableHead className="w-[120px]">部位</TableHead>
+                    <TableHead className="w-[250px]">点検項目</TableHead>
+                    <TableHead className="w-[250px]">点検方法</TableHead>
+                    <TableHead className="w-[250px]">判定基準</TableHead>
+                    <TableHead className="w-[150px]">測定等記録</TableHead>
+                    <TableHead className="w-[150px]">図形記録</TableHead>
+                    <TableHead className="w-[100px] sticky right-0 bg-background">操作</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredItems.map((item) => (
                     <TableRow key={item.id}>
-                      <TableCell>{item.category}</TableCell>
-                      <TableCell>{item.item}</TableCell>
-                      <TableCell>{item.method}</TableCell>
-                      <TableCell>{item.criteria}</TableCell>
-                      <TableCell>{item.measurementRecord}</TableCell>
-                      <TableCell>{item.diagramRecord}</TableCell>
-                      <TableCell>
+                      <TableCell className="whitespace-normal">{item.category}</TableCell>
+                      <TableCell className="whitespace-normal">{item.item}</TableCell>
+                      <TableCell className="whitespace-normal">{item.method}</TableCell>
+                      <TableCell className="whitespace-normal">{item.criteria}</TableCell>
+                      <TableCell className="whitespace-normal">{item.measurementRecord}</TableCell>
+                      <TableCell className="whitespace-normal">{item.diagramRecord}</TableCell>
+                      <TableCell className="sticky right-0 bg-background">
                         <div className="flex space-x-1">
                           <Button
                             variant="ghost"

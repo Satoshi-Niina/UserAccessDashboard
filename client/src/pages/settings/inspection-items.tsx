@@ -661,20 +661,20 @@ export default function InspectionItems() {
         className="border-b border-gray-200"
         style={{ opacity, cursor: 'move' }}
       >
-        <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.manufacturer}>{item.manufacturer}</TableCell>
-        <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.model}>{item.model}</TableCell>
-        <TableCell className="whitespace-normal py-2 break-words border border-gray-200">
+        <TableCell className="whitespace-normal py-2 break-words border border-gray-200 text-sm" title={item.manufacturer}>{item.manufacturer}</TableCell>
+        <TableCell className="whitespace-normal py-2 break-words border border-gray-200 text-sm" title={item.model}>{item.model}</TableCell>
+        <TableCell className="whitespace-normal py-2 break-words border border-gray-200 text-sm">
           <div className="flex items-center">
             <GripVertical className="h-4 w-4 mr-2 cursor-grab" />
             {item.category}
           </div>
         </TableCell>
-        <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.equipment}>{item.equipment}</TableCell>
-        <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.item}>{item.item}</TableCell>
-        <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.method}>{item.method}</TableCell>
-        <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.criteria}>{item.criteria}</TableCell>
-        <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.measurementRecord}>{item.measurementRecord}</TableCell>
-        <TableCell className="whitespace-normal py-2 break-words border border-gray-200" title={item.diagramRecord}>{item.diagramRecord}</TableCell>
+        <TableCell className="whitespace-normal py-2 break-words border border-gray-200 text-sm" title={item.equipment}>{item.equipment}</TableCell>
+        <TableCell className="whitespace-normal py-2 break-words border border-gray-200 text-sm" title={item.item}>{item.item}</TableCell>
+        <TableCell className="whitespace-normal py-2 break-words border border-gray-200 text-sm" title={item.method} style={{ maxWidth: '450px' }}>{item.method}</TableCell>
+        <TableCell className="whitespace-normal py-2 break-words border border-gray-200 text-sm" title={item.criteria} style={{ maxWidth: '300px' }}>{item.criteria}</TableCell>
+        <TableCell className="whitespace-normal py-2 break-words border border-gray-200 text-sm" title={item.measurementRecord}>{item.measurementRecord}</TableCell>
+        <TableCell className="whitespace-normal py-2 break-words border border-gray-200 text-sm" title={item.diagramRecord}>{item.diagramRecord}</TableCell>
         <TableCell className="sticky right-0 bg-background py-2 border border-gray-200">
           <div className="flex space-x-1">
             <Button
@@ -913,19 +913,19 @@ export default function InspectionItems() {
 
           {/* 点検項目テーブル */}
           {filteredItems.length > 0 ? (
-            <div className="border rounded-md overflow-x-auto" style={{ maxWidth: '100%' }}>
-              <Table className="min-w-[1500px] border-collapse">
+            <div className="border rounded-md overflow-x-auto" style={{ maxWidth: '100%', overflowY: 'auto', maxHeight: '65vh' }}>
+              <Table className="min-w-[2000px] border-collapse">
                 <TableHeader>
                   <TableRow className="border-b border-gray-200">
-                    <TableHead className="w-[100px] py-2 border border-gray-200">製造メーカー</TableHead>
-                    <TableHead className="w-[100px] py-2 border border-gray-200">機種</TableHead>
-                    <TableHead className="w-[100px] py-2 border border-gray-200">部位</TableHead>
-                    <TableHead className="w-[100px] py-2 border border-gray-200">装置</TableHead>
-                    <TableHead className="w-[180px] py-2 border border-gray-200">点検項目</TableHead>
-                    <TableHead className="w-[180px] py-2 border border-gray-200">点検方法</TableHead>
-                    <TableHead className="w-[180px] py-2 border border-gray-200">判定基準</TableHead>
-                    <TableHead className="w-[120px] py-2 border border-gray-200">測定等記録</TableHead>
-                    <TableHead className="w-[120px] py-2 border border-gray-200">図形記録</TableHead>
+                    <TableHead className="w-[120px] py-2 border border-gray-200">製造メーカー</TableHead>
+                    <TableHead className="w-[120px] py-2 border border-gray-200">機種</TableHead>
+                    <TableHead className="w-[120px] py-2 border border-gray-200">部位</TableHead>
+                    <TableHead className="w-[120px] py-2 border border-gray-200">装置</TableHead>
+                    <TableHead className="w-[200px] py-2 border border-gray-200">点検項目</TableHead>
+                    <TableHead className="w-[450px] py-2 border border-gray-200">点検方法</TableHead>
+                    <TableHead className="w-[300px] py-2 border border-gray-200">判定基準</TableHead>
+                    <TableHead className="w-[150px] py-2 border border-gray-200">測定等記録</TableHead>
+                    <TableHead className="w-[150px] py-2 border border-gray-200">図形記録</TableHead>
                     <TableHead className="w-[80px] sticky right-0 bg-background py-2 border border-gray-200">操作</TableHead>
                   </TableRow>
                 </TableHeader>

@@ -308,13 +308,7 @@ export default function InspectionItems() {
           <CardTitle>点検項目管理</CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="edit">
-            <TabsList className="mb-4">
-              <TabsTrigger value="edit">編集</TabsTrigger>
-              <TabsTrigger value="upload">アップロード</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="edit">
+          <div>
               <div className="mb-4 space-y-4">
                 <div className="flex gap-4 mb-4">
                   <div className="w-1/3">
@@ -370,6 +364,16 @@ export default function InspectionItems() {
                       disabled={loading || !hasChanges}
                     >
                       変更を保存
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const uploadForm = document.getElementById('fileUploadForm');
+                        if (uploadForm) uploadForm.classList.remove('hidden');
+                      }}
+                      disabled={loading}
+                    >
+                      CSVアップロード
                     </Button>
                     <Button
                       variant="secondary"
@@ -445,136 +449,155 @@ export default function InspectionItems() {
                   </div>
                 )}
               </div>
-            </TabsContent>
 
-            <TabsContent value="upload">
-              <div className="space-y-4">
-                <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 mb-4" role="alert">
-                  <p className="font-bold">CSVファイルのアップロード</p>
-                  <p>点検項目データのCSVファイルをアップロードできます。</p>
-                  <p>ヘッダー行に以下の列が必要です: 製造メーカー,機種,エンジン型式,部位,装置,手順,確認箇所,判断基準,確認要領,測定等記録,図形記録</p>
-                </div>
-
-                <form
-                  onSubmit={async (e) => {
-                    e.preventDefault();
-                    const formData = new FormData(e.currentTarget);
-                    const fileInput = e.currentTarget.querySelector('input[type="file"]') as HTMLInputElement;
-
-                    if (!fileInput.files || fileInput.files.length === 0) {
-                      toast({
-                        variant: "destructive",
-                        title: "エラー",
-                        description: "ファイルが選択されていません",
-                        duration: 3000,
-                      });
-                      return;
-                    }
-
-                    const file = fileInput.files[0];
-                    if (!file.name.endsWith('.csv')) {
-                      toast({
-                        variant: "destructive",
-                        title: "エラー",
-                        description: "CSVファイルを選択してください",
-                        duration: 3000,
-                      });
-                      return;
-                    }
-
-                    try {
-                      setLoading(true);
-                      const fileName = formData.get('fileName') as string || file.name;
-
-                      formData.append('file', file);
-
-                      const response = await fetch(`/api/upload-inspection-items?fileName=${encodeURIComponent(fileName)}`, {
-                        method: 'POST',
-                        body: formData,
-                      });
-
-                      if (!response.ok) {
-                        throw new Error('アップロードに失敗しました');
-                      }
-
-                      const result = await response.json();
-
-                      toast({
-                        title: "アップロード完了",
-                        description: `${result.fileName} を保存しました (${result.size} バイト)`,
-                        duration: 3000,
-                      });
-
-                      // 現在のファイル名をアップロードしたファイルに設定
-                      setCurrentFileName(result.fileName);
-
-                      // 利用可能なファイル一覧を更新
-                      const filesResponse = await fetch('/api/inspection-files');
-                      const filesData = await filesResponse.json();
-
-                      if (filesData.files && Array.isArray(filesData.files)) {
-                        setAvailableFiles(filesData.files.map(file => ({
-                          name: file.name,
-                          modified: new Date(file.modified).toLocaleString()
-                        })));
-                      }
-
-                      // フォームをリセット
-                      e.currentTarget.reset();
-                      
-                      // 編集タブに切り替え
-                      document.querySelector('[value="edit"]')?.dispatchEvent(
-                        new MouseEvent('click', { bubbles: true })
-                      );
-
-                      setLoading(false);
-                    } catch (err) {
-                      console.error("アップロードエラー:", err);
-
-                      toast({
-                        variant: "destructive",
-                        title: "アップロードエラー",
-                        description: err instanceof Error ? err.message : "ファイルのアップロード中にエラーが発生しました",
-                        duration: 5000,
-                      });
-
-                      setLoading(false);
-                    }
-                  }}
-                  className="space-y-4"
-                >
-                  <div>
-                    <Label htmlFor="file">CSVファイル</Label>
-                    <Input id="file" name="file" type="file" accept=".csv" required />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="fileName">保存ファイル名（オプション）</Label>
-                    <Input 
-                      id="fileName" 
-                      name="fileName" 
-                      type="text" 
-                      placeholder="例: 仕業点検マスタ.csv" 
-                    />
-                    <p className="text-sm text-gray-500 mt-1">指定しない場合はアップロードファイル名が使用されます</p>
-                  </div>
-
-                  <div className="flex space-x-2">
-                    <Button type="submit" disabled={loading}>
-                      {loading ? "アップロード中..." : "アップロード"}
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      onClick={() => window.history.back()}
-                      type="button"
+              {/* ファイルアップロードフォーム（ダイアログ形式） */}
+              <div id="fileUploadForm" className="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+                <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-bold">CSVファイルのアップロード</h3>
+                    <button 
+                      onClick={() => {
+                        const uploadForm = document.getElementById('fileUploadForm');
+                        if (uploadForm) uploadForm.classList.add('hidden');
+                      }}
+                      className="text-gray-500 hover:text-gray-700"
                     >
-                      戻る
-                    </Button>
+                      ✕
+                    </button>
                   </div>
-                </form>
+                  
+                  <p className="text-sm text-gray-600 mb-4">
+                    点検項目データのCSVファイルをアップロードします。<br/>
+                    必要な列: 製造メーカー,機種,エンジン型式,部位,装置,手順,確認箇所,判断基準,確認要領,測定等記録,図形記録
+                  </p>
+                  
+                  <form
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      const formData = new FormData(e.currentTarget);
+                      const fileInput = e.currentTarget.querySelector('input[type="file"]') as HTMLInputElement;
+
+                      if (!fileInput.files || fileInput.files.length === 0) {
+                        toast({
+                          variant: "destructive",
+                          title: "エラー",
+                          description: "ファイルが選択されていません",
+                          duration: 3000,
+                        });
+                        return;
+                      }
+
+                      const file = fileInput.files[0];
+                      if (!file.name.endsWith('.csv')) {
+                        toast({
+                          variant: "destructive",
+                          title: "エラー",
+                          description: "CSVファイルを選択してください",
+                          duration: 3000,
+                        });
+                        return;
+                      }
+
+                      try {
+                        setLoading(true);
+                        // ファイル名が指定されていない場合は元のファイル名に年月日を付加
+                        let fileName = formData.get('fileName') as string;
+                        if (!fileName) {
+                          const now = new Date();
+                          const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+                          const baseName = file.name.replace(/\.csv$/i, '');
+                          fileName = `${baseName}_${dateStr}.csv`;
+                        }
+
+                        formData.append('file', file);
+
+                        const response = await fetch(`/api/upload-inspection-items?fileName=${encodeURIComponent(fileName)}`, {
+                          method: 'POST',
+                          body: formData,
+                        });
+
+                        if (!response.ok) {
+                          throw new Error('アップロードに失敗しました');
+                        }
+
+                        const result = await response.json();
+
+                        toast({
+                          title: "アップロード完了",
+                          description: `${result.fileName} を保存しました (${result.size} バイト)`,
+                          duration: 3000,
+                        });
+
+                        // 現在のファイル名をアップロードしたファイルに設定
+                        setCurrentFileName(result.fileName);
+
+                        // 利用可能なファイル一覧を更新
+                        const filesResponse = await fetch('/api/inspection-files');
+                        const filesData = await filesResponse.json();
+
+                        if (filesData.files && Array.isArray(filesData.files)) {
+                          setAvailableFiles(filesData.files.map(file => ({
+                            name: file.name,
+                            modified: new Date(file.modified).toLocaleString()
+                          })));
+                        }
+
+                        // フォームをリセットして閉じる
+                        e.currentTarget.reset();
+                        const uploadForm = document.getElementById('fileUploadForm');
+                        if (uploadForm) uploadForm.classList.add('hidden');
+
+                        setLoading(false);
+                      } catch (err) {
+                        console.error("アップロードエラー:", err);
+
+                        toast({
+                          variant: "destructive",
+                          title: "アップロードエラー",
+                          description: err instanceof Error ? err.message : "ファイルのアップロード中にエラーが発生しました",
+                          duration: 5000,
+                        });
+
+                        setLoading(false);
+                      }
+                    }}
+                    className="space-y-4"
+                  >
+                    <div>
+                      <Label htmlFor="file">CSVファイル</Label>
+                      <Input id="file" name="file" type="file" accept=".csv" required />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="fileName">保存ファイル名（オプション）</Label>
+                      <Input 
+                        id="fileName" 
+                        name="fileName" 
+                        type="text" 
+                        placeholder="例: 仕業点検マスタ.csv" 
+                      />
+                      <p className="text-sm text-gray-500 mt-1">指定しない場合はファイル名に日付が付加されます</p>
+                    </div>
+
+                    <div className="flex justify-end space-x-2 mt-6">
+                      <Button 
+                        type="button" 
+                        variant="secondary"
+                        onClick={() => {
+                          const uploadForm = document.getElementById('fileUploadForm');
+                          if (uploadForm) uploadForm.classList.add('hidden');
+                        }}
+                      >
+                        キャンセル
+                      </Button>
+                      <Button type="submit" disabled={loading}>
+                        {loading ? "アップロード中..." : "アップロード"}
+                      </Button>
+                    </div>
+                  </form>
+                </div>
               </div>
-            </TabsContent>
-          </Tabs>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -226,8 +226,17 @@ app.post('/api/upload-inspection-items', (req, res) => {
         fs.mkdirSync(assetsDir, { recursive: true });
       }
 
-      // ファイル名をクエリパラメータから取得（デフォルトは仕業点検マスタ.csv）
-      const fileName = req.query.fileName as string || '仕業点検マスタ.csv';
+      // ファイル名をクエリパラメータから取得
+      let fileName = req.query.fileName as string;
+      
+      // ファイル名が指定されていない場合は元のファイル名に年月日を付加
+      if (!fileName) {
+        const originalFilename = req.file.originalname;
+        const now = new Date();
+        const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+        const baseName = originalFilename.replace(/\.csv$/i, '');
+        fileName = `${baseName}_${dateStr}.csv`;
+      }
       
       // CSVファイルパス
       const csvFilePath = path.join(assetsDir, fileName);

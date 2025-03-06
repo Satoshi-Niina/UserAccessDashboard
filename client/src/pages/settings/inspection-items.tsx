@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from '@/components/ui';
 import { Plus, Edit, Trash2, Save } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 // 点検項目の型定義
 interface InspectionItem {

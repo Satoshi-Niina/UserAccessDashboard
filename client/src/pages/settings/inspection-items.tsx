@@ -544,7 +544,7 @@ export default function InspectionItems() {
                   {[...new Set(inspectionItems.map(item => item.manufacturer))]
                     .filter(mfr => mfr && mfr.trim() !== "")
                     .map(mfr => (
-                      <SelectItem key={mfr} value={mfr}>
+                      <SelectItem key={mfr} value={mfr || "未設定"}>
                         {mfr}
                       </SelectItem>
                     ))}
@@ -566,7 +566,7 @@ export default function InspectionItems() {
                 <SelectContent>
                   <SelectItem value="all">すべて</SelectItem>
                   {getFilteredModels().map(mdl => (
-                    <SelectItem key={mdl} value={mdl}>
+                    <SelectItem key={mdl} value={mdl || "未設定"}>
                       {mdl}
                     </SelectItem>
                   ))}
@@ -601,7 +601,7 @@ export default function InspectionItems() {
                   {[...new Set(inspectionItems.map(item => item.manufacturer))]
                     .filter((mfr) => mfr && mfr.trim() !== "")
                     .map((mfr) => (
-                      <SelectItem key={mfr} value={mfr}>
+                      <SelectItem key={mfr} value={mfr || "未設定"}>
                         {mfr}
                       </SelectItem>
                     ))}
@@ -625,7 +625,7 @@ export default function InspectionItems() {
                     .map(item => item.model))]
                     .filter((mdl) => mdl && mdl.trim() !== "")
                     .map((mdl) => (
-                      <SelectItem key={mdl} value={mdl}>
+                      <SelectItem key={mdl} value={mdl || "未設定"}>
                         {mdl}
                       </SelectItem>
                     ))}

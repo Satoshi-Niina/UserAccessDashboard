@@ -46,9 +46,37 @@ function Inspection() {
   const [models, setModels] = useState<string[]>([]);
   const [selectedManufacturer, setSelectedManufacturer] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("");
-  const [currentFileName, setCurrentFileName] = useState("仕業点検マスタ.csv"); // 現在のファイル名を追加
-  const [availableFiles, setAvailableFiles] = useState(["仕業点検マスタ.csv", "仕業点検_編集済.csv"]); // 利用可能なファイル名リストを追加
+  const [currentFileName, setCurrentFileName] = useState("仕業点検マスタ.csv");
+  const [availableFiles, setAvailableFiles] = useState<{name: string, modified: string}[]>([]);
   const { toast } = useToast();
+
+  // 利用可能なCSVファイル一覧を取得
+  useEffect(() => {
+    const fetchAvailableFiles = async () => {
+      try {
+        const response = await fetch('/api/inspection-files');
+        const data = await response.json();
+        
+        if (data.files && Array.isArray(data.files)) {
+          const fileList = data.files.map(file => ({
+            name: file.name,
+            modified: new Date(file.modified).toLocaleString()
+          }));
+          
+          setAvailableFiles(fileList);
+          
+          // 仕業点検マスタ.csvがない場合は、利用可能な最初のファイルを選択
+          if (fileList.length > 0 && !fileList.some(f => f.name === "仕業点検マスタ.csv")) {
+            setCurrentFileName(fileList[0].name);
+          }
+        }
+      } catch (err) {
+        console.error("ファイル一覧取得エラー:", err);
+      }
+    };
+    
+    fetchAvailableFiles();
+  }, []);
 
   useEffect(() => {
     async function fetchData() {
@@ -57,7 +85,7 @@ function Inspection() {
         setError(null);
 
         // キャッシュを回避するためのタイムスタンプ付きリクエスト
-        const response = await fetch(`/api/inspection-items?filename=${currentFileName}&t=` + new Date().getTime());
+        const response = await fetch(`/api/inspection-items?file=${currentFileName}&t=` + new Date().getTime());
 
         if (!response.ok) {
           throw new Error(`サーバーエラー: ${response.status} ${response.statusText}`);
@@ -301,8 +329,8 @@ function Inspection() {
                 onChange={(e) => setCurrentFileName(e.target.value)}
               >
                 {availableFiles.length > 0 ? (
-                  availableFiles.map(file => (
-                    <option key={file} value={file}>{file}</option>
+                  availableFiles.map((file) =>(file => (
+                    <option key={file.name} value={file.name}>{file.name}</option>
                   ))
                 ) : (
                   <option value="仕業点検マスタ.csv">仕業点検マスタ.csv</option>

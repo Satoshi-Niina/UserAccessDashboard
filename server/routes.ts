@@ -73,7 +73,8 @@ app.get('/api/inspection-items', (req, res) => {
   console.log('API: /api/inspection-items が呼び出されました');
   
   // ファイル名をクエリパラメータから取得（デフォルトは仕業点検マスタ.csv）
-  const requestedFile = req.query.file as string || '仕業点検マスタ.csv';
+  // filename または file パラメータをサポート（後方互換性のため）
+  const requestedFile = (req.query.file || req.query.filename) as string || '仕業点検マスタ.csv';
   console.log('リクエストされたファイル:', requestedFile);
 
   // キャッシュ制御ヘッダーを設定

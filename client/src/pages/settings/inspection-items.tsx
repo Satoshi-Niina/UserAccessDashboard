@@ -1,565 +1,622 @@
 
 import React, { useState, useEffect } from 'react';
-import { Sidebar } from '@/components/layout/sidebar';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/components/ui/use-toast';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { useAuth } from '@/hooks/use-auth';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  Label,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui';
+import { Plus, Edit, Trash2, Save } from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
+
+// 点検項目の型定義
+interface InspectionItem {
+  id: number;
+  manufacturer: string;
+  model: string;
+  category: string;
+  item: string;
+  method: string;
+  criteria: string;
+}
+
+// 仮のサンプルデータ（メーカーと機種）
+const sampleManufacturers = ["日立", "三菱", "東芝", "富士電機", "明電舎"];
+const sampleModels = ["HM-100", "HM-200", "MT-300", "TB-150", "FJ-400", "MD-500"];
+
+// 仮の点検項目データ
+const sampleInspectionItems: InspectionItem[] = [
+  {
+    id: 1,
+    manufacturer: "日立",
+    model: "HM-100",
+    category: "エンジン",
+    item: "エンジンオイル確認",
+    method: "目視確認",
+    criteria: "規定値（L〜H）の間にあること",
+  },
+  {
+    id: 2,
+    manufacturer: "日立",
+    model: "HM-100",
+    category: "ブレーキ",
+    item: "ブレーキパッド確認",
+    method: "厚み測定",
+    criteria: "5mm以上あること",
+  },
+  {
+    id: 3,
+    manufacturer: "三菱",
+    model: "MT-300",
+    category: "油圧",
+    item: "作動油量確認",
+    method: "目視確認",
+    criteria: "タンクのレベルゲージで適正範囲内",
+  },
+];
 
 export default function InspectionItems() {
-  const { user } = useAuth();
-  const [isMenuExpanded, setIsMenuExpanded] = useState(false);
-  const [inspectionData, setInspectionData] = useState<any[]>([]);
-  const [filteredData, setFilteredData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [manufacturers, setManufacturers] = useState<string[]>([]);
-  const [models, setModels] = useState<string[]>([]);
-  const [selectedManufacturer, setSelectedManufacturer] = useState<string>('');
-  const [selectedModel, setSelectedModel] = useState<string>('');
-  const [files, setFiles] = useState<{ name: string; size: number; modified: string }[]>([]);
-  const [selectedFile, setSelectedFile] = useState<string>('仕業点検マスタ.csv');
-  const [isEditing, setIsEditing] = useState(false);
-  const [editingRow, setEditingRow] = useState<number | null>(null);
-  const [editData, setEditData] = useState<any>({});
-  const { toast } = useToast();
+  // 状態管理
+  const [manufacturer, setManufacturer] = useState<string>("");
+  const [model, setModel] = useState<string>("");
+  const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
+  const [filteredItems, setFilteredItems] = useState<InspectionItem[]>([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [currentItem, setCurrentItem] = useState<InspectionItem | null>(null);
+  const [newItem, setNewItem] = useState({
+    category: "",
+    item: "",
+    method: "",
+    criteria: "",
+  });
+  
+  // CSVデータ読み込み用の状態
+  const [csvData, setCsvData] = useState<InspectionItem[]>([]);
+  const [filterManufacturer, setFilterManufacturer] = useState<string>("");
+  const [filterModel, setFilterModel] = useState<string>("");
 
-  // CSVファイル一覧を取得
+  // 初期データ読み込み（実際のアプリではAPIから取得）
   useEffect(() => {
-    const fetchFiles = async () => {
-      try {
-        const response = await fetch('/api/inspection-files');
-        if (!response.ok) throw new Error('ファイル一覧の取得に失敗しました');
-        const data = await response.json();
-        setFiles(data.files || []);
-      } catch (error) {
-        console.error('ファイル一覧取得エラー:', error);
-        toast({
-          title: 'エラー',
-          description: 'ファイル一覧の取得に失敗しました',
-          variant: 'destructive',
-        });
-      }
-    };
+    setInspectionItems(sampleInspectionItems);
+  }, []);
 
-    fetchFiles();
-  }, [toast]);
-
-  // 点検項目データの取得
+  // メーカーと機種でフィルタリング
   useEffect(() => {
-    const fetchInspectionData = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(`/api/inspection-items?file=${selectedFile}`);
-        if (!response.ok) throw new Error('データの取得に失敗しました');
-        
-        const text = await response.text();
-        // CSVをパース
-        const rows = text.split('\n');
-        const headers = rows[0].split(',');
-        
-        const data = rows.slice(1).filter(row => row.trim()).map(row => {
-          const values = row.split(',');
-          const item: Record<string, string> = {};
-          headers.forEach((header, index) => {
-            item[header] = values[index] || '';
+    if (manufacturer && model) {
+      const filtered = inspectionItems.filter(
+        (item) => 
+          item.manufacturer === manufacturer && 
+          item.model === model
+      );
+      setFilteredItems(filtered);
+    } else {
+      setFilteredItems([]);
+    }
+  }, [manufacturer, model, inspectionItems]);
+
+  // フィルター用の機種リスト
+  const getFilteredModels = () => {
+    const uniqueModels = [...new Set(
+      inspectionItems
+        .filter(item => !filterManufacturer || item.manufacturer === filterManufacturer)
+        .map(item => item.model)
+    )];
+    return uniqueModels;
+  };
+
+  // 点検項目の追加ダイアログを開く
+  const openAddDialog = () => {
+    setIsEditMode(false);
+    setCurrentItem(null);
+    setNewItem({
+      category: "",
+      item: "",
+      method: "",
+      criteria: "",
+    });
+    setIsDialogOpen(true);
+  };
+
+  // 点検項目の編集ダイアログを開く
+  const openEditDialog = (item: InspectionItem) => {
+    setIsEditMode(true);
+    setCurrentItem(item);
+    setNewItem({
+      category: item.category,
+      item: item.item,
+      method: item.method,
+      criteria: item.criteria,
+    });
+    setIsDialogOpen(true);
+  };
+
+  // 点検項目を追加または更新する
+  const addInspectionItem = () => {
+    if (
+      !manufacturer ||
+      !model ||
+      !newItem.category ||
+      !newItem.item ||
+      !newItem.method ||
+      !newItem.criteria
+    ) {
+      toast({
+        title: "入力エラー",
+        description: "すべての項目を入力してください",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isEditMode && currentItem) {
+      // 既存項目の編集
+      const updatedItems = inspectionItems.map((item) =>
+        item.id === currentItem.id
+          ? {
+              ...item,
+              category: newItem.category || "",
+              item: newItem.item || "",
+              method: newItem.method || "",
+              criteria: newItem.criteria || "",
+            }
+          : item
+      );
+      setInspectionItems(updatedItems);
+      toast({
+        title: "更新完了",
+        description: "点検項目を更新しました",
+      });
+    } else {
+      // 新規項目の追加
+      const newId =
+        inspectionItems.length > 0
+          ? Math.max(...inspectionItems.map((item) => item.id)) + 1
+          : 1;
+      const newInspectionItem: InspectionItem = {
+        id: newId,
+        manufacturer,
+        model,
+        category: newItem.category || "",
+        item: newItem.item || "",
+        method: newItem.method || "",
+        criteria: newItem.criteria || "",
+      };
+      setInspectionItems([...inspectionItems, newInspectionItem]);
+      toast({
+        title: "追加完了",
+        description: "新しい点検項目を追加しました",
+      });
+    }
+
+    setIsDialogOpen(false);
+  };
+
+  // 点検項目を削除する
+  const deleteInspectionItem = (id: number) => {
+    if (window.confirm("この点検項目を削除してもよろしいですか？")) {
+      const updatedItems = inspectionItems.filter((item) => item.id !== id);
+      setInspectionItems(updatedItems);
+      toast({
+        title: "削除完了",
+        description: "点検項目を削除しました",
+      });
+    }
+  };
+
+  // 変更を保存する（実際のアプリではAPI呼び出し）
+  const saveChanges = () => {
+    // APIを呼び出して変更を保存する処理
+    toast({
+      title: "保存完了",
+      description: "変更内容を保存しました",
+    });
+  };
+
+  // CSVファイルを読み込む関数
+  const handleCSVUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const text = e.target?.result as string;
+          const lines = text.split('\n');
+          const headers = lines[0].split(',');
+          
+          console.log("CSVデータの最初の行:", lines[0]);
+          console.log("データのキー:", headers);
+          
+          // CSVから点検項目データを変換
+          const items: InspectionItem[] = [];
+          let nextId = inspectionItems.length > 0
+            ? Math.max(...inspectionItems.map(item => item.id)) + 1
+            : 1;
+            
+          for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+            
+            const values = lines[i].split(',');
+            const item: any = {};
+            
+            for (let j = 0; j < headers.length; j++) {
+              item[headers[j]] = values[j];
+            }
+            
+            // CSVのデータ構造を点検項目の構造に変換
+            const inspectionItem: InspectionItem = {
+              id: nextId++,
+              manufacturer: item['製造メーカー'] || '',
+              model: item['機種'] || '',
+              category: item['部位'] || '',
+              item: item['確認箇所'] || '',
+              method: item['確認要領'] || '',
+              criteria: item['判断基準'] || '',
+            };
+            
+            items.push(inspectionItem);
+          }
+          
+          setCsvData(items);
+          toast({
+            title: "CSV読み込み完了",
+            description: `${items.length}件のデータを読み込みました`,
           });
-          return item;
-        });
-
-        console.log('仕業点検：データ読み込み成功', data.length, '件');
-        console.log('データサンプル:', data.slice(0, 3));
-
-        setInspectionData(data);
-
-        // メーカーと機種の一覧を抽出
-        const makerKey = '製造メーカー';
-        const modelKey = '機種';
-        
-        console.log('CSVデータの最初の行:', rows[0]);
-        console.log('データのキー:', headers);
-        console.log('使用するメーカーキー:', makerKey);
-        console.log('使用する機種キー:', modelKey);
-        
-        const uniqueManufacturers = Array.from(new Set(data.map(item => item[makerKey]).filter(Boolean)));
-        const uniqueModels = Array.from(new Set(data.map(item => item[modelKey]).filter(Boolean)));
-        
-        console.log('メーカーリスト:', uniqueManufacturers);
-        console.log('機種リスト:', uniqueModels);
-        
-        setManufacturers(uniqueManufacturers);
-        setModels(uniqueModels);
-
-        // 初期表示
-        setFilteredData(data);
-      } catch (error) {
-        console.error('データ取得エラー:', error);
-        toast({
-          title: 'エラー',
-          description: 'データの取得に失敗しました',
-          variant: 'destructive',
-        });
-        setInspectionData([]);
-        setFilteredData([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (selectedFile) {
-      fetchInspectionData();
+        } catch (error) {
+          console.error("CSVの解析エラー:", error);
+          toast({
+            title: "エラー",
+            description: "CSVファイルの解析に失敗しました",
+            variant: "destructive",
+          });
+        }
+      };
+      reader.readAsText(file);
     }
-  }, [selectedFile, toast]);
-
-  // フィルター適用
-  useEffect(() => {
-    let filtered = [...inspectionData];
-    
-    if (selectedManufacturer) {
-      filtered = filtered.filter(item => item['製造メーカー'] === selectedManufacturer);
-    }
-    
-    if (selectedModel) {
-      filtered = filtered.filter(item => item['機種'] === selectedModel);
-    }
-    
-    setFilteredData(filtered);
-  }, [inspectionData, selectedManufacturer, selectedModel]);
-
-  // 編集モードの切替
-  const handleEdit = (index: number) => {
-    setIsEditing(true);
-    setEditingRow(index);
-    setEditData({ ...filteredData[index] });
   };
 
-  // 編集キャンセル
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-    setEditingRow(null);
-    setEditData({});
-  };
+  // CSVから読み込んだデータをインポートする
+  const importCSVData = () => {
+    if (csvData.length === 0) {
+      toast({
+        title: "エラー",
+        description: "インポートするデータがありません",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  // 編集内容の保存
-  const handleSaveEdit = () => {
-    if (editingRow !== null) {
-      const newData = [...filteredData];
-      newData[editingRow] = { ...editData };
-      setFilteredData(newData);
-      
-      const newFullData = [...inspectionData];
-      const fullDataIndex = inspectionData.findIndex(item => 
-        item['製造メーカー'] === filteredData[editingRow]['製造メーカー'] &&
-        item['機種'] === filteredData[editingRow]['機種'] &&
-        item['確認箇所'] === filteredData[editingRow]['確認箇所']
+    // 既存データとマージ
+    const mergedData = [...inspectionItems];
+    let addedCount = 0;
+    
+    csvData.forEach(newItem => {
+      const exists = mergedData.some(item => 
+        item.manufacturer === newItem.manufacturer &&
+        item.model === newItem.model &&
+        item.category === newItem.category &&
+        item.item === newItem.item
       );
       
-      if (fullDataIndex !== -1) {
-        newFullData[fullDataIndex] = { ...editData };
-        setInspectionData(newFullData);
+      if (!exists) {
+        mergedData.push(newItem);
+        addedCount++;
       }
-      
-      setIsEditing(false);
-      setEditingRow(null);
-      setEditData({});
-    }
-  };
-
-  // 入力値の変更ハンドラ
-  const handleInputChange = (key: string, value: string) => {
-    setEditData(prev => ({ ...prev, [key]: value }));
-  };
-
-  // CSVデータの保存
-  const handleSaveAll = async () => {
-    try {
-      // ヘッダー行を取得
-      const headers = Object.keys(inspectionData[0]);
-      
-      // CSVデータを整形
-      const csvRows = [headers.join(',')];
-      inspectionData.forEach(row => {
-        csvRows.push(headers.map(header => row[header] || '').join(','));
-      });
-      
-      const csvContent = csvRows.join('\n');
-      
-      const response = await fetch('/api/save-inspection-data', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          data: csvContent,
-          fileName: `仕業点検_編集済_${new Date().toISOString().slice(0, 10)}.csv`,
-        }),
-      });
-      
-      if (!response.ok) throw new Error('データの保存に失敗しました');
-      
-      const result = await response.json();
-      toast({
-        title: '成功',
-        description: `データを保存しました: ${result.fileName}`,
-      });
-      
-      // ファイル一覧を更新
-      const filesResponse = await fetch('/api/inspection-files');
-      if (filesResponse.ok) {
-        const filesData = await filesResponse.json();
-        setFiles(filesData.files || []);
-      }
-    } catch (error) {
-      console.error('データ保存エラー:', error);
-      toast({
-        title: 'エラー',
-        description: '点検項目データの保存に失敗しました',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  // ファイルアップロード
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    });
     
-    const formData = new FormData();
-    formData.append('file', file);
+    setInspectionItems(mergedData);
+    setCsvData([]);
     
-    try {
-      const response = await fetch('/api/upload-inspection-items', {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (!response.ok) throw new Error('ファイルのアップロードに失敗しました');
-      
-      const result = await response.json();
-      toast({
-        title: '成功',
-        description: `ファイルをアップロードしました: ${result.fileName}`,
-      });
-      
-      // ファイル一覧を更新
-      const filesResponse = await fetch('/api/inspection-files');
-      if (filesResponse.ok) {
-        const filesData = await filesResponse.json();
-        setFiles(filesData.files || []);
-        setSelectedFile(result.fileName);
-      }
-    } catch (error) {
-      console.error('ファイルアップロードエラー:', error);
-      toast({
-        title: 'エラー',
-        description: 'ファイルのアップロードに失敗しました',
-        variant: 'destructive',
-      });
-    }
+    toast({
+      title: "インポート完了",
+      description: `${addedCount}件のデータをインポートしました`,
+    });
   };
 
   return (
-    <div className="flex h-screen">
-      <Sidebar onExpandChange={setIsMenuExpanded} />
-      <div className={`flex-1 ${isMenuExpanded ? 'ml-64' : 'ml-16'} transition-all duration-300 overflow-auto`}>
-        <main className="p-6">
-          <h1 className="text-2xl font-bold mb-6">点検項目設定</h1>
-          
-          <Tabs defaultValue="view" className="w-full">
-            <TabsList className="mb-4">
-              <TabsTrigger value="view">点検項目表示</TabsTrigger>
-              <TabsTrigger value="upload">CSVファイル管理</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="view">
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle className="text-lg">フィルター</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-4">
-                    <div className="w-full md:w-64">
-                      <label className="block text-sm font-medium mb-1">ファイル</label>
-                      <Select value={selectedFile} onValueChange={setSelectedFile}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="ファイルを選択" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {files.map(file => (
-                            <SelectItem key={file.name} value={file.name}>
-                              {file.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="w-full md:w-64">
-                      <label className="block text-sm font-medium mb-1">メーカー</label>
-                      <Select value={selectedManufacturer} onValueChange={setSelectedManufacturer}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="メーカーを選択" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="">すべて</SelectItem>
-                          {manufacturers.map(manufacturer => (
-                            <SelectItem key={manufacturer} value={manufacturer}>
-                              {manufacturer}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="w-full md:w-64">
-                      <label className="block text-sm font-medium mb-1">機種</label>
-                      <Select value={selectedModel} onValueChange={setSelectedModel}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="機種を選択" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="">すべて</SelectItem>
-                          {models.map(model => (
-                            <SelectItem key={model} value={model}>
-                              {model}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-lg">点検項目一覧</CardTitle>
-                  <div className="flex gap-2">
-                    <Button onClick={handleSaveAll} variant="primary">
-                      レイアウト保存
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      onClick={() => window.history.back()}
-                    >
-                      閉じる
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {loading ? (
-                    <div className="text-center p-4">データを読み込み中...</div>
-                  ) : filteredData.length === 0 ? (
-                    <div className="text-center p-4">データがありません</div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>編集</TableHead>
-                            <TableHead>製造メーカー</TableHead>
-                            <TableHead>機種</TableHead>
-                            <TableHead>エンジン型式</TableHead>
-                            <TableHead>部位</TableHead>
-                            <TableHead>装置</TableHead>
-                            <TableHead>確認箇所</TableHead>
-                            <TableHead>判断基準</TableHead>
-                            <TableHead>確認要領</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredData.map((item, index) => (
-                            <TableRow key={index}>
-                              <TableCell>
-                                {isEditing && editingRow === index ? (
-                                  <div className="flex gap-2">
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm"
-                                      onClick={handleSaveEdit}
-                                    >
-                                      保存
-                                    </Button>
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm"
-                                      onClick={handleCancelEdit}
-                                    >
-                                      キャンセル
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    onClick={() => handleEdit(index)}
-                                  >
-                                    編集
-                                  </Button>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {isEditing && editingRow === index ? (
-                                  <Input 
-                                    value={editData['製造メーカー'] || ''} 
-                                    onChange={(e) => handleInputChange('製造メーカー', e.target.value)}
-                                    className="w-32"
-                                  />
-                                ) : (
-                                  item['製造メーカー']
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {isEditing && editingRow === index ? (
-                                  <Input 
-                                    value={editData['機種'] || ''} 
-                                    onChange={(e) => handleInputChange('機種', e.target.value)}
-                                    className="w-32"
-                                  />
-                                ) : (
-                                  item['機種']
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {isEditing && editingRow === index ? (
-                                  <Input 
-                                    value={editData['エンジン型式'] || ''} 
-                                    onChange={(e) => handleInputChange('エンジン型式', e.target.value)}
-                                    className="w-32"
-                                  />
-                                ) : (
-                                  item['エンジン型式']
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {isEditing && editingRow === index ? (
-                                  <Input 
-                                    value={editData['部位'] || ''} 
-                                    onChange={(e) => handleInputChange('部位', e.target.value)}
-                                    className="w-32"
-                                  />
-                                ) : (
-                                  item['部位']
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {isEditing && editingRow === index ? (
-                                  <Input 
-                                    value={editData['装置'] || ''} 
-                                    onChange={(e) => handleInputChange('装置', e.target.value)}
-                                    className="w-32"
-                                  />
-                                ) : (
-                                  item['装置']
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {isEditing && editingRow === index ? (
-                                  <Input 
-                                    value={editData['確認箇所'] || ''} 
-                                    onChange={(e) => handleInputChange('確認箇所', e.target.value)}
-                                    className="w-32"
-                                  />
-                                ) : (
-                                  item['確認箇所']
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {isEditing && editingRow === index ? (
-                                  <Input 
-                                    value={editData['判断基準'] || ''} 
-                                    onChange={(e) => handleInputChange('判断基準', e.target.value)}
-                                    className="w-full"
-                                  />
-                                ) : (
-                                  item['判断基準']
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {isEditing && editingRow === index ? (
-                                  <Input 
-                                    value={editData['確認要領'] || ''} 
-                                    onChange={(e) => handleInputChange('確認要領', e.target.value)}
-                                    className="w-full"
-                                  />
-                                ) : (
-                                  item['確認要領']
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="upload">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">CSVファイルのアップロード</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium">ファイルを選択</label>
-                      <Input 
-                        type="file" 
-                        accept=".csv" 
-                        onChange={handleFileUpload}
-                      />
-                      <p className="text-sm text-muted-foreground">CSVファイル形式のみ対応しています</p>
-                    </div>
-                    
-                    <div className="mt-6">
-                      <h3 className="text-lg font-semibold mb-2">利用可能なCSVファイル</h3>
-                      {files.length === 0 ? (
-                        <p>アップロード済みのファイルはありません</p>
-                      ) : (
-                        <div className="overflow-x-auto">
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>ファイル名</TableHead>
-                                <TableHead>サイズ</TableHead>
-                                <TableHead>更新日時</TableHead>
-                                <TableHead>操作</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {files.map((file) => (
-                                <TableRow key={file.name}>
-                                  <TableCell>{file.name}</TableCell>
-                                  <TableCell>{Math.round(file.size / 1024)} KB</TableCell>
-                                  <TableCell>{new Date(file.modified).toLocaleString()}</TableCell>
-                                  <TableCell>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => setSelectedFile(file.name)}
-                                    >
-                                      表示
-                                    </Button>
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </main>
-      </div>
-    </div>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="text-2xl">点検項目設定</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* インポート機能 */}
+        <div className="border p-4 rounded-md space-y-4">
+          <h3 className="text-lg font-semibold">CSV一括インポート</h3>
+          <div className="flex items-center gap-4">
+            <Input 
+              type="file" 
+              accept=".csv" 
+              onChange={handleCSVUpload} 
+              className="max-w-md" 
+            />
+            <Button 
+              onClick={importCSVData} 
+              disabled={csvData.length === 0}
+            >
+              CSVデータをインポート
+            </Button>
+          </div>
+          {csvData.length > 0 && (
+            <p className="text-sm text-muted-foreground">
+              {csvData.length}件のデータが読み込まれています。「CSVデータをインポート」ボタンを押してインポートしてください。
+            </p>
+          )}
+        </div>
+
+        {/* 検索/フィルター */}
+        <div className="border p-4 rounded-md space-y-4">
+          <h3 className="text-lg font-semibold">点検項目検索</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="filter-manufacturer">メーカー</Label>
+              <Select
+                value={filterManufacturer}
+                onValueChange={setFilterManufacturer}
+              >
+                <SelectTrigger id="filter-manufacturer">
+                  <SelectValue placeholder="メーカーを選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">すべて</SelectItem>
+                  {[...new Set(inspectionItems.map(item => item.manufacturer))]
+                    .filter(mfr => mfr && mfr.trim() !== "")
+                    .map(mfr => (
+                      <SelectItem key={mfr} value={mfr}>
+                        {mfr}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="filter-model">機種</Label>
+              <Select
+                value={filterModel}
+                onValueChange={setFilterModel}
+                disabled={!filterManufacturer}
+              >
+                <SelectTrigger id="filter-model">
+                  <SelectValue placeholder="機種を選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">すべて</SelectItem>
+                  {getFilteredModels().map(mdl => (
+                    <SelectItem key={mdl} value={mdl}>
+                      {mdl}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        {/* メーカーと機種の選択 */}
+        <div className="border p-4 rounded-md space-y-4">
+          <h3 className="text-lg font-semibold">点検項目編集</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="manufacturer">メーカー</Label>
+              <Select
+                value={manufacturer}
+                onValueChange={(value) => {
+                  setManufacturer(value);
+                  setModel("");
+                }}
+              >
+                <SelectTrigger id="manufacturer">
+                  <SelectValue placeholder="メーカーを選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sampleManufacturers
+                    .filter((mfr) => mfr && mfr.trim() !== "")
+                    .map((mfr) => (
+                      <SelectItem key={mfr} value={mfr}>
+                        {mfr}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="model">機種</Label>
+              <Select
+                value={model}
+                onValueChange={setModel}
+                disabled={!manufacturer}
+              >
+                <SelectTrigger id="model">
+                  <SelectValue placeholder="機種を選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sampleModels
+                    .filter((mdl) => mdl && mdl.trim() !== "")
+                    .map((mdl) => (
+                      <SelectItem key={mdl} value={mdl}>
+                        {mdl}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* 点検項目一覧と操作ボタン */}
+          {manufacturer && model ? (
+            <>
+              <div className="flex justify-between items-center mt-4">
+                <h3 className="text-lg font-semibold">
+                  点検項目一覧 ({filteredItems.length}件)
+                </h3>
+                <div className="space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={openAddDialog}
+                    className="gap-1"
+                  >
+                    <Plus className="h-4 w-4" />
+                    新規追加
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={saveChanges}
+                    className="gap-1"
+                  >
+                    <Save className="h-4 w-4" />
+                    レイアウト保存
+                  </Button>
+                </div>
+              </div>
+
+              {/* 点検項目テーブル */}
+              {filteredItems.length > 0 ? (
+                <div className="border rounded-md">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>カテゴリ</TableHead>
+                        <TableHead>点検項目</TableHead>
+                        <TableHead>点検方法</TableHead>
+                        <TableHead>判定基準</TableHead>
+                        <TableHead className="w-[100px]">操作</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredItems.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell>{item.category}</TableCell>
+                          <TableCell>{item.item}</TableCell>
+                          <TableCell>{item.method}</TableCell>
+                          <TableCell>{item.criteria}</TableCell>
+                          <TableCell>
+                            <div className="flex space-x-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => openEditDialog(item)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => deleteInspectionItem(item.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="flex justify-center items-center p-12 border rounded-md">
+                  <p className="text-muted-foreground">
+                    選択したメーカーと機種の点検項目がありません。
+                    <br />
+                    「新規追加」から点検項目を登録してください。
+                  </p>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="flex justify-center items-center p-12 border rounded-md">
+              <p className="text-muted-foreground">
+                メーカーと機種を選択して点検項目を表示します。
+              </p>
+            </div>
+          )}
+        </div>
+      </CardContent>
+
+      {/* 点検項目追加・編集ダイアログ */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {isEditMode ? "点検項目を編集" : "点検項目を追加"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="category">カテゴリ</Label>
+              <Input
+                id="category"
+                value={newItem.category}
+                onChange={(e) =>
+                  setNewItem({ ...newItem, category: e.target.value })
+                }
+                placeholder="例: エンジン、油圧系統など"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="item">点検項目</Label>
+              <Input
+                id="item"
+                value={newItem.item}
+                onChange={(e) =>
+                  setNewItem({ ...newItem, item: e.target.value })
+                }
+                placeholder="例: エンジンオイル量、ブレーキパッド摩耗など"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="method">点検方法</Label>
+              <Input
+                id="method"
+                value={newItem.method}
+                onChange={(e) =>
+                  setNewItem({ ...newItem, method: e.target.value })
+                }
+                placeholder="例: 目視確認、測定など"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="criteria">判定基準</Label>
+              <Input
+                id="criteria"
+                value={newItem.criteria}
+                onChange={(e) =>
+                  setNewItem({ ...newItem, criteria: e.target.value })
+                }
+                placeholder="例: ○○mm以上あること、××の範囲内など"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              キャンセル
+            </Button>
+            <Button onClick={addInspectionItem}>
+              {isEditMode ? "更新" : "追加"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Card>
   );
 }

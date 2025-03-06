@@ -124,6 +124,7 @@ app.get('/api/inspection-items', (req, res) => {
         if (!headerLine.trim() || 
             headerLine.includes('測定等"録') || 
             headerLine.includes('--XX') ||
+            headerLine.includes('--XX"形記録') ||
             !headerLine.endsWith('図形記録')) {
           
           const newCsvData = standardHeader + '\n' + cleanedCsvData.substring(cleanedCsvData.indexOf('\n') + 1);

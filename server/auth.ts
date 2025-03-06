@@ -36,10 +36,16 @@ async function comparePasswords(supplied: string, stored: string) {
 export function setupAuth(app: Express) {
   // セッション設定
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.REPL_ID!,
+    secret: process.env.REPL_ID! || 'replit-session-secret',
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
+    cookie: {
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      httpOnly: true,
+      secure: app.get("env") === "production",
+      sameSite: 'lax'
+    }
   };
 
   if (app.get("env") === "production") {

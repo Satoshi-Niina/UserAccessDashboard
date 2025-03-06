@@ -25,11 +25,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     queryKey: ["user"],
     queryFn: async () => {
       const res = await fetch("/api/user");
-      if (!res.ok) throw new Error("Failed to fetch user");
+      if (!res.ok) {
+        if (res.status === 401) {
+          return null; // Not authenticated, return null instead of throwing
+        }
+        throw new Error("Failed to fetch user");
+      }
       const data = await res.json();
       //isAdminの値を確実に正しく処理するため、明示的にboolean型に変換
       return { ...data, isAdmin: Boolean(data.is_admin) };
     },
+    retry: false, // Don't retry on 401 errors
   });
 
   const loginMutation = useMutation({

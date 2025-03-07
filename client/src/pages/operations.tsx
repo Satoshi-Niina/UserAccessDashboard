@@ -306,7 +306,7 @@ function Inspection() {
                   <SelectValue placeholder="メーカーを選択" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">すべて</SelectItem>
+                  <SelectItem value="all">すべて</SelectItem>
                   {manufacturers.filter(manufacturer => manufacturer && manufacturer.trim() !== '').map((manufacturer) => (
                     manufacturer && manufacturer.trim() !== "" && (
                     <SelectItem key={manufacturer} value={manufacturer}>

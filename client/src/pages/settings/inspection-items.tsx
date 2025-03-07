@@ -427,11 +427,14 @@ export default function InspectionItems() {
     try {
       // 現在の点検項目データをCSV形式に変換
       // 元のCSVファイルのヘッダー順序に従って出力
-      const headers = ['製造メーカー', '機種', 'エンジン型式', '部位', '装置', '手順', '確認箇所', '判断基準', '確認要領', '測定等記録', '図形記録'];
-      const csvRows = [headers.join(',')];
+      const csvRows = [];
+      // ヘッダー行を追加 - 保存時は元のCSVと同じヘッダー形式を使用
+      const csvHeaders = ['製造メーカー', '機種', 'エンジン型式', '部位', '装置', '確認箇所', '判断基準', '確認要領', '測定等記録', '図形記録'];
+      csvRows.push(csvHeaders.join(','));
 
+      // データ行を追加
       inspectionItems.forEach(item => {
-        const row = [
+        const values = [
           item.manufacturer,
           item.model,
           '', // エンジン型式は空欄
@@ -444,7 +447,7 @@ export default function InspectionItems() {
           item.measurementRecord,
           item.diagramRecord
         ].map(val => `${val}`).join(',');
-        csvRows.push(row);
+        csvRows.push(values);
       });
 
       const csvContent = csvRows.join('\n');

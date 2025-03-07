@@ -156,6 +156,10 @@ function Inspection() {
 
         setManufacturers(uniqueManufacturers);
         setModels(uniqueModels);
+        console.log("読み込んだデータ:", processedData.slice(0, 3));
+        console.log("メーカー一覧:", uniqueManufacturers);
+        console.log("機種一覧:", uniqueModels);
+        
         setInspectionItems(processedData);
         setLoading(false);
 
@@ -184,8 +188,8 @@ function Inspection() {
 
   // メーカーや機種で絞り込んだ点検項目を取得
   const filteredItems = inspectionItems.filter(item => {
-    const matchManufacturer = !selectedManufacturer || item.製造メーカー === selectedManufacturer;
-    const matchModel = !selectedModel || item.機種 === selectedModel;
+    const matchManufacturer = selectedManufacturer === "all" || !selectedManufacturer || item.製造メーカー === selectedManufacturer;
+    const matchModel = selectedModel === "all" || !selectedModel || item.機種 === selectedModel;
     return matchManufacturer && matchModel;
   });
 
@@ -300,7 +304,7 @@ function Inspection() {
               <Label htmlFor="manufacturer">製造メーカー</Label>
               <Select 
                 value={selectedManufacturer} 
-                onValueChange={setSelectedManufacturer}
+                onValueChange={(value) => setSelectedManufacturer(value === "all" ? "" : value)}
               >
                 <SelectTrigger id="manufacturer">
                   <SelectValue placeholder="メーカーを選択" />

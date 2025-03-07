@@ -1,336 +1,305 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
-import { Button } from '../../components/ui/button';
-import { Calendar } from '../../components/ui/calendar';
-import Papa from 'papaparse';
 
-interface InspectionItem {
-  id: string;
-  メーカー: string;
-  機種: string;
-  'エンジン型式': string;
-  部位: string;
-  装置: string;
-  手順: string;
-  確認箇所: string;
-  判断基準: string;
-  確認要領: string;
-  測定等記録: string;
-  図形記録: string;
-  order: number;
-}
+import { useState } from "react";
+import { 
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { useForm } from "react-hook-form";
+import { toast } from "@/components/ui/use-toast";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { format } from "date-fns";
+import { ja } from "date-fns/locale";
+import { CalendarIcon } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
-export default function OperationalPlan() {
-  // タイトルを設定
-  useEffect(() => {
-    document.title = "運用管理システム - 運用計画";
-  }, []);
+// バリデーションスキーマ
+const planFormSchema = z.object({
+  planDate: z.date({
+    required_error: "運用日を選択してください",
+  }),
+  vehicleId: z.string().min(1, "車両を選択してください"),
+  vehicleType: z.string().min(1, "車両型式を選択してください"),
+  route: z.string().min(1, "運用区間を入力してください"),
+  plannedStartTime: z.string().min(1, "予定出発時刻を入力してください"),
+  plannedEndTime: z.string().min(1, "予定終了時刻を入力してください"),
+  purpose: z.string().min(1, "作業目的を入力してください"),
+  driverName: z.string().min(1, "運転手名を入力してください"),
+  supportStaffName: z.string().optional(),
+  remarks: z.string().optional(),
+});
 
-  const [items, setItems] = useState<InspectionItem[]>([]);
-  const [manufacturers, setManufacturers] = useState<string[]>([]);
-  const [modelTypes, setModelTypes] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
+type PlanFormValues = z.infer<typeof planFormSchema>;
+
+export default function OperationalPlanPage() {
   const [date, setDate] = useState<Date | undefined>(new Date());
 
-  // 点検項目データの読み込み
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch('/api/inspection-items?t=' + new Date().getTime());
-        const csvText = await response.text();
+  // デフォルト値の設定
+  const defaultValues: Partial<PlanFormValues> = {
+    planDate: new Date(),
+    vehicleId: "",
+    vehicleType: "",
+    route: "",
+    plannedStartTime: "",
+    plannedEndTime: "",
+    purpose: "",
+    driverName: "",
+    supportStaffName: "",
+    remarks: "",
+  };
 
-        const { data } = Papa.parse<InspectionItem>(csvText, {
-          header: true,
-          skipEmptyLines: true,
-        });
+  const form = useForm<PlanFormValues>({
+    resolver: zodResolver(planFormSchema),
+    defaultValues,
+  });
 
-        // 項目をIDと順序で強化
-        const enhancedItems = data.map((item, index) => ({
-          ...item,
-          id: `item-${index + 1}`,
-          order: index + 1
-        }));
-
-        console.log("運用計画: データ読み込み成功", enhancedItems.length, "件");
-
-        // メーカーとモデルタイプのリストを作成（空の値を確実に除外）
-        const uniqueManufacturers = [...new Set(enhancedItems.map(item => item.メーカー).filter(value => value && value.trim() !== ''))];
-        const uniqueModelTypes = [...new Set(enhancedItems.map(item => item.機種).filter(value => value && value.trim() !== ''))];
-
-        setItems(enhancedItems);
-        setManufacturers(uniqueManufacturers);
-        setModelTypes(uniqueModelTypes);
-      } catch (error) {
-        console.error("運用計画: データ読み込みエラー", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  if (loading) {
-    return <div className="text-center py-8">データを読み込み中...</div>;
+  function onSubmit(data: PlanFormValues) {
+    console.log(data);
+    toast({
+      title: "運用計画が登録されました",
+      description: (
+        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
+          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
+        </pre>
+      ),
+    });
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold mb-4">運用計画</h2>
-        <p className="mb-4">保守用車の運用計画を管理します。</p>
-      </div>
+    <div className="container mx-auto py-8">
+      <h1 className="text-2xl font-bold mb-6">運用計画登録</h1>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>運用計画フォーム</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* 運用日 */}
+                <FormField
+                  control={form.control}
+                  name="planDate"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel className="mb-2">運用日</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "yyyy年MM月dd日", { locale: ja })
+                              ) : (
+                                <span>日付を選択</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
+                            locale={ja}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>計画カレンダー</CardTitle>
-          </CardHeader>
-          <CardContent className="flex justify-center">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={setDate}
-              className="rounded-md border"
-            />
-          </CardContent>
-        </Card>
+                {/* 車両ID */}
+                <FormField
+                  control={form.control}
+                  name="vehicleId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>車両番号</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="車両を選択" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="MC300-1">MC300-1</SelectItem>
+                          <SelectItem value="MC300-2">MC300-2</SelectItem>
+                          <SelectItem value="MC300-3">MC300-3</SelectItem>
+                          <SelectItem value="MR400-1">MR400-1</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>登録済み機械一覧</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>メーカー</TableHead>
-                  <TableHead>機種</TableHead>
-                  <TableHead>作業状態</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {manufacturers.map((manufacturer, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{manufacturer}</TableCell>
-                    <TableCell>
-                      {items
-                        .filter(item => item.メーカー === manufacturer)
-                        .map(item => item.機種)
-                        .filter((value, index, self) => self.indexOf(value) === index)
-                        .join(', ')}
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="outline" size="sm">
-                        詳細
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-}
-import React, { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { Search } from 'lucide-react';
-import Papa from 'papaparse';
+                {/* 車両型式 */}
+                <FormField
+                  control={form.control}
+                  name="vehicleType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>車両型式</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="型式を選択" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="MC300">MC300</SelectItem>
+                          <SelectItem value="MR400">MR400</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-interface Task {
-  id: string;
-  date: string;
-  operator: string;
-  status: 'completed' | 'in-progress' | 'pending';
-  notes: string;
-}
+                {/* 運用区間 */}
+                <FormField
+                  control={form.control}
+                  name="route"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>運用区間</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="例: 東京駅〜新宿駅" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-export default function OperationalPlan() {
-  const [tasks, setTasks] = useState<Task[]>([
-    { id: 'TK-1234', date: '2023-11-15 08:30', operator: '田中 太郎', status: 'completed', notes: 'すべての確認が完了です。' },
-    { id: 'TK-5678', date: '2023-11-15 09:15', operator: '佐藤 次郎', status: 'completed', notes: 'ワイパーブレードの交換が必要です。' },
-    { id: 'TK-9012', date: '2023-11-15 10:00', operator: '鈴木 三郎', status: 'pending', notes: 'ブレーキパッドが薄れてきています。早めに交換が必要。' },
-    { id: 'TK-3456', date: '2023-11-15 11:30', operator: '高橋 四郎', status: 'completed', notes: 'エンジンオイルを交換しました。' },
-    { id: 'TK-7890', date: '2023-11-15 13:00', operator: '伊藤 五郎', status: 'pending', notes: '' },
-    { id: 'TK-2345', date: '2023-11-15 14:30', operator: '渡辺 六郎', status: 'pending', notes: '' },
-    { id: 'TK-6789', date: '2023-11-15 15:45', operator: '山本 七郎', status: 'completed', notes: 'タイヤの空気圧を調整しました。' },
-  ]);
+                {/* 予定出発時刻 */}
+                <FormField
+                  control={form.control}
+                  name="plannedStartTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>予定出発時刻</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="time" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const tasksPerPage = 7;
+                {/* 予定終了時刻 */}
+                <FormField
+                  control={form.control}
+                  name="plannedEndTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>予定終了時刻</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="time" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-  // ページネーション用の計算
-  const indexOfLastTask = currentPage * tasksPerPage;
-  const indexOfFirstTask = indexOfLastTask - tasksPerPage;
-  
-  // 検索フィルタリング
-  const filteredTasks = tasks.filter(task => 
-    task.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    task.operator.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    task.notes.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  
-  const currentTasks = filteredTasks.slice(indexOfFirstTask, indexOfLastTask);
+                {/* 作業目的 */}
+                <FormField
+                  control={form.control}
+                  name="purpose"
+                  render={({ field }) => (
+                    <FormItem className="col-span-1 md:col-span-2">
+                      <FormLabel>作業目的</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="作業目的を入力" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-  // 統計情報の計算
-  const totalTasks = tasks.length;
-  const completedTasks = tasks.filter(task => task.status === 'completed').length;
-  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-  const issuesCount = tasks.filter(task => task.notes && task.notes.length > 0).length;
+                {/* 運転手名 */}
+                <FormField
+                  control={form.control}
+                  name="driverName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>運転手</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="運転手名を入力" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-  // タイトルを設定
-  useEffect(() => {
-    document.title = "運用管理システム - 運用計画";
-  }, []);
+                {/* 添乗員名 */}
+                <FormField
+                  control={form.control}
+                  name="supportStaffName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>添乗員（任意）</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="添乗員名を入力" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-  const getStatusBadge = (status: string) => {
-    switch(status) {
-      case 'completed':
-        return <Badge className="bg-green-500">完了</Badge>;
-      case 'in-progress':
-        return <Badge className="bg-blue-500">進行中</Badge>;
-      case 'pending':
-        return <Badge className="bg-yellow-500">未完了</Badge>;
-      default:
-        return <Badge className="bg-gray-500">不明</Badge>;
-    }
-  };
-
-  return (
-    <div className="container mx-auto p-4">
-      {/* 統計情報カード */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <Card>
-          <CardContent className="p-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-1">本日の点検予定</h3>
-            <p className="text-xs text-gray-400">予定された点検の総数</p>
-            <h2 className="text-3xl font-bold mt-2">{completedTasks} / {totalTasks}</h2>
-            <div className="w-full bg-gray-200 rounded-full h-2.5 mt-3">
-              <div 
-                className="bg-black h-2.5 rounded-full" 
-                style={{ width: `${completionRate}%` }}
-              ></div>
-            </div>
-            <p className="text-xs text-gray-400 mt-2">残りの作業数が{totalTasks - completedTasks}件です</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-1">点検完了率</h3>
-            <p className="text-xs text-gray-400">今週の点検完了の状況</p>
-            <h2 className="text-3xl font-bold mt-2">{completionRate}%</h2>
-            <div className="w-full bg-gray-200 rounded-full h-2.5 mt-3">
-              <div 
-                className="bg-black h-2.5 rounded-full" 
-                style={{ width: `${completionRate}%` }}
-              ></div>
-            </div>
-            <p className="text-xs text-gray-400 mt-2">目標: 95%</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-1">要対応項目</h3>
-            <p className="text-xs text-gray-400">指摘された箇所・確認が必要な項目</p>
-            <h2 className="text-3xl font-bold mt-2">{issuesCount}</h2>
-            <p className="text-xs text-gray-400 mt-6">確認された全ての問題の報告が必要です</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* 仕事点検リスト */}
-      <Card className="mb-6">
-        <CardContent className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <h2 className="text-xl font-bold">仕業点検リスト</h2>
-              <p className="text-sm text-gray-500">点検が必要な作業の一覧</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                <Input
-                  type="search"
-                  placeholder="検索..."
-                  className="pl-8 w-64"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                {/* 備考 */}
+                <FormField
+                  control={form.control}
+                  name="remarks"
+                  render={({ field }) => (
+                    <FormItem className="col-span-1 md:col-span-2">
+                      <FormLabel>備考（任意）</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          {...field} 
+                          placeholder="備考事項があれば入力してください" 
+                          className="resize-none" 
+                          rows={4}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               </div>
-              <Button variant="outline">フィルター</Button>
-              <Button variant="outline">詳細</Button>
-            </div>
-          </div>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px]">管理番号</TableHead>
-                <TableHead className="w-[180px]">点検日時</TableHead>
-                <TableHead className="w-[150px]">点検者</TableHead>
-                <TableHead className="w-[100px]">ステータス</TableHead>
-                <TableHead>備考</TableHead>
-                <TableHead className="w-[100px] text-right">アクション</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {currentTasks.map((task) => (
-                <TableRow key={task.id}>
-                  <TableCell className="font-medium">{task.id}</TableCell>
-                  <TableCell>{task.date}</TableCell>
-                  <TableCell>{task.operator}</TableCell>
-                  <TableCell>{getStatusBadge(task.status)}</TableCell>
-                  <TableCell className="max-w-[300px] truncate">{task.notes}</TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-list-x">
-                        <path d="M11 12H3"/>
-                        <path d="M16 6H3"/>
-                        <path d="M16 18H3"/>
-                        <path d="M18 9l3 3-3 3"/>
-                      </svg>
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-
-          <div className="flex justify-end mt-4 gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              前へ
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => setCurrentPage(prev => prev + 1)}
-              disabled={indexOfLastTask >= filteredTasks.length}
-            >
-              次へ
-            </Button>
-          </div>
+              <div className="flex justify-end space-x-4">
+                <Button type="button" variant="outline">キャンセル</Button>
+                <Button type="submit">登録</Button>
+              </div>
+            </form>
+          </Form>
         </CardContent>
       </Card>
     </div>

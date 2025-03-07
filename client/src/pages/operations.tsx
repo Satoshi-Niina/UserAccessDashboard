@@ -215,28 +215,28 @@ export default function OperationsPage() {
                   <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[100px] min-w-[100px] text-xs">部位</TableHead>
-                      <TableHead className="w-[100px] min-w-[100px] text-xs">装置</TableHead>
-                      <TableHead className="w-[375px] min-w-[375px] text-xs">確認箇所</TableHead>
-                      <TableHead className="w-[375px] min-w-[375px] text-xs">判断基準</TableHead>
-                      <TableHead className="w-[375px] min-w-[375px] text-xs">確認要領</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px] text-xs">測定等記録</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px] text-xs">図形記録</TableHead>
-                      <TableHead className="w-[100px] min-w-[100px] text-xs">結果</TableHead>
-                      <TableHead className="w-[250px] min-w-[250px] text-xs">特記事項</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px] text-xs border">部位</TableHead>
+                      <TableHead className="w-[140px] min-w-[140px] text-xs border">装置</TableHead>
+                      <TableHead className="w-[250px] min-w-[250px] text-xs border">確認箇所</TableHead>
+                      <TableHead className="w-[250px] min-w-[250px] text-xs border">判断基準</TableHead>
+                      <TableHead className="w-[250px] min-w-[250px] text-xs border">確認要領</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px] text-xs border">測定等記録</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px] text-xs border">図形記録</TableHead>
+                      <TableHead className="w-[50px] min-w-[50px] text-xs border">結果</TableHead>
+                      <TableHead className="w-[250px] min-w-[250px] text-xs border">特記事項</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {inspectionItems.map((item) => (
+                    {inspectionItems.map((item, index) => (
                       <TableRow key={item.id} className="h-12">
-                        <TableCell className="text-xs py-1">{item.category}</TableCell>
-                        <TableCell className="text-xs py-1">{item.equipment}</TableCell>
-                        <TableCell className="text-xs py-1">{item.item}</TableCell>
-                        <TableCell className="text-xs py-1">{item.criteria}</TableCell>
-                        <TableCell className="text-xs py-1">{item.method}</TableCell>
-                        <TableCell className="text-xs py-1">{item.measurementRecord}</TableCell>
-                        <TableCell className="text-xs py-1">{item.diagramRecord}</TableCell>
-                        <TableCell className="text-xs py-1">
+                        <TableCell className="text-xs border py-1">{item.category}</TableCell>
+                        <TableCell className="text-xs border py-1">{item.equipment}</TableCell>
+                        <TableCell className="text-xs border py-1">{item.item}</TableCell>
+                        <TableCell className="text-xs border py-1">{item.criteria}</TableCell>
+                        <TableCell className="text-xs border py-1">{item.method}</TableCell>
+                        <TableCell className="text-xs border py-1">{item.measurementRecord}</TableCell>
+                        <TableCell className="text-xs border py-1">{item.diagramRecord}</TableCell>
+                        <TableCell className="text-xs border py-1">
                           <Select>
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder="選択" />
@@ -251,7 +251,7 @@ export default function OperationsPage() {
                             </SelectContent>
                           </Select>
                         </TableCell>
-                        <TableCell className="text-xs py-1">
+                        <TableCell className="text-xs border py-1">
                           <Input className="text-xs h-8" value={item.notes || ''} onChange={(e) => handleNotesChange(item.id, e.target.value)} />
                         </TableCell>
                       </TableRow>
@@ -276,28 +276,28 @@ export default function OperationsPage() {
                   <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[100px] min-w-[100px] text-xs">部位</TableHead>
-                      <TableHead className="w-[100px] min-w-[100px] text-xs">装置</TableHead>
-                      <TableHead className="w-[375px] min-w-[375px] text-xs">確認箇所</TableHead>
-                      <TableHead className="w-[375px] min-w-[375px] text-xs">判断基準</TableHead>
-                      <TableHead className="w-[375px] min-w-[375px] text-xs">確認要領</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px] text-xs">測定等記録</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px] text-xs">図形記録</TableHead>
-                      <TableHead className="w-[100px] min-w-[100px] text-xs">結果</TableHead>
-                      <TableHead className="w-[250px] min-w-[250px] text-xs">特記事項</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px] text-xs border">部位</TableHead>
+                      <TableHead className="w-[140px] min-w-[140px] text-xs border">装置</TableHead>
+                      <TableHead className="w-[250px] min-w-[250px] text-xs border">確認箇所</TableHead>
+                      <TableHead className="w-[250px] min-w-[250px] text-xs border">判断基準</TableHead>
+                      <TableHead className="w-[250px] min-w-[250px] text-xs border">確認要領</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px] text-xs border">測定等記録</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px] text-xs border">図形記録</TableHead>
+                      <TableHead className="w-[50px] min-w-[50px] text-xs border">結果</TableHead>
+                      <TableHead className="w-[250px] min-w-[250px] text-xs border">特記事項</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {inspectionItems.map((item) => (
+                    {inspectionItems.map((item, index) => (
                       <TableRow key={item.id} className="h-12">
-                        <TableCell className="text-xs py-1">{item.category}</TableCell>
-                        <TableCell className="text-xs py-1">{item.equipment}</TableCell>
-                        <TableCell className="text-xs py-1">{item.item}</TableCell>
-                        <TableCell className="text-xs py-1">{item.criteria}</TableCell>
-                        <TableCell className="text-xs py-1">{item.method}</TableCell>
-                        <TableCell className="text-xs py-1">{item.measurementRecord}</TableCell>
-                        <TableCell className="text-xs py-1">{item.diagramRecord}</TableCell>
-                        <TableCell className="text-xs py-1">
+                        <TableCell className="text-xs border py-1">{item.category}</TableCell>
+                        <TableCell className="text-xs border py-1">{item.equipment}</TableCell>
+                        <TableCell className="text-xs border py-1">{item.item}</TableCell>
+                        <TableCell className="text-xs border py-1">{item.criteria}</TableCell>
+                        <TableCell className="text-xs border py-1">{item.method}</TableCell>
+                        <TableCell className="text-xs border py-1">{item.measurementRecord}</TableCell>
+                        <TableCell className="text-xs border py-1">{item.diagramRecord}</TableCell>
+                        <TableCell className="text-xs border py-1">
                           <Select>
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder="選択" />
@@ -312,7 +312,7 @@ export default function OperationsPage() {
                             </SelectContent>
                           </Select>
                         </TableCell>
-                        <TableCell className="text-xs py-1">
+                        <TableCell className="text-xs border py-1">
                           <Input className="text-xs h-8" value={item.notes || ''} onChange={(e) => handleNotesChange(item.id, e.target.value)} />
                         </TableCell>
                       </TableRow>
@@ -337,28 +337,28 @@ export default function OperationsPage() {
                   <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[100px] min-w-[100px] text-xs">部位</TableHead>
-                      <TableHead className="w-[100px] min-w-[100px] text-xs">装置</TableHead>
-                      <TableHead className="w-[375px] min-w-[375px] text-xs">確認箇所</TableHead>
-                      <TableHead className="w-[375px] min-w-[375px] text-xs">判断基準</TableHead>
-                      <TableHead className="w-[375px] min-w-[375px] text-xs">確認要領</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px] text-xs">測定等記録</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px] text-xs">図形記録</TableHead>
-                      <TableHead className="w-[100px] min-w-[100px] text-xs">結果</TableHead>
-                      <TableHead className="w-[250px] min-w-[250px] text-xs">特記事項</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px] text-xs border">部位</TableHead>
+                      <TableHead className="w-[140px] min-w-[140px] text-xs border">装置</TableHead>
+                      <TableHead className="w-[250px] min-w-[250px] text-xs border">確認箇所</TableHead>
+                      <TableHead className="w-[250px] min-w-[250px] text-xs border">判断基準</TableHead>
+                      <TableHead className="w-[250px] min-w-[250px] text-xs border">確認要領</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px] text-xs border">測定等記録</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px] text-xs border">図形記録</TableHead>
+                      <TableHead className="w-[50px] min-w-[50px] text-xs border">結果</TableHead>
+                      <TableHead className="w-[250px] min-w-[250px] text-xs border">特記事項</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {inspectionItems.map((item) => (
+                    {inspectionItems.map((item, index) => (
                       <TableRow key={item.id} className="h-12">
-                        <TableCell className="text-xs py-1">{item.category}</TableCell>
-                        <TableCell className="text-xs py-1">{item.equipment}</TableCell>
-                        <TableCell className="text-xs py-1">{item.item}</TableCell>
-                        <TableCell className="text-xs py-1">{item.criteria}</TableCell>
-                        <TableCell className="text-xs py-1">{item.method}</TableCell>
-                        <TableCell className="text-xs py-1">{item.measurementRecord}</TableCell>
-                        <TableCell className="text-xs py-1">{item.diagramRecord}</TableCell>
-                        <TableCell className="text-xs py-1">
+                        <TableCell className="text-xs border py-1">{item.category}</TableCell>
+                        <TableCell className="text-xs border py-1">{item.equipment}</TableCell>
+                        <TableCell className="text-xs border py-1">{item.item}</TableCell>
+                        <TableCell className="text-xs border py-1">{item.criteria}</TableCell>
+                        <TableCell className="text-xs border py-1">{item.method}</TableCell>
+                        <TableCell className="text-xs border py-1">{item.measurementRecord}</TableCell>
+                        <TableCell className="text-xs border py-1">{item.diagramRecord}</TableCell>
+                        <TableCell className="text-xs border py-1">
                           <Select>
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder="選択" />
@@ -373,7 +373,7 @@ export default function OperationsPage() {
                             </SelectContent>
                           </Select>
                         </TableCell>
-                        <TableCell className="text-xs py-1">
+                        <TableCell className="text-xs border py-1">
                           <Input className="text-xs h-8" value={item.notes || ''} onChange={(e) => handleNotesChange(item.id, e.target.value)} />
                         </TableCell>
                       </TableRow>

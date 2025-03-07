@@ -328,7 +328,6 @@ function Inspection() {
                 <SelectContent>
                   <SelectItem value="all">すべて</SelectItem>
                   {models.map((model) => (
-                    model && model.trim() !== "" && (
                     <SelectItem key={model} value={model}>
                       {model}
                     </SelectItem>

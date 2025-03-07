@@ -118,8 +118,8 @@ export default function OperationsPage() {
               <Input id="inspector" placeholder="責任者名を入力" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="inspectorId">社員番号</Label>
-              <Input id="inspectorId" placeholder="社員番号を入力" />
+              <Label htmlFor="inspectorId">点検者</Label>
+              <Input id="inspectorId" placeholder="点検者名を入力" />
             </div>
           </div>
         </CardContent>
@@ -246,8 +246,8 @@ export default function OperationsPage() {
         <TabsContent value="entry">
           <Card>
             <CardHeader>
-              <CardTitle>入庫時点検表</CardTitle>
-              <CardDescription>保守用車の入庫時点検を行います</CardDescription>
+              <CardTitle>帰着点検表</CardTitle>
+              <CardDescription>保守用車の帰着点検を行います</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>

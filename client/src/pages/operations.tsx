@@ -40,7 +40,7 @@ export default function OperationsPage() {
   const [error, setError] = useState<string | null>(null);
 
   const handleNotesChange = (id: number, value: string) => {
-    setInspectionItems(prevItems => prevItems.map(item => 
+    setInspectionItems(prevItems => prevItems.map(item =>
       item.id === id ? {...item, notes: value} : item
     ));
   }
@@ -196,18 +196,18 @@ export default function OperationsPage() {
             <CardDescription>点検項目を確認し、結果を入力してください</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="exit" value={activeTab} onValueChange={(value) => setActiveTab(value as InspectionTab)}>
+            <Tabs defaultValue="periodic" value={activeTab} onValueChange={(value) => setActiveTab(value as InspectionTab)}>
               <TabsList className="grid grid-cols-3">
                 <TabsTrigger value="exit">出発前点検</TabsTrigger>
                 <TabsTrigger value="periodic">仕業点検</TabsTrigger>
                 <TabsTrigger value="entry">帰着点検</TabsTrigger>
               </TabsList>
 
-        <TabsContent value="exit">
+        <TabsContent value="periodic">
           <Card>
             <CardHeader>
-              <CardTitle>出発前点検表</CardTitle>
-              <CardDescription>保守用車の出発前点検を行います</CardDescription>
+              <CardTitle>仕業点検表</CardTitle>
+              <CardDescription>保守用車の定期的な仕業点検を行います</CardDescription>
             </CardHeader>
             <CardContent className="overflow-x-auto" style={{ scrollbarWidth: 'thin', scrollbarGutter: 'stable' }}>
               <Table className="border-collapse border">
@@ -260,11 +260,11 @@ export default function OperationsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="periodic">
+        <TabsContent value="exit">
           <Card>
             <CardHeader>
-              <CardTitle>仕業点検表</CardTitle>
-              <CardDescription>保守用車の定期的な仕業点検を行います</CardDescription>
+              <CardTitle>出発前点検表</CardTitle>
+              <CardDescription>保守用車の出発前点検を行います</CardDescription>
             </CardHeader>
             <CardContent className="overflow-x-auto" style={{ scrollbarWidth: 'thin', scrollbarGutter: 'stable' }}>
               <Table className="border-collapse border">

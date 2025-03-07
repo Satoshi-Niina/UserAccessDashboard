@@ -181,11 +181,11 @@ function Inspection() {
           const { エンジン型式, ...rest } = item;
           return rest;
         });
-        
+
         console.log("読み込んだデータ:", filteredProcessedData.slice(0, 3));
         console.log("メーカー一覧:", uniqueManufacturers);
         console.log("機種一覧:", uniqueModels);
-        
+
         setManufacturers(uniqueManufacturers);
         setModels(uniqueModels);
         setInspectionItems(filteredProcessedData);
@@ -194,7 +194,7 @@ function Inspection() {
         // 初期値は「すべて」に設定
         setSelectedManufacturer("all");
         setSelectedModel("all");
-        
+
         console.log("製造メーカー初期値:", "all");
         console.log("機種初期値:", "all");
 
@@ -216,15 +216,15 @@ function Inspection() {
   // メーカーや機種で絞り込んだ点検項目を取得
   const filteredItems = inspectionItems.filter(item => {
     console.log("フィルター中のアイテム:", item, "選択した製造メーカー:", selectedManufacturer, "選択した機種:", selectedModel);
-    
+
     // 製造メーカーと機種の値を確実に取得（存在しない場合は空文字に）
     const itemManufacturer = item.製造メーカー || "";
     const itemModel = item.機種 || "";
-    
+
     // マッチング条件を明確に
     const matchManufacturer = selectedManufacturer === "all" || itemManufacturer === selectedManufacturer;
     const matchModel = selectedModel === "all" || itemModel === selectedModel;
-    
+
     console.log("マッチ状況:", "製造メーカー:", matchManufacturer, "機種:", matchModel);
     return matchManufacturer && matchModel;
   });
@@ -420,11 +420,7 @@ function Inspection() {
                           'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                          data: inspectionItems,
-                          fileName: newFileName,
-                          sourceFileName: currentFileName  // 元のファイル名を追加
-                        }),
-                        body: JSON.stringify({
+                          sourceFileName: currentFileName, // 元のファイル名を追加
                           data: inspectionItems,
                           fileName: newFileName
                         }),

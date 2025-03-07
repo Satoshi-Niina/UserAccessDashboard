@@ -1,71 +1,149 @@
-import React, { useState } from "react";
-import { useLocation } from "wouter"; // Using wouter's useLocation
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { format } from "date-fns";
-import { Calendar as CalendarIcon, Car, Check, Clipboard, ClipboardCheck, ClipboardList, FileText, PlusCircle, Settings, Wrench } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { format } from "date-fns";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-type InspectionTab = "entry" | "exit" | "maintenance";
+type InspectionTab = "entry" | "exit" | "periodic";
 type InspectionResult = "完了" | "調整" | "補充" | "交換" | "経過観察" | "その他";
+
+interface InspectionItem {
+  id: number;
+  category: string;          // 部位
+  equipment: string;         // 装置
+  item: string;              // 確認箇所
+  criteria: string;          // 判断基準
+  method: string;            // 確認要領
+  measurementRecord: string; // 測定等記録
+  diagramRecord: string;     // 図形記録
+  manufacturer?: string;     // 製造メーカー
+  model?: string;            // 機種
+  engineType?: string;       // エンジン型式
+}
 
 export default function OperationsPage() {
   const [location, setLocation] = useLocation(); // Use wouter's location hook
   const [activeTab, setActiveTab] = useState<InspectionTab>("exit");
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock inspection items - this would be fetched from an API in a real application
-  const inspectionItems = [
-    { id: 1, category: "エンジン", equipment: "エンジン本体", item: "エンジンオイル量", criteria: "オイルレベルゲージの範囲内" },
-    { id: 2, category: "エンジン", equipment: "エンジン本体", item: "冷却水量", criteria: "リザーバタンクの規定値" },
-    { id: 3, category: "電気系統", equipment: "バッテリー", item: "バッテリー液量", criteria: "UPPER/LOWERの範囲内" },
-    { id: 4, category: "電気系統", equipment: "インジケーター", item: "充電表示灯", criteria: "エンジン始動後消灯" },
-    { id: 5, category: "制動装置", equipment: "ブレーキペダル", item: "ブレーキペダル", criteria: "遊び10～15mm" },
-    { id: 6, category: "制動装置", equipment: "パーキングブレーキ", item: "駐車ブレーキ", criteria: "引きしろの確認" },
-    { id: 7, category: "走行装置", equipment: "タイヤ", item: "前輪タイヤ空気圧", criteria: "規定値550kPa" },
-    { id: 8, category: "走行装置", equipment: "タイヤ", item: "後輪タイヤ空気圧", criteria: "規定値550kPa" },
-    { id: 9, category: "その他", equipment: "警報装置", item: "警音器", criteria: "正常に鳴る" },
-    { id: 10, category: "その他", equipment: "ワイパー", item: "ワイパー", criteria: "作動と拭き取り状態の確認" },
-  ];
+  useEffect(() => {
+    const fetchInspectionItems = async () => {
+      try {
+        setLoading(true);
+        // 最新のCSVファイルを取得するためにlatestパラメータを追加
+        const response = await fetch('/api/inspection-items?latest=true');
 
+        if (!response.ok) {
+          throw new Error('点検項目の取得に失敗しました');
+        }
+
+        const csvText = await response.text();
+
+        // CSVパース（簡易的な実装）
+        const rows = csvText.split('\n');
+        const headers = rows[0].split(',');
+
+        // ヘッダーのインデックスを取得
+        const categoryIndex = headers.findIndex(h => h === '部位' || h === 'category');
+        const equipmentIndex = headers.findIndex(h => h === '装置' || h === 'equipment');
+        const itemIndex = headers.findIndex(h => h === '確認箇所' || h === 'item');
+        const criteriaIndex = headers.findIndex(h => h === '判断基準' || h === 'criteria');
+        const methodIndex = headers.findIndex(h => h === '確認要領' || h === 'method');
+        const measurementRecordIndex = headers.findIndex(h => h === '測定等記録' || h === 'measurementRecord');
+        const diagramRecordIndex = headers.findIndex(h => h === '図形記録' || h === 'diagramRecord');
+        const idIndex = headers.findIndex(h => h === 'id');
+        const manufacturerIndex = headers.findIndex(h => h === '製造メーカー' || h === 'manufacturer');
+        const modelIndex = headers.findIndex(h => h === '機種' || h === 'model');
+        const engineTypeIndex = headers.findIndex(h => h === 'エンジン型式' || h === 'engineType');
+
+        // CSVから点検項目を作成
+        const items: InspectionItem[] = [];
+        for (let i = 1; i < rows.length; i++) {
+          if (!rows[i].trim()) continue; // 空行をスキップ
+
+          const values = rows[i].split(',');
+
+          // 各カラムの値を取得（存在しない場合は空文字）
+          const getId = () => idIndex >= 0 ? parseInt(values[idIndex]) || i : i;
+          const getCategory = () => categoryIndex >= 0 ? values[categoryIndex] || '' : '';
+          const getEquipment = () => equipmentIndex >= 0 ? values[equipmentIndex] || '' : '';
+          const getItem = () => itemIndex >= 0 ? values[itemIndex] || '' : '';
+          const getCriteria = () => criteriaIndex >= 0 ? values[criteriaIndex] || '' : '';
+          const getMethod = () => methodIndex >= 0 ? values[methodIndex] || '' : '';
+          const getMeasurementRecord = () => measurementRecordIndex >= 0 ? values[measurementRecordIndex] || '' : '';
+          const getDiagramRecord = () => diagramRecordIndex >= 0 ? values[diagramRecordIndex] || '' : '';
+          const getManufacturer = () => manufacturerIndex >= 0 ? values[manufacturerIndex] || '' : '';
+          const getModel = () => modelIndex >= 0 ? values[modelIndex] || '' : '';
+          const getEngineType = () => engineTypeIndex >= 0 ? values[engineTypeIndex] || '' : '';
+
+          items.push({
+            id: getId(),
+            category: getCategory(),
+            equipment: getEquipment(),
+            item: getItem(),
+            criteria: getCriteria(),
+            method: getMethod(),
+            measurementRecord: getMeasurementRecord(),
+            diagramRecord: getDiagramRecord(),
+            manufacturer: getManufacturer(),
+            model: getModel(),
+            engineType: getEngineType(),
+          });
+        }
+
+        setInspectionItems(items);
+        setLoading(false);
+      } catch (err) {
+        console.error('点検項目取得エラー:', err);
+        setError(err instanceof Error ? err.message : '点検項目の取得に失敗しました');
+        setLoading(false);
+      }
+    };
+
+    fetchInspectionItems();
+  }, []);
+
+  // メイン機能の点検表
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">運用管理</h1>
-        <Button variant="outline" onClick={() => setLocation("/")}> {/*Using wouter setLocation*/}
-          <Settings className="mr-2 h-4 w-4" />
-          管理メニュー
-        </Button>
-      </div>
+    <div className="container mx-auto p-4">
+      <div className="flex flex-col space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">運用管理</h1>
+          <p className="text-muted-foreground">保守用車両の運用管理と点検を行います</p>
+        </div>
 
-      {/* 基本情報 - 3 items in a row at the top */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>点検基本情報</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle>点検基本情報</CardTitle>
+            <CardDescription>点検の基本情報を入力してください</CardDescription>
+          </CardHeader>
+          <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="inspectionDate">点検日</Label>
+              <Label htmlFor="date">点検日</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
-                    variant="outline"
-                    className="w-full justify-start text-left font-normal"
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !date && "text-muted-foreground"
+                    )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, 'yyyy年MM月dd日') : "日付を選択"}
+                    {date ? format(date, "yyyy年MM月dd日") : "日付を選択"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
@@ -80,39 +158,16 @@ export default function OperationsPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="startTime">開始時間</Label>
-              <Input id="startTime" type="time" />
+              <Input id="startTime" placeholder="開始時間を入力" type="time" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="endTime">終了時間</Label>
-              <Input id="endTime" type="time" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
-            <div className="space-y-2">
-              <Label htmlFor="vehicleType">車両型式</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="型式を選択" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="mc300">MC300</SelectItem>
-                  <SelectItem value="mc100">MC100</SelectItem>
-                  <SelectItem value="mc400">MC400</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input id="endTime" placeholder="終了時間を入力" type="time" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="vehicleId">車両番号</Label>
-              <Input id="vehicleId" placeholder="車両番号を入力" />
+              <Label htmlFor="location">点検場所</Label>
+              <Input id="location" placeholder="場所を入力" />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="location">場所</Label>
-              <Input id="location" placeholder="点検場所を入力" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
             <div className="space-y-2">
               <Label htmlFor="inspector">責任者</Label>
               <Input id="inspector" placeholder="責任者名を入力" />
@@ -125,13 +180,18 @@ export default function OperationsPage() {
         </CardContent>
       </Card>
 
-      {/* 点検タブ */}
-      <Tabs defaultValue="exit" className="w-full" onValueChange={(value) => setActiveTab(value as InspectionTab)}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="exit" disabled={activeTab === "entry"}>出発前点検</TabsTrigger>
-          <TabsTrigger value="maintenance">帰着点検</TabsTrigger>
-          <TabsTrigger value="entry" disabled={activeTab === "exit"}>入庫時点検</TabsTrigger>
-        </TabsList>
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle>点検表</CardTitle>
+            <CardDescription>点検項目を確認し、結果を入力してください</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="exit" value={activeTab} onValueChange={(value) => setActiveTab(value as InspectionTab)}>
+              <TabsList className="grid grid-cols-3">
+                <TabsTrigger value="exit">出発前点検</TabsTrigger>
+                <TabsTrigger value="periodic">仕業点検</TabsTrigger>
+                <TabsTrigger value="entry">帰着点検</TabsTrigger>
+              </TabsList>
 
         <TabsContent value="exit">
           <Card>
@@ -140,106 +200,122 @@ export default function OperationsPage() {
               <CardDescription>保守用車の出発前点検を行います</CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[15%]">部位</TableHead>
-                    <TableHead className="w-[15%]">装置</TableHead>
-                    <TableHead className="w-[20%]">確認箇所</TableHead>
-                    <TableHead className="w-[20%]">判断基準</TableHead>
-                    <TableHead className="w-[10%]">結果</TableHead>
-                    <TableHead className="w-[20%]">特記</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {inspectionItems.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>{item.category}</TableCell>
-                      <TableCell>{item.equipment}</TableCell>
-                      <TableCell>{item.item}</TableCell>
-                      <TableCell>{item.criteria}</TableCell>
-                      <TableCell>
-                        <Select>
-                          <SelectTrigger>
-                            <SelectValue placeholder="結果" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="完了">完了</SelectItem>
-                            <SelectItem value="調整">調整</SelectItem>
-                            <SelectItem value="補充">補充</SelectItem>
-                            <SelectItem value="交換">交換</SelectItem>
-                            <SelectItem value="経過観察">経過観察</SelectItem>
-                            <SelectItem value="その他">その他</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <Input placeholder="特記事項（50文字以内）" maxLength={50} />
-                      </TableCell>
+              {loading ? (
+                <div className="text-center py-4">データ読み込み中...</div>
+              ) : error ? (
+                <div className="text-center text-red-500 py-4">{error}</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[12%]">部位</TableHead>
+                      <TableHead className="w-[12%]">装置</TableHead>
+                      <TableHead className="w-[15%]">確認箇所</TableHead>
+                      <TableHead className="w-[15%]">判断基準</TableHead>
+                      <TableHead className="w-[15%]">確認要領</TableHead>
+                      <TableHead className="w-[7%]">測定等記録</TableHead>
+                      <TableHead className="w-[7%]">図形記録</TableHead>
+                      <TableHead className="w-[8%]">結果</TableHead>
+                      <TableHead className="w-[9%]">特記事項</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {inspectionItems.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>{item.category}</TableCell>
+                        <TableCell>{item.equipment}</TableCell>
+                        <TableCell>{item.item}</TableCell>
+                        <TableCell>{item.criteria}</TableCell>
+                        <TableCell>{item.method}</TableCell>
+                        <TableCell>{item.measurementRecord}</TableCell>
+                        <TableCell>{item.diagramRecord}</TableCell>
+                        <TableCell>
+                          <Select>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="選択" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="完了">完了</SelectItem>
+                              <SelectItem value="調整">調整</SelectItem>
+                              <SelectItem value="補充">補充</SelectItem>
+                              <SelectItem value="交換">交換</SelectItem>
+                              <SelectItem value="経過観察">経過観察</SelectItem>
+                              <SelectItem value="その他">その他</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <Input placeholder="特記事項" />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="outline">保存</Button>
-              <Button>提出</Button>
-            </CardFooter>
           </Card>
         </TabsContent>
 
-        <TabsContent value="maintenance">
+        <TabsContent value="periodic">
           <Card>
             <CardHeader>
-              <CardTitle>帰着点検表</CardTitle>
-              <CardDescription>保守用車の帰着点検を行います</CardDescription>
+              <CardTitle>仕業点検表</CardTitle>
+              <CardDescription>保守用車の定期的な仕業点検を行います</CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[15%]">部位</TableHead>
-                    <TableHead className="w-[15%]">装置</TableHead>
-                    <TableHead className="w-[20%]">確認箇所</TableHead>
-                    <TableHead className="w-[20%]">判断基準</TableHead>
-                    <TableHead className="w-[10%]">結果</TableHead>
-                    <TableHead className="w-[20%]">特記</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {inspectionItems.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>{item.category}</TableCell>
-                      <TableCell>{item.equipment}</TableCell>
-                      <TableCell>{item.item}</TableCell>
-                      <TableCell>{item.criteria}</TableCell>
-                      <TableCell>
-                        <Select>
-                          <SelectTrigger>
-                            <SelectValue placeholder="結果" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="完了">完了</SelectItem>
-                            <SelectItem value="調整">調整</SelectItem>
-                            <SelectItem value="補充">補充</SelectItem>
-                            <SelectItem value="交換">交換</SelectItem>
-                            <SelectItem value="経過観察">経過観察</SelectItem>
-                            <SelectItem value="その他">その他</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <Input placeholder="特記事項（50文字以内）" maxLength={50} />
-                      </TableCell>
+              {loading ? (
+                <div className="text-center py-4">データ読み込み中...</div>
+              ) : error ? (
+                <div className="text-center text-red-500 py-4">{error}</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[12%]">部位</TableHead>
+                      <TableHead className="w-[12%]">装置</TableHead>
+                      <TableHead className="w-[15%]">確認箇所</TableHead>
+                      <TableHead className="w-[15%]">判断基準</TableHead>
+                      <TableHead className="w-[15%]">確認要領</TableHead>
+                      <TableHead className="w-[7%]">測定等記録</TableHead>
+                      <TableHead className="w-[7%]">図形記録</TableHead>
+                      <TableHead className="w-[8%]">結果</TableHead>
+                      <TableHead className="w-[9%]">特記事項</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {inspectionItems.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>{item.category}</TableCell>
+                        <TableCell>{item.equipment}</TableCell>
+                        <TableCell>{item.item}</TableCell>
+                        <TableCell>{item.criteria}</TableCell>
+                        <TableCell>{item.method}</TableCell>
+                        <TableCell>{item.measurementRecord}</TableCell>
+                        <TableCell>{item.diagramRecord}</TableCell>
+                        <TableCell>
+                          <Select>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="選択" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="完了">完了</SelectItem>
+                              <SelectItem value="調整">調整</SelectItem>
+                              <SelectItem value="補充">補充</SelectItem>
+                              <SelectItem value="交換">交換</SelectItem>
+                              <SelectItem value="経過観察">経過観察</SelectItem>
+                              <SelectItem value="その他">その他</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <Input placeholder="特記事項" />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="outline">保存</Button>
-              <Button>提出</Button>
-            </CardFooter>
           </Card>
         </TabsContent>
 
@@ -250,54 +326,69 @@ export default function OperationsPage() {
               <CardDescription>保守用車の帰着点検を行います</CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[15%]">部位</TableHead>
-                    <TableHead className="w-[15%]">装置</TableHead>
-                    <TableHead className="w-[20%]">確認箇所</TableHead>
-                    <TableHead className="w-[20%]">判断基準</TableHead>
-                    <TableHead className="w-[10%]">結果</TableHead>
-                    <TableHead className="w-[20%]">特記</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {inspectionItems.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>{item.category}</TableCell>
-                      <TableCell>{item.equipment}</TableCell>
-                      <TableCell>{item.item}</TableCell>
-                      <TableCell>{item.criteria}</TableCell>
-                      <TableCell>
-                        <Select>
-                          <SelectTrigger>
-                            <SelectValue placeholder="結果" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="完了">完了</SelectItem>
-                            <SelectItem value="調整">調整</SelectItem>
-                            <SelectItem value="補充">補充</SelectItem>
-                            <SelectItem value="交換">交換</SelectItem>
-                            <SelectItem value="経過観察">経過観察</SelectItem>
-                            <SelectItem value="その他">その他</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <Input placeholder="特記事項（50文字以内）" maxLength={50} />
-                      </TableCell>
+              {loading ? (
+                <div className="text-center py-4">データ読み込み中...</div>
+              ) : error ? (
+                <div className="text-center text-red-500 py-4">{error}</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[12%]">部位</TableHead>
+                      <TableHead className="w-[12%]">装置</TableHead>
+                      <TableHead className="w-[15%]">確認箇所</TableHead>
+                      <TableHead className="w-[15%]">判断基準</TableHead>
+                      <TableHead className="w-[15%]">確認要領</TableHead>
+                      <TableHead className="w-[7%]">測定等記録</TableHead>
+                      <TableHead className="w-[7%]">図形記録</TableHead>
+                      <TableHead className="w-[8%]">結果</TableHead>
+                      <TableHead className="w-[9%]">特記事項</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {inspectionItems.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>{item.category}</TableCell>
+                        <TableCell>{item.equipment}</TableCell>
+                        <TableCell>{item.item}</TableCell>
+                        <TableCell>{item.criteria}</TableCell>
+                        <TableCell>{item.method}</TableCell>
+                        <TableCell>{item.measurementRecord}</TableCell>
+                        <TableCell>{item.diagramRecord}</TableCell>
+                        <TableCell>
+                          <Select>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="選択" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="完了">完了</SelectItem>
+                              <SelectItem value="調整">調整</SelectItem>
+                              <SelectItem value="補充">補充</SelectItem>
+                              <SelectItem value="交換">交換</SelectItem>
+                              <SelectItem value="経過観察">経過観察</SelectItem>
+                              <SelectItem value="その他">その他</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <Input placeholder="特記事項" />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="outline">保存</Button>
-              <Button>提出</Button>
-            </CardFooter>
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
-  );
+    </CardContent>
+    <CardFooter className="flex justify-between">
+      <Button variant="outline">キャンセル</Button>
+      <Button>点検結果を保存</Button>
+    </CardFooter>
+  </Card>
+</div>
+</div>
+);
 }

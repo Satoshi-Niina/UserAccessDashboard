@@ -1091,7 +1091,7 @@ export default function InspectionItems() {
               variant="outline" 
               onClick={() => setIsDialogOpen(false)}
             >
-              編集完了
+              {isEditMode ? "編集完了" : "キャンセル"}
             </Button>
             <Button type="button" onClick={addInspectionItem}>
               {isEditMode ? "更新" : "追加"}

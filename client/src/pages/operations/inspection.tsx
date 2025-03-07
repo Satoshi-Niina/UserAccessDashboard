@@ -438,11 +438,8 @@ export default function Inspection() {
             </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsDialogOpen(false)}
-            >
-              キャンセル
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              {isEditMode ? "編集終了" : "キャンセル"}
             </Button>
             <Button onClick={addInspectionItem}>
               {isEditMode ? "更新" : "追加"}

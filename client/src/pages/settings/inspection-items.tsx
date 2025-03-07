@@ -840,7 +840,7 @@ export default function InspectionItems() {
   const [dynamicFields, setDynamicFields] = useState<Array<{ key: string, label: string, value: string }>>([]);
 
   // 点検項目の編集
-  const openEditDialog = (item: InspectionItem) => {
+  const handleEditDialog = (item: InspectionItem) => {
     // 基本フィールド以外の動的フィールドを検出
     const baseFields = ['id', 'manufacturer', 'model', 'category', 'equipment', 'item', 'criteria', 'method', 'measurementRecord', 'diagramRecord'];
     const extraFields: Array<{ key: string, label: string, value: string }> = [];

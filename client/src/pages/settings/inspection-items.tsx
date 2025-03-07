@@ -264,6 +264,15 @@ export default function InspectionItems() {
     setIsDialogOpen(true);
   };
 
+  // 項目追加ダイアログを開く
+  const openAddItemDialog = () => {
+    setIsEditMode(false);
+    setCurrentItem(null);
+    // 将来的に項目追加用の専用ダイアログを表示する場合は
+    // ここでそのダイアログを開く処理を実装する
+    setIsDialogOpen(true);
+  };
+
   // 点検項目の編集ダイアログを開く
   const openEditDialog = (item: InspectionItem) => {
     setIsEditMode(true);
@@ -932,16 +941,16 @@ export default function InspectionItems() {
                 className="gap-1"
               >
                 <Plus className="h-4 w-4" />
-                新規追加
+                レコード追加
               </Button>
               <Button
-                variant="default"
+                variant="outline"
                 size="sm"
-                onClick={saveChanges}
+                onClick={openAddItemDialog}
                 className="gap-1"
               >
-                <Save className="h-4 w-4" />
-                変更を保存
+                <Plus className="h-4 w-4" />
+                項目追加
               </Button>
             </div>
           </div>
@@ -950,8 +959,7 @@ export default function InspectionItems() {
           {filteredItems.length > 0 ? (
             <div className="border rounded-md overflow-x-auto" style={{ maxWidth: '100%', overflowY: 'auto', maxHeight: '65vh' }}>
               <Table className="min-w-[2000px] border-collapse">
-                <TableHeader>
-                  <TableRow className="border-b border-gray-200">
+                <TableHeader><TableRow className="border-b border-gray-200">
                     <TableHead className="w-[120px] py-2 border border-gray-200">製造メーカー</TableHead>
                      <TableHead className="w-[120px] py-2 border border-gray-200">機種</TableHead>
                     <TableHead className="w-[120px] py-2 border border-gray-200">部位</TableHead>

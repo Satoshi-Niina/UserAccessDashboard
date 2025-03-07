@@ -950,7 +950,6 @@ export default function InspectionItems() {
               >
                 <Plus className="h-4 w-4" />
                 レコード追加
-              Button>
               </Button>
               <Button
                 variant="outline"

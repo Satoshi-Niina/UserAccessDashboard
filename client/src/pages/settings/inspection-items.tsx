@@ -39,20 +39,23 @@ import {
 import { Plus, Edit, Trash2, Save, ArrowLeft, Check, GripVertical } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useDrag, useDrop } from 'react-dnd';
+import Papa from 'papaparse'; // Import PapaParse
 
 
-// 点検項目の型定義
+// インスペクション項目の型定義（動的フィールドをサポート）
 interface InspectionItem {
   id: number;
   manufacturer: string;
   model: string;
+  engineType?: string;  // オプショナル
   category: string;
-  equipment?: string;        // 装置
+  equipment: string;
   item: string;
-  method: string;
   criteria: string;
-  measurementRecord?: string; // Optional measurement record
-  diagramRecord?: string;     // Optional diagram record
+  method: string;
+  measurementRecord: string;
+  diagramRecord: string;
+  [key: string]: any;  // 動的なプロパティに対応
 }
 
 export default function InspectionItems() {
@@ -89,6 +92,7 @@ export default function InspectionItems() {
   const [_, navigate] = useLocation();
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [saveFileName, setSaveFileName] = useState("");
+  const [loading, setLoading] = useState(false); // ローディング状態を追加
 
   const { toast } = useToast();
 
@@ -159,43 +163,71 @@ export default function InspectionItems() {
           throw new Error('データが空です');
         }
 
-        // CSVパース処理
-        const lines = csvText.split('\n');
-        const headers = lines[0].split(',').map(header => header.trim());
+        // CSVパース処理 - 柔軟に対応するため、ヘッダーマッピングを動的に行う
+        const results = Papa.parse(csvText, {
+          header: true,
+          skipEmptyLines: true,
+          // エラーを許容する
+          error: (error) => {
+            console.error("CSV解析エラー:", error);
+          }
+        });
 
+        if (results.errors && results.errors.length > 0) {
+          console.log("CSVパースエラー:", results.errors);
+          // エラーを表示するが、処理は続行する
+          toast({
+            title: "CSVパース警告",
+            description: "一部のデータが正しく読み込めない可能性があります",
+            variant: "warning",
+          });
+        }
+
+        // ヘッダーの確認とマッピング
+        const headers = results.meta.fields || [];
         console.log("CSVヘッダー:", headers);
         console.log("予想されるヘッダー数:", headers.length);
-        // CSVから点検項目データを変換
-        const items: InspectionItem[] = [];
-        let nextId = 1;
 
-        for (let i = 1; i < lines.length; i++) {
-          if (!lines[i].trim()) continue;
+        // ヘッダーマッピングを動的に構築
+        const headerMapping: Record<string, string> = {
+          // 日本語ヘッダー -> アプリケーションのプロパティ名
+          '製造メーカー': 'manufacturer',
+          '機種': 'model',
+          'エンジン型式': 'engineType',
+          '部位': 'category',
+          '装置': 'equipment',
+          '確認箇所': 'item',
+          '判断基準': 'criteria',
+          '確認要領': 'method',
+          '測定等記録': 'measurementRecord',
+          '図形記録': 'diagramRecord',
+          // 追加可能なフィールド
+          '時期': 'season',
+          '備考': 'remarks',
+          'メモ': 'notes'
+        };
 
-          const values = lines[i].split(',');
-          const rowData: Record<string, string> = {};
+        // データをアプリケーションの形式に変換（柔軟なマッピング）
+        const items = results.data.map((row: any, index: number) => {
+          const item: Record<string, any> = { id: index + 1 };
 
-          // 各カラムの値をマッピング（存在する分だけ）
-          for (let j = 0; j < headers.length && j < values.length; j++) {
-            rowData[headers[j]] = values[j]?.trim() || '';
-          }
+          // すべてのヘッダーに対して処理
+          Object.keys(row).forEach(header => {
+            // マッピングされたプロパティ名があればそれを使用、なければヘッダー名をそのまま使用
+            const propName = headerMapping[header] || header;
+            item[propName] = row[header] || '';
+          });
 
-          // CSVのデータ構造を点検項目の構造に変換
-          const inspectionItem: InspectionItem = {
-            id: nextId++,
-            manufacturer: rowData['製造メーカー'] || '',
-            model: rowData['機種'] || '',
-            category: rowData['部位'] || '',
-            equipment: rowData['装置'] || '',
-            item: rowData['確認箇所'] || '',
-            criteria: rowData['判断基準'] || '',
-            method: rowData['確認要領'] || '',
-            measurementRecord: rowData['測定等記録'] || '',
-            diagramRecord: rowData['図形記録'] || ''
-          };
+          // 必須フィールドが存在しない場合は空文字で初期化
+          const requiredFields = ['manufacturer', 'model', 'category', 'equipment', 'item', 'criteria', 'method', 'measurementRecord', 'diagramRecord'];
+          requiredFields.forEach(field => {
+            if (item[field] === undefined) {
+              item[field] = '';
+            }
+          });
 
-          items.push(inspectionItem);
-        }
+          return item as InspectionItem;
+        });
 
         setInspectionItems(items);
 
@@ -426,28 +458,72 @@ export default function InspectionItems() {
   // 変更を保存する
   const saveChanges = async (newFileName?: string) => {
     try {
-      // 現在の点検項目データをCSV形式に変換
-      // 元のCSVファイルのヘッダー順序に従って出力
-      const csvRows = [];
-      // ヘッダー行を追加 - 保存時は元のCSVと同じヘッダー形式を使用
-      const csvHeaders = ['製造メーカー', '機種', 'エンジン型式', '部位', '装置', '確認箇所', '判断基準', '確認要領', '測定等記録', '図形記録'];
-      csvRows.push(csvHeaders.join(','));
+      // 保存するフィールドを決定（動的に変更可能）
+      // 基本フィールドを定義
+      const baseFields = [
+        { header: '製造メーカー', key: 'manufacturer' },
+        { header: '機種', key: 'model' },
+        { header: 'エンジン型式', key: 'engineType' },
+        { header: '部位', key: 'category' },
+        { header: '装置', key: 'equipment' },
+        { header: '確認箇所', key: 'item' },
+        { header: '判断基準', key: 'criteria' },
+        { header: '確認要領', key: 'method' },
+        { header: '測定等記録', key: 'measurementRecord' },
+        { header: '図形記録', key: 'diagramRecord' }
+      ];
+
+      // 追加フィールドがあれば動的に追加（例：サンプルデータから追加フィールドを検出）
+      const additionalFields: Array<{ header: string, key: string }> = [];
+
+      // 最初の項目で利用可能なフィールドを確認
+      if (inspectionItems.length > 0) {
+        const firstItem = inspectionItems[0];
+        Object.keys(firstItem).forEach(key => {
+          // 基本フィールド以外で、idでもなければ追加フィールドとして扱う
+          const isBaseField = baseFields.some(field => field.key === key);
+          if (!isBaseField && key !== 'id') {
+            // キーをヘッダー名に変換（camelCase -> 日本語など）
+            let header = key;
+            if (key === 'season') header = '時期';
+            if (key === 'remarks') header = '備考';
+            if (key === 'notes') header = 'メモ';
+
+            additionalFields.push({ header, key });
+          }
+        });
+      }
+
+      // 全フィールドを結合
+      const allFields = [...baseFields, ...additionalFields];
+
+      // ヘッダー行を作成
+      const csvHeaders = allFields.map(field => field.header);
+      const csvRows = [csvHeaders.join(',')];
 
       // データ行を追加
       inspectionItems.forEach(item => {
-        const values = [
-          item.manufacturer,
-          item.model,
-          '', // エンジン型式は空欄
-          item.category,
-          item.equipment || "",
-          item.item,
-          item.criteria,
-          item.method,
-          item.measurementRecord || "",
-          item.diagramRecord || ""
-        ].map(val => `${val}`).join(',');
-        csvRows.push(values);
+        // 各フィールドの値を取得
+        const values = allFields.map(field => {
+          // key が 'engineType' で、値が undefined または空文字の場合は空欄を返す
+          if (field.key === 'engineType' && (!item[field.key] || item[field.key] === '')) {
+            return '';
+          }
+          // その他のフィールドは値をそのまま返す（ただし undefined の場合は空文字を返す）
+          return item[field.key] !== undefined ? item[field.key] : '';
+        });
+
+        // カンマを含む値は引用符で囲む処理を追加
+        const escapedValues = values.map(val => {
+          // 値にカンマ、改行、引用符が含まれる場合
+          if (typeof val === 'string' && (val.includes(',') || val.includes('\n') || val.includes('"'))) {
+            // 引用符をエスケープして引用符で囲む
+            return `"${val.replace(/"/g, '""')}"`;
+          }
+          return val;
+        });
+
+        csvRows.push(escapedValues.join(','));
       });
 
       const csvContent = csvRows.join('\n');
@@ -528,44 +604,71 @@ export default function InspectionItems() {
         try {
           const text = e.target?.result as string;
           // CSVデータを解析
-          const lines = text.split('\n');
-          const headers = lines[0].split(',').map(header => header.trim());
+          const results = Papa.parse(text, {
+            header: true,
+            skipEmptyLines: true,
+            // エラーを許容する
+            error: (error) => {
+              console.error("CSV解析エラー:", error);
+            }
+          });
 
+          if (results.errors && results.errors.length > 0) {
+            console.log("CSVパースエラー:", results.errors);
+            // エラーを表示するが、処理は続行する
+            toast({
+              title: "CSVパース警告",
+              description: "一部のデータが正しく読み込めない可能性があります",
+              variant: "warning",
+            });
+          }
+
+          // ヘッダーの確認とマッピング
+          const headers = results.meta.fields || [];
           console.log("CSVヘッダー:", headers);
           console.log("予想されるヘッダー数:", headers.length);
-          // CSVから点検項目データを変換
-          const items: InspectionItem[] = [];
-          let nextId = inspectionItems.length > 0
-            ? Math.max(...inspectionItems.map(item => item.id)) + 1
-            : 1;
 
-          for (let i = 1; i < lines.length; i++) {
-            if (!lines[i].trim()) continue;
 
-            const values = lines[i].split(',');
-            const rowData: Record<string, string> = {};
+          // ヘッダーマッピングを動的に構築
+          const headerMapping: Record<string, string> = {
+            // 日本語ヘッダー -> アプリケーションのプロパティ名
+            '製造メーカー': 'manufacturer',
+            '機種': 'model',
+            'エンジン型式': 'engineType',
+            '部位': 'category',
+            '装置': 'equipment',
+            '確認箇所': 'item',
+            '判断基準': 'criteria',
+            '確認要領': 'method',
+            '測定等記録': 'measurementRecord',
+            '図形記録': 'diagramRecord',
+            // 追加可能なフィールド
+            '時期': 'season',
+            '備考': 'remarks',
+            'メモ': 'notes'
+          };
 
-            // 各カラムの値をマッピング（存在する分だけ）
-            for (let j = 0; j < headers.length && j < values.length; j++) {
-              rowData[headers[j]] = values[j]?.trim() || '';
-            }
+          // データをアプリケーションの形式に変換（柔軟なマッピング）
+          const items = results.data.map((row: any, index: number) => {
+            const item: Record<string, any> = { id: index + 1 };
 
-            // CSVのデータ構造を点検項目の構造に変換
-            const inspectionItem: InspectionItem = {
-              id: nextId++,
-              manufacturer: rowData['製造メーカー'] || '',
-              model: rowData['機種'] || '',
-              category: rowData['部位'] || '',
-              item: rowData['確認箇所'] || '',
-              method: rowData['確認要領'] || '',
-              criteria: rowData['判断基準'] || '',
-              measurementRecord: rowData['測定等記録'] || '',
-              diagramRecord: rowData['図形記録'] || '',
-              equipment: rowData['装置'] || ''
-            };
+            // すべてのヘッダーに対して処理
+            Object.keys(row).forEach(header => {
+              // マッピングされたプロパティ名があればそれを使用、なければヘッダー名をそのまま使用
+              const propName = headerMapping[header] || header;
+              item[propName] = row[header] || '';
+            });
 
-            items.push(inspectionItem);
-          }
+            // 必須フィールドが存在しない場合は空文字で初期化
+            const requiredFields = ['manufacturer', 'model', 'category', 'equipment', 'item', 'criteria', 'method', 'measurementRecord', 'diagramRecord'];
+            requiredFields.forEach(field => {
+              if (item[field] === undefined) {
+                item[field] = '';
+              }
+            });
+
+            return item as InspectionItem;
+          });
 
           setCsvData(items);
           toast({
@@ -729,6 +832,92 @@ export default function InspectionItems() {
         </TableCell>
       </TableRow>
     );
+  };
+
+  // 編集用ダイアログの状態
+  const [editItem, setEditItem] = useState<InspectionItem | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [dynamicFields, setDynamicFields] = useState<Array<{ key: string, label: string, value: string }>>([]);
+
+  // 点検項目の編集
+  const openEditDialog = (item: InspectionItem) => {
+    // 基本フィールド以外の動的フィールドを検出
+    const baseFields = ['id', 'manufacturer', 'model', 'category', 'equipment', 'item', 'criteria', 'method', 'measurementRecord', 'diagramRecord'];
+    const extraFields: Array<{ key: string, label: string, value: string }> = [];
+
+    Object.entries(item).forEach(([key, value]) => {
+      if (!baseFields.includes(key) && key !== 'engineType') {
+        // キーをラベルに変換（camelCase -> 日本語など）
+        let label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+        if (key === 'season') label = '時期';
+        if (key === 'remarks') label = '備考';
+        if (key === 'notes') label = 'メモ';
+
+        extraFields.push({ key, label, value: value as string });
+      }
+    });
+
+    setDynamicFields(extraFields);
+    setEditItem({ ...item });
+    setIsEditDialogOpen(true);
+  };
+
+  // 動的フィールドの値を更新
+  const updateDynamicField = (index: number, value: string) => {
+    const updatedFields = [...dynamicFields];
+    updatedFields[index].value = value;
+    setDynamicFields(updatedFields);
+  };
+
+  // 新しいフィールドを追加
+  const addNewField = () => {
+    // フィールド名のプリセット
+    const presets = [
+      { key: 'season', label: '時期' },
+      { key: 'remarks', label: '備考' },
+      { key: 'notes', label: 'メモ' },
+      { key: 'frequency', label: '頻度' },
+      { key: 'priority', label: '優先度' }
+    ];
+
+    // すでに使用されていないプリセットを探す
+    const unusedPreset = presets.find(preset => 
+      !dynamicFields.some(field => field.key === preset.key)
+    );
+
+    if (unusedPreset) {
+      setDynamicFields([...dynamicFields, { ...unusedPreset, value: '' }]);
+    } else {
+      // すべてのプリセットが使用済みの場合はカスタムフィールド
+      const customField = { 
+        key: `customField${dynamicFields.length + 1}`, 
+        label: `カスタムフィールド${dynamicFields.length + 1}`, 
+        value: '' 
+      };
+      setDynamicFields([...dynamicFields, customField]);
+    }
+  };
+
+  // 点検項目の編集を保存
+  const handleSaveEdit = () => {
+    if (!editItem) return;
+
+    // 動的フィールドの値をeditItemに追加
+    const updatedEditItem = { ...editItem };
+    dynamicFields.forEach(field => {
+      updatedEditItem[field.key] = field.value;
+    });
+
+    const updatedItems = inspectionItems.map(item => 
+      item.id === updatedEditItem.id ? updatedEditItem : item
+    );
+
+    setInspectionItems(updatedItems);
+    setIsEditDialogOpen(false);
+    toast({
+      title: "更新完了",
+      description: "点検項目を更新しました",
+    });
   };
 
   return (
@@ -1217,6 +1406,180 @@ export default function InspectionItems() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {/* 点検項目編集ダイアログ */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>点検項目の編集</DialogTitle>
+          </DialogHeader>
+          {editItem && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="manufacturer" className="text-right">
+                  製造メーカー
+                </Label>
+                <Input
+                  id="manufacturer"
+                  value={editItem.manufacturer}
+                  onChange={(e) => setEditItem({ ...editItem, manufacturer: e.target.value })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="model" className="text-right">
+                  機種
+                </Label>
+                <Input
+                  id="model"
+                  value={editItem.model}
+                  onChange={(e) => setEditItem({ ...editItem, model: e.target.value })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="engineType" className="text-right">
+                  エンジン型式
+                </Label>
+                <Input
+                  id="engineType"
+                  value={editItem.engineType || ''}
+                  onChange={(e) => setEditItem({ ...editItem, engineType: e.target.value })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="category" className="text-right">
+                  部位
+                </Label>
+                <Input
+                  id="category"
+                  value={editItem.category}
+                  onChange={(e) => setEditItem({ ...editItem, category: e.target.value })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="equipment" className="text-right">
+                  装置
+                </Label>
+                <Input
+                  id="equipment"
+                  value={editItem.equipment}
+                  onChange={(e) => setEditItem({ ...editItem, equipment: e.target.value })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="item" className="text-right">
+                  確認箇所
+                </Label>
+                <Input
+                  id="item"
+                  value={editItem.item}
+                  onChange={(e) => setEditItem({ ...editItem, item: e.target.value })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="criteria" className="text-right">
+                  判断基準
+                </Label>
+                <Input
+                  id="criteria"
+                  value={editItem.criteria}
+                  onChange={(e) => setEditItem({ ...editItem, criteria: e.target.value })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="method" className="text-right">
+                  確認要領
+                </Label>
+                <Input
+                  id="method"
+                  value={editItem.method}
+                  onChange={(e) => setEditItem({ ...editItem, method: e.target.value })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="measurementRecord" className="text-right">
+                  測定等記録
+                </Label>
+                <Input
+                  id="measurementRecord"
+                  value={editItem.measurementRecord}
+                  onChange={(e) => setEditItem({ ...editItem, measurementRecord: e.target.value })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="diagramRecord" className="text-right">
+                  図形記録
+                </Label>
+                <Input
+                  id="diagramRecord"
+                  value={editItem.diagramRecord}
+                  onChange={(e) => setEditItem({ ...editItem, diagramRecord: e.target.value })}
+                  className="col-span-3"
+                />
+              </div>
+
+              {/* 動的フィールド */}
+              {dynamicFields.map((field, index) => (
+                <div key={field.key} className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor={field.key} className="text-right">
+                    {field.label}
+                  </Label>
+                  <div className="col-span-3 flex gap-2">
+                    <Input
+                      id={field.key}
+                      value={field.value}
+                      onChange={(e) => updateDynamicField(index, e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      onClick={() => {
+                        const newFields = [...dynamicFields];
+                        newFields.splice(index, 1);
+                        setDynamicFields(newFields);
+                      }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                        <path d="M18 6L6 18"></path>
+                        <path d="M6 6L18 18"></path>
+                      </svg>
+                    </Button>
+                  </div>
+                </div>
+              ))}
+
+              {/* フィールド追加ボタン */}
+              <div className="flex justify-end">
+                <Button 
+                  variant="outline" 
+                  onClick={addNewField}
+                  className="flex items-center gap-1"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                    <path d="M12 5V19"></path>
+                    <path d="M5 12H19"></path>
+                  </svg>
+                  フィールド追加
+                </Button>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              キャンセル
+            </Button>
+            <Button onClick={handleSaveEdit}>保存</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
     </DndProvider>
   );

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { z } from "zod";
@@ -26,7 +25,7 @@ export default function OperationsPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<InspectionTab>("entry");
   const [date, setDate] = useState<Date | undefined>(new Date());
-  
+
   // 検査項目データの例（実際にはAPIから取得）
   const inspectionItems = [
     {
@@ -74,13 +73,13 @@ export default function OperationsPage() {
   // 仮の製造メーカーと機種のフィルター状態
   const [manufacturerFilter, setManufacturerFilter] = useState("all");
   const [modelFilter, setModelFilter] = useState("all");
-  
+
   // フィルター適用した検査項目
   const filteredItems = inspectionItems.filter(item => 
     (manufacturerFilter === "all" || item.manufacturer === manufacturerFilter) &&
     (modelFilter === "all" || item.model === modelFilter)
   );
-  
+
   // タブ切り替え処理
   const handleTabChange = (value: string) => {
     setActiveTab(value as InspectionTab);
@@ -179,7 +178,7 @@ export default function OperationsPage() {
               <TabsTrigger value="exit">入庫時点検</TabsTrigger>
               <TabsTrigger value="maintenance">定期点検</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="entry" className="space-y-4">
               <Card>
                 <CardHeader>
@@ -230,7 +229,7 @@ export default function OperationsPage() {
                 </CardFooter>
               </Card>
             </TabsContent>
-            
+
             <TabsContent value="exit">
               <Card>
                 <CardHeader>
@@ -279,7 +278,7 @@ export default function OperationsPage() {
                 </CardFooter>
               </Card>
             </TabsContent>
-            
+
             <TabsContent value="maintenance">
               <Card>
                 <CardHeader>

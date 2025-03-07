@@ -5,7 +5,9 @@ import { Button } from '../../components/ui/button';
 import Inspection from './inspection';
 import OperationalPlan from './operational-plan';
 
-// キャッシュを強制的にクリアする関数
+// キャッシュをimport OperationalPlan from './operational-plan';
+
+// 強制的にクリアする関数
 const clearCache = () => {
   if ('caches' in window) {
     caches.keys().then((names) => {
@@ -58,6 +60,11 @@ export default function Operations() {
 
             <TabsContent value="inspection" className="p-4">
               <Inspection />
+            </TabsContent>
+
+            <TabsContent value="operational-plan" className="p-4">
+              <OperationalPlan />
+            </TabsContent>
             </TabsContent>
 
             <TabsContent value="operational-plan" className="p-4">

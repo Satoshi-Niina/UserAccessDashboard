@@ -957,7 +957,7 @@ export default function InspectionItems() {
 
           {/* 点検項目テーブル */}
           {filteredItems.length > 0 ? (
-            <div className="border rounded-md overflow-x-auto" style={{ maxWidth: '100%', overflowY: ''auto', maxHeight: '65vh' }}>
+            <div className="border rounded-md overflow-x-auto" style={{ maxWidth: '100%', overflowY: 'auto', maxHeight: '65vh' }}>
               <Table className="min-w-[2000px] border-collapse">
                 <TableHeader><TableRow className="border-b border-gray-200">
                     <TableHead className="w-[120px] py-2 border border-gray-200">製造メーカー</TableHead>

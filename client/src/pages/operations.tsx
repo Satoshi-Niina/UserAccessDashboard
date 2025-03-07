@@ -433,8 +433,8 @@ function Inspection() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <div>
               <Label htmlFor="manufacturer">製造メーカー</Label>
-              <Select 
-                value={selectedManufacturer || "all"} 
+              <Select
+                value={selectedManufacturer || "all"}
                 onValueChange={(value) => {
                   console.log("製造メーカー選択:", value);
                   setSelectedManufacturer(value);
@@ -462,8 +462,8 @@ function Inspection() {
 
             <div>
               <Label htmlFor="model">機種</Label>
-              <Select 
-                value={selectedModel || "all"} 
+              <Select
+                value={selectedModel || "all"}
                 onValueChange={(value) => {
                   console.log("機種選択:", value);
                   setSelectedModel(value);
@@ -502,8 +502,8 @@ function Inspection() {
               </Select>
 
               <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={async () => {
                     // 点検記録情報の入力確認
@@ -574,8 +574,8 @@ function Inspection() {
                   保存
                 </Button>
 
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={() => {
                     // 点検記録情報の入力確認
@@ -633,43 +633,44 @@ function Inspection() {
               </div>
             </div>
 
-          <div className="mt-2">
-            {filteredItems.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                該当する点検項目がありません。フィルターを変更してください。
-              </p>
-            ) : (
-              <Card className="overflow-hidden">
-                <CardContent className="p-0">
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="bg-muted/70">
-                          <th className="px-4 py-2 text-left font-medium text-muted-foreground border">装置</th>
-                          <th className="px-4 py-2 text-left font-medium text-muted-foreground border">確認箇所</th>
-                          <th className="px-4 py-2 text-left font-medium text-muted-foreground border">確認要領</th>
-                          <th className="px-4 py-2 text-left font-medium text-muted-foreground border">判断基準</th>
-                          <th className="px-4 py-2 text-left font-medium text-muted-foreground border">測定等記録</th>
-                          <th className="px-4 py-2 text-left font-medium text-muted-foreground border">図形記録</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredItems.map((item, idx) => (
-                          <tr key={idx} className="hover:bg-muted/50 transition-colors">
-                            <td className="px-4 py-2 border">{item.装置 || "-"}</td>
-                            <td className="px-4 py-2 border">{item.確認箇所 || "-"}</td>
-                            <td className="px-4 py-2 border">{item.確認要領 || "-"}</td>
-                            <td className="px-4 py-2 border">{item.判断基準 || "-"}</td>
-                            <td className="px-4 py-2 border">{item.測定等記録 || "-"}</td>
-                            <td className="px-4 py-2 border">{item.図形記録 || "-"}</td>
+            <div className="mt-2">
+              {filteredItems.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  該当する点検項目がありません。フィルターを変更してください。
+                </p>
+              ) : (
+                <Card className="overflow-hidden">
+                  <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr className="bg-muted/70">
+                            <th className="px-4 py-2 text-left font-medium text-muted-foreground border">装置</th>
+                            <th className="px-4 py-2 text-left font-medium text-muted-foreground border">確認箇所</th>
+                            <th className="px-4 py-2 text-left font-medium text-muted-foreground border">確認要領</th>
+                            <th className="px-4 py-2 text-left font-medium text-muted-foreground border">判断基準</th>
+                            <th className="px-4 py-2 text-left font-medium text-muted-foreground border">測定等記録</th>
+                            <th className="px-4 py-2 text-left font-medium text-muted-foreground border">図形記録</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                        </thead>
+                        <tbody>
+                          {filteredItems.map((item, idx) => (
+                            <tr key={idx} className="hover:bg-muted/50 transition-colors">
+                              <td className="px-4 py-2 border">{item.装置 || "-"}</td>
+                              <td className="px-4 py-2 border">{item.確認箇所 || "-"}</td>
+                              <td className="px-4 py-2 border">{item.確認要領 || "-"}</td>
+                              <td className="px-4 py-2 border">{item.判断基準 || "-"}</td>
+                              <td className="px-4 py-2 border">{item.測定等記録 || "-"}</td>
+                              <td className="px-4 py-2 border">{item.図形記録 || "-"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -692,8 +693,8 @@ export default function Operations() {
 
       <Card>
         <CardContent className="p-0">
-          <Tabs 
-            value={activeTab} 
+          <Tabs
+            value={activeTab}
             onValueChange={setActiveTab}
             className="w-full"
           >

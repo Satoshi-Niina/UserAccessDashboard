@@ -356,7 +356,81 @@ function Inspection() {
         </Alert>
       ) : (
         <div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* 点検記録情報の入力フォーム */}
+          <div className="border p-4 mb-6 rounded-md bg-gray-50">
+            <h3 className="text-lg font-semibold mb-4">仕業点検記録</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <Label htmlFor="inspectionDate">点検年月日</Label>
+                <Input
+                  id="inspectionDate"
+                  type="date"
+                  value={inspectionRecord.点検年月日}
+                  onChange={(e) => updateInspectionRecord('点検年月日', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="startTime">開始時刻</Label>
+                <Input
+                  id="startTime"
+                  type="time"
+                  value={inspectionRecord.開始時刻}
+                  onChange={(e) => updateInspectionRecord('開始時刻', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="endTime">終了時刻</Label>
+                <Input
+                  id="endTime"
+                  type="time"
+                  value={inspectionRecord.終了時刻}
+                  onChange={(e) => updateInspectionRecord('終了時刻', e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <Label htmlFor="location">実施箇所</Label>
+                <Input
+                  id="location"
+                  type="text"
+                  value={inspectionRecord.実施箇所}
+                  onChange={(e) => updateInspectionRecord('実施箇所', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="responsible">責任者</Label>
+                <Input
+                  id="responsible"
+                  type="text"
+                  value={inspectionRecord.責任者}
+                  onChange={(e) => updateInspectionRecord('責任者', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="inspector">点検者</Label>
+                <Input
+                  id="inspector"
+                  type="text"
+                  value={inspectionRecord.点検者}
+                  onChange={(e) => updateInspectionRecord('点検者', e.target.value)}
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="handover">引継ぎ</Label>
+              <Textarea
+                id="handover"
+                value={inspectionRecord.引継ぎ}
+                onChange={(e) => updateInspectionRecord('引継ぎ', e.target.value)}
+                placeholder="引継ぎ内容を入力（200文字以内）"
+                maxLength={200}
+                className="h-20"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <div>
               <Label htmlFor="manufacturer">製造メーカー</Label>
               <Select 
@@ -558,7 +632,6 @@ function Inspection() {
                 </Button>
               </div>
             </div>
-          </div>
 
           <div className="mt-2">
             {filteredItems.length === 0 ? (

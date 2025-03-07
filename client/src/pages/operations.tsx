@@ -205,9 +205,9 @@ export default function OperationsPage() {
                     <TableRow>
                       <TableHead className="w-[100px] min-w-[100px]">部位</TableHead>
                       <TableHead className="w-[100px] min-w-[100px]">装置</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px]">確認箇所</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px]">判断基準</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px]">確認要領</TableHead>
+                      <TableHead className="w-[375px] min-w-[375px]">確認箇所</TableHead>
+                      <TableHead className="w-[375px] min-w-[375px]">判断基準</TableHead>
+                      <TableHead className="w-[375px] min-w-[375px]">確認要領</TableHead>
                       <TableHead className="w-[150px] min-w-[150px]">測定等記録</TableHead>
                       <TableHead className="w-[150px] min-w-[150px]">図形記録</TableHead>
                       <TableHead className="w-[100px] min-w-[100px]">結果</TableHead>
@@ -264,9 +264,9 @@ export default function OperationsPage() {
                     <TableRow>
                       <TableHead className="w-[100px] min-w-[100px]">部位</TableHead>
                       <TableHead className="w-[100px] min-w-[100px]">装置</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px]">確認箇所</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px]">判断基準</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px]">確認要領</TableHead>
+                      <TableHead className="w-[375px] min-w-[375px]">確認箇所</TableHead>
+                      <TableHead className="w-[375px] min-w-[375px]">判断基準</TableHead>
+                      <TableHead className="w-[375px] min-w-[375px]">確認要領</TableHead>
                       <TableHead className="w-[150px] min-w-[150px]">測定等記録</TableHead>
                       <TableHead className="w-[150px] min-w-[150px]">図形記録</TableHead>
                       <TableHead className="w-[100px] min-w-[100px]">結果</TableHead>
@@ -323,9 +323,9 @@ export default function OperationsPage() {
                     <TableRow>
                       <TableHead className="w-[100px] min-w-[100px]">部位</TableHead>
                       <TableHead className="w-[100px] min-w-[100px]">装置</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px]">確認箇所</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px]">判断基準</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px]">確認要領</TableHead>
+                      <TableHead className="w-[375px] min-w-[375px]">確認箇所</TableHead>
+                      <TableHead className="w-[375px] min-w-[375px]">判断基準</TableHead>
+                      <TableHead className="w-[375px] min-w-[375px]">確認要領</TableHead>
                       <TableHead className="w-[150px] min-w-[150px]">測定等記録</TableHead>
                       <TableHead className="w-[150px] min-w-[150px]">図形記録</TableHead>
                       <TableHead className="w-[100px] min-w-[100px]">結果</TableHead>
@@ -379,3 +379,14 @@ export default function OperationsPage() {
 </div>
 );
 }
+
+const TableCell = React.forwardRef<
+  HTMLTableCellElement,
+  React.TdHTMLAttributes<HTMLTableCellElement>
+>(({ className, ...props }, ref) => (
+  <td
+    ref={ref}
+    className={cn("py-2 px-4 align-middle [&:has([role=checkbox])]:pr-0", className)}
+    {...props}
+  />
+))

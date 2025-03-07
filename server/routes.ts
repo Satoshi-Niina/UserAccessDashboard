@@ -232,7 +232,7 @@ app.post('/api/save-inspection-data', (req, res) => {
   }
 
   try {
-    const { data, fileName } = req.body;
+    const { data, fileName, sourceFileName } = req.body;
 
     if (!data) {
       return res.status(400).json({ error: '保存するデータがありません' });
@@ -241,23 +241,65 @@ app.post('/api/save-inspection-data', (req, res) => {
     // ファイル名が指定されていない場合はデフォルト名
     const outputFileName = fileName || `仕業点検_編集済_${new Date().toISOString().slice(0, 10)}.csv`;
 
+    // attached_assetsディレクトリのチェックと作成
+    const assetsDir = path.join(process.cwd(), 'attached_assets');
+    if (!fs.existsSync(assetsDir)) {
+      fs.mkdirSync(assetsDir, { recursive: true });
+    }
+
+    // ソースファイルのパス（元のCSVファイル）
+    const sourceFilePath = path.join(assetsDir, sourceFileName || '仕業点検マスタ.csv');
+    
+    // 元のCSVファイルが存在する場合、ヘッダー行を取得
+    let originalHeaders = [];
+    if (sourceFileName && fs.existsSync(sourceFilePath)) {
+      try {
+        const sourceContent = fs.readFileSync(sourceFilePath, 'utf8');
+        const firstLine = sourceContent.split('\n')[0];
+        originalHeaders = firstLine.split(',').map(header => header.trim());
+      } catch (err) {
+        console.warn('元のCSVファイルからヘッダーを取得できませんでした:', err);
+      }
+    }
+
     // CSV形式に変換
     let csvContent;
     if (typeof data === 'string') {
       csvContent = data;  // すでにCSV文字列の場合
     } else {
       // JSONデータの場合はCSV形式に変換
-      csvContent = Papa.unparse(data, {
-        header: true,
-        delimiter: ',',
-        quoteChar: '"'
-      });
-    }
-
-    // attached_assetsディレクトリのチェックと作成
-    const assetsDir = path.join(process.cwd(), 'attached_assets');
-    if (!fs.existsSync(assetsDir)) {
-      fs.mkdirSync(assetsDir, { recursive: true });
+      // 元のヘッダーがある場合は、それを優先して使用
+      if (originalHeaders.length > 0) {
+        console.log('元のヘッダーを使用します:', originalHeaders);
+        
+        // 新しいデータのキーを取得
+        const newKeys = Object.keys(data[0] || {});
+        
+        // 元のヘッダーに無い新しいフィールドを追加
+        newKeys.forEach(key => {
+          if (!originalHeaders.includes(key)) {
+            originalHeaders.push(key);
+            console.log('新しいフィールドを追加しました:', key);
+          }
+        });
+        
+        // カスタムヘッダーでCSV変換
+        csvContent = Papa.unparse({
+          fields: originalHeaders,
+          data: data
+        }, {
+          header: true,
+          delimiter: ',',
+          quoteChar: '"'
+        });
+      } else {
+        // 元のヘッダーがない場合は通常の変換
+        csvContent = Papa.unparse(data, {
+          header: true,
+          delimiter: ',',
+          quoteChar: '"'
+        });
+      }
     }
 
     // CSVファイルパス

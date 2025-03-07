@@ -421,6 +421,11 @@ function Inspection() {
                         },
                         body: JSON.stringify({
                           data: inspectionItems,
+                          fileName: newFileName,
+                          sourceFileName: currentFileName  // 元のファイル名を追加
+                        }),
+                        body: JSON.stringify({
+                          data: inspectionItems,
                           fileName: newFileName
                         }),
                       });

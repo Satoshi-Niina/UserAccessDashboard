@@ -660,7 +660,7 @@ export default function InspectionItems() {
           // データをアプリケーションの形式に変換（柔軟なマッピング）
           const items = results.data.map((row: any, index: number) => {
             const item: Record<string, any> = {};
-            
+
             // ID設定（存在しない場合は自動採番）
             if (row.id) {
               item.id = Number(row.id);
@@ -910,7 +910,7 @@ export default function InspectionItems() {
       { key: 'notes', label: 'メモ' },
       { key: 'frequency', label: '頻度' },
       { key: 'priority', label: '優先度' }
-    ];
+];
 
     // すでに使用されていないプリセットを探す
     const unusedPreset = presets.find(preset => 
@@ -954,6 +954,58 @@ export default function InspectionItems() {
       title: "更新完了",
       description: description,
     });
+  };
+
+  // 保存処理を実行
+  const saveData = async () => {
+    if (!saveFileName.trim()) {
+      toast({
+        title: "エラー",
+        description: "ファイル名を入力してください",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await fetch('/api/save-inspection-data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          data: inspectionItems,
+          fileName: saveFileName,
+          sourceFileName: currentFileName  // 元のファイル名を追加
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        toast({
+          title: "保存完了",
+          description: `データを${result.fileName}に保存しました`,
+        });
+        setHasChanges(false);
+        setIsSaveDialogOpen(false);
+        setPendingAction(null);
+        // ファイル一覧を更新
+        fetchInspectionFiles();
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "保存に失敗しました");
+      }
+    } catch (error) {
+      console.error("データ保存エラー:", error);
+      toast({
+        title: "エラー",
+        description: `データの保存に失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -1362,52 +1414,7 @@ export default function InspectionItems() {
             <Button variant="outline" onClick={() => setIsSaveDialogOpen(false)}>
               キャンセル
             </Button>
-            <Button onClick={async () => {
-              try {
-                // 保存処理
-                const response = await fetch('/api/save-inspection-data', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    data: inspectionItems,
-                    fileName: saveFileName
-                  }),
-                });
-
-                if (!response.ok) {
-                  throw new Error('保存に失敗しました');
-                }
-
-                const result = await response.json();
-
-                toast({
-                  title: "保存完了",
-                  description: `ファイル「${result.fileName}」に保存しました`,
-                });
-
-                // 保存した後、変更フラグをリセット
-                setInitialItems(JSON.parse(JSON.stringify(inspectionItems)));
-                setHasChanges(false);
-
-                // ダイアログを閉じる
-                setIsSaveDialogOpen(false);
-
-                // ファイル一覧を更新するため再読み込み
-                fetchInspectionFiles();
-
-                // 設定画面に戻る
-                navigate('/');
-              } catch (error) {
-                console.error('保存エラー:', error);
-                toast({
-                  title: "エラー",
-                  description: "ファイルの保存に失敗しました",
-                  variant: "destructive",
-                });
-              }
-            }}>
+            <Button onClick={saveData}>
               保存
             </Button>
           </DialogFooter>

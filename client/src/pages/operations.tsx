@@ -28,6 +28,7 @@ interface InspectionItem {
   manufacturer?: string;     // 製造メーカー
   model?: string;            // 機種
   engineType?: string;       // エンジン型式
+  notes?: string;            //特記事項
 }
 
 export default function OperationsPage() {
@@ -37,6 +38,13 @@ export default function OperationsPage() {
   const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const handleNotesChange = (id: number, value: string) => {
+    setInspectionItems(prevItems => prevItems.map(item => 
+      item.id === id ? {...item, notes: value} : item
+    ));
+  }
+
 
   useEffect(() => {
     const fetchInspectionItems = async () => {
@@ -67,6 +75,7 @@ export default function OperationsPage() {
         const manufacturerIndex = headers.findIndex(h => h === '製造メーカー' || h === 'manufacturer');
         const modelIndex = headers.findIndex(h => h === '機種' || h === 'model');
         const engineTypeIndex = headers.findIndex(h => h === 'エンジン型式' || h === 'engineType');
+        const notesIndex = headers.findIndex(h => h === '特記事項' || h === 'notes');
 
         // CSVから点検項目を作成
         const items: InspectionItem[] = [];
@@ -87,6 +96,7 @@ export default function OperationsPage() {
           const getManufacturer = () => manufacturerIndex >= 0 ? values[manufacturerIndex] || '' : '';
           const getModel = () => modelIndex >= 0 ? values[modelIndex] || '' : '';
           const getEngineType = () => engineTypeIndex >= 0 ? values[engineTypeIndex] || '' : '';
+          const getNotes = () => notesIndex >= 0 ? values[notesIndex] || '' : '';
 
           items.push({
             id: getId(),
@@ -100,6 +110,7 @@ export default function OperationsPage() {
             manufacturer: getManufacturer(),
             model: getModel(),
             engineType: getEngineType(),
+            notes: getNotes()
           });
         }
 
@@ -203,28 +214,28 @@ export default function OperationsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[100px] min-w-[100px]">部位</TableHead>
-                      <TableHead className="w-[100px] min-w-[100px]">装置</TableHead>
-                      <TableHead className="w-[375px] min-w-[375px]">確認箇所</TableHead>
-                      <TableHead className="w-[375px] min-w-[375px]">判断基準</TableHead>
-                      <TableHead className="w-[375px] min-w-[375px]">確認要領</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px]">測定等記録</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px]">図形記録</TableHead>
-                      <TableHead className="w-[100px] min-w-[100px]">結果</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px]">特記事項</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px] text-xs">部位</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px] text-xs">装置</TableHead>
+                      <TableHead className="w-[375px] min-w-[375px] text-xs">確認箇所</TableHead>
+                      <TableHead className="w-[375px] min-w-[375px] text-xs">判断基準</TableHead>
+                      <TableHead className="w-[375px] min-w-[375px] text-xs">確認要領</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px] text-xs">測定等記録</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px] text-xs">図形記録</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px] text-xs">結果</TableHead>
+                      <TableHead className="w-[250px] min-w-[250px] text-xs">特記事項</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {inspectionItems.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell>{item.category}</TableCell>
-                        <TableCell>{item.equipment}</TableCell>
-                        <TableCell>{item.item}</TableCell>
-                        <TableCell>{item.criteria}</TableCell>
-                        <TableCell>{item.method}</TableCell>
-                        <TableCell>{item.measurementRecord}</TableCell>
-                        <TableCell>{item.diagramRecord}</TableCell>
-                        <TableCell>
+                      <TableRow key={item.id} className="h-12">
+                        <TableCell className="text-xs py-1">{item.category}</TableCell>
+                        <TableCell className="text-xs py-1">{item.equipment}</TableCell>
+                        <TableCell className="text-xs py-1">{item.item}</TableCell>
+                        <TableCell className="text-xs py-1">{item.criteria}</TableCell>
+                        <TableCell className="text-xs py-1">{item.method}</TableCell>
+                        <TableCell className="text-xs py-1">{item.measurementRecord}</TableCell>
+                        <TableCell className="text-xs py-1">{item.diagramRecord}</TableCell>
+                        <TableCell className="text-xs py-1">
                           <Select>
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder="選択" />
@@ -239,8 +250,8 @@ export default function OperationsPage() {
                             </SelectContent>
                           </Select>
                         </TableCell>
-                        <TableCell>
-                          <Input placeholder="特記事項" />
+                        <TableCell className="text-xs py-1">
+                          <Input className="text-xs h-8" value={item.notes || ''} onChange={(e) => handleNotesChange(item.id, e.target.value)} />
                         </TableCell>
                       </TableRow>
                     ))}
@@ -262,28 +273,28 @@ export default function OperationsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[100px] min-w-[100px]">部位</TableHead>
-                      <TableHead className="w-[100px] min-w-[100px]">装置</TableHead>
-                      <TableHead className="w-[375px] min-w-[375px]">確認箇所</TableHead>
-                      <TableHead className="w-[375px] min-w-[375px]">判断基準</TableHead>
-                      <TableHead className="w-[375px] min-w-[375px]">確認要領</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px]">測定等記録</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px]">図形記録</TableHead>
-                      <TableHead className="w-[100px] min-w-[100px]">結果</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px]">特記事項</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px] text-xs">部位</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px] text-xs">装置</TableHead>
+                      <TableHead className="w-[375px] min-w-[375px] text-xs">確認箇所</TableHead>
+                      <TableHead className="w-[375px] min-w-[375px] text-xs">判断基準</TableHead>
+                      <TableHead className="w-[375px] min-w-[375px] text-xs">確認要領</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px] text-xs">測定等記録</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px] text-xs">図形記録</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px] text-xs">結果</TableHead>
+                      <TableHead className="w-[250px] min-w-[250px] text-xs">特記事項</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {inspectionItems.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell>{item.category}</TableCell>
-                        <TableCell>{item.equipment}</TableCell>
-                        <TableCell>{item.item}</TableCell>
-                        <TableCell>{item.criteria}</TableCell>
-                        <TableCell>{item.method}</TableCell>
-                        <TableCell>{item.measurementRecord}</TableCell>
-                        <TableCell>{item.diagramRecord}</TableCell>
-                        <TableCell>
+                      <TableRow key={item.id} className="h-12">
+                        <TableCell className="text-xs py-1">{item.category}</TableCell>
+                        <TableCell className="text-xs py-1">{item.equipment}</TableCell>
+                        <TableCell className="text-xs py-1">{item.item}</TableCell>
+                        <TableCell className="text-xs py-1">{item.criteria}</TableCell>
+                        <TableCell className="text-xs py-1">{item.method}</TableCell>
+                        <TableCell className="text-xs py-1">{item.measurementRecord}</TableCell>
+                        <TableCell className="text-xs py-1">{item.diagramRecord}</TableCell>
+                        <TableCell className="text-xs py-1">
                           <Select>
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder="選択" />
@@ -298,8 +309,8 @@ export default function OperationsPage() {
                             </SelectContent>
                           </Select>
                         </TableCell>
-                        <TableCell>
-                          <Input placeholder="特記事項" />
+                        <TableCell className="text-xs py-1">
+                          <Input className="text-xs h-8" value={item.notes || ''} onChange={(e) => handleNotesChange(item.id, e.target.value)} />
                         </TableCell>
                       </TableRow>
                     ))}
@@ -321,28 +332,28 @@ export default function OperationsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[100px] min-w-[100px]">部位</TableHead>
-                      <TableHead className="w-[100px] min-w-[100px]">装置</TableHead>
-                      <TableHead className="w-[375px] min-w-[375px]">確認箇所</TableHead>
-                      <TableHead className="w-[375px] min-w-[375px]">判断基準</TableHead>
-                      <TableHead className="w-[375px] min-w-[375px]">確認要領</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px]">測定等記録</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px]">図形記録</TableHead>
-                      <TableHead className="w-[100px] min-w-[100px]">結果</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px]">特記事項</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px] text-xs">部位</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px] text-xs">装置</TableHead>
+                      <TableHead className="w-[375px] min-w-[375px] text-xs">確認箇所</TableHead>
+                      <TableHead className="w-[375px] min-w-[375px] text-xs">判断基準</TableHead>
+                      <TableHead className="w-[375px] min-w-[375px] text-xs">確認要領</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px] text-xs">測定等記録</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px] text-xs">図形記録</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px] text-xs">結果</TableHead>
+                      <TableHead className="w-[250px] min-w-[250px] text-xs">特記事項</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {inspectionItems.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell>{item.category}</TableCell>
-                        <TableCell>{item.equipment}</TableCell>
-                        <TableCell>{item.item}</TableCell>
-                        <TableCell>{item.criteria}</TableCell>
-                        <TableCell>{item.method}</TableCell>
-                        <TableCell>{item.measurementRecord}</TableCell>
-                        <TableCell>{item.diagramRecord}</TableCell>
-                        <TableCell>
+                      <TableRow key={item.id} className="h-12">
+                        <TableCell className="text-xs py-1">{item.category}</TableCell>
+                        <TableCell className="text-xs py-1">{item.equipment}</TableCell>
+                        <TableCell className="text-xs py-1">{item.item}</TableCell>
+                        <TableCell className="text-xs py-1">{item.criteria}</TableCell>
+                        <TableCell className="text-xs py-1">{item.method}</TableCell>
+                        <TableCell className="text-xs py-1">{item.measurementRecord}</TableCell>
+                        <TableCell className="text-xs py-1">{item.diagramRecord}</TableCell>
+                        <TableCell className="text-xs py-1">
                           <Select>
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder="選択" />
@@ -357,8 +368,8 @@ export default function OperationsPage() {
                             </SelectContent>
                           </Select>
                         </TableCell>
-                        <TableCell>
-                          <Input placeholder="特記事項" />
+                        <TableCell className="text-xs py-1">
+                          <Input className="text-xs h-8" value={item.notes || ''} onChange={(e) => handleNotesChange(item.id, e.target.value)} />
                         </TableCell>
                       </TableRow>
                     ))}

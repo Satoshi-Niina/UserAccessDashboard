@@ -332,7 +332,7 @@ function Inspection() {
                     <SelectItem key={model} value={model}>
                       {model}
                     </SelectItem>
-                  ))}
+                  )}
                 </SelectContent>
               </Select>
             </div>

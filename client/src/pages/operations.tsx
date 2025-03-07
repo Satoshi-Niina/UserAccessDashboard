@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { useLocation, useNavigate as useWouterNavigate } from "wouter"; // Assuming wouter is used
-//import { useNavigate, Link } from "react-router-dom"; // Removed react-router-dom imports
+import { useLocation } from "wouter"; // Using wouter's useLocation
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -24,7 +23,6 @@ type InspectionTab = "entry" | "exit" | "maintenance";
 
 export default function OperationsPage() {
   const [location, setLocation] = useLocation(); // Use wouter's location hook
-  const navigate = useWouterNavigate(); // Use wouter's navigate hook
   const [activeTab, setActiveTab] = useState<InspectionTab>("entry");
   const [date, setDate] = useState<Date | undefined>(new Date());
 
@@ -91,7 +89,7 @@ export default function OperationsPage() {
     <div className="container mx-auto p-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">仕業点検</h1>
-        <Button variant="outline" onClick={() => navigate("/")}> {/*Using wouter navigate*/}
+        <Button variant="outline" onClick={() => setLocation("/")}> {/*Using wouter setLocation*/}
           <Settings className="mr-2 h-4 w-4" />
           管理メニュー
         </Button>

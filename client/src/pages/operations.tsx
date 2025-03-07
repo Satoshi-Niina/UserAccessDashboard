@@ -145,7 +145,7 @@ export default function OperationsPage() {
                   <TableRow>
                     <TableHead className="w-[15%]">部位</TableHead>
                     <TableHead className="w-[15%]">装置</TableHead>
-                    <TableHead className="w-[20%]">点検項目</TableHead>
+                    <TableHead className="w-[20%]">確認箇所</TableHead>
                     <TableHead className="w-[20%]">判断基準</TableHead>
                     <TableHead className="w-[10%]">結果</TableHead>
                     <TableHead className="w-[20%]">特記</TableHead>
@@ -200,7 +200,7 @@ export default function OperationsPage() {
                   <TableRow>
                     <TableHead className="w-[15%]">部位</TableHead>
                     <TableHead className="w-[15%]">装置</TableHead>
-                    <TableHead className="w-[20%]">点検項目</TableHead>
+                    <TableHead className="w-[20%]">確認箇所</TableHead>
                     <TableHead className="w-[20%]">判断基準</TableHead>
                     <TableHead className="w-[10%]">結果</TableHead>
                     <TableHead className="w-[20%]">特記</TableHead>
@@ -255,7 +255,7 @@ export default function OperationsPage() {
                   <TableRow>
                     <TableHead className="w-[15%]">部位</TableHead>
                     <TableHead className="w-[15%]">装置</TableHead>
-                    <TableHead className="w-[20%]">点検項目</TableHead>
+                    <TableHead className="w-[20%]">確認箇所</TableHead>
                     <TableHead className="w-[20%]">判断基準</TableHead>
                     <TableHead className="w-[10%]">結果</TableHead>
                     <TableHead className="w-[20%]">特記</TableHead>

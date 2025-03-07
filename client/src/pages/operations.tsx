@@ -504,25 +504,31 @@ function Inspection() {
                       <div className="bg-primary/10 p-3 font-medium">
                         {part}
                       </div>
-                      <div className="divide-y">
-                        {items.map((item, idx) => (
-                          <div key={idx} className="p-4 hover:bg-muted/50 transition-colors">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <div>
-                                <p className="text-sm text-muted-foreground">確認箇所:</p>
-                                <p>{item.確認箇所 || "-"}</p>
-                              </div>
-                              <div>
-                                <p className="text-sm text-muted-foreground">判断基準:</p>
-                                <p>{item.判断基準 || "-"}</p>
-                              </div>
-                              <div>
-                                <p className="text-sm text-muted-foreground">確認要領:</p>
-                                <p>{item.確認要領 || "-"}</p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse">
+                          <thead>
+                            <tr className="bg-muted/70">
+                              <th className="px-4 py-2 text-left font-medium text-muted-foreground border">確認箇所</th>
+                              <th className="px-4 py-2 text-left font-medium text-muted-foreground border">判断基準</th>
+                              <th className="px-4 py-2 text-left font-medium text-muted-foreground border">確認要領</th>
+                              <th className="px-4 py-2 text-left font-medium text-muted-foreground border">装置</th>
+                              <th className="px-4 py-2 text-left font-medium text-muted-foreground border">機種</th>
+                              <th className="px-4 py-2 text-left font-medium text-muted-foreground border">製造メーカー</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {items.map((item, idx) => (
+                              <tr key={idx} className="hover:bg-muted/50 transition-colors">
+                                <td className="px-4 py-2 border">{item.確認箇所 || "-"}</td>
+                                <td className="px-4 py-2 border">{item.判断基準 || "-"}</td>
+                                <td className="px-4 py-2 border">{item.確認要領 || "-"}</td>
+                                <td className="px-4 py-2 border">{item.装置 || "-"}</td>
+                                <td className="px-4 py-2 border">{item.機種 || "-"}</td>
+                                <td className="px-4 py-2 border">{item.製造メーカー || "-"}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     </CardContent>
                   </Card>

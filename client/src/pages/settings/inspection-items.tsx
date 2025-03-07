@@ -173,24 +173,25 @@ export default function InspectionItems() {
           if (!lines[i].trim()) continue;
 
           const values = lines[i].split(',');
-          const item: any = {};
+          const rowData: Record<string, string> = {};
 
-          for (let j = 0; j < headers.length; j++) {
-            item[headers[j].trim()] = values[j]?.trim() || '';
+          // 各カラムの値をマッピング（存在する分だけ）
+          for (let j = 0; j < headers.length && j < values.length; j++) {
+            rowData[headers[j]] = values[j]?.trim() || '';
           }
 
           // CSVのデータ構造を点検項目の構造に変換
           const inspectionItem: InspectionItem = {
             id: nextId++,
-            manufacturer: item['製造メーカー'] || '',
-            model: item['機種'] || '',
-            category: item['部位'] || '',
-            equipment: item['装置'] || '',
-            item: item['確認箇所'] || '',
-            method: item['確認要領'] || '',
-            criteria: item['判断基準'] || '',
-            measurementRecord: item['測定等記録'] || '',
-            diagramRecord: item['図形記録'] || ''
+            manufacturer: rowData['製造メーカー'] || '',
+            model: rowData['機種'] || '',
+            category: rowData['部位'] || '',
+            equipment: rowData['装置'] || '',
+            item: rowData['確認箇所'] || '',
+            criteria: rowData['判断基準'] || '',
+            method: rowData['確認要領'] || '',
+            measurementRecord: rowData['測定等記録'] || '',
+            diagramRecord: rowData['図形記録'] || ''
           };
 
           items.push(inspectionItem);
@@ -440,12 +441,11 @@ export default function InspectionItems() {
           '', // エンジン型式は空欄
           item.category,
           item.equipment || "",
-          '', // 手順は空欄
           item.item,
           item.criteria,
           item.method,
-          item.measurementRecord,
-          item.diagramRecord
+          item.measurementRecord || "",
+          item.diagramRecord || ""
         ].map(val => `${val}`).join(',');
         csvRows.push(values);
       });
@@ -543,23 +543,25 @@ export default function InspectionItems() {
             if (!lines[i].trim()) continue;
 
             const values = lines[i].split(',');
-            const item: any = {};
+            const rowData: Record<string, string> = {};
 
-            for (let j = 0; j < headers.length; j++) {
-              item[headers[j]] = values[j];
+            // 各カラムの値をマッピング（存在する分だけ）
+            for (let j = 0; j < headers.length && j < values.length; j++) {
+              rowData[headers[j]] = values[j]?.trim() || '';
             }
 
             // CSVのデータ構造を点検項目の構造に変換
             const inspectionItem: InspectionItem = {
               id: nextId++,
-              manufacturer: item['製造メーカー'] || '',
-              model: item['機種'] || '',
-              category: item['部位'] || '',
-              item: item['確認箇所'] || '',
-              method: item['確認要領'] || '',
-              criteria: item['判断基準'] || '',
-              measurementRecord: item['測定等記録'] || '',
-              diagramRecord: item['図形記録'] || ''
+              manufacturer: rowData['製造メーカー'] || '',
+              model: rowData['機種'] || '',
+              category: rowData['部位'] || '',
+              item: rowData['確認箇所'] || '',
+              method: rowData['確認要領'] || '',
+              criteria: rowData['判断基準'] || '',
+              measurementRecord: rowData['測定等記録'] || '',
+              diagramRecord: rowData['図形記録'] || '',
+              equipment: rowData['装置'] || ''
             };
 
             items.push(inspectionItem);

@@ -176,13 +176,19 @@ function Inspection() {
             .filter(model => typeof model === 'string' && model.trim() !== '')
         )) as string[];
 
-        console.log("読み込んだデータ:", processedData.slice(0, 3));
+        // エンジン型式を除外したデータを作成
+        const filteredProcessedData = processedData.map(item => {
+          const { エンジン型式, ...rest } = item;
+          return rest;
+        });
+        
+        console.log("読み込んだデータ:", filteredProcessedData.slice(0, 3));
         console.log("メーカー一覧:", uniqueManufacturers);
         console.log("機種一覧:", uniqueModels);
         
         setManufacturers(uniqueManufacturers);
         setModels(uniqueModels);
-        setInspectionItems(processedData);
+        setInspectionItems(filteredProcessedData);
         setLoading(false);
 
         // 初期値は「すべて」に設定
@@ -508,23 +514,25 @@ function Inspection() {
                         <table className="w-full border-collapse">
                           <thead>
                             <tr className="bg-muted/70">
-                              <th className="px-4 py-2 text-left font-medium text-muted-foreground border">確認箇所</th>
-                              <th className="px-4 py-2 text-left font-medium text-muted-foreground border">判断基準</th>
-                              <th className="px-4 py-2 text-left font-medium text-muted-foreground border">確認要領</th>
                               <th className="px-4 py-2 text-left font-medium text-muted-foreground border">装置</th>
-                              <th className="px-4 py-2 text-left font-medium text-muted-foreground border">機種</th>
-                              <th className="px-4 py-2 text-left font-medium text-muted-foreground border">製造メーカー</th>
+                              <th className="px-4 py-2 text-left font-medium text-muted-foreground border">部位</th>
+                              <th className="px-4 py-2 text-left font-medium text-muted-foreground border">確認箇所</th>
+                              <th className="px-4 py-2 text-left font-medium text-muted-foreground border">確認要領</th>
+                              <th className="px-4 py-2 text-left font-medium text-muted-foreground border">判断基準</th>
+                              <th className="px-4 py-2 text-left font-medium text-muted-foreground border">測定等記録</th>
+                              <th className="px-4 py-2 text-left font-medium text-muted-foreground border">図形記録</th>
                             </tr>
                           </thead>
                           <tbody>
                             {items.map((item, idx) => (
                               <tr key={idx} className="hover:bg-muted/50 transition-colors">
-                                <td className="px-4 py-2 border">{item.確認箇所 || "-"}</td>
-                                <td className="px-4 py-2 border">{item.判断基準 || "-"}</td>
-                                <td className="px-4 py-2 border">{item.確認要領 || "-"}</td>
                                 <td className="px-4 py-2 border">{item.装置 || "-"}</td>
-                                <td className="px-4 py-2 border">{item.機種 || "-"}</td>
-                                <td className="px-4 py-2 border">{item.製造メーカー || "-"}</td>
+                                <td className="px-4 py-2 border">{item.部位 || "-"}</td>
+                                <td className="px-4 py-2 border">{item.確認箇所 || "-"}</td>
+                                <td className="px-4 py-2 border">{item.確認要領 || "-"}</td>
+                                <td className="px-4 py-2 border">{item.判断基準 || "-"}</td>
+                                <td className="px-4 py-2 border">{item.測定等記録 || "-"}</td>
+                                <td className="px-4 py-2 border">{item.図形記録 || "-"}</td>
                               </tr>
                             ))}
                           </tbody>

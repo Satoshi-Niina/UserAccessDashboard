@@ -262,6 +262,34 @@ app.post('/api/save-inspection-data', (req, res) => {
       }
     }
 
+    // 英語フィールド名と日本語フィールド名のマッピング
+    const fieldMapping = {
+      'manufacturer': '製造メーカー',
+      'model': '機種',
+      'engineType': 'エンジン型式',
+      'category': '部位',
+      'equipment': '装置',
+      'item': '確認箇所',
+      'criteria': '判断基準',
+      'method': '確認要領',
+      'measurementRecord': '測定等記録',
+      'diagramRecord': '図形記録'
+    };
+
+    // データを処理して日本語フィールドにデータをコピー
+    const processedData = data.map(item => {
+      const newItem = { ...item };
+      
+      // 英語フィールドから日本語フィールドにデータをコピー
+      Object.entries(fieldMapping).forEach(([engField, jpField]) => {
+        if (item[engField] !== undefined && item[engField] !== null) {
+          newItem[jpField] = item[engField];
+        }
+      });
+      
+      return newItem;
+    });
+
     // CSV形式に変換
     let csvContent;
     if (typeof data === 'string') {
@@ -273,7 +301,7 @@ app.post('/api/save-inspection-data', (req, res) => {
         console.log('元のヘッダーを使用します:', originalHeaders);
         
         // 新しいデータのキーを取得
-        const newKeys = Object.keys(data[0] || {});
+        const newKeys = Object.keys(processedData[0] || {});
         
         // 元のヘッダーに無い新しいフィールドを追加
         newKeys.forEach(key => {
@@ -286,7 +314,7 @@ app.post('/api/save-inspection-data', (req, res) => {
         // カスタムヘッダーでCSV変換
         csvContent = Papa.unparse({
           fields: originalHeaders,
-          data: data
+          data: processedData
         }, {
           header: true,
           delimiter: ',',
@@ -294,7 +322,7 @@ app.post('/api/save-inspection-data', (req, res) => {
         });
       } else {
         // 元のヘッダーがない場合は通常の変換
-        csvContent = Papa.unparse(data, {
+        csvContent = Papa.unparse(processedData, {
           header: true,
           delimiter: ',',
           quoteChar: '"'

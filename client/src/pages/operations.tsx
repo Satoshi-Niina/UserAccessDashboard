@@ -194,7 +194,8 @@ function Inspection() {
 
   // 部位ごとにグループ化
   const groupedByPart = filteredItems.reduce((acc: Record<string, InspectionItem[]>, item) => {
-    const part = item.部位 || "未分類";
+    // 部位がundefinedや空文字の場合も「未分類」にする
+    const part = item.部位 && item.部位.trim() !== "" ? item.部位 : "未分類";
     if (!acc[part]) {
       acc[part] = [];
     }
@@ -302,7 +303,7 @@ function Inspection() {
             <div>
               <Label htmlFor="manufacturer">製造メーカー</Label>
               <Select 
-                value={selectedManufacturer} 
+                value={selectedManufacturer || "all"} 
                 onValueChange={(value) => {
                   console.log("製造メーカー選択:", value);
                   setSelectedManufacturer(value);
@@ -329,7 +330,7 @@ function Inspection() {
             <div>
               <Label htmlFor="model">機種</Label>
               <Select 
-                value={selectedModel} 
+                value={selectedModel || "all"} 
                 onValueChange={(value) => {
                   console.log("機種選択:", value);
                   setSelectedModel(value);
@@ -353,7 +354,7 @@ function Inspection() {
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">仕業点検項目一覧</h2>
             <div className="flex gap-2">
-              <Select value={currentFileName} onValueChange={(e) => setCurrentFileName(e.target.value)}>
+              <Select value={currentFileName} onValueChange={(value) => setCurrentFileName(value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="ファイルを選択" />
                 </SelectTrigger>

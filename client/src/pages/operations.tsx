@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Papa from 'papaparse';
+import { Textarea } from '@/components/ui/textarea';
 
 // 検査項目の型定義
 interface InspectionItem {
@@ -25,6 +26,18 @@ interface InspectionItem {
   図形記録: string;
   [key: string]: string | undefined; // インデックスシグネチャ, undefinedを追加
 }
+
+// 点検記録情報の型定義
+interface InspectionRecord {
+  点検年月日: string;
+  開始時刻: string;
+  終了時刻: string;
+  実施箇所: string;
+  責任者: string;
+  点検者: string;
+  引継ぎ: string;
+}
+
 
 // 運用計画のコンポーネント
 function OperationalPlan() {
@@ -49,6 +62,19 @@ function Inspection() {
   const [currentFileName, setCurrentFileName] = useState("仕業点検マスタ.csv");
   const [availableFiles, setAvailableFiles] = useState<{name: string, modified: string}[]>([]);
   const { toast } = useToast();
+  const [inspectionRecord, setInspectionRecord] = useState<InspectionRecord>({
+    点検年月日: '',
+    開始時刻: '',
+    終了時刻: '',
+    実施箇所: '',
+    責任者: '',
+    点検者: '',
+    引継ぎ: ''
+  });
+
+  const updateInspectionRecord = (key: keyof InspectionRecord, value: string) => {
+    setInspectionRecord({ ...inspectionRecord, [key]: value });
+  };
 
   // 利用可能なCSVファイル一覧を取得
   useEffect(() => {
@@ -406,6 +432,24 @@ function Inspection() {
                   variant="outline" 
                   size="sm"
                   onClick={async () => {
+                    // 点検記録情報の入力確認
+                    const missingFields = [];
+                    if (!inspectionRecord.点検年月日) missingFields.push('点検年月日');
+                    if (!inspectionRecord.開始時刻) missingFields.push('開始時刻');
+                    if (!inspectionRecord.終了時刻) missingFields.push('終了時刻');
+                    if (!inspectionRecord.実施箇所) missingFields.push('実施箇所');
+                    if (!inspectionRecord.責任者) missingFields.push('責任者');
+                    if (!inspectionRecord.点検者) missingFields.push('点検者');
+
+                    if (missingFields.length > 0) {
+                      toast({
+                        title: "入力不足",
+                        description: `以下の項目を入力してください: ${missingFields.join(', ')}`,
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+
                     try {
                       // CSV形式にデータを変換
                       const csv = Papa.unparse(inspectionItems);
@@ -422,7 +466,8 @@ function Inspection() {
                         body: JSON.stringify({
                           sourceFileName: currentFileName, // 元のファイル名を追加
                           data: inspectionItems,
-                          fileName: newFileName
+                          fileName: newFileName,
+                          inspectionRecord: inspectionRecord // 点検記録情報を追加
                         }),
                       });
 
@@ -459,22 +504,52 @@ function Inspection() {
                   variant="outline" 
                   size="sm"
                   onClick={() => {
-                    // CSV形式にデータを変換
-                    const csv = Papa.unparse(inspectionItems);
+                    // 点検記録情報の入力確認
+                    const missingFields = [];
+                    if (!inspectionRecord.点検年月日) missingFields.push('点検年月日');
+                    if (!inspectionRecord.開始時刻) missingFields.push('開始時刻');
+                    if (!inspectionRecord.終了時刻) missingFields.push('終了時刻');
+                    if (!inspectionRecord.実施箇所) missingFields.push('実施箇所');
+                    if (!inspectionRecord.責任者) missingFields.push('責任者');
+                    if (!inspectionRecord.点検者) missingFields.push('点検者');
 
-                    // 新しいファイル名
-                    const newFileName = `仕業点検_エクスポート_${new Date().toISOString().slice(0, 10)}.csv`;
+                    if (missingFields.length > 0) {
+                      toast({
+                        title: "入力不足",
+                        description: `以下の項目を入力してください: ${missingFields.join(', ')}`,
+                        variant: "destructive",
+                      });
+                      return;
+                    }
 
-                    // Blobを作成してダウンロード
-                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    // 点検記録情報をヘッダーに追加
+                    const recordInfoHeader = [
+                      `#点検年月日: ${inspectionRecord.点検年月日}`,
+                      `#開始時刻: ${inspectionRecord.開始時刻}`,
+                      `#終了時刻: ${inspectionRecord.終了時刻}`,
+                      `#実施箇所: ${inspectionRecord.実施箇所}`,
+                      `#責任者: ${inspectionRecord.責任者}`,
+                      `#点検者: ${inspectionRecord.点検者}`,
+                      `#引継ぎ: ${inspectionRecord.引継ぎ}`,
+                      ''  // 空行を追加
+                    ];
+
+                    // CSVを生成してダウンロード
+                    const itemsCSV = Papa.unparse(filteredItems);
+                    const csvContent = recordInfoHeader.join('\n') + '\n' + itemsCSV;
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
                     const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = newFileName;
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', `仕業点検_${inspectionRecord.点検年月日}.csv`);
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
                     link.click();
+                    document.body.removeChild(link);
 
                     toast({
                       title: "CSVをエクスポートしました",
-                      description: `${newFileName}としてダウンロードされました`,
+                      description: `仕業点検_${inspectionRecord.点検年月日}.csvとしてダウンロードされました`,
                       duration: 3000,
                     });
                   }}

@@ -84,7 +84,7 @@ app.get('/api/inspection-items', async (req, res) => {
       if (fs.existsSync(INSPECTION_FILES_DIR)) {
         const files = await promisify(fs.readdir)(INSPECTION_FILES_DIR);
         const csvFiles = files.filter(file => file.endsWith('.csv'));
-        
+
         if (csvFiles.length > 0) {
           // 各ファイルの更新日時を取得してソート
           const fileStats = await Promise.all(
@@ -96,7 +96,7 @@ app.get('/api/inspection-items', async (req, res) => {
               };
             })
           );
-          
+
           // 最新のファイルを特定
           fileStats.sort((a, b) => b.mtime - a.mtime);
           requestedFile = fileStats[0]?.name || '仕業点検マスタ.csv';
@@ -123,11 +123,11 @@ app.get('/api/inspection-items', async (req, res) => {
 
     if (!fs.existsSync(filePath)) {
       console.warn('指定されたCSVファイルが見つかりません:', filePath);
-      
+
       // attached_assetsディレクトリ内のCSVファイルを探索
       const files = await promisify(fs.readdir)(INSPECTION_FILES_DIR);
       const csvFiles = files.filter(file => file.endsWith('.csv'));
-      
+
       if (csvFiles.length > 0) {
         // 最新のCSVファイルを使用
         const fileStats = await Promise.all(
@@ -139,11 +139,11 @@ app.get('/api/inspection-items', async (req, res) => {
             };
           })
         );
-        
+
         fileStats.sort((a, b) => b.mtime - a.mtime);
         const latestFile = fileStats[0].name;
         const latestFilePath = path.join(INSPECTION_FILES_DIR, latestFile);
-        
+
         console.log('最新のCSVファイルを使用します:', latestFilePath);
         const csvData = fs.readFileSync(latestFilePath, 'utf8');
         res.set('Content-Type', 'text/csv; charset=utf-8');
@@ -249,7 +249,7 @@ app.post('/api/save-inspection-data', (req, res) => {
 
     // ソースファイルのパス（元のCSVファイル）
     const sourceFilePath = path.join(assetsDir, sourceFileName || '仕業点検マスタ.csv');
-    
+
     // 元のCSVファイルが存在する場合、ヘッダー行を取得
     let originalHeaders = [];
     if (sourceFileName && fs.existsSync(sourceFilePath)) {
@@ -279,55 +279,70 @@ app.post('/api/save-inspection-data', (req, res) => {
     // データを処理して日本語フィールドにデータをコピー
     const processedData = data.map(item => {
       const newItem = { ...item };
-      
+
       // 英語フィールドから日本語フィールドにデータをコピー
       Object.entries(fieldMapping).forEach(([engField, jpField]) => {
         if (item[engField] !== undefined && item[engField] !== null) {
           newItem[jpField] = item[engField];
         }
       });
-      
+
       return newItem;
     });
 
-    // CSV形式に変換
-    let csvContent;
-    if (typeof data === 'string') {
-      csvContent = data;  // すでにCSV文字列の場合
+    // 点検記録情報がある場合はヘッダーとして追加
+    let headerComments = '';
+    if (req.body.inspectionRecord) {
+      const record = req.body.inspectionRecord;
+      headerComments = [
+        `#点検年月日: ${record.点検年月日 || ''}`,
+        `#開始時刻: ${record.開始時刻 || ''}`,
+        `#終了時刻: ${record.終了時刻 || ''}`,
+        `#実施箇所: ${record.実施箇所 || ''}`,
+        `#責任者: ${record.責任者 || ''}`,
+        `#点検者: ${record.点検者 || ''}`,
+        `#引継ぎ: ${record.引継ぎ || ''}`,
+        ''  // 空行を追加
+      ].join('\n') + '\n';
+    }
+
+    // JSONデータの場合はCSV形式に変換
+    // 元のヘッダーがある場合は、それを優先して使用
+    if (originalHeaders.length > 0) {
+      console.log('元のヘッダーを使用します:', originalHeaders);
+
+      // 新しいデータのキーを取得
+      const newKeys = Object.keys(processedData[0] || {});
+
+      // 元のヘッダーに無い新しいフィールドを追加
+      newKeys.forEach(key => {
+        if (!originalHeaders.includes(key)) {
+          originalHeaders.push(key);
+          console.log('新しいフィールドを追加しました:', key);
+        }
+      });
+
+      // カスタムヘッダーでCSV変換
+      csvContent = Papa.unparse({
+        fields: originalHeaders,
+        data: processedData
+      }, {
+        header: true,
+        delimiter: ',',
+        quoteChar: '"'
+      });
     } else {
-      // JSONデータの場合はCSV形式に変換
-      // 元のヘッダーがある場合は、それを優先して使用
-      if (originalHeaders.length > 0) {
-        console.log('元のヘッダーを使用します:', originalHeaders);
-        
-        // 新しいデータのキーを取得
-        const newKeys = Object.keys(processedData[0] || {});
-        
-        // 元のヘッダーに無い新しいフィールドを追加
-        newKeys.forEach(key => {
-          if (!originalHeaders.includes(key)) {
-            originalHeaders.push(key);
-            console.log('新しいフィールドを追加しました:', key);
-          }
-        });
-        
-        // カスタムヘッダーでCSV変換
-        csvContent = Papa.unparse({
-          fields: originalHeaders,
-          data: processedData
-        }, {
-          header: true,
-          delimiter: ',',
-          quoteChar: '"'
-        });
-      } else {
-        // 元のヘッダーがない場合は通常の変換
-        csvContent = Papa.unparse(processedData, {
-          header: true,
-          delimiter: ',',
-          quoteChar: '"'
-        });
-      }
+      // 元のヘッダーがない場合は通常の変換
+      csvContent = Papa.unparse(processedData, {
+        header: true,
+        delimiter: ',',
+        quoteChar: '"'
+      });
+    }
+
+    // 点検記録情報がある場合は、CSVの先頭に追加
+    if (headerComments) {
+      csvContent = headerComments + csvContent;
     }
 
     // CSVファイルパス

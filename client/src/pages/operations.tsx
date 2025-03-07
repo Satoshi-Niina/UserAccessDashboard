@@ -307,7 +307,7 @@ function Inspection() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">すべて</SelectItem>
-                  {manufacturers.filter(manufacturer => manufacturer && manufacturer.trim() !== '').map((manufacturer) => (
+                  {manufacturers.filter(manufacturer => typeof manufacturer === 'string' && manufacturer.trim() !== '').map((manufacturer) => (
                     <SelectItem key={manufacturer} value={manufacturer}>
                       {manufacturer}
                     </SelectItem>
@@ -327,7 +327,7 @@ function Inspection() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">すべて</SelectItem>
-                  {models.map((model) => (
+                  {models.filter(model => typeof model === 'string' && model.trim() !== '').map((model) => (
                     <SelectItem key={model} value={model}>
                       {model}
                     </SelectItem>

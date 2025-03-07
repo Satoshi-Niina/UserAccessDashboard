@@ -1085,11 +1085,15 @@ export default function InspectionItems() {
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              キャンセル
+          <DialogFooter className="flex justify-between">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setIsDialogOpen(false)}
+            >
+              編集完了
             </Button>
-            <Button onClick={addInspectionItem}>
+            <Button type="button" onClick={addInspectionItem}>
               {isEditMode ? "更新" : "追加"}
             </Button>
           </DialogFooter>

@@ -147,12 +147,11 @@ function Inspection() {
 
 
         // メーカーと機種のリストを抽出
-        const uniqueManufacturers = Array.from(new Set(processedData.map(item => item[manufacturerKey])))
-          .filter(Boolean) as string[];
+        const uniqueManufacturers = Array.from(new Set(processedData.map(item => item.製造メーカー)))
+          .filter(manufacturer => typeof manufacturer === 'string' && manufacturer.trim() !== '') as string[];
 
-        const uniqueModels = Array.from(new Set(processedData.map(item => item[modelKey])))
-          .filter(Boolean) as string[];
-
+        const uniqueModels = Array.from(new Set(processedData.map(item => item.機種)))
+          .filter(model => typeof model === 'string' && model.trim() !== '') as string[];
 
         setManufacturers(uniqueManufacturers);
         setModels(uniqueModels);
@@ -163,13 +162,12 @@ function Inspection() {
         setInspectionItems(processedData);
         setLoading(false);
 
-        if (uniqueManufacturers.length > 0) {
-          setSelectedManufacturer(uniqueManufacturers[0]);
-        }
-
-        if (uniqueModels.length > 0) {
-          setSelectedModel(uniqueModels[0]);
-        }
+        // 初期値は「すべて」に設定
+        setSelectedManufacturer("all");
+        setSelectedModel("all");
+        
+        console.log("製造メーカー初期値:", "all");
+        console.log("機種初期値:", "all");
 
         toast({
           title: "データ読み込み完了",
@@ -188,6 +186,7 @@ function Inspection() {
 
   // メーカーや機種で絞り込んだ点検項目を取得
   const filteredItems = inspectionItems.filter(item => {
+    // console.log("フィルター中のアイテム:", item);
     const matchManufacturer = selectedManufacturer === "all" || !selectedManufacturer || item.製造メーカー === selectedManufacturer;
     const matchModel = selectedModel === "all" || !selectedModel || item.機種 === selectedModel;
     return matchManufacturer && matchModel;
@@ -276,10 +275,10 @@ function Inspection() {
 
                     // メーカーと機種のリストを抽出
                     const uniqueManufacturers = Array.from(new Set(processedData.map(item => item.製造メーカー)))
-                      .filter(Boolean) as string[];
+                      .filter(manufacturer => typeof manufacturer === 'string' && manufacturer.trim() !== '') as string[];
 
                     const uniqueModels = Array.from(new Set(processedData.map(item => item.機種)))
-                      .filter(Boolean) as string[];
+                      .filter(model => typeof model === 'string' && model.trim() !== '') as string[];
 
                     setManufacturers(uniqueManufacturers);
                     setModels(uniqueModels);
@@ -304,7 +303,14 @@ function Inspection() {
               <Label htmlFor="manufacturer">製造メーカー</Label>
               <Select 
                 value={selectedManufacturer} 
-                onValueChange={(value) => setSelectedManufacturer(value === "all" ? "" : value)}
+                onValueChange={(value) => {
+                  console.log("製造メーカー選択:", value);
+                  setSelectedManufacturer(value);
+                  // メーカーが変わったら機種をリセット
+                  if (value !== selectedManufacturer) {
+                    setSelectedModel("all");
+                  }
+                }}
               >
                 <SelectTrigger id="manufacturer">
                   <SelectValue placeholder="メーカーを選択" />
@@ -324,7 +330,10 @@ function Inspection() {
               <Label htmlFor="model">機種</Label>
               <Select 
                 value={selectedModel} 
-                onValueChange={(value) => setSelectedModel(value === "all" ? "" : value)}
+                onValueChange={(value) => {
+                  console.log("機種選択:", value);
+                  setSelectedModel(value);
+                }}
               >
                 <SelectTrigger id="model">
                   <SelectValue placeholder="機種を選択" />

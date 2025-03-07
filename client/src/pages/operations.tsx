@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useLocation } from "wouter"; // Using wouter's useLocation
+import { useLocation } from "wouter";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -17,12 +17,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import {Wrench as WrenchIcon, Replace as ReplaceIcon, Clock as ClockIcon, MoreHorizontal as MoreHorizontalIcon} from "lucide-react";
+import {Badge} from "@/components/ui/badge";
+
 
 // タブのデータ型
 type InspectionTab = "entry" | "exit" | "maintenance";
 
 export default function OperationsPage() {
-  const [location, setLocation] = useLocation(); // Use wouter's location hook
+  const [location, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState<InspectionTab>("entry");
   const [date, setDate] = useState<Date | undefined>(new Date());
 
@@ -75,7 +78,7 @@ export default function OperationsPage() {
   const [modelFilter, setModelFilter] = useState("all");
 
   // フィルター適用した検査項目
-  const filteredItems = inspectionItems.filter(item => 
+  const filteredItems = inspectionItems.filter(item =>
     (manufacturerFilter === "all" || item.manufacturer === manufacturerFilter) &&
     (modelFilter === "all" || item.model === modelFilter)
   );
@@ -89,14 +92,14 @@ export default function OperationsPage() {
     <div className="container mx-auto p-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">仕業点検</h1>
-        <Button variant="outline" onClick={() => setLocation("/")}> {/*Using wouter setLocation*/}
+        <Button variant="outline" onClick={() => setLocation("/")}>
           <Settings className="mr-2 h-4 w-4" />
           管理メニュー
         </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6">
-        {/* 左側: 点検情報入力 */}
+        {/* 左側: フィルター設定 */}
         <div>
           <Card>
             <CardHeader>
@@ -188,39 +191,41 @@ export default function OperationsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="bg-muted/50">
-                          <th className="border px-2 py-2 text-left text-xs font-medium">製造メーカー</th>
-                          <th className="border px-2 py-2 text-left text-xs font-medium">機種</th>
-                          <th className="border px-2 py-2 text-left text-xs font-medium">部位</th>
-                          <th className="border px-2 py-2 text-left text-xs font-medium">装置</th>
-                          <th className="border px-2 py-2 text-left text-xs font-medium">確認箇所</th>
-                          <th className="border px-2 py-2 text-left text-xs font-medium">判断基準</th>
-                          <th className="border px-2 py-2 text-left text-xs font-medium">確認要領</th>
-                          <th className="border px-2 py-2 text-left text-xs font-medium">結果</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredItems.map((item) => (
-                          <tr key={item.id} className="border-b">
-                            <td className="border px-2 py-1 text-xs">{item.manufacturer}</td>
-                            <td className="border px-2 py-1 text-xs">{item.model}</td>
-                            <td className="border px-2 py-1 text-xs">{item.category}</td>
-                            <td className="border px-2 py-1 text-xs">{item.equipment}</td>
-                            <td className="border px-2 py-1 text-xs">{item.item}</td>
-                            <td className="border px-2 py-1 text-xs">{item.criteria}</td>
-                            <td className="border px-2 py-1 text-xs">{item.method}</td>
-                            <td className="border px-2 py-1 text-center">
-                              <div className="flex items-center justify-center">
-                                <Switch id={`result-${item.id}`} />
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <div className="grid grid-cols-1 divide-y">
+                    {filteredItems.map((item) => (
+                      <div key={item.id} className="py-4">
+                        <div className="flex justify-between mb-2">
+                          <h3 className="font-medium text-sm">{item.item}</h3>
+                          <Badge variant="outline" className="text-xs">
+                            {item.category}
+                          </Badge>
+                        </div>
+                        <div className="mb-2 text-sm text-muted-foreground">
+                          <p>確認基準: {item.criteria}</p>
+                          <p>確認方法: {item.method}</p>
+                        </div>
+                        <div className="grid grid-cols-1 gap-2">
+                          <div className="flex flex-wrap gap-2">
+                            <Button variant="outline" size="sm">
+                              <Check className="mr-1 h-3 w-3" /> 完了
+                            </Button>
+                            <Button variant="outline" size="sm">
+                              <WrenchIcon className="mr-1 h-3 w-3" /> 調整
+                            </Button>
+                            <Button variant="outline" size="sm">
+                              <ReplaceIcon className="mr-1 h-3 w-3" /> 補充・交換
+                            </Button>
+                            <Button variant="outline" size="sm">
+                              <ClockIcon className="mr-1 h-3 w-3" /> 経過観察
+                            </Button>
+                            <Button variant="outline" size="sm">
+                              <MoreHorizontalIcon className="mr-1 h-3 w-3" /> その他
+                            </Button>
+                          </div>
+                          <Input placeholder="特記事項（50文字以内）" maxLength={50} />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
                 <CardFooter className="justify-between">
@@ -231,52 +236,7 @@ export default function OperationsPage() {
             </TabsContent>
 
             <TabsContent value="exit">
-              <Card>
-                <CardHeader>
-                  <CardTitle>入庫時点検項目</CardTitle>
-                  <CardDescription>
-                    入庫時に必要な点検項目です
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="exit-manufacturer">製造メーカー</Label>
-                      <Select>
-                        <SelectTrigger id="exit-manufacturer">
-                          <SelectValue placeholder="メーカーを選択" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="horikawa">堀川工機</SelectItem>
-                          <SelectItem value="transis">トランシス</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="exit-model">機種</Label>
-                      <Select>
-                        <SelectTrigger id="exit-model">
-                          <SelectValue placeholder="機種を選択" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="mc300">MC300</SelectItem>
-                          <SelectItem value="mh200">MH200</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 mt-4">
-                    <Label htmlFor="exit-notes">検査メモ</Label>
-                    <Textarea id="exit-notes" placeholder="検査に関する特記事項があれば入力してください" />
-                  </div>
-                </CardContent>
-                <CardFooter className="justify-between">
-                  <Button variant="outline">一時保存</Button>
-                  <Button>点検完了</Button>
-                </CardFooter>
-              </Card>
+              {/* 入庫時点検は削除 */}
             </TabsContent>
 
             <TabsContent value="maintenance">

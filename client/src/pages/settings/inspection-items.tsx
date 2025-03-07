@@ -1577,29 +1577,17 @@ export default function InspectionItems() {
                 </Button>
               </div>
               <div className="grid grid-cols-4 items-center gap-4 mt-4">
-              <Label htmlFor="editComment" className="text-right">
-                コメント・メモ
-              </Label>
-              <textarea
-                id="editComment"
-                value={editComment}
-                onChange={(e) => setEditComment(e.target.value)}
-                className="col-span-3 min-h-[80px] p-2 rounded-md border border-input bg-background text-sm resize-vertical"
-                placeholder="編集に関するコメントやメモを入力してください"
-              />
-            </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4 mt-4">
-              <Label htmlFor="editComment" className="text-right">
-                コメント・メモ
-              </Label>
-              <textarea
-                id="editComment"
-                value={editComment}
-                onChange={(e) => setEditComment(e.target.value)}
-                className="col-span-3 min-h-[80px] p-2 rounded-md border border-input bg-background text-sm resize-vertical"
-                placeholder="編集に関するコメントやメモを入力してください"
-              />
+                <Label htmlFor="editComment" className="text-right">
+                  コメント・メモ
+                </Label>
+                <textarea
+                  id="editComment"
+                  value={editComment}
+                  onChange={(e) => setEditComment(e.target.value)}
+                  className="col-span-3 min-h-[80px] p-2 rounded-md border border-input bg-background text-sm resize-vertical"
+                  placeholder="編集に関するコメントやメモを入力してください"
+                />
+              </div>
             </div>
           )}
           <DialogFooter>

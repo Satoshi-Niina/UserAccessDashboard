@@ -31,3 +31,21 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+/* スクロールバーを常に表示 */
+.overflow-x-auto {
+  overflow-x: scroll !important; /* 横スクロールバーを常に表示 */
+  scrollbar-width: thin;
+}
+
+/* テーブルのスタイル */
+table {
+  border-collapse: collapse;
+}
+
+table td, table th {
+  padding: 4px 8px;
+  line-height: 1.2;
+} {
+  background: #555;
+}

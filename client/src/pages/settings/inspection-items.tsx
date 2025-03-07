@@ -161,8 +161,10 @@ export default function InspectionItems() {
 
         // CSVパース処理
         const lines = csvText.split('\n');
-        const headers = lines[0].split(',');
+        const headers = lines[0].split(',').map(header => header.trim());
 
+        console.log("CSVヘッダー:", headers);
+        console.log("予想されるヘッダー数:", headers.length);
         // CSVから点検項目データを変換
         const items: InspectionItem[] = [];
         let nextId = 1;
@@ -424,18 +426,21 @@ export default function InspectionItems() {
   const saveChanges = async (newFileName?: string) => {
     try {
       // 現在の点検項目データをCSV形式に変換
-      const headers = ['製造メーカー', '機種', '部位', '確認箇所', '確認要領', '判断基準', '測定等記録', '図形記録'];
+      // 元のCSVファイルのヘッダー順序に従って出力
+      const headers = ['製造メーカー', '機種', 'エンジン型式', '部位', '装置', '手順', '確認箇所', '判断基準', '確認要領', '測定等記録', '図形記録'];
       const csvRows = [headers.join(',')];
 
       inspectionItems.forEach(item => {
         const row = [
           item.manufacturer,
           item.model,
+          '', // エンジン型式は空欄
           item.category,
           item.equipment || "",
+          '', // 手順は空欄
           item.item,
-          item.method,
           item.criteria,
+          item.method,
           item.measurementRecord,
           item.diagramRecord
         ].map(val => `${val}`).join(',');
@@ -519,9 +524,12 @@ export default function InspectionItems() {
       reader.onload = (e) => {
         try {
           const text = e.target?.result as string;
+          // CSVデータを解析
           const lines = text.split('\n');
-          const headers = lines[0].split(',');
+          const headers = lines[0].split(',').map(header => header.trim());
 
+          console.log("CSVヘッダー:", headers);
+          console.log("予想されるヘッダー数:", headers.length);
           // CSVから点検項目データを変換
           const items: InspectionItem[] = [];
           let nextId = inspectionItems.length > 0
@@ -942,6 +950,7 @@ export default function InspectionItems() {
               >
                 <Plus className="h-4 w-4" />
                 レコード追加
+              Button>
               </Button>
               <Button
                 variant="outline"

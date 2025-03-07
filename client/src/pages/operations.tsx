@@ -62,12 +62,17 @@ function Inspection() {
             name: file.name,
             modified: new Date(file.modified).toLocaleString()
           }));
-
           setAvailableFiles(fileList);
 
-          // 仕業点検マスタ.csvがない場合は、利用可能な最初のファイルを選択
-          if (fileList.length > 0 && !fileList.some(f => f.name === "仕業点検マスタ.csv")) {
-            setCurrentFileName(fileList[0].name);
+          // 最新のファイルを選択する
+          if (fileList.length > 0) {
+            // latestFileがレスポンスに含まれている場合はそれを使用
+            if (data.latestFile) {
+              setCurrentFileName(data.latestFile);
+            } else {
+              // 含まれていない場合は最初のファイル（すでにソート済み）を使用
+              setCurrentFileName(fileList[0].name);
+            }
           }
         }
       } catch (err) {

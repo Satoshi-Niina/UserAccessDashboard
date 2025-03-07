@@ -72,11 +72,46 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-// 仕業点検項目のCSVを返すAPI - Modified to handle file selection
+// 仕業点検項目のCSVを返すAPI - Modified to handle file selection and auto-detect latest file
 app.get('/api/inspection-items', async (req, res) => {
   console.log('API: /api/inspection-items が呼び出されました');
 
-  const requestedFile = (req.query.file || req.query.filename) as string || '仕業点検マスタ.csv';
+  // ファイル名が指定されていない場合や "latest" の場合は最新のファイルを取得
+  let requestedFile = (req.query.file || req.query.filename) as string;
+  if (!requestedFile || requestedFile === 'latest') {
+    try {
+      // ディレクトリ内の全CSVファイルを取得
+      if (fs.existsSync(INSPECTION_FILES_DIR)) {
+        const files = await promisify(fs.readdir)(INSPECTION_FILES_DIR);
+        const csvFiles = files.filter(file => file.endsWith('.csv'));
+        
+        if (csvFiles.length > 0) {
+          // 各ファイルの更新日時を取得してソート
+          const fileStats = await Promise.all(
+            csvFiles.map(async file => {
+              const stats = await promisify(fs.stat)(path.join(INSPECTION_FILES_DIR, file));
+              return { 
+                name: file, 
+                mtime: stats.mtime.getTime() 
+              };
+            })
+          );
+          
+          // 最新のファイルを特定
+          fileStats.sort((a, b) => b.mtime - a.mtime);
+          requestedFile = fileStats[0]?.name || '仕業点検マスタ.csv';
+        } else {
+          requestedFile = '仕業点検マスタ.csv';
+        }
+      } else {
+        requestedFile = '仕業点検マスタ.csv';
+      }
+    } catch (error) {
+      console.error('最新ファイル特定エラー:', error);
+      requestedFile = '仕業点検マスタ.csv';
+    }
+  }
+
   console.log('リクエストされたファイル:', requestedFile);
 
   res.set('Cache-Control', 'no-store, max-age=0');
@@ -88,15 +123,33 @@ app.get('/api/inspection-items', async (req, res) => {
 
     if (!fs.existsSync(filePath)) {
       console.warn('指定されたCSVファイルが見つかりません:', filePath);
-      // Default to 仕業点検マスタ.csv if not found.
-      const defaultFilePath = path.join(INSPECTION_FILES_DIR, '仕業点検マスタ.csv');
-      if (fs.existsSync(defaultFilePath)) {
-        console.log('デフォルトCSVファイルを使用します:', defaultFilePath);
-        const csvData = fs.readFileSync(defaultFilePath, 'utf8');
+      
+      // attached_assetsディレクトリ内のCSVファイルを探索
+      const files = await promisify(fs.readdir)(INSPECTION_FILES_DIR);
+      const csvFiles = files.filter(file => file.endsWith('.csv'));
+      
+      if (csvFiles.length > 0) {
+        // 最新のCSVファイルを使用
+        const fileStats = await Promise.all(
+          csvFiles.map(async file => {
+            const stats = await promisify(fs.stat)(path.join(INSPECTION_FILES_DIR, file));
+            return { 
+              name: file, 
+              mtime: stats.mtime.getTime() 
+            };
+          })
+        );
+        
+        fileStats.sort((a, b) => b.mtime - a.mtime);
+        const latestFile = fileStats[0].name;
+        const latestFilePath = path.join(INSPECTION_FILES_DIR, latestFile);
+        
+        console.log('最新のCSVファイルを使用します:', latestFilePath);
+        const csvData = fs.readFileSync(latestFilePath, 'utf8');
         res.set('Content-Type', 'text/csv; charset=utf-8');
         return res.status(200).send(csvData);
       } else {
-        return res.status(404).json({ error: 'ファイルが見つかりません' });
+        return res.status(404).json({ error: 'CSVファイルが見つかりません' });
       }
     }
 
@@ -243,17 +296,21 @@ app.get('/api/inspection-files', async (req, res) => {
           return {
             name: file,
             size: stats.size,
-            modified: stats.mtime
+            modified: stats.mtime,
+            // 最終更新日の数値表現（ソート用）
+            modifiedTime: new Date(stats.mtime).getTime()
           };
         })
     );
 
     // 更新日時の新しい順にソート
-    fileDetails.sort((a, b) => {
-      return new Date(b.modified).getTime() - new Date(a.modified).getTime();
-    });
+    fileDetails.sort((a, b) => b.modifiedTime - a.modifiedTime);
 
-    res.json({ files: fileDetails });
+    res.json({ 
+      files: fileDetails,
+      // 最新のファイル名も提供
+      latestFile: fileDetails.length > 0 ? fileDetails[0].name : null 
+    });
   } catch (error) {
     console.error('ファイル一覧取得エラー:', error);
     res.status(500).json({ error: 'ファイル一覧の取得に失敗しました' });

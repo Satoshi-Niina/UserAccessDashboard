@@ -125,11 +125,12 @@ export default function InspectionItems() {
 
           setAvailableFiles(fileList);
 
-          // 初期ファイルが存在するか確認
-          if (!fileList.some(f => f.name === "仕業点検マスタ.csv")) {
-            if (fileList.length > 0) {
-              setCurrentFileName(fileList[0].name);
-            }
+          // 最新のファイルを取得して設定
+          if (data.latestFile) {
+            setCurrentFileName(data.latestFile);
+          } else if (fileList.length > 0) {
+            // latestFileがレスポンスに含まれていない場合は最初のファイル（すでにソート済み）
+            setCurrentFileName(fileList[0].name);
           }
         }
       } catch (err) {
@@ -642,24 +643,53 @@ export default function InspectionItems() {
             '確認要領': 'method',
             '測定等記録': 'measurementRecord',
             '図形記録': 'diagramRecord',
+            // IDフィールドのマッピング
+            'id': 'id',
             // 追加可能なフィールド
             '時期': 'season',
             '備考': 'remarks',
             'メモ': 'notes'
           };
 
+          // 逆マッピング（英語 -> 日本語）も作成
+          const reverseMapping: Record<string, string> = {};
+          Object.entries(headerMapping).forEach(([jpField, enField]) => {
+            reverseMapping[enField] = jpField;
+          });
+
           // データをアプリケーションの形式に変換（柔軟なマッピング）
           const items = results.data.map((row: any, index: number) => {
-            const item: Record<string, any> = { id: index + 1 };
+            const item: Record<string, any> = {};
+            
+            // ID設定（存在しない場合は自動採番）
+            if (row.id) {
+              item.id = Number(row.id);
+            } else if (row.ID) {
+              item.id = Number(row.ID);
+            } else {
+              item.id = index + 1;
+            }
 
             // すべてのヘッダーに対して処理
             Object.keys(row).forEach(header => {
-              // マッピングされたプロパティ名があればそれを使用、なければヘッダー名をそのまま使用
-              const propName = headerMapping[header] || header;
-              item[propName] = row[header] || '';
+              // 1. そのまま英語のプロパティ名として存在する場合
+              if (Object.values(headerMapping).includes(header)) {
+                item[header] = row[header] || '';
+              }
+              // 2. 日本語ヘッダーのマッピングを使用
+              else {
+                const propName = headerMapping[header] || header;
+                item[propName] = row[header] || '';
+              }
             });
 
-            // 必須フィールドが存在しない場合は空文字で初期化
+            // 必要なフィールドの存在確認（データの補完）
+            ['manufacturer', 'model', 'category', 'equipment', 'item', 'criteria', 'method'].forEach(field => {
+              if (!item[field]) {
+                // 必須フィールドが存在しない場合は空文字を設定
+                item[field] = '';
+              }
+            });場合は空文字で初期化
             const requiredFields = ['manufacturer', 'model', 'category', 'equipment', 'item', 'criteria', 'method', 'measurementRecord', 'diagramRecord'];
             requiredFields.forEach(field => {
               if (item[field] === undefined) {

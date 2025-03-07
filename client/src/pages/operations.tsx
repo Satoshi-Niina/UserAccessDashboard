@@ -146,19 +146,42 @@ function Inspection() {
         const modelKey = meta.fields?.includes("機種") ? "機種" : meta.fields?.[1] || "";
 
 
+        // データを確認
+        console.log("CSV列名:", meta.fields);
+
+        // 製造メーカーと機種の値を明示的に処理
+        processedData.forEach(item => {
+          // nullやundefinedの場合は空文字にする
+          if (item.製造メーカー === null || item.製造メーカー === undefined) {
+            item.製造メーカー = "";
+          }
+          if (item.機種 === null || item.機種 === undefined) {
+            item.機種 = "";
+          }
+          if (item.部位 === null || item.部位 === undefined) {
+            item.部位 = "";
+          }
+        });
+
         // メーカーと機種のリストを抽出
-        const uniqueManufacturers = Array.from(new Set(processedData.map(item => item.製造メーカー)))
-          .filter(manufacturer => typeof manufacturer === 'string' && manufacturer.trim() !== '') as string[];
+        const uniqueManufacturers = Array.from(new Set(
+          processedData
+            .map(item => item.製造メーカー)
+            .filter(manufacturer => typeof manufacturer === 'string' && manufacturer.trim() !== '')
+        )) as string[];
 
-        const uniqueModels = Array.from(new Set(processedData.map(item => item.機種)))
-          .filter(model => typeof model === 'string' && model.trim() !== '') as string[];
+        const uniqueModels = Array.from(new Set(
+          processedData
+            .map(item => item.機種)
+            .filter(model => typeof model === 'string' && model.trim() !== '')
+        )) as string[];
 
-        setManufacturers(uniqueManufacturers);
-        setModels(uniqueModels);
         console.log("読み込んだデータ:", processedData.slice(0, 3));
         console.log("メーカー一覧:", uniqueManufacturers);
         console.log("機種一覧:", uniqueModels);
         
+        setManufacturers(uniqueManufacturers);
+        setModels(uniqueModels);
         setInspectionItems(processedData);
         setLoading(false);
 
@@ -186,22 +209,37 @@ function Inspection() {
 
   // メーカーや機種で絞り込んだ点検項目を取得
   const filteredItems = inspectionItems.filter(item => {
-    // console.log("フィルター中のアイテム:", item);
-    const matchManufacturer = selectedManufacturer === "all" || !selectedManufacturer || item.製造メーカー === selectedManufacturer;
-    const matchModel = selectedModel === "all" || !selectedModel || item.機種 === selectedModel;
+    console.log("フィルター中のアイテム:", item, "選択した製造メーカー:", selectedManufacturer, "選択した機種:", selectedModel);
+    
+    // 製造メーカーと機種の値を確実に取得（存在しない場合は空文字に）
+    const itemManufacturer = item.製造メーカー || "";
+    const itemModel = item.機種 || "";
+    
+    // マッチング条件を明確に
+    const matchManufacturer = selectedManufacturer === "all" || itemManufacturer === selectedManufacturer;
+    const matchModel = selectedModel === "all" || itemModel === selectedModel;
+    
+    console.log("マッチ状況:", "製造メーカー:", matchManufacturer, "機種:", matchModel);
     return matchManufacturer && matchModel;
   });
 
+  console.log("フィルター後のアイテム数:", filteredItems.length);
+
   // 部位ごとにグループ化
   const groupedByPart = filteredItems.reduce((acc: Record<string, InspectionItem[]>, item) => {
-    // 部位がundefinedや空文字の場合も「未分類」にする
-    const part = item.部位 && item.部位.trim() !== "" ? item.部位 : "未分類";
+    // 部位の値を確実に取得
+    const part = (item.部位 && typeof item.部位 === 'string' && item.部位.trim() !== "") 
+      ? item.部位.trim() 
+      : "未分類";
+    
     if (!acc[part]) {
       acc[part] = [];
     }
     acc[part].push(item);
     return acc;
   }, {});
+  
+  console.log("部位ごとのグループ:", Object.keys(groupedByPart));
 
   return (
     <div className="space-y-4">
@@ -317,12 +355,14 @@ function Inspection() {
                   <SelectValue placeholder="メーカーを選択" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">すべて</SelectItem>
-                  {manufacturers.filter(manufacturer => typeof manufacturer === 'string' && manufacturer.trim() !== '').map((manufacturer) => (
-                    <SelectItem key={manufacturer} value={manufacturer}>
-                      {manufacturer}
-                    </SelectItem>
-                  ))}
+                  <SelectItem key="all-manufacturers" value="all">すべて</SelectItem>
+                  {manufacturers
+                    .filter(manufacturer => typeof manufacturer === 'string' && manufacturer.trim() !== '')
+                    .map((manufacturer) => (
+                      <SelectItem key={`manufacturer-${manufacturer}`} value={manufacturer}>
+                        {manufacturer}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -340,12 +380,14 @@ function Inspection() {
                   <SelectValue placeholder="機種を選択" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">すべて</SelectItem>
-                  {models.filter(model => typeof model === 'string' && model.trim() !== '').map((model) => (
-                    <SelectItem key={model} value={model}>
-                      {model}
-                    </SelectItem>
-                  ))}
+                  <SelectItem key="all-models" value="all">すべて</SelectItem>
+                  {models
+                    .filter(model => typeof model === 'string' && model.trim() !== '')
+                    .map((model) => (
+                      <SelectItem key={`model-${model}`} value={model}>
+                        {model}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>

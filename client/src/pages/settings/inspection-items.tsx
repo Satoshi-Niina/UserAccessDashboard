@@ -13,6 +13,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   Input,
   Label,
   Table,
@@ -368,20 +369,19 @@ export default function InspectionItems() {
   };
 
   // 変更を保存して戻る
-  const handleSaveAndNavigate = () => {
+  const handleSaveAndNavigate = async () => {
     if (hasChanges) {
       // 変更がある場合、保存ダイアログを開く
       setPendingAction('save');
-      openSaveDialog();
+      setIsSaveDialogOpen(true);
+      // デフォルトのファイル名設定（現在のファイル名に日付を追加）
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+      const baseName = currentFileName.replace(/\.csv$/i, '');
+      setSaveFileName(`${baseName}_${dateStr}.csv`);
     } else {
       navigate('/settings');
     }
-  };
-
-  // ファイル保存ダイアログを開く
-  const openSaveDialog = () => {
-    setIsSaveDialogOpen(true);
-    setSaveFileName(currentFileName); //初期値は現在のファイル名
   };
 
   // ファイル保存ダイアログを閉じる
@@ -390,6 +390,26 @@ export default function InspectionItems() {
     setPendingAction(null);
   };
 
+  const fetchInspectionFiles = async () => {
+    try {
+      const response = await fetch('/api/inspection-files');
+      const data = await response.json();
+      if (data.files && Array.isArray(data.files)) {
+        const fileList = data.files.map(file => ({
+          name: file.name,
+          modified: new Date(file.modified).toLocaleString()
+        }));
+        setAvailableFiles(fileList);
+      }
+    } catch (error) {
+      console.error("ファイル一覧取得エラー:", error);
+      toast({
+        title: "エラー",
+        description: "ファイル一覧の取得に失敗しました",
+        variant: "destructive",
+      });
+    }
+  };
 
   // 変更を保存する
   const saveChanges = async (newFileName?: string) => {
@@ -435,16 +455,7 @@ export default function InspectionItems() {
       }
 
       // ファイル一覧を更新
-      const filesResponse = await fetch('/api/inspection-files');
-      const data = await filesResponse.json();
-      if (data.files && Array.isArray(data.files)) {
-        const fileList = data.files.map(file => ({
-          name: file.name,
-          modified: new Date(file.modified).toLocaleString()
-        }));
-        setAvailableFiles(fileList);
-        setCurrentFileName(fileName);
-      }
+      await fetchInspectionFiles();
 
       toast({
         title: "保存完了",
@@ -460,6 +471,7 @@ export default function InspectionItems() {
         navigate('/settings');
       }
 
+      setIsSaveDialogOpen(false); // ダイアログを閉じる
       return true;
     } catch (error) {
       console.error('保存エラー:', error);
@@ -940,8 +952,7 @@ export default function InspectionItems() {
               <Table className="min-w-[2000px] border-collapse">
                 <TableHeader>
                   <TableRow className="border-b border-gray-200">
-                    <TableHead className="w-[120px] py-2 border border-gray-200">製造メーカー</TableHead>
-                    <TableHead className="w-[120px] py-2 border border-gray-200">機種</TableHead>
+                    <TableHead className="w-[120px] py-2 border border-gray-200">製造メーカー</TableHead<TableHead className="w-[120px] py-2 border border-gray-200">機種</TableHead>
                     <TableHead className="w-[120px] py-2 border border-gray-200">部位</TableHead>
                     <TableHead className="w-[120px] py-2 border border-gray-200">装置</TableHead>
                     <TableHead className="w-[200px] py-2 border border-gray-200">点検項目</TableHead>
@@ -1080,25 +1091,74 @@ export default function InspectionItems() {
       <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>ファイル名を入力してください</DialogTitle>
+            <DialogTitle>変更を保存</DialogTitle>
+            <DialogDescription>
+              変更内容を保存するためのファイル名を入力してください。
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="saveFileName">ファイル名</Label>
+              <Label htmlFor="fileName">ファイル名</Label>
               <Input
-                id="saveFileName"
-                type="text"
+                id="fileName"
                 value={saveFileName}
                 onChange={(e) => setSaveFileName(e.target.value)}
-                placeholder="ファイル名を入力してください"
+                placeholder="例: 仕業点検マスタ_20240101.csv"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={closeSaveDialog}>
+            <Button variant="outline" onClick={() => setIsSaveDialogOpen(false)}>
               キャンセル
             </Button>
-            <Button onClick={() => saveChanges(saveFileName)}>保存</Button>
+            <Button onClick={async () => {
+              try {
+                // 保存処理
+                const response = await fetch('/api/save-inspection-data', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    data: inspectionItems,
+                    fileName: saveFileName
+                  }),
+                });
+
+                if (!response.ok) {
+                  throw new Error('保存に失敗しました');
+                }
+
+                const result = await response.json();
+
+                toast({
+                  title: "保存完了",
+                  description: `ファイル「${result.fileName}」に保存しました`,
+                });
+
+                // 保存した後、変更フラグをリセット
+                setInitialItems(JSON.parse(JSON.stringify(inspectionItems)));
+                setHasChanges(false);
+
+                // ダイアログを閉じる
+                setIsSaveDialogOpen(false);
+
+                // ファイル一覧を更新するため再読み込み
+                fetchInspectionFiles();
+
+                // 設定画面に戻る
+                navigate('/settings');
+              } catch (error) {
+                console.error('保存エラー:', error);
+                toast({
+                  title: "エラー",
+                  description: "ファイルの保存に失敗しました",
+                  variant: "destructive",
+                });
+              }
+            }}>
+              保存
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1109,22 +1169,29 @@ export default function InspectionItems() {
           <AlertDialogHeader>
             <AlertDialogTitle>変更が保存されていません</AlertDialogTitle>
             <AlertDialogDescription>
-              変更を保存しますか？保存せずに戻ると、変更内容は失われます。
+              変更内容を保存せずに移動しますか？
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleCancelAction}>キャンセル</AlertDialogCancel>
             <AlertDialogAction onClick={() => {
+              setShowConfirmDialog(false);
               if (pendingAction === 'back') {
                 navigate('/settings');
-              } else {
-                handleConfirmAction();
               }
             }}>
-              保存せずに戻る
+              保存せずに移動
             </AlertDialogAction>
-            <Button onClick={handleConfirmAction} variant="default">
-              保存して戻る
+            <Button onClick={() => {
+              setShowConfirmDialog(false);
+              setIsSaveDialogOpen(true);
+              // デフォルトのファイル名設定
+              const now = new Date();
+              const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+              const baseName = currentFileName.replace(/\.csv$/i, '');
+              setSaveFileName(`${baseName}_${dateStr}.csv`);
+            }}>
+              保存する
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

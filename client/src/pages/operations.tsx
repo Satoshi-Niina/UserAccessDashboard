@@ -23,7 +23,7 @@ interface InspectionItem {
   確認要領: string;
   測定等記録: string;
   図形記録: string;
-  [key: string]: string; // インデックスシグネチャ
+  [key: string]: string | undefined; // インデックスシグネチャ, undefinedを追加
 }
 
 // 運用計画のコンポーネント
@@ -104,61 +104,59 @@ function Inspection() {
           return;
         }
 
-        console.log("CSVデータの最初の行:", csvText.split('\n')[0]);
-
-        // CSVのヘッダー行を修正（「測定等"録」などの問題を修正）
-        let fixedCsvText = csvText;
-        const lines = csvText.split('\n');
-        if (lines.length > 0) {
-          // ヘッダー行を取得して標準化
-          const standardHeader = '製造メーカー,機種,エンジン型式,部位,装置,手順,確認箇所,判断基準,確認要領,測定等記録,図形記録';
-          // 最初の行を標準ヘッダーに置き換え
-          lines[0] = standardHeader;
-          fixedCsvText = lines.join('\n');
-        }
 
         // CSVデータのパース
-        const { data, errors, meta } = Papa.parse<InspectionItem>(fixedCsvText, {
+        const { data, errors, meta } = Papa.parse<InspectionItem>(csvText, {
           header: true,
           skipEmptyLines: true,
           delimiter: ',',
           transformHeader: (header) => header.trim() || 'column',
           quoteChar: '"',
-          encoding: "UTF-8"
+          encoding: "UTF-8",
+          dynamicTyping: true, // add dynamicTyping to handle different data types
+          // Add error handling for fewer fields.  This is crucial for the problem described.
+          error: (err) => {
+            console.error('Papa Parse Error:', err);
+            setError(`CSV解析エラー: ${err.message}`);
+            setLoading(false);
+          }
         });
 
-        if (errors.length > 0) {
+        if (errors && errors.length > 0) {
           console.error("CSVパースエラー:", errors);
           setError(`CSVの解析に失敗しました: ${errors[0].message}`);
           setLoading(false);
           return;
         }
 
-        console.log("データのキー:", meta.fields);
+        // データの欠損値を処理
+        const processedData = data.map(item => {
+          const processedItem: InspectionItem = { ...item };
+          for (const key in processedItem) {
+            if (processedItem[key] === undefined || processedItem[key] === null) {
+              processedItem[key] = "";
+            }
+          }
+          return processedItem;
+        });
+
 
         // 製造メーカーと機種のキーを決定
         const manufacturerKey = meta.fields?.includes("製造メーカー") ? "製造メーカー" : meta.fields?.[0] || "";
         const modelKey = meta.fields?.includes("機種") ? "機種" : meta.fields?.[1] || "";
 
-        console.log("使用するメーカーキー:", manufacturerKey);
-        console.log("使用する機種キー:", modelKey);
 
         // メーカーと機種のリストを抽出
-        const uniqueManufacturers = Array.from(new Set(data.map(item => item[manufacturerKey])))
+        const uniqueManufacturers = Array.from(new Set(processedData.map(item => item[manufacturerKey])))
           .filter(Boolean) as string[];
 
-        const uniqueModels = Array.from(new Set(data.map(item => item[modelKey])))
+        const uniqueModels = Array.from(new Set(processedData.map(item => item[modelKey])))
           .filter(Boolean) as string[];
 
-        console.log("メーカーリスト:", uniqueManufacturers);
-        console.log("機種リスト:", uniqueModels);
-
-        console.log("仕業点検：データ読み込み成功", data.length, "件");
-        console.log("データサンプル:", data.slice(0, 3));
 
         setManufacturers(uniqueManufacturers);
         setModels(uniqueModels);
-        setInspectionItems(data);
+        setInspectionItems(processedData);
         setLoading(false);
 
         if (uniqueManufacturers.length > 0) {
@@ -171,7 +169,7 @@ function Inspection() {
 
         toast({
           title: "データ読み込み完了",
-          description: `${data.length}件の点検項目を読み込みました`,
+          description: `${processedData.length}件の点検項目を読み込みました`,
           duration: 3000,
         });
       } catch (err) {
@@ -236,38 +234,52 @@ function Inspection() {
                       return;
                     }
 
-                    // CSVのヘッダー行を修正
-                    let fixedCsvText = csvText;
-                    const lines = csvText.split('\n');
-                    if (lines.length > 0) {
-                      // ヘッダー行を標準化
-                      const standardHeader = '製造メーカー,機種,エンジン型式,部位,装置,手順,確認箇所,判断基準,確認要領,測定等記録,図形記録';
-                      lines[0] = standardHeader;
-                      fixedCsvText = lines.join('\n');
-                    }
-
                     // CSVデータのパース
-                    const { data, errors } = Papa.parse<InspectionItem>(fixedCsvText, {
+                    const { data, errors } = Papa.parse<InspectionItem>(csvText, {
                       header: true,
                       skipEmptyLines: true,
                       delimiter: ',',
                       transformHeader: (header) => header.trim() || 'column',
                       quoteChar: '"',
-                      encoding: "UTF-8"
+                      encoding: "UTF-8",
+                      dynamicTyping: true,
+                      error: (err) => {
+                        console.error('Papa Parse Error:', err);
+                        setError(`CSV解析エラー: ${err.message}`);
+                        setLoading(false);
+                      }
                     });
 
-                    console.log("CSVデータを再読み込みしました:", data.length, "件");
+                    if (errors && errors.length > 0) {
+                      console.error("CSVパースエラー:", errors);
+                      setError(`CSVの解析に失敗しました: ${errors[0].message}`);
+                      setLoading(false);
+                      return;
+                    }
+
+                    // データの欠損値を処理
+                    const processedData = data.map(item => {
+                      const processedItem: InspectionItem = { ...item };
+                      for (const key in processedItem) {
+                        if (processedItem[key] === undefined || processedItem[key] === null) {
+                          processedItem[key] = "";
+                        }
+                      }
+                      return processedItem;
+                    });
+
+                    console.log("CSVデータを再読み込みしました:", processedData.length, "件");
 
                     // メーカーと機種のリストを抽出
-                    const uniqueManufacturers = Array.from(new Set(data.map(item => item.製造メーカー)))
+                    const uniqueManufacturers = Array.from(new Set(processedData.map(item => item.製造メーカー)))
                       .filter(Boolean) as string[];
 
-                    const uniqueModels = Array.from(new Set(data.map(item => item.機種)))
+                    const uniqueModels = Array.from(new Set(processedData.map(item => item.機種)))
                       .filter(Boolean) as string[];
 
                     setManufacturers(uniqueManufacturers);
                     setModels(uniqueModels);
-                    setInspectionItems(data);
+                    setInspectionItems(processedData);
                     setLoading(false);
                   } catch (err) {
                     console.error("データ再読み込みエラー:", err);

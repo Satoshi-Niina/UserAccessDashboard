@@ -231,21 +231,8 @@ function Inspection() {
 
   console.log("フィルター後のアイテム数:", filteredItems.length);
 
-  // 部位ごとにグループ化
-  const groupedByPart = filteredItems.reduce((acc: Record<string, InspectionItem[]>, item) => {
-    // 部位の値を確実に取得
-    const part = (item.部位 && typeof item.部位 === 'string' && item.部位.trim() !== "") 
-      ? item.部位.trim() 
-      : "未分類";
-    
-    if (!acc[part]) {
-      acc[part] = [];
-    }
-    acc[part].push(item);
-    return acc;
-  }, {});
-  
-  console.log("部位ごとのグループ:", Object.keys(groupedByPart));
+  // 部位によるグループ化を削除
+  console.log("フィルター後のアイテム数:", filteredItems.length);
 
   return (
     <div className="space-y-4">
@@ -498,50 +485,41 @@ function Inspection() {
           </div>
 
           <div className="mt-2">
-            {Object.keys(groupedByPart).length === 0 ? (
+            {filteredItems.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
                 該当する点検項目がありません。フィルターを変更してください。
               </p>
             ) : (
-              <div className="space-y-6">
-                {Object.entries(groupedByPart).map(([part, items]) => (
-                  <Card key={part} className="overflow-hidden">
-                    <CardContent className="p-0">
-                      <div className="bg-primary/10 p-3 font-medium">
-                        {part}
-                      </div>
-                      <div className="overflow-x-auto">
-                        <table className="w-full border-collapse">
-                          <thead>
-                            <tr className="bg-muted/70">
-                              <th className="px-4 py-2 text-left font-medium text-muted-foreground border">装置</th>
-                              <th className="px-4 py-2 text-left font-medium text-muted-foreground border">部位</th>
-                              <th className="px-4 py-2 text-left font-medium text-muted-foreground border">確認箇所</th>
-                              <th className="px-4 py-2 text-left font-medium text-muted-foreground border">確認要領</th>
-                              <th className="px-4 py-2 text-left font-medium text-muted-foreground border">判断基準</th>
-                              <th className="px-4 py-2 text-left font-medium text-muted-foreground border">測定等記録</th>
-                              <th className="px-4 py-2 text-left font-medium text-muted-foreground border">図形記録</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {items.map((item, idx) => (
-                              <tr key={idx} className="hover:bg-muted/50 transition-colors">
-                                <td className="px-4 py-2 border">{item.装置 || "-"}</td>
-                                <td className="px-4 py-2 border">{item.部位 || "-"}</td>
-                                <td className="px-4 py-2 border">{item.確認箇所 || "-"}</td>
-                                <td className="px-4 py-2 border">{item.確認要領 || "-"}</td>
-                                <td className="px-4 py-2 border">{item.判断基準 || "-"}</td>
-                                <td className="px-4 py-2 border">{item.測定等記録 || "-"}</td>
-                                <td className="px-4 py-2 border">{item.図形記録 || "-"}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+              <Card className="overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="bg-muted/70">
+                          <th className="px-4 py-2 text-left font-medium text-muted-foreground border">装置</th>
+                          <th className="px-4 py-2 text-left font-medium text-muted-foreground border">確認箇所</th>
+                          <th className="px-4 py-2 text-left font-medium text-muted-foreground border">確認要領</th>
+                          <th className="px-4 py-2 text-left font-medium text-muted-foreground border">判断基準</th>
+                          <th className="px-4 py-2 text-left font-medium text-muted-foreground border">測定等記録</th>
+                          <th className="px-4 py-2 text-left font-medium text-muted-foreground border">図形記録</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredItems.map((item, idx) => (
+                          <tr key={idx} className="hover:bg-muted/50 transition-colors">
+                            <td className="px-4 py-2 border">{item.装置 || "-"}</td>
+                            <td className="px-4 py-2 border">{item.確認箇所 || "-"}</td>
+                            <td className="px-4 py-2 border">{item.確認要領 || "-"}</td>
+                            <td className="px-4 py-2 border">{item.判断基準 || "-"}</td>
+                            <td className="px-4 py-2 border">{item.測定等記録 || "-"}</td>
+                            <td className="px-4 py-2 border">{item.図形記録 || "-"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </div>
         </div>

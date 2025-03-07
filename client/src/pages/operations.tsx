@@ -311,7 +311,6 @@ function Inspection() {
                     <SelectItem key={manufacturer} value={manufacturer}>
                       {manufacturer}
                     </SelectItem>
-                  )
                   ))}
                 </SelectContent>
               </Select>
@@ -333,7 +332,6 @@ function Inspection() {
                     <SelectItem key={model} value={model}>
                       {model}
                     </SelectItem>
-                  )
                   ))}
                 </SelectContent>
               </Select>

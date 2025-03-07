@@ -364,7 +364,7 @@ export default function InspectionItems() {
       setShowConfirmDialog(true);
       setPendingAction('back');
     } else {
-      navigate('/settings');
+      navigate('/');
     }
   };
 
@@ -380,7 +380,7 @@ export default function InspectionItems() {
       const baseName = currentFileName.replace(/\.csv$/i, '');
       setSaveFileName(`${baseName}_${dateStr}.csv`);
     } else {
-      navigate('/settings');
+      navigate('/');
     }
   };
 
@@ -468,7 +468,7 @@ export default function InspectionItems() {
 
       // 保存して戻る場合は画面遷移
       if (pendingAction === 'save') {
-        navigate('/settings');
+        navigate('/');
       }
 
       setIsSaveDialogOpen(false); // ダイアログを閉じる
@@ -491,7 +491,7 @@ export default function InspectionItems() {
     if (pendingAction === 'save') {
       // 保存ダイアログは別で開くので、ここでは何もしない
     } else if (pendingAction === 'back') {
-      navigate('/settings');
+      navigate('/');
     }
 
     setPendingAction(null);
@@ -723,7 +723,7 @@ export default function InspectionItems() {
               onClick={handleSaveAndNavigate}
             >
               <Check className="h-4 w-4" />
-              変更を保存して戻る
+              編集終了
             </Button>
           </div>
         </div>
@@ -1148,7 +1148,7 @@ export default function InspectionItems() {
                 fetchInspectionFiles();
 
                 // 設定画面に戻る
-                navigate('/settings');
+                navigate('/');
               } catch (error) {
                 console.error('保存エラー:', error);
                 toast({
@@ -1175,12 +1175,7 @@ export default function InspectionItems() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleCancelAction}>キャンセル</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              setShowConfirmDialog(false);
-              if (pendingAction === 'back') {
-                navigate('/settings');
-              }
-            }}>
+            <AlertDialogAction onClick={handleConfirmAction}>
               保存せずに移動
             </AlertDialogAction>
             <Button onClick={() => {

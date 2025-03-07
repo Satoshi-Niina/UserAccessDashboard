@@ -838,6 +838,7 @@ export default function InspectionItems() {
   const [editItem, setEditItem] = useState<InspectionItem | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [dynamicFields, setDynamicFields] = useState<Array<{ key: string, label: string, value: string }>>([]);
+  const [editComment, setEditComment] = useState(""); // 追加：コメント状態
 
   // 点検項目の編集
   const handleEditDialog = (item: InspectionItem) => {
@@ -859,6 +860,7 @@ export default function InspectionItems() {
 
     setDynamicFields(extraFields);
     setEditItem({ ...item });
+    setEditComment(""); // コメントをクリア
     setIsEditDialogOpen(true);
   };
 
@@ -914,9 +916,13 @@ export default function InspectionItems() {
 
     setInspectionItems(updatedItems);
     setIsEditDialogOpen(false);
+    // コメントがある場合は表示、なければ基本メッセージ
+    const description = editComment 
+      ? `点検項目を更新しました: ${editComment}`
+      : "点検項目を更新しました";
     toast({
       title: "更新完了",
-      description: "点検項目を更新しました",
+      description: description,
     });
   };
 
@@ -1569,6 +1575,18 @@ export default function InspectionItems() {
                   </svg>
                   フィールド追加
                 </Button>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4 mt-4">
+                <Label htmlFor="editComment" className="text-right">
+                  コメント・メモ
+                </Label>
+                <textarea
+                  id="editComment"
+                  value={editComment}
+                  onChange={(e) => setEditComment(e.target.value)}
+                  className="col-span-3 min-h-[80px] p-2 rounded-md border border-input bg-background text-sm resize-vertical"
+                  placeholder="編集に関するコメントやメモを入力してください"
+                />
               </div>
             </div>
           )}

@@ -209,8 +209,10 @@ export default function OperationsPage() {
               <CardTitle>出発前点検表</CardTitle>
               <CardDescription>保守用車の出発前点検を行います</CardDescription>
             </CardHeader>
-            <CardContent className="overflow-x-auto">
-              <Table>
+            <CardContent>
+              <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-300px)]" style={{ width: '100%' }}>
+                <div className="min-w-[1200px]">
+                  <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-[100px] min-w-[100px] text-xs">部位</TableHead>
@@ -255,7 +257,9 @@ export default function OperationsPage() {
                       </TableRow>
                     ))}
                   </TableBody>
-              </Table>
+                  </Table>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -266,8 +270,10 @@ export default function OperationsPage() {
               <CardTitle>仕業点検表</CardTitle>
               <CardDescription>保守用車の定期的な仕業点検を行います</CardDescription>
             </CardHeader>
-            <CardContent className="overflow-x-auto">
-              <Table>
+            <CardContent>
+              <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-300px)]" style={{ width: '100%' }}>
+                <div className="min-w-[1200px]">
+                  <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-[100px] min-w-[100px] text-xs">部位</TableHead>
@@ -312,7 +318,9 @@ export default function OperationsPage() {
                       </TableRow>
                     ))}
                   </TableBody>
-              </Table>
+                  </Table>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -323,8 +331,10 @@ export default function OperationsPage() {
               <CardTitle>帰着点検表</CardTitle>
               <CardDescription>保守用車の帰着点検を行います</CardDescription>
             </CardHeader>
-            <CardContent className="overflow-x-auto">
-              <Table>
+            <CardContent>
+              <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-300px)]" style={{ width: '100%' }}>
+                <div className="min-w-[1200px]">
+                  <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-[100px] min-w-[100px] text-xs">部位</TableHead>
@@ -369,7 +379,9 @@ export default function OperationsPage() {
                       </TableRow>
                     ))}
                   </TableBody>
-              </Table>
+                  </Table>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

@@ -120,8 +120,7 @@ export default function OperationsPage() {
     <div className="container mx-auto p-4">
       <div className="flex flex-col space-y-6">
         <div>
-          <h1 className="text-2xl font-bold">運用管理</h1>
-          <p className="text-muted-foreground">保守用車両の運用管理と点検を行います</p>
+          {/*Removed Title*/}
         </div>
 
         <Card className="w-full">
@@ -200,23 +199,19 @@ export default function OperationsPage() {
               <CardDescription>保守用車の出発前点検を行います</CardDescription>
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <div className="text-center py-4">データ読み込み中...</div>
-              ) : error ? (
-                <div className="text-center text-red-500 py-4">{error}</div>
-              ) : (
+              <div className="overflow-auto max-h-[calc(100vh-300px)]">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[12%]">部位</TableHead>
-                      <TableHead className="w-[12%]">装置</TableHead>
-                      <TableHead className="w-[15%]">確認箇所</TableHead>
-                      <TableHead className="w-[15%]">判断基準</TableHead>
-                      <TableHead className="w-[15%]">確認要領</TableHead>
-                      <TableHead className="w-[7%]">測定等記録</TableHead>
-                      <TableHead className="w-[7%]">図形記録</TableHead>
-                      <TableHead className="w-[8%]">結果</TableHead>
-                      <TableHead className="w-[9%]">特記事項</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px]">部位</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px]">装置</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px]">確認箇所</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px]">判断基準</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px]">確認要領</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px]">測定等記録</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px]">図形記録</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px]">結果</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px]">特記事項</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -251,7 +246,7 @@ export default function OperationsPage() {
                     ))}
                   </TableBody>
                 </Table>
-              )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -263,23 +258,19 @@ export default function OperationsPage() {
               <CardDescription>保守用車の定期的な仕業点検を行います</CardDescription>
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <div className="text-center py-4">データ読み込み中...</div>
-              ) : error ? (
-                <div className="text-center text-red-500 py-4">{error}</div>
-              ) : (
+              <div className="overflow-auto max-h-[calc(100vh-300px)]">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[12%]">部位</TableHead>
-                      <TableHead className="w-[12%]">装置</TableHead>
-                      <TableHead className="w-[15%]">確認箇所</TableHead>
-                      <TableHead className="w-[15%]">判断基準</TableHead>
-                      <TableHead className="w-[15%]">確認要領</TableHead>
-                      <TableHead className="w-[7%]">測定等記録</TableHead>
-                      <TableHead className="w-[7%]">図形記録</TableHead>
-                      <TableHead className="w-[8%]">結果</TableHead>
-                      <TableHead className="w-[9%]">特記事項</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px]">部位</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px]">装置</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px]">確認箇所</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px]">判断基準</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px]">確認要領</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px]">測定等記録</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px]">図形記録</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px]">結果</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px]">特記事項</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -314,7 +305,7 @@ export default function OperationsPage() {
                     ))}
                   </TableBody>
                 </Table>
-              )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -326,23 +317,19 @@ export default function OperationsPage() {
               <CardDescription>保守用車の帰着点検を行います</CardDescription>
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <div className="text-center py-4">データ読み込み中...</div>
-              ) : error ? (
-                <div className="text-center text-red-500 py-4">{error}</div>
-              ) : (
+              <div className="overflow-auto max-h-[calc(100vh-300px)]">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[12%]">部位</TableHead>
-                      <TableHead className="w-[12%]">装置</TableHead>
-                      <TableHead className="w-[15%]">確認箇所</TableHead>
-                      <TableHead className="w-[15%]">判断基準</TableHead>
-                      <TableHead className="w-[15%]">確認要領</TableHead>
-                      <TableHead className="w-[7%]">測定等記録</TableHead>
-                      <TableHead className="w-[7%]">図形記録</TableHead>
-                      <TableHead className="w-[8%]">結果</TableHead>
-                      <TableHead className="w-[9%]">特記事項</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px]">部位</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px]">装置</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px]">確認箇所</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px]">判断基準</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px]">確認要領</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px]">測定等記録</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px]">図形記録</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px]">結果</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px]">特記事項</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -377,7 +364,7 @@ export default function OperationsPage() {
                     ))}
                   </TableBody>
                 </Table>
-              )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

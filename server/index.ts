@@ -80,14 +80,9 @@ app.use((req, res, next) => {
     // ポート使用時のエラーハンドリングを追加
     server.on('error', (err: any) => {
       if (err.code === 'EADDRINUSE') {
-        // Try alternative ports if 5000 is in use
-        PORT = PORT + 1;
-        log(`Port ${PORT - 1} is already in use. Trying port ${PORT} instead...`);
-        setTimeout(() => {
-          server.listen(PORT, '0.0.0.0', () => {
-            log(`Server is running on port ${PORT}`);
-          });
-        }, 1000);
+        // 元のポートが使用中の場合はエラーで終了
+        log(`Port ${PORT} is already in use. Please stop the existing server first.`);
+        process.exit(1);
       } else {
         log(`Server error: ${err}`);
         process.exit(1);

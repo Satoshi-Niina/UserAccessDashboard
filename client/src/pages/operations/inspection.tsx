@@ -1,14 +1,35 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useForm } from "react-hook-form";
+import { useToast } from "@/hooks/use-toast";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { ja } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Edit, Trash, Save } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+
 
 // 点検項目の型定義
 interface InspectionItem {
@@ -218,12 +239,7 @@ export default function Inspection() {
             {/* 1行目：点検日・開始/終了時間・点検場所 */}
             <div>
               <Label htmlFor="date">点検日</Label>
-              <Input 
-                type="date" 
-                id="date" 
-                value={date.toISOString().split('T')[0]} 
-                onChange={(e) => setDate(new Date(e.target.value))}
-              />
+              <Calendar date={date} setDate={setDate} />
             </div>
             <div>
               <Label htmlFor="startTime">開始時間</Label>

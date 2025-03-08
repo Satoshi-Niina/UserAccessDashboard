@@ -1,7 +1,7 @@
+@import './styles/table-extensions.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import './styles/table-extensions.css';
 
 @layer base {
   * {

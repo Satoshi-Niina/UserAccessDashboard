@@ -68,7 +68,8 @@ export default function Inspection() {
     method: "",
     criteria: "",
   });
-  const [tabValue, setTabValue] = useState('inspection'); // Add state for tab selection
+  const [tabValue, setTabValue] = useState('inspection');
+  const navigate = useNavigate();
 
   // 初期データロード - 実際のアプリではAPIから取得する
   useEffect(() => {
@@ -239,7 +240,16 @@ export default function Inspection() {
 
   return (
     <div className="container mx-auto py-8">
-      <Tabs value={tabValue} onValueChange={setTabValue} className="mb-6">
+      <Tabs 
+        value={tabValue} 
+        onValueChange={(value) => {
+          setTabValue(value);
+          if (value === 'operational-plan') {
+            navigate('/operations/operational-plan');
+          }
+        }} 
+        className="mb-6"
+      >
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="inspection">仕業点検</TabsTrigger>
           <TabsTrigger value="operational-plan">運用計画</TabsTrigger>

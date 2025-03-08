@@ -28,6 +28,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PenSquare, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Import Tabs component
+
 
 // 仕業点検の型定義
 interface InspectionItem {
@@ -43,6 +45,9 @@ interface InspectionItem {
 // サンプルデータ - 本来はAPIから取得する
 const sampleManufacturers = ["コマツ", "日立建機", "キャタピラー", "コベルコ", "住友建機"];
 const sampleModels = ["油圧ショベル ZX120", "ブルドーザー D51PX", "ホイールローダー WA100", "クローラクレーン SCX900", "バックホウ PC200"];
+
+// Placeholder for OperationalPlanPage component.  Replace with your actual component.
+const OperationalPlanPage = () => <div>運用計画ページ</div>;
 
 export default function Inspection() {
   // タイトルを設定
@@ -63,6 +68,7 @@ export default function Inspection() {
     method: "",
     criteria: "",
   });
+  const [tabValue, setTabValue] = useState('inspection'); // Add state for tab selection
 
   // 初期データロード - 実際のアプリではAPIから取得する
   useEffect(() => {
@@ -235,218 +241,229 @@ export default function Inspection() {
     <Card>
       <CardContent className="p-6">
         <div className="space-y-6">
-          <h2 className="text-2xl font-bold">仕業点検</h2>
-          <p className="text-muted-foreground">
-            メーカーと機種を選択して、点検項目を表示します。
-          </p>
+          <Tabs value={tabValue} onValueChange={setTabValue}>
+            <TabsList>
+              <TabsTrigger value="inspection">仕業点検</TabsTrigger>
+              <TabsTrigger value="operational-plan">運用計画</TabsTrigger>
+            </TabsList>
+            <TabsContent value="inspection">
+              <h2 className="text-2xl font-bold">仕業点検</h2>
+              <p className="text-muted-foreground">
+                メーカーと機種を選択して、点検項目を表示します。
+              </p>
 
-          {/* 製造メーカーと機種選択 */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="manufacturer">製造メーカー</Label>
-              <Select
-                value={manufacturer}
-                onValueChange={(value) => {
-                  setManufacturer(value);
-                  setModel(""); // メーカーが変わったら機種をリセット
-                }}
-              >
-                <SelectTrigger id="manufacturer">
-                  <SelectValue placeholder="メーカーを選択" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">すべて</SelectItem>
-                  {sampleManufacturers
-                    .filter((mfr) => mfr && mfr.trim() !== "")
-                    .map((mfr) => (
-                      <SelectItem key={mfr} value={mfr}>
-                        {mfr}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="model">機種</Label>
-              <Select
-                value={model}
-                onValueChange={setModel}
-                disabled={!manufacturer}
-              >
-                <SelectTrigger id="model">
-                  <SelectValue placeholder="機種を選択" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">すべて</SelectItem>
-                  {sampleModels
-                    .filter((mdl) => mdl && mdl.trim() !== "")
-                    .map((mdl) => (
-                      <SelectItem key={mdl} value={mdl}>
-                        {mdl}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* 点検項目一覧と操作ボタン */}
-          {manufacturer && model ? (
-            <>
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold">
-                  点検項目一覧 ({inspectionItems.length}件)
-                </h3>
-                <div className="space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={openAddDialog}
-                    className="gap-1"
+              {/* 製造メーカーと機種選択 */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="manufacturer">製造メーカー</Label>
+                  <Select
+                    value={manufacturer}
+                    onValueChange={(value) => {
+                      setManufacturer(value);
+                      setModel(""); // メーカーが変わったら機種をリセット
+                    }}
                   >
-                    <Plus className="h-4 w-4" />
-                    新規追加
-                  </Button>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={saveChanges}
-                    className="gap-1"
+                    <SelectTrigger id="manufacturer">
+                      <SelectValue placeholder="メーカーを選択" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">すべて</SelectItem>
+                      {sampleManufacturers
+                        .filter((mfr) => mfr && mfr.trim() !== "")
+                        .map((mfr) => (
+                          <SelectItem key={mfr} value={mfr}>
+                            {mfr}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="model">機種</Label>
+                  <Select
+                    value={model}
+                    onValueChange={setModel}
+                    disabled={!manufacturer}
                   >
-                    <Save className="h-4 w-4" />
-                    変更を保存
-                  </Button>
+                    <SelectTrigger id="model">
+                      <SelectValue placeholder="機種を選択" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">すべて</SelectItem>
+                      {sampleModels
+                        .filter((mdl) => mdl && mdl.trim() !== "")
+                        .map((mdl) => (
+                          <SelectItem key={mdl} value={mdl}>
+                            {mdl}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
-              {/* 点検項目テーブル */}
-              {inspectionItems.length > 0 ? (
-                <div className="border rounded-md overflow-x-auto"> {/* Added overflow-x-auto */}
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>カテゴリ</TableHead>
-                        <TableHead className="min-w-[20ch]">点検項目</TableHead> {/* Increased minimum width */}
-                        <TableHead>点検方法</TableHead>
-                        <TableHead>判定基準</TableHead>
-                        <TableHead className="w-[100px]">操作</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody className="max-h-[90px]"> {/* Reduced maximum height */}
-                      {inspectionItems.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell>{item.category}</TableCell>
-                          <TableCell>{item.item}</TableCell>
-                          <TableCell>{item.method}</TableCell>
-                          <TableCell>{item.criteria}</TableCell>
-                          <TableCell>
-                            <div className="flex space-x-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => openEditDialog(item)}
-                              >
-                                <PenSquare className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => deleteInspectionItem(item.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+              {/* 点検項目一覧と操作ボタン */}
+              {manufacturer && model ? (
+                <>
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold">
+                      点検項目一覧 ({inspectionItems.length}件)
+                    </h3>
+                    <div className="space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={openAddDialog}
+                        className="gap-1"
+                      >
+                        <Plus className="h-4 w-4" />
+                        新規追加
+                      </Button>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={saveChanges}
+                        className="gap-1"
+                      >
+                        <Save className="h-4 w-4" />
+                        変更を保存
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* 点検項目テーブル */}
+                  {inspectionItems.length > 0 ? (
+                    <div className="border rounded-md overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>カテゴリ</TableHead>
+                            <TableHead className="min-w-[20ch]">点検項目</TableHead>
+                            <TableHead>点検方法</TableHead>
+                            <TableHead>判定基準</TableHead>
+                            <TableHead className="w-[100px]">操作</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody className="max-h-[90px]">
+                          {inspectionItems.map((item) => (
+                            <TableRow key={item.id}>
+                              <TableCell>{item.category}</TableCell>
+                              <TableCell>{item.item}</TableCell>
+                              <TableCell>{item.method}</TableCell>
+                              <TableCell>{item.criteria}</TableCell>
+                              <TableCell>
+                                <div className="flex space-x-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => openEditDialog(item)}
+                                  >
+                                    <PenSquare className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => deleteInspectionItem(item.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <div className="flex justify-center items-center p-12 border rounded-md">
+                      <p className="text-muted-foreground">
+                        選択したメーカーと機種の点検項目がありません。
+                        <br />
+                        「新規追加」から点検項目を登録してください。
+                      </p>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="flex justify-center items-center p-12 border rounded-md">
                   <p className="text-muted-foreground">
-                    選択したメーカーと機種の点検項目がありません。
-                    <br />
-                    「新規追加」から点検項目を登録してください。
+                    メーカーと機種を選択して点検項目を表示します。
                   </p>
                 </div>
               )}
-            </>
-          ) : (
-            <div className="flex justify-center items-center p-12 border rounded-md">
-              <p className="text-muted-foreground">
-                メーカーと機種を選択して点検項目を表示します。
-              </p>
-            </div>
-          )}
+              {/* 点検項目追加・編集ダイアログ */}
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>
+                      {isEditMode ? "点検項目を編集" : "点検項目を追加"}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="category">カテゴリ</Label>
+                      <Input
+                        id="category"
+                        value={newItem.category}
+                        onChange={(e) =>
+                          setNewItem({ ...newItem, category: e.target.value })
+                        }
+                        placeholder="例: エンジン、油圧系統など"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="item">点検項目</Label>
+                      <Input
+                        id="item"
+                        value={newItem.item}
+                        onChange={(e) =>
+                          setNewItem({ ...newItem, item: e.target.value })
+                        }
+                        placeholder="例: エンジンオイル量、冷却水量など"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="method">点検方法</Label>
+                      <Input
+                        id="method"
+                        value={newItem.method}
+                        onChange={(e) =>
+                          setNewItem({ ...newItem, method: e.target.value })
+                        }
+                        placeholder="例: 目視点検、操作確認など"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="criteria">判定基準</Label>
+                      <Input
+                        id="criteria"
+                        value={newItem.criteria}
+                        onChange={(e) =>
+                          setNewItem({ ...newItem, criteria: e.target.value })
+                        }
+                        placeholder="例: 正常範囲内、異音がないことなど"
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                      {isEditMode ? "編集終了" : "キャンセル"}
+                    </Button>
+                    <Button onClick={addInspectionItem}>
+                      {isEditMode ? "更新" : "追加"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </TabsContent>
+
+            <TabsContent value="operational-plan">
+              <OperationalPlanPage />
+            </TabsContent>
+          </Tabs>
         </div>
       </CardContent>
-
-      {/* 点検項目追加・編集ダイアログ */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {isEditMode ? "点検項目を編集" : "点検項目を追加"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="category">カテゴリ</Label>
-              <Input
-                id="category"
-                value={newItem.category}
-                onChange={(e) =>
-                  setNewItem({ ...newItem, category: e.target.value })
-                }
-                placeholder="例: エンジン、油圧系統など"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="item">点検項目</Label>
-              <Input
-                id="item"
-                value={newItem.item}
-                onChange={(e) =>
-                  setNewItem({ ...newItem, item: e.target.value })
-                }
-                placeholder="例: エンジンオイル量、冷却水量など"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="method">点検方法</Label>
-              <Input
-                id="method"
-                value={newItem.method}
-                onChange={(e) =>
-                  setNewItem({ ...newItem, method: e.target.value })
-                }
-                placeholder="例: 目視点検、操作確認など"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="criteria">判定基準</Label>
-              <Input
-                id="criteria"
-                value={newItem.criteria}
-                onChange={(e) =>
-                  setNewItem({ ...newItem, criteria: e.target.value })
-                }
-                placeholder="例: 正常範囲内、異音がないことなど"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              {isEditMode ? "編集終了" : "キャンセル"}
-            </Button>
-            <Button onClick={addInspectionItem}>
-              {isEditMode ? "更新" : "追加"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </Card>
   );
 }

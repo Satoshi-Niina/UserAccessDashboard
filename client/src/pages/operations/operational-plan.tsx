@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "wouter";
 import { 
   Form,
   FormControl,
@@ -51,7 +51,7 @@ const planFormSchema = z.object({
 type PlanFormValues = z.infer<typeof planFormSchema>;
 
 export default function OperationalPlanPage() {
-  const navigate = useNavigate();
+  const [location, navigate] = useLocation();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [activeTab, setActiveTab] = useState("operational-plan");
 

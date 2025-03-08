@@ -29,7 +29,7 @@ export default function App() {
           <ProtectedRoute path="/voice-assistant" component={VoiceAssistant} />
           <ProtectedRoute path="/operations" component={OperationsPage} />
           <ProtectedRoute path="/operations/inspection" component={() => React.createElement(require("@/pages/operations/inspection").default)} />
-          <ProtectedRoute path="/operations/operational-plan" component={() => React.createElement(require("@/pages/operations/operational-plan").default)} />
+          <ProtectedRoute path="/operations/operational-plan" component={OperationalPlanPage} />
           <ProtectedRoute path="/messages" component={Messages} />
           <ProtectedRoute path="/settings/basic-data" component={BasicData} adminOnly={true} />
           <ProtectedRoute path="/settings/inspection-items" component={InspectionItems} adminOnly={true} />

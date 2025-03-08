@@ -34,7 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, PenSquare, Trash2, Save } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 // 実際の運用計画コンポーネントをインポート
 import OperationalPlanPage from "./operational-plan";

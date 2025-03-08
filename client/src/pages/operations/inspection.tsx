@@ -338,10 +338,12 @@ export default function InspectionPage() {
                   const startX = e.clientX;
                   const startScrollLeft = container.scrollLeft;
                   const maxScroll = container.scrollWidth - container.clientWidth;
+                  // ドラッグ開始時にスクロールバーの幅を取得して保存
+                  const scrollBarWidth = e.currentTarget.getBoundingClientRect().width;
                   
                   const handleMouseMove = (moveEvent: MouseEvent) => {
                     const dx = moveEvent.clientX - startX;
-                    const scrollBarWidth = e.currentTarget.getBoundingClientRect().width;
+                    // e.currentTargetではなく、保存した値を使用
                     const scrollRatio = dx / scrollBarWidth;
                     const newScrollLeft = startScrollLeft + (maxScroll * scrollRatio);
                     container.scrollLeft = Math.max(0, Math.min(maxScroll, newScrollLeft));

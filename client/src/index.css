@@ -43,9 +43,11 @@
 [class*="overflow-x-auto"], 
 [class*="overflow-auto"],
 .w-full.overflow-x-auto {
-  overflow-x: scroll !important;
+  overflow-x: auto !important;
   -ms-overflow-style: auto !important;
   scrollbar-width: auto !important;
+  max-width: 100%;
+  position: relative;
 }
 
 /* テーブルのスタイル */

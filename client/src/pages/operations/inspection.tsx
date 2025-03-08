@@ -316,7 +316,7 @@ export default function InspectionPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="relative overflow-x-auto">
+            <div className="relative overflow-x-auto" style={{ maxWidth: '100%' }}>
               {/* スクロールインジケーター */}
               <div className="table-scroll-indicator-container" 
                 onClick={(e) => {

@@ -33,7 +33,7 @@ interface InspectionItem {
 }
 
 export default function OperationsPage() {
-  const [location, setLocation] = useLocation(); // Use wouter's location hook
+  const [location, navigate] = useLocation(); // Use wouter's location hook
   const [activeTab, setActiveTab] = useState<InspectionTab>("exit");
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);

@@ -383,13 +383,13 @@ export default function InspectionPage() {
                 <Table>
                   <TableHeader>
                     <tr>
-                      <th className="p-2 text-left whitespace-nowrap">部位</th>
-                      <th className="p-2 text-left whitespace-nowrap w-[15ch]">装置</th>
-                      <th className="p-2 text-left whitespace-nowrap w-[20ch]">確認箇所</th>
-                      <th className="p-2 text-left whitespace-nowrap w-[30ch]">判断基準</th>
-                      <th className="p-2 text-left whitespace-nowrap w-[30ch]">確認要領</th>
+                      <th className="p-2 text-left whitespace-nowrap w-[12ch]">部位</th>
+                      <th className="p-2 text-left whitespace-nowrap w-[10ch]">装置</th>
+                      <th className="p-2 text-left whitespace-nowrap w-[15ch]">確認箇所</th>
+                      <th className="p-2 text-left whitespace-nowrap w-[20ch]">判断基準</th>
+                      <th className="p-2 text-left whitespace-nowrap w-[25ch]">確認要領</th>
                       <th className="p-2 text-left whitespace-nowrap">測定等記録</th>
-                      <th className="p-2 text-left whitespace-nowrap">図形記録</th>
+                      <th className="p-2 text-left whitespace-nowrap w-[25ch]">図形記録</th>
                       <th className="p-2 text-center whitespace-nowrap w-[10ch]">判定</th>
                       <th className="p-2 text-left whitespace-nowrap w-[50ch]">記事</th>
                     </tr>

@@ -41,6 +41,7 @@ const menuItems: MenuItem[] = [
       { icon: ClipboardCheck, label: "仕業点検", href: "/operations?tab=inspection" },
     ],
   },
+  { icon: BarChart2, label: "運用計画", href: "/operation-planning" },
   { icon: MessageSquare, label: "メッセージ", href: "/messages" },
   {
     icon: Settings,

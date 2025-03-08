@@ -55,14 +55,19 @@ export default function OperationalPlanPage() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [activeTab, setActiveTab] = useState("operational-plan");
 
-  // タブ切り替え処理
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    if (value === "inspection") {
-      navigate("/operations/inspection");
-    } else if (value === "operational-plan") {
-      // 現在のページなので特に遷移不要
-    }
+  // 画面切り替え処理
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
+
+  // 保存して戻る処理
+  const handleSaveAndReturn = () => {
+    // フォームの内容を送信
+    form.handleSubmit(onSubmit)();
+    // 操作完了後、運用管理トップに戻る
+    setTimeout(() => {
+      navigate("/operations");
+    }, 1000);
   };
 
   // デフォルト値の設定
@@ -98,16 +103,33 @@ export default function OperationalPlanPage() {
 
   return (
     <div className="container mx-auto py-8">
-      {/* タブUIを一番上に配置 */}
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="inspection">仕業点検</TabsTrigger>
-          <TabsTrigger value="operational-plan">運用計画</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      {/* ヘッダー部分 */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">運用計画登録</h1>
+        <div className="flex space-x-2">
+          <Button variant="outline" onClick={() => handleSaveAndReturn()}>
+            保存して戻る
+          </Button>
+        </div>
+      </div>
 
-      {/* 運用計画フォーム */}
-      <h1 className="text-2xl font-bold mb-6">運用計画登録</h1>
+      {/* 画面切り替えボタン */}
+      <div className="flex space-x-4 mb-6">
+        <Button 
+          variant="outline" 
+          onClick={() => handleNavigation("/operations/inspection")}
+          className="flex-1"
+        >
+          仕業点検へ切り替え
+        </Button>
+        <Button 
+          variant="default" 
+          className="flex-1"
+          disabled
+        >
+          運用計画
+        </Button>
+      </div>
       
       <Card>
         <CardHeader>

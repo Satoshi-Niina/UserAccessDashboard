@@ -14,6 +14,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import OperationsNav from "@/components/OperationsNav";
 
 
 // 新規点検項目フォームインターフェース
@@ -25,7 +26,7 @@ interface NewInspectionItemForm {
 }
 
 export default function InspectionPage() {
-  const [_, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [startTime, setStartTime] = useState<string>("");
   const [endTime, setEndTime] = useState<string>("");
@@ -165,15 +166,13 @@ export default function InspectionPage() {
   return (
     <div className="container mx-auto py-8">
       {/* ヘッダー部分 */}
+      <OperationsNav currentPage="inspection" /> {/* Added Navigation Component */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">仕業点検登録</h1>
         <div className="flex space-x-2">
-          <Button variant="outline" onClick={navigateToOperationalPlan}>
+          <Button variant="outline" onClick={() => navigate("/operations/operational-plan")}>
             運用計画へ
           </Button>
-          <a href="/operations/operational-plan" className="text-blue-600 hover:underline p-2">
-            運用計画ページへ直接リンク
-          </a>
           <Button variant="outline" onClick={saveChanges}>
             保存して戻る
           </Button>

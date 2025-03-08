@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocation } from "wouter";
+import OperationsNav from "@/components/OperationsNav";
 import { 
   Form,
   FormControl,
@@ -114,23 +115,8 @@ export default function OperationalPlanPage() {
         </div>
       </div>
 
-      {/* 画面切り替えボタン */}
-      <div className="flex space-x-4 mb-6">
-        <Button 
-          variant="outline" 
-          onClick={() => handleNavigation("/operations/inspection")}
-          className="flex-1"
-        >
-          仕業点検へ切り替え
-        </Button>
-        <Button 
-          variant="default" 
-          className="flex-1"
-          disabled
-        >
-          運用計画
-        </Button>
-      </div>
+      {/* 運用画面ナビゲーション */}
+      <OperationsNav currentPage="operational-plan" />
       
       <Card>
         <CardHeader>

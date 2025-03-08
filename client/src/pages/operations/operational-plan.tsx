@@ -95,14 +95,15 @@ export default function OperationalPlanPage() {
 
   return (
     <div className="container mx-auto py-8">
-      <Tabs defaultValue="operational-plan" value={tabValue} onValueChange={handleTabChange} className="mb-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="inspection">仕業点検</TabsTrigger>
-          <TabsTrigger value="operational-plan">運用計画</TabsTrigger>
-        </TabsList>
-      </Tabs>
-      
-      <h1 className="text-2xl font-bold mb-6">運用計画登録</h1>
+      <div className="flex flex-col space-y-4">
+        <Tabs defaultValue="operational-plan" value={tabValue} onValueChange={handleTabChange} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="inspection">仕業点検</TabsTrigger>
+            <TabsTrigger value="operational-plan">運用計画</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        
+        <h1 className="text-2xl font-bold">運用計画登録</h1>
       
       <Card>
         <CardHeader>
@@ -320,6 +321,7 @@ export default function OperationalPlanPage() {
           </Form>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

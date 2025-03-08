@@ -6,7 +6,9 @@ import { Toaster } from "@/components/ui/toaster";
 import AuthPage from "@/pages/auth-page";
 import Dashboard from "@/pages/dashboard";
 import VoiceAssistant from "@/pages/voice-assistant";
-import Operations from "@/pages/operations";
+import OperationsPage from "@/pages/operations";
+import InspectionPage from "@/pages/operations/inspection";
+import OperationalPlanPage from "@/pages/operations/operational-plan";
 import Messages from "@/pages/messages";
 import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
@@ -24,8 +26,9 @@ export default function App() {
         <Switch>
           <Route path="/login" component={AuthPage} />
           <ProtectedRoute path="/voice-assistant" component={VoiceAssistant} />
-          <ProtectedRoute path="/operations" component={Operations} />
-          <ProtectedRoute path="/operations/operational-plan" component={Operations} />
+          <ProtectedRoute path="/operations" component={OperationsPage} />
+          <ProtectedRoute path="/operations/inspection" component={InspectionPage} />
+          <ProtectedRoute path="/operations/operational-plan" component={OperationalPlanPage} />
           <ProtectedRoute path="/messages" component={Messages} />
           <ProtectedRoute path="/settings/basic-data" component={BasicData} adminOnly={true} />
           <ProtectedRoute path="/settings/inspection-items" component={InspectionItems} adminOnly={true} />

@@ -1,37 +1,37 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
 } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle 
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Plus, PenSquare, Trash2, Save } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
@@ -259,7 +259,9 @@ export default function Inspection() {
                           <TableHeader>
                             <TableRow>
                               <TableHead>カテゴリ</TableHead>
-                              <TableHead className="min-w-[20ch]">点検項目</TableHead>
+                              <TableHead className="min-w-[20ch]">
+                                点検項目
+                              </TableHead>
                               <TableHead>点検方法</TableHead>
                               <TableHead>判定基準</TableHead>
                               <TableHead className="w-[100px]">操作</TableHead>
@@ -284,7 +286,9 @@ export default function Inspection() {
                                     <Button
                                       variant="ghost"
                                       size="icon"
-                                      onClick={() => deleteInspectionItem(item.id)}
+                                      onClick={() =>
+                                        deleteInspectionItem(item.id)
+                                      }
                                     >
                                       <Trash2 className="h-4 w-4" />
                                     </Button>

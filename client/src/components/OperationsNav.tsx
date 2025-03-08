@@ -26,10 +26,10 @@ export default function OperationsNav({ currentPage }: OperationsNavProps) {
       </Button>
       <Button
         variant={currentPage === "other" ? "default" : "outline"}
-        onClick={() => navigate("/operations")}
+        onClick={() => navigate("/")}
         className="flex-1"
       >
-        運用管理トップ
+        戻る
       </Button>
     </div>
   );

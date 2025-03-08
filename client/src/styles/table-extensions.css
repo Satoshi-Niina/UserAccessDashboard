@@ -24,9 +24,13 @@
   transition: width 0.3s, left 0.3s;
 }
 
+.table-with-fixed-height {
+  width: 100%;
+}
+
 .table-with-fixed-height tbody {
   display: block;
-  max-height: 4.5rem;
+  max-height: 4.5rem; /* Approx. 2 rows height */
   overflow-y: auto;
 }
 

@@ -1,4 +1,3 @@
-
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
@@ -75,7 +74,7 @@ app.use((req, res, next) => {
 
   // サーバーの起動（ポート5000または環境変数から）
   let PORT = Number(process.env.PORT || 5000);
-  
+
   // サーバーをシンプルに起動する関数
   const startServer = () => {
     // ポート使用時のエラーハンドリングを追加
@@ -94,23 +93,23 @@ app.use((req, res, next) => {
         process.exit(1);
       }
     });
-    
+
     // サーバーを起動
     server.listen(PORT, '0.0.0.0', () => {
       log(`Server is running on port ${PORT}`);
     });
   };
-  
+
   // サーバー起動プロセスを開始
   startServer();
-  
+
   // グレースフルシャットダウンの処理
   const shutdown = () => {
     log('Shutting down server...');
     server.close();
     process.exit(0);
   };
-  
+
   // シグナルハンドラの設定
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);

@@ -51,8 +51,14 @@ export default function Inspection() {
   const [endTime, setEndTime] = useState("");
   const [inspector, setInspector] = useState("");
   const [responsiblePerson, setResponsiblePerson] = useState("");
-  const [vehicleType, setVehicleType] = useState(""); // 追加
+  const [vehicleType, setVehicleType] = useState(""); // 機種
+  const [vehicleNumber, setVehicleNumber] = useState(""); // 機械番号
 
+  // デバッグ用
+  useEffect(() => {
+    console.log("Current vehicleType:", vehicleType);
+    console.log("Current vehicleNumber:", vehicleNumber);
+  }, [vehicleType, vehicleNumber]);
 
   // 画面切り替え処理
   const handleNavigation = (path: string) => {

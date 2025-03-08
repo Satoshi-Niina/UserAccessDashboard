@@ -383,15 +383,15 @@ export default function InspectionPage() {
                 <Table>
                   <TableHeader>
                     <tr>
-                      <th className="p-2 text-center whitespace-nowrap w-[20ch]">部位</th>
-                      <th className="p-2 text-center whitespace-nowrap w-[15ch]">装置</th>
-                      <th className="p-2 text-center whitespace-nowrap w-[20ch]">確認箇所</th>
-                      <th className="p-2 text-center whitespace-nowrap w-[25ch]">判断基準</th>
-                      <th className="p-2 text-center whitespace-nowrap w-[30ch]">確認要領</th>
-                      <th className="p-2 text-center whitespace-nowrap">測定等記録</th>
-                      <th className="p-2 text-center whitespace-nowrap w-[30ch]">図形記録</th>
-                      <th className="p-2 text-center whitespace-nowrap w-[15ch]">判定</th>
-                      <th className="p-2 text-center whitespace-nowrap w-[50ch]">記事</th>
+                      <th className="p-2 text-center whitespace-nowrap w-[20ch] text-xs">部位</th>
+                      <th className="p-2 text-center whitespace-nowrap w-[15ch] text-xs">装置</th>
+                      <th className="p-2 text-center whitespace-nowrap w-[20ch] text-xs">確認箇所</th>
+                      <th className="p-2 text-center whitespace-nowrap w-[25ch] text-xs">判断基準</th>
+                      <th className="p-2 text-center whitespace-nowrap w-[30ch] text-xs">確認要領</th>
+                      <th className="p-2 text-center whitespace-nowrap text-xs">測定等記録</th>
+                      <th className="p-2 text-center whitespace-nowrap w-[30ch] text-xs">図形記録</th>
+                      <th className="p-2 text-center whitespace-nowrap w-[15ch] text-xs">判定</th>
+                      <th className="p-2 text-center whitespace-nowrap w-[50ch] text-xs">記事</th>
                     </tr>
                   </TableHeader>
                   <TableBody>
@@ -416,22 +416,22 @@ export default function InspectionPage() {
                     ) : (
                       inspectionItems.map((item) => (
                         <tr key={item.id} className="border-t">
-                          <td className="p-2">{item.category}</td>
-                          <td className="p-2">{item.equipment}</td>
-                          <td className="p-2">{item.item}</td>
-                          <td className="p-2">{item.criteria}</td>
-                          <td className="p-2">{item.method}</td>
-                          <td className="p-2">{item.measurementRecord}</td>
-                          <td className="p-2">{item.diagramRecord}</td>
-                          <td className="p-2">
+                          <td className="p-1 text-xs">{item.category}</td>
+                          <td className="p-1 text-xs">{item.equipment}</td>
+                          <td className="p-1 text-xs">{item.item}</td>
+                          <td className="p-1 text-xs">{item.criteria}</td>
+                          <td className="p-1 text-xs">{item.method}</td>
+                          <td className="p-1 text-xs">{item.measurementRecord}</td>
+                          <td className="p-1 text-xs">{item.diagramRecord}</td>
+                          <td className="p-1 text-xs">
                             <Select
                               value={item.result}
                               onValueChange={(value) => updateInspectionResult(item.id, value)}
                             >
-                              <SelectTrigger className="w-full">
+                              <SelectTrigger className="w-full text-xs p-1">
                                 <SelectValue placeholder="選択" />
                               </SelectTrigger>
-                              <SelectContent>
+                              <SelectContent className="text-xs">
                                 {resultOptions.map((option) => (
                                   <SelectItem key={option} value={option}>
                                     {option}
@@ -440,12 +440,12 @@ export default function InspectionPage() {
                               </SelectContent>
                             </Select>
                           </td>
-                          <td className="p-2">
+                          <td className="p-1 text-xs">
                             <Textarea
                               value={item.remark || ""}
                               onChange={(e) => updateInspectionRemark(item.id, e.target.value)}
                               placeholder="備考"
-                              className="h-20 w-full"
+                              className="h-20 w-full text-xs p-0.5"
                             />
                           </td>
                         </tr>

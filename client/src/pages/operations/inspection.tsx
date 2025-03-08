@@ -318,9 +318,18 @@ export default function InspectionPage() {
           <CardContent>
             <div className="relative overflow-x-auto">
               {/* スクロールインジケーター */}
-              <div className="table-scroll-indicator absolute top-0 left-0">
+              <div className="table-scroll-indicator-container" 
+                onClick={(e) => {
+                  if (scrollContainerRef.current) {
+                    const container = scrollContainerRef.current;
+                    const { left, width } = e.currentTarget.getBoundingClientRect();
+                    const clickPosition = (e.clientX - left) / width;
+                    const scrollTo = clickPosition * (container.scrollWidth - container.clientWidth);
+                    container.scrollTo({ left: scrollTo, behavior: 'smooth' });
+                  }
+                }}>
                 <div 
-                  className="table-scroll-indicator-inner"
+                  className="table-scroll-indicator"
                   style={{ width: `${scrollIndicatorWidth}%`, left: `${scrollIndicatorLeft}%` }}
                 ></div>
               </div>

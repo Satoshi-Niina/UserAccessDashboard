@@ -67,6 +67,7 @@ export function ScrollableTable({ headers, data, renderRow }: ScrollableTablePro
                   <TableHead 
                     key={i} 
                     className={header === '装置' ? 'min-w-[20ch] w-[20ch]' : ''}
+                    style={header === '装置' ? {width: '20ch', minWidth: '20ch'} : {}}
                   >
                     {header}
                   </TableHead>

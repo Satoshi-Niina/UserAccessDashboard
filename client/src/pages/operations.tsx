@@ -198,8 +198,8 @@ export default function OperationsPage() {
           <CardContent>
             <Tabs defaultValue="periodic" value={activeTab} onValueChange={(value) => setActiveTab(value as InspectionTab)}>
               <TabsList className="grid grid-cols-3">
-                <TabsTrigger value="exit">出発前点検</TabsTrigger>
                 <TabsTrigger value="periodic">仕業点検</TabsTrigger>
+                <TabsTrigger value="exit">出発前点検</TabsTrigger>
                 <TabsTrigger value="entry">帰着点検</TabsTrigger>
               </TabsList>
 

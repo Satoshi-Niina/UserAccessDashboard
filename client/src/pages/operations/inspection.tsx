@@ -47,7 +47,7 @@ const sampleModels = ["油圧ショベル ZX120", "ブルドーザー D51PX", "�
 export default function Inspection() {
   // タイトルを設定
   useEffect(() => {
-    document.title = "運用管理システム - 仕業点検";
+    document.title = "運用管理システム - 出発前点検";
   }, []);
 
   // 状態管理

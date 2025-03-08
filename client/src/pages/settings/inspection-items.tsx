@@ -82,7 +82,7 @@ export default function InspectionItems() {
   // CSVデータ読み込み用の状態
   const [csvData, setCsvData] = useState<InspectionItem[]>([]);
   const [availableFiles, setAvailableFiles] = useState<{name: string, modified: string}[]>([]);
-  const [currentFileName, setCurrentFileName] = useState("仕業点検マスタ.csv");
+  const [currentFileName, setCurrentFileName] = useState("出発前点検マスタ.csv");
 
   // 変更追跡と確認ダイアログ用の状態
   const [hasChanges, setHasChanges] = useState(false);

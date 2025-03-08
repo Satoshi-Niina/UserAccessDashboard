@@ -50,10 +50,16 @@ export default function InspectionPage() {
   const [location, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState<InspectionTab>("general");
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [startTime, setStartTime] = useState<string>(""); // 開始時刻
+  const [endTime, setEndTime] = useState<string>("");     // 終了時刻
   const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showBasicInfo, setShowBasicInfo] = useState(false);
+  const [locationInput, setLocationInput] = useState(""); // 点検場所
+  const [responsiblePerson, setResponsiblePerson] = useState(""); // 責任者
+  const [inspectorInput, setInspectorInput] = useState(""); // 点検者
+  const [vehicleId, setVehicleId] = useState(""); // 車両番号
   const { toast } = useToast();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [scrollIndicatorWidth, setScrollIndicatorWidth] = useState(100);
@@ -256,25 +262,32 @@ export default function InspectionPage() {
                 </PopoverContent>
               </Popover>
             </div>
-
+            <div className="space-y-2">
+              <Label htmlFor="start-time">開始時刻</Label>
+              <Input id="start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="end-time">終了時刻</Label>
+              <Input id="end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="location">点検場所</Label>
-              <Input id="location" placeholder="点検場所を入力" />
+              <Input id="location" placeholder="点検場所を入力" value={locationInput} onChange={e => setLocationInput(e.target.value)}/>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="responsible-person">責任者</Label>
-              <Input id="responsible-person" placeholder="責任者名を入力" />
+              <Input id="responsible-person" placeholder="責任者名を入力" value={responsiblePerson} onChange={e => setResponsiblePerson(e.target.value)}/>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="inspector">点検者</Label>
-              <Input id="inspector" placeholder="点検者名を入力" />
+              <Input id="inspector" placeholder="点検者名を入力" value={inspectorInput} onChange={e => setInspectorInput(e.target.value)}/>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="vehicle-id">車両番号</Label>
-              <Select>
+              <Select value={vehicleId} onValueChange={setVehicleId}>
                 <SelectTrigger id="vehicle-id">
                   <SelectValue placeholder="車両番号を選択" />
                 </SelectTrigger>

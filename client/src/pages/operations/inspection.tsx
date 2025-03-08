@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation } from "wouter";
 import OperationsNav from "@/components/OperationsNav";
@@ -156,7 +155,7 @@ export default function InspectionPage() {
 
       {/* 運用画面ナビゲーション */}
       <OperationsNav currentPage="inspection" />
-      
+
       {/* 点検基本情報 */}
       <Card className="w-full mb-6">
         <CardHeader>
@@ -296,11 +295,15 @@ export default function InspectionPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="bg-muted">
-                      <th className="p-2 text-left">項目</th>
-                      <th className="p-2 text-left">確認要領</th>
-                      <th className="p-2 text-left">判断基準</th>
-                      <th className="p-2 text-center w-40">判定</th>
-                      <th className="p-2 text-left">備考</th>
+                      <th className="p-2 text-left w-20">部位</th>
+                      <th className="p-2 text-left w-24">装置</th>
+                      <th className="p-2 text-left w-32">確認箇所</th>
+                      <th className="p-2 text-left w-32">判断基準</th>
+                      <th className="p-2 text-left w-32">確認要領</th>
+                      <th className="p-2 text-left w-24">測定等記録</th>
+                      <th className="p-2 text-left w-24">図形記録</th>
+                      <th className="p-2 text-center w-20">判定</th>
+                      <th className="p-2 text-left w-32">記事</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -310,9 +313,13 @@ export default function InspectionPage() {
                         item.category.toLowerCase().includes("engine"))
                       .map((item) => (
                         <tr key={item.id} className="border-t">
+                          <td className="p-2">{item.category}</td>
+                          <td className="p-2">{item.equipment}</td>
                           <td className="p-2">{item.item}</td>
-                          <td className="p-2">{item.method}</td>
                           <td className="p-2">{item.criteria}</td>
+                          <td className="p-2">{item.method}</td>
+                          <td className="p-2">{item.measurementRecord}</td>
+                          <td className="p-2">{item.diagramRecord}</td>
                           <td className="p-2">
                             <div className="flex justify-center space-x-4">
                               <div className="flex items-center space-x-1">
@@ -335,7 +342,7 @@ export default function InspectionPage() {
                           </td>
                           <td className="p-2">
                             <Input
-                              placeholder="備考"
+                              placeholder="記事"
                               value={item.remark || ""}
                               onChange={(e) => updateInspectionRemark(item.id, e.target.value)}
                             />
@@ -352,11 +359,15 @@ export default function InspectionPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="bg-muted">
-                      <th className="p-2 text-left">項目</th>
-                      <th className="p-2 text-left">確認要領</th>
-                      <th className="p-2 text-left">判断基準</th>
-                      <th className="p-2 text-center w-40">判定</th>
-                      <th className="p-2 text-left">備考</th>
+                      <th className="p-2 text-left w-20">部位</th>
+                      <th className="p-2 text-left w-24">装置</th>
+                      <th className="p-2 text-left w-32">確認箇所</th>
+                      <th className="p-2 text-left w-32">判断基準</th>
+                      <th className="p-2 text-left w-32">確認要領</th>
+                      <th className="p-2 text-left w-24">測定等記録</th>
+                      <th className="p-2 text-left w-24">図形記録</th>
+                      <th className="p-2 text-center w-20">判定</th>
+                      <th className="p-2 text-left w-32">記事</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -366,9 +377,13 @@ export default function InspectionPage() {
                         item.category.toLowerCase().includes("brake"))
                       .map((item) => (
                         <tr key={item.id} className="border-t">
+                          <td className="p-2">{item.category}</td>
+                          <td className="p-2">{item.equipment}</td>
                           <td className="p-2">{item.item}</td>
-                          <td className="p-2">{item.method}</td>
                           <td className="p-2">{item.criteria}</td>
+                          <td className="p-2">{item.method}</td>
+                          <td className="p-2">{item.measurementRecord}</td>
+                          <td className="p-2">{item.diagramRecord}</td>
                           <td className="p-2">
                             <div className="flex justify-center space-x-4">
                               <div className="flex items-center space-x-1">
@@ -391,7 +406,7 @@ export default function InspectionPage() {
                           </td>
                           <td className="p-2">
                             <Input
-                              placeholder="備考"
+                              placeholder="記事"
                               value={item.remark || ""}
                               onChange={(e) => updateInspectionRemark(item.id, e.target.value)}
                             />
@@ -408,11 +423,15 @@ export default function InspectionPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="bg-muted">
-                      <th className="p-2 text-left">項目</th>
-                      <th className="p-2 text-left">確認要領</th>
-                      <th className="p-2 text-left">判断基準</th>
-                      <th className="p-2 text-center w-40">判定</th>
-                      <th className="p-2 text-left">備考</th>
+                      <th className="p-2 text-left w-20">部位</th>
+                      <th className="p-2 text-left w-24">装置</th>
+                      <th className="p-2 text-left w-32">確認箇所</th>
+                      <th className="p-2 text-left w-32">判断基準</th>
+                      <th className="p-2 text-left w-32">確認要領</th>
+                      <th className="p-2 text-left w-24">測定等記録</th>
+                      <th className="p-2 text-left w-24">図形記録</th>
+                      <th className="p-2 text-center w-20">判定</th>
+                      <th className="p-2 text-left w-32">記事</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -424,9 +443,13 @@ export default function InspectionPage() {
                         !item.category.toLowerCase().includes("brake"))
                       .map((item) => (
                         <tr key={item.id} className="border-t">
+                          <td className="p-2">{item.category}</td>
+                          <td className="p-2">{item.equipment}</td>
                           <td className="p-2">{item.item}</td>
-                          <td className="p-2">{item.method}</td>
                           <td className="p-2">{item.criteria}</td>
+                          <td className="p-2">{item.method}</td>
+                          <td className="p-2">{item.measurementRecord}</td>
+                          <td className="p-2">{item.diagramRecord}</td>
                           <td className="p-2">
                             <div className="flex justify-center space-x-4">
                               <div className="flex items-center space-x-1">
@@ -449,7 +472,7 @@ export default function InspectionPage() {
                           </td>
                           <td className="p-2">
                             <Input
-                              placeholder="備考"
+                              placeholder="記事"
                               value={item.remark || ""}
                               onChange={(e) => updateInspectionRemark(item.id, e.target.value)}
                             />

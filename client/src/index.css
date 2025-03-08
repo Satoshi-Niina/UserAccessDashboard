@@ -27,11 +27,30 @@
 ::-webkit-scrollbar-thumb {
   background: #888;
   border-radius: 4px;
+  position: relative; /* Added to allow absolute positioning of inner element */
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+/* Add the new class to style the scrollbar thumb */
+::-webkit-scrollbar-thumb::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 33% !important; /* インジケーター幅を1/3に固定 */
+  max-width: 33% !important;
+  background-color: #666;
+  border-radius: 3px;
+  transition: left 0.3s;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 5;
+}
+
 
 /* スクロールバーを常に表示 */
 .overflow-x-auto {
@@ -58,6 +77,4 @@ table {
 table td, table th {
   padding: 4px 8px;
   line-height: 1.2;
-} {
-  background: #555;
 }

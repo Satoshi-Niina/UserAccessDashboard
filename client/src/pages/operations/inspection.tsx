@@ -320,12 +320,19 @@ export default function InspectionPage() {
               {/* スクロールインジケーター */}
               <div className="table-scroll-indicator-container" 
                 onClick={(e) => {
-                  if (scrollContainerRef.current) {
-                    const container = scrollContainerRef.current;
-                    const { left, width } = e.currentTarget.getBoundingClientRect();
-                    const clickPosition = (e.clientX - left) / width;
-                    const scrollTo = clickPosition * (container.scrollWidth - container.clientWidth);
-                    container.scrollTo({ left: scrollTo, behavior: 'smooth' });
+                  const container = e.currentTarget;
+                  const rect = container.getBoundingClientRect();
+                  const x = e.clientX - rect.left;
+                  const percentage = x / rect.width;
+                  const scrollContainer = container.nextElementSibling as HTMLDivElement;
+                  if (scrollContainer) {
+                    const maxScroll = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+                    scrollContainer.scrollLeft = percentage * maxScroll;
+
+                    // スクロール位置を適切に更新するためのイベントを発火
+                    setTimeout(() => {
+                      scrollContainer.dispatchEvent(new Event('scroll'));
+                    }, 50);
                   }
                 }}>
                 <div 

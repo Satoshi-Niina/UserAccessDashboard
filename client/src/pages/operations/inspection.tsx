@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useNavigation } from "wouter"; // Corrected import to include useNavigation
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,7 +50,8 @@ interface NewInspectionItemForm {
 }
 
 export default function InspectionPage() {
-  const [location, navigate] = useLocation();
+  const [location, _] = useLocation();
+  const navigate = useNavigation(); // Added useNavigation hook
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [startTime, setStartTime] = useState<string>("");
   const [endTime, setEndTime] = useState<string>("");
@@ -150,12 +150,12 @@ export default function InspectionPage() {
       vehicleNumber,
       items: inspectionItems,
     });
-    
+
     toast({
       title: "保存完了",
       description: "仕業点検が保存されました",
     });
-    
+
     setHasChanges(false);
     navigate("/operations");
   };
@@ -415,7 +415,7 @@ export default function InspectionPage() {
               <TabsTrigger value="brake">ブレーキ関係</TabsTrigger>
               <TabsTrigger value="other">その他</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="engine" className="space-y-4">
               <div className="border rounded-lg overflow-hidden">
                 <table className="w-full">
@@ -469,7 +469,7 @@ export default function InspectionPage() {
                 </table>
               </div>
             </TabsContent>
-            
+
             <TabsContent value="brake" className="space-y-4">
               <div className="border rounded-lg overflow-hidden">
                 <table className="w-full">
@@ -523,7 +523,7 @@ export default function InspectionPage() {
                 </table>
               </div>
             </TabsContent>
-            
+
             <TabsContent value="other" className="space-y-4">
               <div className="border rounded-lg overflow-hidden">
                 <table className="w-full">

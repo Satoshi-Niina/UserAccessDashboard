@@ -46,8 +46,8 @@ interface InspectionItem {
 const sampleManufacturers = ["コマツ", "日立建機", "キャタピラー", "コベルコ", "住友建機"];
 const sampleModels = ["油圧ショベル ZX120", "ブルドーザー D51PX", "ホイールローダー WA100", "クローラクレーン SCX900", "バックホウ PC200"];
 
-// Placeholder for OperationalPlanPage component.  Replace with your actual component.
-const OperationalPlanPage = () => <div>運用計画ページ</div>;
+// 実際の運用計画コンポーネントをインポート
+import OperationalPlanPage from "./operational-plan";
 
 export default function Inspection() {
   // タイトルを設定

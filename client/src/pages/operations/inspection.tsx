@@ -324,16 +324,36 @@ export default function InspectionPage() {
                   const rect = container.getBoundingClientRect();
                   const x = e.clientX - rect.left;
                   const percentage = x / rect.width;
-                  const scrollContainer = container.nextElementSibling as HTMLDivElement;
+                  const scrollContainer = scrollContainerRef.current;
                   if (scrollContainer) {
                     const maxScroll = scrollContainer.scrollWidth - scrollContainer.clientWidth;
                     scrollContainer.scrollLeft = percentage * maxScroll;
-
-                    // スクロール位置を適切に更新するためのイベントを発火
-                    setTimeout(() => {
-                      scrollContainer.dispatchEvent(new Event('scroll'));
-                    }, 50);
                   }
+                }}
+                onMouseDown={(e) => {
+                  // ドラッグ開始
+                  const container = scrollContainerRef.current;
+                  if (!container) return;
+                  
+                  const startX = e.clientX;
+                  const startScrollLeft = container.scrollLeft;
+                  const maxScroll = container.scrollWidth - container.clientWidth;
+                  
+                  const handleMouseMove = (moveEvent: MouseEvent) => {
+                    const dx = moveEvent.clientX - startX;
+                    const scrollBarWidth = e.currentTarget.getBoundingClientRect().width;
+                    const scrollRatio = dx / scrollBarWidth;
+                    const newScrollLeft = startScrollLeft + (maxScroll * scrollRatio);
+                    container.scrollLeft = Math.max(0, Math.min(maxScroll, newScrollLeft));
+                  };
+                  
+                  const handleMouseUp = () => {
+                    document.removeEventListener('mousemove', handleMouseMove);
+                    document.removeEventListener('mouseup', handleMouseUp);
+                  };
+                  
+                  document.addEventListener('mousemove', handleMouseMove);
+                  document.addEventListener('mouseup', handleMouseUp);
                 }}>
                 <div 
                   className="table-scroll-indicator"

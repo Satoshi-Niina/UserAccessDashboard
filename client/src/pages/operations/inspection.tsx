@@ -1,34 +1,15 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Plus, PenSquare, Trash2, Save } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Plus, Edit, Trash, Save } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 // 点検項目の型定義
 interface InspectionItem {
@@ -48,12 +29,13 @@ export default function Inspection() {
   }, []);
 
   const navigate = useNavigate();
-  //activeTabは不要になったので削除
-  //const [activeTab, setActiveTab] = useState("inspection");
+  const { toast } = useToast();
 
   // 状態変数
   const [manufacturer, setManufacturer] = useState("");
   const [model, setModel] = useState("");
+  const [vehicleNumber, setVehicleNumber] = useState("");
+  const [location, setLocation] = useState("");
   const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -65,11 +47,25 @@ export default function Inspection() {
     criteria: "",
   });
   const [hasChanges, setHasChanges] = useState(false); // 変更があったかどうかを管理する状態変数
-
+  const [date, setDate] = useState<Date>(new Date());
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
+  const [inspector, setInspector] = useState("");
+  const [responsiblePerson, setResponsiblePerson] = useState("");
 
   // 画面切り替え処理
   const handleNavigation = (path: string) => {
     navigate(path);
+  };
+
+  // 保存して戻る処理
+  const saveChanges = () => {
+    // 保存処理（実際のAPI呼び出しなど）
+    toast({
+      title: "保存完了",
+      description: "点検データが保存されました",
+    });
+    setHasChanges(false);
   };
 
   // 保存して戻る処理
@@ -82,7 +78,7 @@ export default function Inspection() {
     navigate("/operations");
   };
 
-  // ダイアログを開く (新規追加)
+  // ダイアログを開く
   const openAddDialog = () => {
     setIsEditMode(false);
     setNewItem({
@@ -94,8 +90,13 @@ export default function Inspection() {
     setIsDialogOpen(true);
   };
 
-  // ダイアログを開く (編集)
-  const openEditDialog = (item: InspectionItem) => {
+  // ダイアログを閉じる
+  const closeDialog = () => {
+    setIsDialogOpen(false);
+  };
+
+  // 編集モードを開始
+  const startEdit = (item: InspectionItem) => {
     setIsEditMode(true);
     setEditingItemId(item.id);
     setNewItem({
@@ -107,13 +108,18 @@ export default function Inspection() {
     setIsDialogOpen(true);
   };
 
-  // ダイアログを閉じる
-  const closeDialog = () => {
-    setIsDialogOpen(false);
+  // 項目を削除
+  const deleteItem = (id: number) => {
+    setInspectionItems(inspectionItems.filter(item => item.id !== id));
+    setHasChanges(true);
+    toast({
+      title: "削除完了",
+      description: "点検項目を削除しました",
+    });
   };
 
-  // 入力フィールドの変更を処理
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  // フォーム入力の変更を処理
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
     setNewItem({ ...newItem, [id]: value });
     setHasChanges(true); // 変更があったことを記録
@@ -162,31 +168,8 @@ export default function Inspection() {
         description: "新しい点検項目を追加しました",
       });
     }
-    setHasChanges(true); // 変更があったことを記録
     setIsDialogOpen(false);
-  };
-
-  // 点検項目を削除する
-  const deleteInspectionItem = (id: number) => {
-    if (window.confirm("この点検項目を削除してもよろしいですか？")) {
-      const updatedItems = inspectionItems.filter((item) => item.id !== id);
-      setInspectionItems(updatedItems);
-      toast({
-        title: "削除完了",
-        description: "点検項目を削除しました",
-      });
-      setHasChanges(true); // 変更があったことを記録
-    }
-  };
-
-  // 変更を保存する（実際のアプリでは、APIにデータを送信する）
-  const saveChanges = () => {
-    // ここでデータをサーバーに送信する処理を実装する
-    toast({
-      title: "保存完了",
-      description: "点検項目リストを保存しました",
-    });
-    setHasChanges(false); // 保存したので変更なしにする
+    setHasChanges(true);
   };
 
   return (
@@ -211,7 +194,7 @@ export default function Inspection() {
           仕業点検
         </Button>
         <Button 
-          variant="outline" 
+          variant="outline"
           onClick={() => handleNavigation("/operations/operational-plan")}
           className="flex-1"
         >
@@ -221,35 +204,94 @@ export default function Inspection() {
 
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>メーカーと機種の選択</CardTitle>
+          <CardTitle>基本情報</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-4">
-            <div className="w-full md:w-[calc(50%-0.5rem)]">
-              <Label htmlFor="manufacturer">メーカー</Label>
-              <Select value={manufacturer} onValueChange={setManufacturer}>
-                <SelectTrigger>
-                  <SelectValue placeholder="メーカーを選択" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="トキメック">トキメック</SelectItem>
-                  <SelectItem value="丸八">丸八</SelectItem>
-                  <SelectItem value="タダノ">タダノ</SelectItem>
-                </SelectContent>
-              </Select>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* 1行目：点検日・時間・場所 */}
+            <div>
+              <Label htmlFor="date">点検日</Label>
+              <Input 
+                type="date" 
+                id="date" 
+                value={date.toISOString().split('T')[0]} 
+                onChange={(e) => setDate(new Date(e.target.value))}
+              />
             </div>
-            <div className="w-full md:w-[calc(50%-0.5rem)]">
-              <Label htmlFor="model">機種</Label>
-              <Select value={model} onValueChange={setModel}>
-                <SelectTrigger>
-                  <SelectValue placeholder="機種を選択" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="MC300">MC300</SelectItem>
-                  <SelectItem value="MR400">MR400</SelectItem>
-                  <SelectItem value="MG500">MG500</SelectItem>
-                </SelectContent>
-              </Select>
+            <div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label htmlFor="startTime">開始時間</Label>
+                  <Input 
+                    type="time" 
+                    id="startTime" 
+                    value={startTime} 
+                    onChange={(e) => setStartTime(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="endTime">終了時間</Label>
+                  <Input 
+                    type="time" 
+                    id="endTime" 
+                    value={endTime} 
+                    onChange={(e) => setEndTime(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="location">点検場所</Label>
+              <Input 
+                id="location" 
+                placeholder="場所を入力" 
+                value={location} 
+                onChange={(e) => setLocation(e.target.value)}
+              />
+            </div>
+
+            {/* 2行目：責任者・点検者・機種・機械番号 */}
+            <div>
+              <Label htmlFor="responsiblePerson">責任者</Label>
+              <Input 
+                id="responsiblePerson" 
+                placeholder="責任者名を入力" 
+                value={responsiblePerson} 
+                onChange={(e) => setResponsiblePerson(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="inspector">点検者</Label>
+              <Input 
+                id="inspector" 
+                placeholder="点検者名を入力" 
+                value={inspector} 
+                onChange={(e) => setInspector(e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label htmlFor="model">機種</Label>
+                <Select value={model} onValueChange={setModel}>
+                  <SelectTrigger id="model">
+                    <SelectValue placeholder="機種を選択" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="MC300">MC300</SelectItem>
+                    <SelectItem value="MR400">MR400</SelectItem>
+                    <SelectItem value="MG500">MG500</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="vehicleNumber">機械番号</Label>
+                <Input 
+                  id="vehicleNumber" 
+                  placeholder="番号を入力" 
+                  value={vehicleNumber} 
+                  onChange={(e) => setVehicleNumber(e.target.value)}
+                />
+              </div>
             </div>
           </div>
         </CardContent>
@@ -261,10 +303,6 @@ export default function Inspection() {
           <Button onClick={openAddDialog} size="sm">
             <Plus className="mr-1 h-4 w-4" /> 追加
           </Button>
-          {/*saveChangesボタンは不要になったので削除*/}
-          {/*<Button onClick={saveChanges} size="sm" variant="outline">
-            <Save className="mr-1 h-4 w-4" /> 保存
-          </Button>*/}
         </div>
       </div>
 
@@ -282,27 +320,19 @@ export default function Inspection() {
             </TableHeader>
             <TableBody>
               {inspectionItems.length > 0 ? (
-                inspectionItems.map((item) => (
+                inspectionItems.map(item => (
                   <TableRow key={item.id}>
                     <TableCell>{item.category}</TableCell>
                     <TableCell>{item.item}</TableCell>
                     <TableCell>{item.method}</TableCell>
                     <TableCell>{item.criteria}</TableCell>
                     <TableCell>
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openEditDialog(item)}
-                        >
-                          <PenSquare className="h-4 w-4" />
+                      <div className="flex space-x-1">
+                        <Button onClick={() => startEdit(item)} size="sm" variant="ghost">
+                          <Edit className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => deleteInspectionItem(item.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
+                        <Button onClick={() => deleteItem(item.id)} size="sm" variant="ghost">
+                          <Trash className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
@@ -311,7 +341,7 @@ export default function Inspection() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-4">
-                    点検項目がありません。「追加」ボタンから点検項目を追加してください。
+                    点検項目がありません。「追加」ボタンから項目を追加してください。
                   </TableCell>
                 </TableRow>
               )}
@@ -320,70 +350,53 @@ export default function Inspection() {
         </CardContent>
       </Card>
 
+      {/* 点検項目追加/編集ダイアログ */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {isEditMode ? "点検項目の編集" : "新しい点検項目の追加"}
-            </DialogTitle>
+            <DialogTitle>{isEditMode ? "点検項目の編集" : "点検項目の追加"}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="category">部位</Label>
-              <Select
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="category">部位 *</Label>
+              <Input
+                id="category"
                 value={newItem.category}
-                onValueChange={(value) =>
-                  setNewItem({ ...newItem, category: value })
-                }
-              >
-                <SelectTrigger id="category">
-                  <SelectValue placeholder="部位を選択" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="エンジン">エンジン</SelectItem>
-                  <SelectItem value="駆動系統">駆動系統</SelectItem>
-                  <SelectItem value="足回り">足回り</SelectItem>
-                  <SelectItem value="油圧系統">油圧系統</SelectItem>
-                  <SelectItem value="電気系統">電気系統</SelectItem>
-                  <SelectItem value="安全装置">安全装置</SelectItem>
-                </SelectContent>
-              </Select>
+                onChange={handleInputChange}
+                placeholder="例: 機体前部"
+              />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="item">点検項目</Label>
+            <div>
+              <Label htmlFor="item">点検項目 *</Label>
               <Input
                 id="item"
                 value={newItem.item}
                 onChange={handleInputChange}
-                placeholder="点検項目を入力"
+                placeholder="例: ブレーキの状態"
               />
             </div>
-            <div className="space-y-2">
+            <div>
               <Label htmlFor="method">点検方法</Label>
-              <Textarea
+              <Input
                 id="method"
                 value={newItem.method}
                 onChange={handleInputChange}
-                placeholder="点検方法を入力"
-                rows={2}
+                placeholder="例: 目視確認"
               />
             </div>
-            <div className="space-y-2">
+            <div>
               <Label htmlFor="criteria">判定基準</Label>
-              <Textarea
+              <Input
                 id="criteria"
                 value={newItem.criteria}
                 onChange={handleInputChange}
-                placeholder="判定基準を入力"
-                rows={2}
+                placeholder="例: 損傷がないこと"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={closeDialog}>
-              キャンセル
-            </Button>
-            <Button onClick={saveInspectionItem}>保存</Button>
+            <Button variant="outline" onClick={closeDialog}>キャンセル</Button>
+            <Button onClick={saveInspectionItem}>{isEditMode ? "更新" : "追加"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

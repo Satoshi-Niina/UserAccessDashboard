@@ -1,58 +1,66 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation } from "wouter";
-import OperationsNav from "@/components/OperationsNav";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import OperationsNav from "@/components/OperationsNav";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { format } from "date-fns";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
+import { Textarea } from "@/components/ui/textarea";
 
-// 点検項目インターフェース
+// 点検項目の型定義
 interface InspectionItem {
   id: number;
-  category: string;
-  equipment: string;
-  item: string;
-  criteria: string;
-  method: string;
-  measurementRecord: string;
-  diagramRecord: string;
-  result?: string;
-  remark?: string;
-  manufacturer?: string;
-  model?: string;
-  engineType?: string;
+  category: string;          // 部位
+  equipment: string;         // 装置
+  item: string;              // 確認箇所
+  criteria: string;          // 判断基準
+  method: string;            // 確認要領
+  measurementRecord: string; // 測定等記録
+  diagramRecord: string;     // 図形記録
+  manufacturer?: string;     // 製造メーカー
+  model?: string;            // 機種
+  engineType?: string;       // エンジン型式
+  result?: string;           // 判定結果
+  remark?: string;           // 記事（特記事項）
 }
 
+// 判定結果の選択肢
+const resultOptions = [
+  "良好",
+  "補給・給脂",
+  "修繕",
+  "経過観察",
+  "その他"
+];
+
+type InspectionTab = "general" | "engine" | "brake";
+
 export default function InspectionPage() {
-  const [_, navigate] = useLocation();
-  const { toast } = useToast();
+  const [location, navigate] = useLocation();
+  const [activeTab, setActiveTab] = useState<InspectionTab>("general");
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<string>("engine");
-  const [startTime, setStartTime] = useState<string>("");
-  const [endTime, setEndTime] = useState<string>("");
-  const [location_, setLocation] = useState<string>("");
-  const [responsible, setResponsible] = useState<string>("");
-  const [inspector, setInspector] = useState<string>("");
-  const [manufacturer, setManufacturer] = useState<string>("");
-  const [model, setModel] = useState<string>("");
-  const [engineType, setEngineType] = useState<string>("");
-  const [vehicleNumber, setVehicleNumber] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+  const [showBasicInfo, setShowBasicInfo] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchInspectionItems = async () => {
       try {
         setLoading(true);
+        // 最新のCSVファイルを取得するためにlatestパラメータを追加
         const response = await fetch('/api/inspection-items?latest=true');
 
         if (!response.ok) {
@@ -61,11 +69,13 @@ export default function InspectionPage() {
 
         const csvText = await response.text();
 
-        // CSVパース（簡易的な実装）
+        // ヘッダー情報のログ
         const rows = csvText.split('\n');
         const headers = rows[0].split(',');
+        console.log("CSVヘッダー:", headers);
+        console.log("予想されるヘッダー数:", headers.length);
 
-        // ヘッダーのインデックスを取得
+        // CSVパース（簡易的な実装）
         const categoryIndex = headers.findIndex(h => h === '部位' || h === 'category');
         const equipmentIndex = headers.findIndex(h => h === '装置' || h === 'equipment');
         const itemIndex = headers.findIndex(h => h === '確認箇所' || h === 'item');
@@ -150,22 +160,24 @@ export default function InspectionPage() {
           <Button variant="outline" onClick={() => navigate("/operations")}>
             戻る
           </Button>
+          <Button onClick={() => setShowBasicInfo(!showBasicInfo)}>
+            {showBasicInfo ? "点検表示" : "基本情報表示"}
+          </Button>
         </div>
       </div>
 
       {/* 運用画面ナビゲーション */}
       <OperationsNav currentPage="inspection" />
 
-      {/* 点検基本情報 */}
-      <Card className="w-full mb-6">
+      <Card className="mb-6">
         <CardHeader>
           <CardTitle>点検基本情報</CardTitle>
-          <CardDescription>点検の基本情報を入力してください</CardDescription>
+          <CardDescription>仕業点検の基本情報を入力してください</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="date">点検日</Label>
+              <Label htmlFor="inspection-date">点検日</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -176,7 +188,7 @@ export default function InspectionPage() {
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, "yyyy年MM月dd日") : "日付を選択"}
+                    {date ? format(date, "yyyy年MM月dd日") : <span>日付を選択</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
@@ -189,307 +201,268 @@ export default function InspectionPage() {
                 </PopoverContent>
               </Popover>
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="startTime">開始時間</Label>
-              <Input 
-                id="startTime" 
-                placeholder="開始時間を入力" 
-                type="time" 
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-              />
+              <Label htmlFor="vehicle-model">機種</Label>
+              <Select>
+                <SelectTrigger id="vehicle-model">
+                  <SelectValue placeholder="機種を選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MC300">MC300</SelectItem>
+                  <SelectItem value="MR400">MR400</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="endTime">終了時間</Label>
-              <Input 
-                id="endTime" 
-                placeholder="終了時間を入力" 
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-              />
+              <Label htmlFor="vehicle-id">車両番号</Label>
+              <Select>
+                <SelectTrigger id="vehicle-id">
+                  <SelectValue placeholder="車両番号を選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MC300-1">MC300-1</SelectItem>
+                  <SelectItem value="MC300-2">MC300-2</SelectItem>
+                  <SelectItem value="MR400-1">MR400-1</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="location">点検場所</Label>
-              <Input 
-                id="location" 
-                placeholder="場所を入力"
-                value={location_}
-                onChange={(e) => setLocation(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="responsible">責任者</Label>
-              <Input 
-                id="responsible" 
-                placeholder="責任者名を入力"
-                value={responsible}
-                onChange={(e) => setResponsible(e.target.value)}
-              />
-            </div>
+
             <div className="space-y-2">
               <Label htmlFor="inspector">点検者</Label>
-              <Input 
-                id="inspector" 
-                placeholder="点検者名を入力"
-                value={inspector}
-                onChange={(e) => setInspector(e.target.value)}
-              />
+              <Input id="inspector" placeholder="点検者名を入力" />
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="manufacturer">製造メーカー</Label>
-              <Input 
-                id="manufacturer" 
-                placeholder="製造メーカーを入力"
-                value={manufacturer}
-                onChange={(e) => setManufacturer(e.target.value)}
-              />
+              <Label htmlFor="location">点検場所</Label>
+              <Input id="location" placeholder="点検場所を入力" />
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="model">機種</Label>
-              <Input 
-                id="model" 
-                placeholder="機種を入力"
-                value={model}
-                onChange={(e) => setModel(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="engineType">エンジン型式</Label>
-              <Input 
-                id="engineType" 
-                placeholder="エンジン型式を入力"
-                value={engineType}
-                onChange={(e) => setEngineType(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="vehicleNumber">車両番号</Label>
-              <Input 
-                id="vehicleNumber" 
-                placeholder="車両番号を入力"
-                value={vehicleNumber}
-                onChange={(e) => setVehicleNumber(e.target.value)}
-              />
+              <Label htmlFor="weather">天候</Label>
+              <Select>
+                <SelectTrigger id="weather">
+                  <SelectValue placeholder="天候を選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="晴れ">晴れ</SelectItem>
+                  <SelectItem value="曇り">曇り</SelectItem>
+                  <SelectItem value="雨">雨</SelectItem>
+                  <SelectItem value="雪">雪</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* 点検項目タブ */}
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>点検項目</CardTitle>
-          <CardDescription>点検項目を確認し、結果を入力してください</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="engine" value={activeTab} onValueChange={(value) => setActiveTab(value)}>
-            <TabsList className="grid grid-cols-3">
-              <TabsTrigger value="engine">エンジン関係</TabsTrigger>
-              <TabsTrigger value="brake">ブレーキ関係</TabsTrigger>
-              <TabsTrigger value="other">その他</TabsTrigger>
-            </TabsList>
+      {showBasicInfo ? null : (
+        <Card>
+          <CardHeader>
+            <CardTitle>仕業点検表</CardTitle>
+            <CardDescription>各点検項目の結果を入力してください</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="general" value={activeTab} onValueChange={(value) => setActiveTab(value as InspectionTab)}>
+              <TabsList className="mb-4">
+                <TabsTrigger value="general">一般</TabsTrigger>
+                <TabsTrigger value="engine">エンジン</TabsTrigger>
+                <TabsTrigger value="brake">ブレーキ</TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="engine">
-              <div className="border rounded-lg overflow-hidden overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-muted">
-                      <th className="p-2 text-left w-20">部位</th>
-                      <th className="p-2 text-left w-24">装置</th>
-                      <th className="p-2 text-left w-32">確認箇所</th>
-                      <th className="p-2 text-left w-32">判断基準</th>
-                      <th className="p-2 text-left w-32">確認要領</th>
-                      <th className="p-2 text-left w-24">測定等記録</th>
-                      <th className="p-2 text-left w-24">図形記録</th>
-                      <th className="p-2 text-center w-20">判定</th>
-                      <th className="p-2 text-left w-32">記事</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {inspectionItems
-                      .filter((item) => 
-                        item.category.toLowerCase().includes("エンジン") || 
-                        item.category.toLowerCase().includes("engine"))
-                      .map((item) => (
-                        <tr key={item.id} className="border-t">
-                          <td className="p-2">{item.category}</td>
-                          <td className="p-2">{item.equipment}</td>
-                          <td className="p-2">{item.item}</td>
-                          <td className="p-2">{item.criteria}</td>
-                          <td className="p-2">{item.method}</td>
-                          <td className="p-2">{item.measurementRecord}</td>
-                          <td className="p-2">{item.diagramRecord}</td>
-                          <td className="p-2">
-                            <div className="flex justify-center space-x-4">
-                              <div className="flex items-center space-x-1">
-                                <Checkbox
-                                  id={`ok-${item.id}`}
-                                  checked={item.result === "OK"}
-                                  onCheckedChange={() => updateInspectionResult(item.id, "OK")}
-                                />
-                                <label htmlFor={`ok-${item.id}`}>良</label>
-                              </div>
-                              <div className="flex items-center space-x-1">
-                                <Checkbox
-                                  id={`ng-${item.id}`}
-                                  checked={item.result === "NG"}
-                                  onCheckedChange={() => updateInspectionResult(item.id, "NG")}
-                                />
-                                <label htmlFor={`ng-${item.id}`}>否</label>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="p-2">
-                            <Input
-                              placeholder="記事"
-                              value={item.remark || ""}
-                              onChange={(e) => updateInspectionRemark(item.id, e.target.value)}
-                            />
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
-            </TabsContent>
+              <TabsContent value="general">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <tr>
+                        <th className="p-2 text-left whitespace-nowrap">部位</th>
+                        <th className="p-2 text-left whitespace-nowrap w-[15ch]">装置</th>
+                        <th className="p-2 text-left whitespace-nowrap w-[20ch]">確認箇所</th>
+                        <th className="p-2 text-left whitespace-nowrap w-[30ch]">判断基準</th>
+                        <th className="p-2 text-left whitespace-nowrap w-[30ch]">確認要領</th>
+                        <th className="p-2 text-left whitespace-nowrap">測定等記録</th>
+                        <th className="p-2 text-left whitespace-nowrap">図形記録</th>
+                        <th className="p-2 text-center whitespace-nowrap w-[10ch]">判定</th>
+                        <th className="p-2 text-left whitespace-nowrap w-[20ch]">記事</th>
+                      </tr>
+                    </TableHeader>
+                    <TableBody>
+                      {inspectionItems
+                        .filter((item) => 
+                          !item.category.toLowerCase().includes("エンジン") && 
+                          !item.category.toLowerCase().includes("engine") &&
+                          !item.category.toLowerCase().includes("ブレーキ") &&
+                          !item.category.toLowerCase().includes("brake"))
+                        .map((item) => (
+                          <tr key={item.id} className="border-t">
+                            <td className="p-2">{item.category}</td>
+                            <td className="p-2">{item.equipment}</td>
+                            <td className="p-2">{item.item}</td>
+                            <td className="p-2">{item.criteria}</td>
+                            <td className="p-2">{item.method}</td>
+                            <td className="p-2">{item.measurementRecord}</td>
+                            <td className="p-2">{item.diagramRecord}</td>
+                            <td className="p-2">
+                              <Select
+                                value={item.result}
+                                onValueChange={(value) => updateInspectionResult(item.id, value)}
+                              >
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="選択" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {resultOptions.map((option) => (
+                                    <SelectItem key={option} value={option}>
+                                      {option}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </td>
+                            <td className="p-2">
+                              <Input
+                                value={item.remark || ""}
+                                onChange={(e) => updateInspectionRemark(item.id, e.target.value)}
+                                placeholder="備考"
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </TabsContent>
 
-            <TabsContent value="brake">
-              <div className="border rounded-lg overflow-hidden overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-muted">
-                      <th className="p-2 text-left w-20">部位</th>
-                      <th className="p-2 text-left w-24">装置</th>
-                      <th className="p-2 text-left w-32">確認箇所</th>
-                      <th className="p-2 text-left w-32">判断基準</th>
-                      <th className="p-2 text-left w-32">確認要領</th>
-                      <th className="p-2 text-left w-24">測定等記録</th>
-                      <th className="p-2 text-left w-24">図形記録</th>
-                      <th className="p-2 text-center w-20">判定</th>
-                      <th className="p-2 text-left w-32">記事</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {inspectionItems
-                      .filter((item) => 
-                        item.category.toLowerCase().includes("ブレーキ") || 
-                        item.category.toLowerCase().includes("brake"))
-                      .map((item) => (
-                        <tr key={item.id} className="border-t">
-                          <td className="p-2">{item.category}</td>
-                          <td className="p-2">{item.equipment}</td>
-                          <td className="p-2">{item.item}</td>
-                          <td className="p-2">{item.criteria}</td>
-                          <td className="p-2">{item.method}</td>
-                          <td className="p-2">{item.measurementRecord}</td>
-                          <td className="p-2">{item.diagramRecord}</td>
-                          <td className="p-2">
-                            <div className="flex justify-center space-x-4">
-                              <div className="flex items-center space-x-1">
-                                <Checkbox
-                                  id={`ok-${item.id}`}
-                                  checked={item.result === "OK"}
-                                  onCheckedChange={() => updateInspectionResult(item.id, "OK")}
-                                />
-                                <label htmlFor={`ok-${item.id}`}>良</label>
-                              </div>
-                              <div className="flex items-center space-x-1">
-                                <Checkbox
-                                  id={`ng-${item.id}`}
-                                  checked={item.result === "NG"}
-                                  onCheckedChange={() => updateInspectionResult(item.id, "NG")}
-                                />
-                                <label htmlFor={`ng-${item.id}`}>否</label>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="p-2">
-                            <Input
-                              placeholder="記事"
-                              value={item.remark || ""}
-                              onChange={(e) => updateInspectionRemark(item.id, e.target.value)}
-                            />
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
-            </TabsContent>
+              <TabsContent value="engine">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <tr>
+                        <th className="p-2 text-left whitespace-nowrap">部位</th>
+                        <th className="p-2 text-left whitespace-nowrap w-[15ch]">装置</th>
+                        <th className="p-2 text-left whitespace-nowrap w-[20ch]">確認箇所</th>
+                        <th className="p-2 text-left whitespace-nowrap w-[30ch]">判断基準</th>
+                        <th className="p-2 text-left whitespace-nowrap w-[30ch]">確認要領</th>
+                        <th className="p-2 text-left whitespace-nowrap">測定等記録</th>
+                        <th className="p-2 text-left whitespace-nowrap">図形記録</th>
+                        <th className="p-2 text-center whitespace-nowrap w-[10ch]">判定</th>
+                        <th className="p-2 text-left whitespace-nowrap w-[20ch]">記事</th>
+                      </tr>
+                    </TableHeader>
+                    <TableBody>
+                      {inspectionItems
+                        .filter((item) => 
+                          item.category.toLowerCase().includes("エンジン") || 
+                          item.category.toLowerCase().includes("engine"))
+                        .map((item) => (
+                          <tr key={item.id} className="border-t">
+                            <td className="p-2">{item.category}</td>
+                            <td className="p-2">{item.equipment}</td>
+                            <td className="p-2">{item.item}</td>
+                            <td className="p-2">{item.criteria}</td>
+                            <td className="p-2">{item.method}</td>
+                            <td className="p-2">{item.measurementRecord}</td>
+                            <td className="p-2">{item.diagramRecord}</td>
+                            <td className="p-2">
+                              <Select
+                                value={item.result}
+                                onValueChange={(value) => updateInspectionResult(item.id, value)}
+                              >
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="選択" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {resultOptions.map((option) => (
+                                    <SelectItem key={option} value={option}>
+                                      {option}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </td>
+                            <td className="p-2">
+                              <Input
+                                value={item.remark || ""}
+                                onChange={(e) => updateInspectionRemark(item.id, e.target.value)}
+                                placeholder="備考"
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </TabsContent>
 
-            <TabsContent value="other">
-              <div className="border rounded-lg overflow-hidden overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-muted">
-                      <th className="p-2 text-left w-20">部位</th>
-                      <th className="p-2 text-left w-24">装置</th>
-                      <th className="p-2 text-left w-32">確認箇所</th>
-                      <th className="p-2 text-left w-32">判断基準</th>
-                      <th className="p-2 text-left w-32">確認要領</th>
-                      <th className="p-2 text-left w-24">測定等記録</th>
-                      <th className="p-2 text-left w-24">図形記録</th>
-                      <th className="p-2 text-center w-20">判定</th>
-                      <th className="p-2 text-left w-32">記事</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {inspectionItems
-                      .filter((item) => 
-                        !item.category.toLowerCase().includes("エンジン") && 
-                        !item.category.toLowerCase().includes("engine") &&
-                        !item.category.toLowerCase().includes("ブレーキ") &&
-                        !item.category.toLowerCase().includes("brake"))
-                      .map((item) => (
-                        <tr key={item.id} className="border-t">
-                          <td className="p-2">{item.category}</td>
-                          <td className="p-2">{item.equipment}</td>
-                          <td className="p-2">{item.item}</td>
-                          <td className="p-2">{item.criteria}</td>
-                          <td className="p-2">{item.method}</td>
-                          <td className="p-2">{item.measurementRecord}</td>
-                          <td className="p-2">{item.diagramRecord}</td>
-                          <td className="p-2">
-                            <div className="flex justify-center space-x-4">
-                              <div className="flex items-center space-x-1">
-                                <Checkbox
-                                  id={`ok-${item.id}`}
-                                  checked={item.result === "OK"}
-                                  onCheckedChange={() => updateInspectionResult(item.id, "OK")}
-                                />
-                                <label htmlFor={`ok-${item.id}`}>良</label>
-                              </div>
-                              <div className="flex items-center space-x-1">
-                                <Checkbox
-                                  id={`ng-${item.id}`}
-                                  checked={item.result === "NG"}
-                                  onCheckedChange={() => updateInspectionResult(item.id, "NG")}
-                                />
-                                <label htmlFor={`ng-${item.id}`}>否</label>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="p-2">
-                            <Input
-                              placeholder="記事"
-                              value={item.remark || ""}
-                              onChange={(e) => updateInspectionRemark(item.id, e.target.value)}
-                            />
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={() => navigate("/operations")}>キャンセル</Button>
-          <Button>点検結果を保存</Button>
-        </CardFooter>
-      </Card>
+              <TabsContent value="brake">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <tr>
+                        <th className="p-2 text-left whitespace-nowrap">部位</th>
+                        <th className="p-2 text-left whitespace-nowrap w-[15ch]">装置</th>
+                        <th className="p-2 text-left whitespace-nowrap w-[20ch]">確認箇所</th>
+                        <th className="p-2 text-left whitespace-nowrap w-[30ch]">判断基準</th>
+                        <th className="p-2 text-left whitespace-nowrap w-[30ch]">確認要領</th>
+                        <th className="p-2 text-left whitespace-nowrap">測定等記録</th>
+                        <th className="p-2 text-left whitespace-nowrap">図形記録</th>
+                        <th className="p-2 text-center whitespace-nowrap w-[10ch]">判定</th>
+                        <th className="p-2 text-left whitespace-nowrap w-[20ch]">記事</th>
+                      </tr>
+                    </TableHeader>
+                    <TableBody>
+                      {inspectionItems
+                        .filter((item) => 
+                          item.category.toLowerCase().includes("ブレーキ") || 
+                          item.category.toLowerCase().includes("brake"))
+                        .map((item) => (
+                          <tr key={item.id} className="border-t">
+                            <td className="p-2">{item.category}</td>
+                            <td className="p-2">{item.equipment}</td>
+                            <td className="p-2">{item.item}</td>
+                            <td className="p-2">{item.criteria}</td>
+                            <td className="p-2">{item.method}</td>
+                            <td className="p-2">{item.measurementRecord}</td>
+                            <td className="p-2">{item.diagramRecord}</td>
+                            <td className="p-2">
+                              <Select
+                                value={item.result}
+                                onValueChange={(value) => updateInspectionResult(item.id, value)}
+                              >
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="選択" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {resultOptions.map((option) => (
+                                    <SelectItem key={option} value={option}>
+                                      {option}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </td>
+                            <td className="p-2">
+                              <Input
+                                value={item.remark || ""}
+                                onChange={(e) => updateInspectionRemark(item.id, e.target.value)}
+                                placeholder="備考"
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+          <CardFooter className="flex justify-end space-x-4">
+            <Button variant="outline">キャンセル</Button>
+            <Button>点検完了</Button>
+          </CardFooter>
+        </Card>
+      )}
     </div>
   );
 }

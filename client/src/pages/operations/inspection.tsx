@@ -240,38 +240,44 @@ export default function Inspection() {
           <CardTitle>基本情報</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {/* 1行目：点検日・開始/終了時間・点検場所 */}
-            <div>
+            <div className="space-y-2 sm:col-span-1 lg:col-span-2">
               <Label htmlFor="date">点検日</Label>
-              <Calendar date={date} setDate={setDate} />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !date && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {date ? format(date, "yyyy年MM月dd日") : <span>日付を選択</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={setDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
-            <div>
+            <div className="space-y-2 sm:col-span-1">
               <Label htmlFor="startTime">開始時間</Label>
-              <Input 
-                type="time" 
-                id="startTime" 
-                value={startTime} 
-                onChange={(e) => setStartTime(e.target.value)}
-              />
+              <Input id="startTime" placeholder="開始時間を入力" type="time" value={startTime} onChange={e => setStartTime(e.target.value)} />
             </div>
-            <div>
+            <div className="space-y-2 sm:col-span-1">
               <Label htmlFor="endTime">終了時間</Label>
-              <Input 
-                type="time" 
-                id="endTime" 
-                value={endTime} 
-                onChange={(e) => setEndTime(e.target.value)}
-              />
+              <Input id="endTime" placeholder="終了時間を入力" type="time" value={endTime} onChange={e => setEndTime(e.target.value)} />
             </div>
-            <div>
+            <div className="space-y-2 sm:col-span-1 lg:col-span-2">
               <Label htmlFor="location">点検場所</Label>
-              <Input 
-                id="location" 
-                placeholder="場所を入力" 
-                value={location} 
-                onChange={(e) => setLocation(e.target.value)}
-              />
+              <Input id="location" placeholder="場所を入力" value={location} onChange={e => setLocation(e.target.value)} />
             </div>
 
             {/* 2行目：責任者・点検者・機種・機械番号 */}

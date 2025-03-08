@@ -12,6 +12,9 @@
   background-color: #f1f1f1;
   border-radius: 3px;
   margin-bottom: 8px;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .table-scroll-indicator-inner {
@@ -22,6 +25,10 @@
   background-color: #d1d1d1;
   border-radius: 3px;
   transition: width 0.3s, left 0.3s;
+  min-width: 10px;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .table-with-fixed-height {

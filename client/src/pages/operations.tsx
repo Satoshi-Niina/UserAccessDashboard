@@ -218,9 +218,9 @@ export default function OperationsPage() {
                       <TableHead className="w-[250px] min-w-[250px] text-xs border">確認箇所</TableHead>
                       <TableHead className="w-[250px] min-w-[250px] text-xs border">判断基準</TableHead>
                       <TableHead className="w-[250px] min-w-[250px] text-xs border">確認要領</TableHead>
-                      <TableHead className="w-[100px] min-w-[100px] text-xs border">測定等記録</TableHead>
-                      <TableHead className="w-[100px] min-w-[100px] text-xs border">図形記録</TableHead>
-                      <TableHead className="w-[100px] min-w-[100px] text-xs border">結果</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px] text-xs border">測定等記録</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px] text-xs border">図形記録</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px] text-xs border">結果</TableHead>
                       <TableHead className="w-[250px] min-w-[250px] text-xs border">特記事項</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -275,9 +275,9 @@ export default function OperationsPage() {
                       <TableHead className="w-[250px] min-w-[250px] text-xs border">確認箇所</TableHead>
                       <TableHead className="w-[250px] min-w-[250px] text-xs border">判断基準</TableHead>
                       <TableHead className="w-[250px] min-w-[250px] text-xs border">確認要領</TableHead>
-                      <TableHead className="w-[100px] min-w-[100px] text-xs border">測定等記録</TableHead>
-                      <TableHead className="w-[100px] min-w-[100px] text-xs border">図形記録</TableHead>
-                      <TableHead className="w-[100px] min-w-[100px] text-xs border">結果</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px] text-xs border">測定等記録</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px] text-xs border">図形記録</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px] text-xs border">結果</TableHead>
                       <TableHead className="w-[250px] min-w-[250px] text-xs border">特記事項</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -332,9 +332,9 @@ export default function OperationsPage() {
                       <TableHead className="w-[250px] min-w-[250px] text-xs border">確認箇所</TableHead>
                       <TableHead className="w-[250px] min-w-[250px] text-xs border">判断基準</TableHead>
                       <TableHead className="w-[250px] min-w-[250px] text-xs border">確認要領</TableHead>
-                      <TableHead className="w-[100px] min-w-[100px] text-xs border">測定等記録</TableHead>
-                      <TableHead className="w-[100px] min-w-[100px] text-xs border">図形記録</TableHead>
-                      <TableHead className="w-[100px] min-w-[100px] text-xs border">結果</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px] text-xs border">測定等記録</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px] text-xs border">図形記録</TableHead>
+                      <TableHead className="w-[150px] min-w-[150px] text-xs border">結果</TableHead>
                       <TableHead className="w-[250px] min-w-[250px] text-xs border">特記事項</TableHead>
                     </TableRow>
                   </TableHeader>

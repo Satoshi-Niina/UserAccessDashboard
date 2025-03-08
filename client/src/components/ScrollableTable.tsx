@@ -20,7 +20,6 @@ export function ScrollableTable({ headers, data, renderRow }: ScrollableTablePro
 
     const handleScroll = () => {
       const { scrollLeft, scrollWidth, clientWidth } = scrollContainer;
-      const scrollPercentage = scrollLeft / (scrollWidth - clientWidth);
       const maxScrollLeft = scrollWidth - clientWidth;
       
       if (maxScrollLeft > 0) {
@@ -29,17 +28,25 @@ export function ScrollableTable({ headers, data, renderRow }: ScrollableTablePro
         
         setScrollIndicatorWidth(indicatorWidth);
         setScrollIndicatorLeft(indicatorLeft);
+      } else {
+        // テーブルがスクロール可能でない場合もインジケーターを表示
+        setScrollIndicatorWidth(100);
+        setScrollIndicatorLeft(0);
       }
     };
 
+    // ウィンドウサイズ変更時もインジケーターを更新
+    window.addEventListener('resize', handleScroll);
     scrollContainer.addEventListener('scroll', handleScroll);
-    // Initial calculation
-    handleScroll();
+    
+    // 初期計算（少し遅延させて確実にDOMが反映された後に計算）
+    setTimeout(handleScroll, 100);
 
     return () => {
+      window.removeEventListener('resize', handleScroll);
       scrollContainer.removeEventListener('scroll', handleScroll);
     };
-  }, []);
+  }, [data]); // dataが変わった時にも再計算
 
   return (
     <div className="flex flex-col gap-2">

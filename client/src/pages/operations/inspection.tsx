@@ -193,6 +193,33 @@ export default function Inspection() {
     <div className="container mx-auto py-8">
       {/* ヘッダー部分 */}
       <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">仕業点検登録</h1>
+        <div className="flex space-x-2">
+          <Button variant="outline" onClick={() => saveChanges()}>
+            保存して戻る
+          </Button>
+        </div>
+      </div>
+
+      {/* 画面切り替えボタン */}
+      <div className="flex space-x-4 mb-6">
+        <Button 
+          variant="default" 
+          className="flex-1"
+          disabled
+        >
+          仕業点検
+        </Button>
+        <Button 
+          variant="outline" 
+          onClick={() => navigate("/operations/operational-plan")}
+          className="flex-1"
+        >
+          運用計画へ切り替え
+        </Button>
+      </div>x-auto py-8">
+      {/* ヘッダー部分 */}
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">仕業点検</h1>
         <div className="flex space-x-2">
           <Button variant="outline" onClick={() => handleSaveAndReturn()}>

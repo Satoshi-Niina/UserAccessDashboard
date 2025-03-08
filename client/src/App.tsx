@@ -17,28 +17,31 @@ import History from "@/pages/settings/history";
 import UserManagement from "@/pages/settings/user-management";
 import InspectionItems from "@/pages/settings/inspection-items";
 import { ProtectedRoute } from "./lib/protected-route";
-import React from 'react';
+import React, { lazy, Suspense } from "react";
 
 // アプリケーションのルートコンポーネント
 export default function App() {
+  const LazyInspectionPage = lazy(() => import("@/pages/operations/inspection"));
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Switch>
-          <Route path="/login" component={AuthPage} />
-          <ProtectedRoute path="/voice-assistant" component={VoiceAssistant} />
-          <ProtectedRoute path="/operations" component={OperationsPage} />
-          <ProtectedRoute path="/operations/inspection" component={() => React.createElement(require("@/pages/operations/inspection").default)} />
-          <ProtectedRoute path="/operations/operational-plan" component={OperationalPlanPage} />
-          <ProtectedRoute path="/messages" component={Messages} />
-          <ProtectedRoute path="/settings/basic-data" component={BasicData} adminOnly={true} />
-          <ProtectedRoute path="/settings/inspection-items" component={InspectionItems} adminOnly={true} />
-          <ProtectedRoute path="/settings/history" component={History} adminOnly={true} />
-          <ProtectedRoute path="/settings/user-management" component={UserManagement} adminOnly={true} />
-          <ProtectedRoute path="/settings" component={Settings} adminOnly={true} />
-          <ProtectedRoute path="/" component={Dashboard} />
-          <Route component={NotFound} />
-        </Switch>
+        <Suspense fallback={<div>Loading...</div>}>
+          <Switch>
+            <Route path="/login" component={AuthPage} />
+            <ProtectedRoute path="/voice-assistant" component={VoiceAssistant} />
+            <ProtectedRoute path="/operations" component={OperationsPage} />
+            <ProtectedRoute path="/operations/inspection" component={LazyInspectionPage} />
+            <ProtectedRoute path="/operations/operational-plan" component={OperationalPlanPage} />
+            <ProtectedRoute path="/messages" component={Messages} />
+            <ProtectedRoute path="/settings/basic-data" component={BasicData} adminOnly={true} />
+            <ProtectedRoute path="/settings/inspection-items" component={InspectionItems} adminOnly={true} />
+            <ProtectedRoute path="/settings/history" component={History} adminOnly={true} />
+            <ProtectedRoute path="/settings/user-management" component={UserManagement} adminOnly={true} />
+            <ProtectedRoute path="/settings" component={Settings} adminOnly={true} />
+            <ProtectedRoute path="/" component={Dashboard} />
+            <Route component={NotFound} />
+          </Switch>
+        </Suspense>
         <Toaster />
       </AuthProvider>
     </QueryClientProvider>

@@ -437,3 +437,45 @@ export default function InspectionPage() {
     </div>
   );
 }
+import React, { useState, useEffect } from 'react';
+import { useLocation } from "wouter";
+import OperationsNav from "@/components/OperationsNav";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+
+export default function InspectionPage() {
+  const [_, navigate] = useLocation();
+  const { toast } = useToast();
+  
+  return (
+    <div className="container mx-auto py-8">
+      {/* ヘッダー部分 */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">仕業点検</h1>
+        <div className="flex space-x-2">
+          <Button variant="outline" onClick={() => navigate("/operations")}>
+            戻る
+          </Button>
+        </div>
+      </div>
+
+      {/* 運用画面ナビゲーション */}
+      <OperationsNav currentPage="inspection" />
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>仕業点検</CardTitle>
+          <CardDescription>保守用車の点検を記録します</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p>仕業点検のフォームをここに実装します。</p>
+        </CardContent>
+        <CardFooter className="flex justify-between">
+          <Button variant="outline">キャンセル</Button>
+          <Button>保存</Button>
+        </CardFooter>
+      </Card>
+    </div>
+  );
+}

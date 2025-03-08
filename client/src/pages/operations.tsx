@@ -1,6 +1,7 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import OperationsNav from "@/components/OperationsNav";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -130,9 +131,12 @@ export default function OperationsPage() {
   return (
     <div className="container mx-auto p-4">
       <div className="flex flex-col space-y-6">
-        <div>
-          {/*Removed Title*/}
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold">運用管理</h1>
         </div>
+        
+        {/* 運用管理ナビゲーションを追加 */}
+        <OperationsNav currentPage="other" />
 
         <Card className="w-full">
           <CardHeader>

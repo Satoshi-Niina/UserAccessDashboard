@@ -60,6 +60,8 @@ export default function OperationalPlanPage() {
     setActiveTab(value);
     if (value === "inspection") {
       navigate("/operations/inspection");
+    } else if (value === "operational-plan") {
+      // 現在のページなので特に遷移不要
     }
   };
 

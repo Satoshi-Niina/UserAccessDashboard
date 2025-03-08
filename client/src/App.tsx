@@ -17,6 +17,7 @@ import History from "@/pages/settings/history";
 import UserManagement from "@/pages/settings/user-management";
 import InspectionItems from "@/pages/settings/inspection-items";
 import { ProtectedRoute } from "./lib/protected-route";
+import React from 'react';
 
 // アプリケーションのルートコンポーネント
 export default function App() {
@@ -27,8 +28,8 @@ export default function App() {
           <Route path="/login" component={AuthPage} />
           <ProtectedRoute path="/voice-assistant" component={VoiceAssistant} />
           <ProtectedRoute path="/operations" component={OperationsPage} />
-          <ProtectedRoute path="/operations/inspection" component={InspectionPage} />
-          <ProtectedRoute path="/operations/operational-plan" component={OperationalPlanPage} />
+          <ProtectedRoute path="/operations/inspection" component={() => React.createElement(require("@/pages/operations/inspection").default)} />
+          <ProtectedRoute path="/operations/operational-plan" component={() => React.createElement(require("@/pages/operations/operational-plan").default)} />
           <ProtectedRoute path="/messages" component={Messages} />
           <ProtectedRoute path="/settings/basic-data" component={BasicData} adminOnly={true} />
           <ProtectedRoute path="/settings/inspection-items" component={InspectionItems} adminOnly={true} />

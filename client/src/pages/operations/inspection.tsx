@@ -206,6 +206,11 @@ export default function Inspection() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">仕業点検登録</h1>
         <div className="flex space-x-2">
+          <Button variant="outline" onClick={() => handleNavigation("/operations/operational-plan")}>
+            運用計画へ
+          </Button>
+        </div>
+        <div className="flex space-x-2">
           <Button variant="outline" onClick={() => saveChanges()}>
             保存して戻る
           </Button>

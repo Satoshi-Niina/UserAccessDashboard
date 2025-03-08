@@ -38,12 +38,16 @@ export function ScrollableTable({ headers, data, renderRow }: ScrollableTablePro
     scrollContainer.addEventListener('scroll', handleScroll);
     window.addEventListener('resize', handleScroll);
 
-    // 初期計算（少し遅延させて確実にDOMが反映された後に計算）
+    // 初期計算と定期的な更新を設定
     setTimeout(handleScroll, 100);
+    
+    // 更新を毎秒行って確実に表示されるようにする
+    const intervalId = setInterval(handleScroll, 1000);
 
     return () => {
       window.removeEventListener('resize', handleScroll);
       scrollContainer.removeEventListener('scroll', handleScroll);
+      clearInterval(intervalId);
     };
   }, [data]); // dataが変わった時にも再計算
 
@@ -94,7 +98,8 @@ export function ScrollableTable({ headers, data, renderRow }: ScrollableTablePro
       {/* Table container with scroll */}
       <div 
         ref={scrollContainerRef} 
-        className="w-full overflow-x-auto border rounded-md"
+        className="w-full overflow-x-scroll border rounded-md"
+        style={{ msOverflowStyle: 'scrollbar', scrollbarWidth: 'auto' }}
       >
         <div style={{ minWidth: '100%', width: 'max-content' }}>
           <Table className="table-with-fixed-height">

@@ -39,6 +39,15 @@
   scrollbar-width: thin;
 }
 
+/* テーブルスクロールコンテナに適用 */
+[class*="overflow-x-auto"], 
+[class*="overflow-auto"],
+.w-full.overflow-x-auto {
+  overflow-x: scroll !important;
+  -ms-overflow-style: auto !important;
+  scrollbar-width: auto !important;
+}
+
 /* テーブルのスタイル */
 table {
   border-collapse: collapse;

@@ -44,7 +44,7 @@ const resultOptions = [
   "その他"
 ];
 
-type InspectionTab = "general" | "engine" | "brake";
+type InspectionTab = "general";
 
 export default function InspectionPage() {
   const [location, navigate] = useLocation();
@@ -258,16 +258,18 @@ export default function InspectionPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="vehicle-model">機種</Label>
-              <Select>
-                <SelectTrigger id="vehicle-model">
-                  <SelectValue placeholder="機種を選択" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="MC300">MC300</SelectItem>
-                  <SelectItem value="MR400">MR400</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="location">点検場所</Label>
+              <Input id="location" placeholder="点検場所を入力" />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="responsible-person">責任者</Label>
+              <Input id="responsible-person" placeholder="責任者名を入力" />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="inspector">点検者</Label>
+              <Input id="inspector" placeholder="点検者名を入力" />
             </div>
 
             <div className="space-y-2">
@@ -283,315 +285,125 @@ export default function InspectionPage() {
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="inspector">点検者</Label>
-              <Input id="inspector" placeholder="点検者名を入力" />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="location">点検場所</Label>
-              <Input id="location" placeholder="点検場所を入力" />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="weather">天候</Label>
-              <Select>
-                <SelectTrigger id="weather">
-                  <SelectValue placeholder="天候を選択" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="晴れ">晴れ</SelectItem>
-                  <SelectItem value="曇り">曇り</SelectItem>
-                  <SelectItem value="雨">雨</SelectItem>
-                  <SelectItem value="雪">雪</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
         </CardContent>
       </Card>
 
       {showBasicInfo ? null : (
-        <Card>
-          <CardHeader>
-            <CardTitle>仕業点検表</CardTitle>
-            <CardDescription>各点検項目の結果を入力してください</CardDescription>
+        <Card className="mb-6">
+          <CardHeader className="flex flex-row items-center">
+            <div>
+              <CardTitle>仕業点検表</CardTitle>
+              <CardDescription>
+                各項目を確認し、判定を入力してください
+              </CardDescription>
+            </div>
+            <div className="ml-auto flex space-x-2">
+              {/* 左右スクロールボタンは削除 */}
+            </div>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="general" value={activeTab} onValueChange={(value) => setActiveTab(value as InspectionTab)}>
-              <TabsList className="mb-4">
-                <TabsTrigger value="general">一般</TabsTrigger>
-                <TabsTrigger value="engine">エンジン</TabsTrigger>
-                <TabsTrigger value="brake">ブレーキ</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="general">
-                <div className="relative overflow-x-auto">
-                  {/* スクロールインジケーター */}
-                  <div className="table-scroll-indicator absolute top-0 left-0">
-                    <div 
-                      className="table-scroll-indicator-inner"
-                      style={{ width: `${scrollIndicatorWidth}%`, left: `${scrollIndicatorLeft}%` }}
-                    ></div>
-                  </div>
-                  {/* スクロールコントロールボタン */}
-                  <div className="flex justify-between absolute w-full top-0">
-                    <button 
-                      onClick={scrollLeft} 
-                      className="bg-white/80 rounded-full p-1 shadow hover:bg-white transition-colors"
-                      aria-label="左へスクロール"
-                    >
-                      <ChevronLeft size={20} />
-                    </button>
-                    <button 
-                      onClick={scrollRight} 
-                      className="bg-white/80 rounded-full p-1 shadow hover:bg-white transition-colors"
-                      aria-label="右へスクロール"
-                    >
-                      <ChevronRight size={20} />
-                    </button>
-                  </div>
-                  <div ref={scrollContainerRef} className="w-full overflow-x-auto border rounded-md" style={{ minWidth: '100%', width: 'max-content'}}>
-                    <Table>
-                      <TableHeader>
-                        <tr>
-                          <th className="p-2 text-left whitespace-nowrap">部位</th>
-                          <th className="p-2 text-left whitespace-nowrap w-[15ch]">装置</th>
-                          <th className="p-2 text-left whitespace-nowrap w-[20ch]">確認箇所</th>
-                          <th className="p-2 text-left whitespace-nowrap w-[30ch]">判断基準</th>
-                          <th className="p-2 text-left whitespace-nowrap w-[30ch]">確認要領</th>
-                          <th className="p-2 text-left whitespace-nowrap">測定等記録</th>
-                          <th className="p-2 text-left whitespace-nowrap">図形記録</th>
-                          <th className="p-2 text-center whitespace-nowrap w-[10ch]">判定</th>
-                          <th className="p-2 text-left whitespace-nowrap w-[50ch]">記事</th>
+            <div className="relative overflow-x-auto">
+              {/* スクロールインジケーター */}
+              <div className="table-scroll-indicator absolute top-0 left-0">
+                <div 
+                  className="table-scroll-indicator-inner"
+                  style={{ width: `${scrollIndicatorWidth}%`, left: `${scrollIndicatorLeft}%` }}
+                ></div>
+              </div>
+              {/* スクロールコントロールボタン */}
+              <div className="flex justify-between absolute w-full top-0">
+                <button 
+                  onClick={scrollLeft} 
+                  className="bg-white/80 rounded-full p-1 shadow hover:bg-white transition-colors"
+                  aria-label="左へスクロール"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                <button 
+                  onClick={scrollRight} 
+                  className="bg-white/80 rounded-full p-1 shadow hover:bg-white transition-colors"
+                  aria-label="右へスクロール"
+                >
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+              <div ref={scrollContainerRef} className="w-full overflow-x-auto border rounded-md" style={{ minWidth: '100%', width: 'max-content'}}>
+                <Table>
+                  <TableHeader>
+                    <tr>
+                      <th className="p-2 text-left whitespace-nowrap">部位</th>
+                      <th className="p-2 text-left whitespace-nowrap w-[15ch]">装置</th>
+                      <th className="p-2 text-left whitespace-nowrap w-[20ch]">確認箇所</th>
+                      <th className="p-2 text-left whitespace-nowrap w-[30ch]">判断基準</th>
+                      <th className="p-2 text-left whitespace-nowrap w-[30ch]">確認要領</th>
+                      <th className="p-2 text-left whitespace-nowrap">測定等記録</th>
+                      <th className="p-2 text-left whitespace-nowrap">図形記録</th>
+                      <th className="p-2 text-center whitespace-nowrap w-[10ch]">判定</th>
+                      <th className="p-2 text-left whitespace-nowrap w-[50ch]">記事</th>
+                    </tr>
+                  </TableHeader>
+                  <TableBody>
+                    {loading ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center">
+                          データを読み込み中...
+                        </TableCell>
+                      </TableRow>
+                    ) : error ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center text-red-500">
+                          {error}
+                        </TableCell>
+                      </TableRow>
+                    ) : inspectionItems.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center">
+                          表示する点検項目がありません
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      inspectionItems.map((item) => (
+                        <tr key={item.id} className="border-t">
+                          <td className="p-2">{item.category}</td>
+                          <td className="p-2">{item.equipment}</td>
+                          <td className="p-2">{item.item}</td>
+                          <td className="p-2">{item.criteria}</td>
+                          <td className="p-2">{item.method}</td>
+                          <td className="p-2">{item.measurementRecord}</td>
+                          <td className="p-2">{item.diagramRecord}</td>
+                          <td className="p-2">
+                            <Select
+                              value={item.result}
+                              onValueChange={(value) => updateInspectionResult(item.id, value)}
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="選択" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {resultOptions.map((option) => (
+                                  <SelectItem key={option} value={option}>
+                                    {option}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </td>
+                          <td className="p-2">
+                            <Textarea
+                              value={item.remark || ""}
+                              onChange={(e) => updateInspectionRemark(item.id, e.target.value)}
+                              placeholder="備考"
+                              className="h-20 w-full"
+                            />
+                          </td>
                         </tr>
-                      </TableHeader>
-                      <TableBody>
-                        {inspectionItems
-                          .filter((item) => 
-                            !item.category.toLowerCase().includes("エンジン") && 
-                            !item.category.toLowerCase().includes("engine") &&
-                            !item.category.toLowerCase().includes("ブレーキ") &&
-                            !item.category.toLowerCase().includes("brake"))
-                          .map((item) => (
-                            <tr key={item.id} className="border-t">
-                              <td className="p-2">{item.category}</td>
-                              <td className="p-2">{item.equipment}</td>
-                              <td className="p-2">{item.item}</td>
-                              <td className="p-2">{item.criteria}</td>
-                              <td className="p-2">{item.method}</td>
-                              <td className="p-2">{item.measurementRecord}</td>
-                              <td className="p-2">{item.diagramRecord}</td>
-                              <td className="p-2">
-                                <Select
-                                  value={item.result}
-                                  onValueChange={(value) => updateInspectionResult(item.id, value)}
-                                >
-                                  <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="選択" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {resultOptions.map((option) => (
-                                      <SelectItem key={option} value={option}>
-                                        {option}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </td>
-                              <td className="p-2">
-                                <Textarea
-                                  value={item.remark || ""}
-                                  onChange={(e) => updateInspectionRemark(item.id, e.target.value)}
-                                  placeholder="備考"
-                                  className="h-20 w-full"
-                                />
-                              </td>
-                            </tr>
-                          ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-              </TabsContent>
-
-              {/* Engine and Brake Tabs (similar structure as General tab) */}
-              <TabsContent value="engine">
-                <div className="relative overflow-x-auto">
-                  {/* スクロールインジケーター */}
-                  <div className="table-scroll-indicator absolute top-0 left-0">
-                    <div 
-                      className="table-scroll-indicator-inner"
-                      style={{ width: `${scrollIndicatorWidth}%`, left: `${scrollIndicatorLeft}%` }}
-                    ></div>
-                  </div>
-                  {/* スクロールコントロールボタン */}
-                  <div className="flex justify-between absolute w-full top-0">
-                    <button 
-                      onClick={scrollLeft} 
-                      className="bg-white/80 rounded-full p-1 shadow hover:bg-white transition-colors"
-                      aria-label="左へスクロール"
-                    >
-                      <ChevronLeft size={20} />
-                    </button>
-                    <button 
-                      onClick={scrollRight} 
-                      className="bg-white/80 rounded-full p-1 shadow hover:bg-white transition-colors"
-                      aria-label="右へスクロール"
-                    >
-                      <ChevronRight size={20} />
-                    </button>
-                  </div>
-                  <div ref={scrollContainerRef} className="w-full overflow-x-auto border rounded-md" style={{ minWidth: '100%', width: 'max-content'}}>
-                    <Table>
-                      <TableHeader>
-                        <tr>
-                          <th className="p-2 text-left whitespace-nowrap">部位</th>
-                          <th className="p-2 text-left whitespace-nowrap w-[15ch]">装置</th>
-                          <th className="p-2 text-left whitespace-nowrap w-[20ch]">確認箇所</th>
-                          <th className="p-2 text-left whitespace-nowrap w-[30ch]">判断基準</th>
-                          <th className="p-2 text-left whitespace-nowrap w-[30ch]">確認要領</th>
-                          <th className="p-2 text-left whitespace-nowrap">測定等記録</th>
-                          <th className="p-2 text-left whitespace-nowrap">図形記録</th>
-                          <th className="p-2 text-center whitespace-nowrap w-[10ch]">判定</th>
-                          <th className="p-2 text-left whitespace-nowrap w-[50ch]">記事</th>
-                        </tr>
-                      </TableHeader>
-                      <TableBody>
-                        {inspectionItems
-                          .filter((item) => 
-                            item.category.toLowerCase().includes("エンジン") || 
-                            item.category.toLowerCase().includes("engine"))
-                          .map((item) => (
-                            <tr key={item.id} className="border-t">
-                              <td className="p-2">{item.category}</td>
-                              <td className="p-2">{item.equipment}</td>
-                              <td className="p-2">{item.item}</td>
-                              <td className="p-2">{item.criteria}</td>
-                              <td className="p-2">{item.method}</td>
-                              <td className="p-2">{item.measurementRecord}</td>
-                              <td className="p-2">{item.diagramRecord}</td>
-                              <td className="p-2">
-                                <Select
-                                  value={item.result}
-                                  onValueChange={(value) => updateInspectionResult(item.id, value)}
-                                >
-                                  <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="選択" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {resultOptions.map((option) => (
-                                      <SelectItem key={option} value={option}>
-                                        {option}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </td>
-                              <td className="p-2">
-                                <Textarea
-                                  value={item.remark || ""}
-                                  onChange={(e) => updateInspectionRemark(item.id, e.target.value)}
-                                  placeholder="備考"
-                                  className="h-20 w-full"
-                                />
-                              </td>
-                            </tr>
-                          ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-              </TabsContent>
-              <TabsContent value="brake">
-                <div className="relative overflow-x-auto">
-                  {/* スクロールインジケーター */}
-                  <div className="table-scroll-indicator absolute top-0 left-0">
-                    <div 
-                      className="table-scroll-indicator-inner"
-                      style={{ width: `${scrollIndicatorWidth}%`, left: `${scrollIndicatorLeft}%` }}
-                    ></div>
-                  </div>
-                  {/* スクロールコントロールボタン */}
-                  <div className="flex justify-between absolute w-full top-0">
-                    <button 
-                      onClick={scrollLeft} 
-                      className="bg-white/80 rounded-full p-1 shadow hover:bg-white transition-colors"
-                      aria-label="左へスクロール"
-                    >
-                      <ChevronLeft size={20} />
-                    </button>
-                    <button 
-                      onClick={scrollRight} 
-                      className="bg-white/80 rounded-full p-1 shadow hover:bg-white transition-colors"
-                      aria-label="右へスクロール"
-                    >
-                      <ChevronRight size={20} />
-                    </button>
-                  </div>
-                  <div ref={scrollContainerRef} className="w-full overflow-x-auto border rounded-md" style={{ minWidth: '100%', width: 'max-content'}}>
-                    <Table>
-                      <TableHeader>
-                        <tr>
-                          <th className="p-2 text-left whitespace-nowrap">部位</th>
-                          <th className="p-2 text-left whitespace-nowrap w-[15ch]">装置</th>
-                          <th className="p-2 text-left whitespace-nowrap w-[20ch]">確認箇所</th>
-                          <th className="p-2 text-left whitespace-nowrap w-[30ch]">判断基準</th>
-                          <th className="p-2 text-left whitespace-nowrap w-[30ch]">確認要領</th>
-                          <th className="p-2 text-left whitespace-nowrap">測定等記録</th>
-                          <th className="p-2 text-left whitespace-nowrap">図形記録</th>
-                          <th className="p-2 text-center whitespace-nowrap w-[10ch]">判定</th>
-                          <th className="p-2 text-left whitespace-nowrap w-[50ch]">記事</th>
-                        </tr>
-                      </TableHeader>
-                      <TableBody>
-                        {inspectionItems
-                          .filter((item) => 
-                            item.category.toLowerCase().includes("ブレーキ") || 
-                            item.category.toLowerCase().includes("brake"))
-                          .map((item) => (
-                            <tr key={item.id} className="border-t">
-                              <td className="p-2">{item.category}</td>
-                              <td className="p-2">{item.equipment}</td>
-                              <td className="p-2">{item.item}</td>
-                              <td className="p-2">{item.criteria}</td>
-                              <td className="p-2">{item.method}</td>
-                              <td className="p-2">{item.measurementRecord}</td>
-                              <td className="p-2">{item.diagramRecord}</td>
-                              <td className="p-2">
-                                <Select
-                                  value={item.result}
-                                  onValueChange={(value) => updateInspectionResult(item.id, value)}
-                                >
-                                  <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="選択" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {resultOptions.map((option) => (
-                                      <SelectItem key={option} value={option}>
-                                        {option}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </td>
-                              <td className="p-2">
-                                <Textarea
-                                  value={item.remark || ""}
-                                  onChange={(e) => updateInspectionRemark(item.id, e.target.value)}
-                                  placeholder="備考"
-                                  className="h-20 w-full"
-                                />
-                              </td>
-                            </tr>
-                          ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-              </TabsContent>
-            </Tabs>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
           </CardContent>
           <CardFooter className="flex justify-end space-x-4">
             <Button variant="outline">キャンセル</Button>

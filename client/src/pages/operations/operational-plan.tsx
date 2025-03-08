@@ -53,14 +53,6 @@ type PlanFormValues = z.infer<typeof planFormSchema>;
 export default function OperationalPlanPage() {
   const navigate = useNavigate();
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [tabValue, setTabValue] = useState('operational-plan');
-
-  const handleTabChange = (value: string) => {
-    setTabValue(value);
-    if (value === 'inspection') {
-      navigate('/operations?tab=inspection');
-    }
-  };
 
   // デフォルト値の設定
   const defaultValues: Partial<PlanFormValues> = {
@@ -94,16 +86,8 @@ export default function OperationalPlanPage() {
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex flex-col space-y-4">
-        <Tabs defaultValue="operational-plan" value={tabValue} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="inspection">仕業点検</TabsTrigger>
-            <TabsTrigger value="operational-plan">運用計画</TabsTrigger>
-          </TabsList>
-        </Tabs>
-        
-        <h1 className="text-2xl font-bold">運用計画登録</h1>
+    <div>
+      <h1 className="text-2xl font-bold mb-6">運用計画登録</h1>
       
       <Card>
         <CardHeader>
@@ -321,7 +305,6 @@ export default function OperationalPlanPage() {
           </Form>
         </CardContent>
       </Card>
-      </div>
     </div>
   );
 }

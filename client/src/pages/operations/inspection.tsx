@@ -238,14 +238,17 @@ export default function Inspection() {
   };
 
   return (
-    <Card>
-      <CardContent className="p-6">
-        <div className="space-y-6">
-          <Tabs value={tabValue} onValueChange={setTabValue}>
-            <TabsList>
-              <TabsTrigger value="inspection">仕業点検</TabsTrigger>
-              <TabsTrigger value="operational-plan">運用計画</TabsTrigger>
-            </TabsList>
+    <div className="container mx-auto py-8">
+      <Tabs value={tabValue} onValueChange={setTabValue} className="mb-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="inspection">仕業点検</TabsTrigger>
+          <TabsTrigger value="operational-plan">運用計画</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      
+      <Card>
+        <CardContent className="p-6">
+          <div className="space-y-6">
             <TabsContent value="inspection">
               <h2 className="text-2xl font-bold">仕業点検</h2>
               <p className="text-muted-foreground">
@@ -465,5 +468,6 @@ export default function Inspection() {
         </div>
       </CardContent>
     </Card>
+    </div>
   );
 }

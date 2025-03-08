@@ -51,13 +51,15 @@
 }
 
 .table-scroll-indicator {
-  display: block;
+  display: block !important;
   position: relative;
   width: 100%;
   height: 6px;
   background-color: #f1f1f1;
   border-radius: 3px;
   margin-bottom: 8px;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .table-scroll-indicator-inner {
@@ -65,9 +67,25 @@
   top: 0;
   left: 0;
   height: 100%;
-  background-color: #d1d1d1;
+  background-color: #666;
   border-radius: 3px;
   transition: width 0.3s, left 0.3s;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 5;
+}
+
+/* テーブルセルの記事欄用スタイル */
+textarea[style*="width: 50ch"] {
+  min-width: 50ch;
+  resize: both;
+}
+
+/* スクロールバーを常に表示 */
+.overflow-x-scroll {
+  overflow-x: scroll !important;
+  -ms-overflow-style: auto !important;
+  scrollbar-width: auto !important;
 }
 
 .wide-device-cell {

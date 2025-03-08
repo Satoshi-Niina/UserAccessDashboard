@@ -86,6 +86,7 @@ textarea[style*="width: 50ch"] {
   -ms-overflow-style: auto !important;
   scrollbar-width: auto !important;
   max-width: 100%;
+  width: max-content !important;
 }
 
 .wide-device-cell {

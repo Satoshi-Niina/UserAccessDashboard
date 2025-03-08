@@ -334,13 +334,13 @@ export default function InspectionPage() {
                   // ドラッグ開始
                   const container = scrollContainerRef.current;
                   if (!container) return;
-                  
+
                   const startX = e.clientX;
                   const startScrollLeft = container.scrollLeft;
                   const maxScroll = container.scrollWidth - container.clientWidth;
                   // ドラッグ開始時にスクロールバーの幅を取得して保存
                   const scrollBarWidth = e.currentTarget.getBoundingClientRect().width;
-                  
+
                   const handleMouseMove = (moveEvent: MouseEvent) => {
                     const dx = moveEvent.clientX - startX;
                     // e.currentTargetではなく、保存した値を使用
@@ -348,12 +348,12 @@ export default function InspectionPage() {
                     const newScrollLeft = startScrollLeft + (maxScroll * scrollRatio);
                     container.scrollLeft = Math.max(0, Math.min(maxScroll, newScrollLeft));
                   };
-                  
+
                   const handleMouseUp = () => {
                     document.removeEventListener('mousemove', handleMouseMove);
                     document.removeEventListener('mouseup', handleMouseUp);
                   };
-                  
+
                   document.addEventListener('mousemove', handleMouseMove);
                   document.addEventListener('mouseup', handleMouseUp);
                 }}>
@@ -379,7 +379,7 @@ export default function InspectionPage() {
                   <ChevronRight size={20} />
                 </button>
               </div>
-              <div ref={scrollContainerRef} className="w-full overflow-x-auto border rounded-md" style={{ minWidth: '100%', width: 'max-content'}}>
+              <div ref={scrollContainerRef} className="w-full overflow-x-auto border rounded-md" style={{ minWidth: '100%', width: '100%', overflowX: 'auto'}}>
                 <Table>
                   <TableHeader>
                     <tr>

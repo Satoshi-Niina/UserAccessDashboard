@@ -35,7 +35,7 @@ const menuItems: MenuItem[] = [
   { icon: Mic, label: "技術支援サポート", href: "/voice-assistant" },
   {
     icon: ClipboardCheck,
-    label: "仕業点検管理",
+    label: "運用管理",
     href: "/operations",
     subItems: [
       { icon: ClipboardCheck, label: "運用管理", href: "/operations?tab=inspection" },

@@ -290,15 +290,15 @@ export default function OperationalPlanPage() {
                   )}
                 />
 
-                {/* 添乗員名 */}
+                {/* 運転者名 */}
                 <FormField
                   control={form.control}
                   name="supportStaffName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>添乗員（任意）</FormLabel>
+                      <FormLabel>運転者</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="添乗員名を入力" />
+                        <Input {...field} placeholder="運転者名を入力" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

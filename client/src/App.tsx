@@ -25,6 +25,7 @@ export default function App() {
           <Route path="/login" component={AuthPage} />
           <ProtectedRoute path="/voice-assistant" component={VoiceAssistant} />
           <ProtectedRoute path="/operations" component={Operations} />
+          <ProtectedRoute path="/operations/operational-plan" component={Operations} />
           <ProtectedRoute path="/messages" component={Messages} />
           <ProtectedRoute path="/settings/basic-data" component={BasicData} adminOnly={true} />
           <ProtectedRoute path="/settings/inspection-items" component={InspectionItems} adminOnly={true} />

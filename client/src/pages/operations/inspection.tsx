@@ -1,37 +1,35 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+
+import React, { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useForm } from "react-hook-form";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter,
+  DialogTrigger
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarIcon } from "lucide-react";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
-import { ja } from "date-fns/locale";
+import { CalendarIcon, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Edit, Trash, Save } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-
-// 点検項目の型定義
+// 点検項目インターフェース
 interface InspectionItem {
   id: number;
   manufacturer: string;
@@ -40,147 +38,132 @@ interface InspectionItem {
   item: string;
   method: string;
   criteria: string;
+  result?: string;
+  remark?: string;
 }
 
-export default function Inspection() {
-  // タイトルを設定
-  useEffect(() => {
-    document.title = "仕業点検 | 保守用車管理システム";
-  }, []);
+// 新規点検項目フォームインターフェース
+interface NewInspectionItemForm {
+  category: string;
+  item: string;
+  method?: string;
+  criteria?: string;
+}
 
-  const navigate = useNavigate();
-  const { toast } = useToast();
-
-  // 状態変数
-  const [manufacturer, setManufacturer] = useState("");
-  const [model, setModel] = useState("");
-  const [vehicleNumber, setVehicleNumber] = useState("");
-  const [location, setLocation] = useState("");
-  const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editingItemId, setEditingItemId] = useState<number | null>(null);
-  const [newItem, setNewItem] = useState({
+export default function InspectionPage() {
+  const [location, navigate] = useLocation();
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [startTime, setStartTime] = useState<string>("");
+  const [endTime, setEndTime] = useState<string>("");
+  const [location_, setLocation] = useState<string>("");
+  const [responsible, setResponsible] = useState<string>("");
+  const [inspector, setInspector] = useState<string>("");
+  const [manufacturer, setManufacturer] = useState<string>("");
+  const [model, setModel] = useState<string>("");
+  const [engineModel, setEngineModel] = useState<string>("");
+  const [vehicleNumber, setVehicleNumber] = useState<string>("");
+  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
+  const [newItem, setNewItem] = useState<NewInspectionItemForm>({
     category: "",
     item: "",
-    method: "",
-    criteria: "",
   });
-  const [hasChanges, setHasChanges] = useState(false); // 変更があったかどうかを管理する状態変数
-  const [date, setDate] = useState<Date>(new Date());
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
-  const [inspector, setInspector] = useState("");
-  const [responsiblePerson, setResponsiblePerson] = useState("");
-  const [vehicleType, setVehicleType] = useState(""); // 機種
-  const [vehicleNumber, setVehicleNumber] = useState(""); // 機械番号
-
-  // デバッグ用
-  useEffect(() => {
-    console.log("Current vehicleType:", vehicleType);
-    console.log("Current vehicleNumber:", vehicleNumber);
-  }, [vehicleType, vehicleNumber]);
+  const [hasChanges, setHasChanges] = useState<boolean>(false);
+  const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
+  const { toast } = useToast();
 
   // 画面切り替え処理
   const handleNavigation = (path: string) => {
+    if (hasChanges) {
+      const confirm = window.confirm("保存されていない変更があります。移動しますか？");
+      if (!confirm) return;
+    }
     navigate(path);
   };
 
-  // 保存して戻る処理
-  const saveChanges = () => {
-    // 保存処理（実際のAPI呼び出しなど）
-    toast({
-      title: "保存完了",
-      description: "点検データが保存されました",
-    });
-    setHasChanges(false);
+  // コンポーネントマウント時に点検項目を取得
+  useEffect(() => {
+    // APIから点検項目を取得する処理
+    // ここではモックデータを使用
+    const fetchInspectionItems = async () => {
+      try {
+        const response = await fetch("/api/inspection-items");
+        if (response.ok) {
+          const data = await response.json();
+          // 取得したデータをフォーマット
+          const formattedItems: InspectionItem[] = data.map((item: any, index: number) => ({
+            id: index + 1,
+            manufacturer: item[0] || "",
+            model: item[1] || "",
+            category: item[4] || "",
+            item: item[5] || "",
+            method: item[7] || "",
+            criteria: item[6] || "",
+          }));
+          setInspectionItems(formattedItems);
+        }
+      } catch (error) {
+        console.error("点検項目の取得に失敗しました", error);
+        toast({
+          title: "エラー",
+          description: "点検項目の取得に失敗しました",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchInspectionItems();
+  }, [toast]);
+
+  // 点検結果の更新処理
+  const updateInspectionResult = (id: number, result: string) => {
+    setInspectionItems(
+      inspectionItems.map(item => 
+        item.id === id ? { ...item, result } : item
+      )
+    );
+    setHasChanges(true);
   };
 
-  // 保存して戻る処理
-  const handleSaveAndReturn = () => {
-    // 変更があれば保存
-    if (hasChanges) {
-      saveChanges();
-    }
-    // 運用管理トップに戻る
+  // 点検備考の更新処理
+  const updateInspectionRemark = (id: number, remark: string) => {
+    setInspectionItems(
+      inspectionItems.map(item => 
+        item.id === id ? { ...item, remark } : item
+      )
+    );
+    setHasChanges(true);
+  };
+
+  // 保存処理
+  const saveChanges = () => {
+    // APIに保存する処理
+    console.log("保存データ:", {
+      date,
+      startTime,
+      endTime,
+      location: location_,
+      responsible,
+      inspector,
+      manufacturer,
+      model,
+      engineModel,
+      vehicleNumber,
+      items: inspectionItems,
+    });
+    
+    toast({
+      title: "保存完了",
+      description: "仕業点検が保存されました",
+    });
+    
+    setHasChanges(false);
     navigate("/operations");
   };
 
-  // ダイアログを開く
-  const openAddDialog = () => {
-    setIsEditMode(false);
-    setNewItem({
-      category: "",
-      item: "",
-      method: "",
-      criteria: "",
-    });
-    setIsDialogOpen(true);
-  };
-
-  // ダイアログを閉じる
-  const closeDialog = () => {
-    setIsDialogOpen(false);
-  };
-
-  // 編集モードを開始
-  const startEdit = (item: InspectionItem) => {
-    setIsEditMode(true);
-    setEditingItemId(item.id);
-    setNewItem({
-      category: item.category,
-      item: item.item,
-      method: item.method,
-      criteria: item.criteria,
-    });
-    setIsDialogOpen(true);
-  };
-
-  // 項目を削除
-  const deleteItem = (id: number) => {
-    setInspectionItems(inspectionItems.filter(item => item.id !== id));
-    setHasChanges(true);
-    toast({
-      title: "削除完了",
-      description: "点検項目を削除しました",
-    });
-  };
-
-  // フォーム入力の変更を処理
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { id, value } = e.target;
-    setNewItem({ ...newItem, [id]: value });
-    setHasChanges(true); // 変更があったことを記録
-  };
-
-  // 点検項目を保存する
-  const saveInspectionItem = () => {
-    if (!newItem.category || !newItem.item) {
-      alert("部位と点検項目を入力してください");
-      return;
-    }
-
-    if (isEditMode && editingItemId !== null) {
-      // 既存の項目を更新
-      const updatedItems = inspectionItems.map(item => {
-        if (item.id === editingItemId) {
-          return {
-            ...item,
-            category: newItem.category,
-            item: newItem.item,
-            method: newItem.method,
-            criteria: newItem.criteria,
-          };
-        }
-        return item;
-      });
-      setInspectionItems(updatedItems);
-      toast({
-        title: "更新完了",
-        description: "点検項目を更新しました",
-      });
-    } else {
-      // 新しい項目を追加
+  // 新規項目追加処理
+  const handleAddNewItem = () => {
+    if (newItem.category && newItem.item) {
+      // 新しい点検項目を追加
       const newInspectionItem: InspectionItem = {
         id: Date.now(),
         manufacturer: manufacturer,
@@ -209,8 +192,6 @@ export default function Inspection() {
           <Button variant="outline" onClick={() => handleNavigation("/operations/operational-plan")}>
             運用計画へ
           </Button>
-        </div>
-        <div className="flex space-x-2">
           <Button variant="outline" onClick={() => saveChanges()}>
             保存して戻る
           </Button>
@@ -240,9 +221,9 @@ export default function Inspection() {
           <CardTitle>基本情報</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-6 gap-4">
             {/* 1行目：点検日・開始/終了時間・点検場所 */}
-            <div className="space-y-2 sm:col-span-1 lg:col-span-2">
+            <div className="sm:col-span-2">
               <Label htmlFor="date">点検日</Label>
               <Popover>
                 <PopoverTrigger asChild>
@@ -267,30 +248,45 @@ export default function Inspection() {
                 </PopoverContent>
               </Popover>
             </div>
-            <div className="space-y-2 sm:col-span-1">
+            <div className="sm:col-span-1">
               <Label htmlFor="startTime">開始時間</Label>
-              <Input id="startTime" placeholder="開始時間を入力" type="time" value={startTime} onChange={e => setStartTime(e.target.value)} />
+              <Input
+                type="time" 
+                id="startTime" 
+                value={startTime} 
+                onChange={(e) => setStartTime(e.target.value)}
+              />
             </div>
-            <div className="space-y-2 sm:col-span-1">
+            <div className="sm:col-span-1">
               <Label htmlFor="endTime">終了時間</Label>
-              <Input id="endTime" placeholder="終了時間を入力" type="time" value={endTime} onChange={e => setEndTime(e.target.value)} />
+              <Input
+                type="time" 
+                id="endTime" 
+                value={endTime} 
+                onChange={(e) => setEndTime(e.target.value)}
+              />
             </div>
-            <div className="space-y-2 sm:col-span-1 lg:col-span-2">
+            <div className="sm:col-span-2">
               <Label htmlFor="location">点検場所</Label>
-              <Input id="location" placeholder="場所を入力" value={location} onChange={e => setLocation(e.target.value)} />
+              <Input 
+                id="location" 
+                placeholder="場所を入力" 
+                value={location_} 
+                onChange={(e) => setLocation(e.target.value)}
+              />
             </div>
 
             {/* 2行目：責任者・点検者・機種・機械番号 */}
-            <div>
-              <Label htmlFor="responsiblePerson">責任者</Label>
+            <div className="sm:col-span-2">
+              <Label htmlFor="responsible">責任者</Label>
               <Input 
-                id="responsiblePerson" 
+                id="responsible" 
                 placeholder="責任者名を入力" 
-                value={responsiblePerson} 
-                onChange={(e) => setResponsiblePerson(e.target.value)}
+                value={responsible} 
+                onChange={(e) => setResponsible(e.target.value)}
               />
             </div>
-            <div>
+            <div className="sm:col-span-2">
               <Label htmlFor="inspector">点検者</Label>
               <Input 
                 id="inspector" 
@@ -299,20 +295,47 @@ export default function Inspection() {
                 onChange={(e) => setInspector(e.target.value)}
               />
             </div>
-            <div>
-              <Label htmlFor="vehicleType">機種</Label>
+            <div className="sm:col-span-2">
+              <Label htmlFor="manufacturer">メーカー</Label>
+              <Select onValueChange={(value) => setManufacturer(value)}>
+                <SelectTrigger id="manufacturer">
+                  <SelectValue placeholder="メーカーを選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="日本コマツ">日本コマツ</SelectItem>
+                  <SelectItem value="メルセデス">メルセデス</SelectItem>
+                  <SelectItem value="東急">東急</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* 3行目：機種・エンジン型式・車両番号 */}
+            <div className="sm:col-span-2">
+              <Label htmlFor="model">機種</Label>
+              <Select onValueChange={(value) => setModel(value)}>
+                <SelectTrigger id="model">
+                  <SelectValue placeholder="機種を選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MC300">MC300</SelectItem>
+                  <SelectItem value="MR400">MR400</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="sm:col-span-2">
+              <Label htmlFor="engineModel">エンジン型式</Label>
               <Input 
-                id="vehicleType" 
-                placeholder="機種を入力" 
-                value={vehicleType} 
-                onChange={(e) => setVehicleType(e.target.value)}
+                id="engineModel" 
+                placeholder="エンジン型式を入力" 
+                value={engineModel} 
+                onChange={(e) => setEngineModel(e.target.value)}
               />
             </div>
-            <div>
-              <Label htmlFor="vehicleNumber">機械番号</Label>
+            <div className="sm:col-span-2">
+              <Label htmlFor="vehicleNumber">車両番号</Label>
               <Input 
                 id="vehicleNumber" 
-                placeholder="機械番号を入力" 
+                placeholder="車両番号を入力" 
                 value={vehicleNumber} 
                 onChange={(e) => setVehicleNumber(e.target.value)}
               />
@@ -321,109 +344,243 @@ export default function Inspection() {
         </CardContent>
       </Card>
 
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">点検項目リスト</h2>
-        <div className="flex gap-2">
-          <Button onClick={openAddDialog} size="sm">
-            <Plus className="mr-1 h-4 w-4" /> 追加
-          </Button>
-        </div>
-      </div>
-
       <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>部位</TableHead>
-                <TableHead>点検項目</TableHead>
-                <TableHead>点検方法</TableHead>
-                <TableHead>判定基準</TableHead>
-                <TableHead className="w-[100px]">操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {inspectionItems.length > 0 ? (
-                inspectionItems.map(item => (
-                  <TableRow key={item.id}>
-                    <TableCell>{item.category}</TableCell>
-                    <TableCell>{item.item}</TableCell>
-                    <TableCell>{item.method}</TableCell>
-                    <TableCell>{item.criteria}</TableCell>
-                    <TableCell>
-                      <div className="flex space-x-1">
-                        <Button onClick={() => startEdit(item)} size="sm" variant="ghost">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button onClick={() => deleteItem(item.id)} size="sm" variant="ghost">
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-4">
-                    点検項目がありません。「追加」ボタンから項目を追加してください。
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle>点検項目</CardTitle>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="gap-1">
+                  <Plus className="h-4 w-4" />
+                  <span>項目追加</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>点検項目の追加</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="newCategory" className="text-right">カテゴリ</Label>
+                    <Input 
+                      id="newCategory" 
+                      placeholder="カテゴリを入力" 
+                      className="col-span-3" 
+                      value={newItem.category} 
+                      onChange={(e) => setNewItem({...newItem, category: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="newItem" className="text-right">項目名</Label>
+                    <Input 
+                      id="newItem" 
+                      placeholder="項目名を入力" 
+                      className="col-span-3" 
+                      value={newItem.item} 
+                      onChange={(e) => setNewItem({...newItem, item: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="newMethod" className="text-right">確認要領</Label>
+                    <Input 
+                      id="newMethod" 
+                      placeholder="確認要領を入力" 
+                      className="col-span-3" 
+                      value={newItem.method || ""} 
+                      onChange={(e) => setNewItem({...newItem, method: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="newCriteria" className="text-right">判断基準</Label>
+                    <Input 
+                      id="newCriteria" 
+                      placeholder="判断基準を入力" 
+                      className="col-span-3" 
+                      value={newItem.criteria || ""} 
+                      onChange={(e) => setNewItem({...newItem, criteria: e.target.value})}
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="submit" onClick={handleAddNewItem}>追加</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="engine">
+            <TabsList className="grid grid-cols-3 mb-6">
+              <TabsTrigger value="engine">エンジン関係</TabsTrigger>
+              <TabsTrigger value="brake">ブレーキ関係</TabsTrigger>
+              <TabsTrigger value="other">その他</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="engine" className="space-y-4">
+              <div className="border rounded-lg overflow-hidden">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-muted">
+                      <th className="p-2 text-left">項目</th>
+                      <th className="p-2 text-left">確認要領</th>
+                      <th className="p-2 text-left">判断基準</th>
+                      <th className="p-2 text-center w-40">判定</th>
+                      <th className="p-2 text-left">備考</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {inspectionItems
+                      .filter(item => item.category.includes("エンジン") || item.category.includes("engine"))
+                      .map(item => (
+                        <tr key={item.id} className="border-t">
+                          <td className="p-2">{item.item}</td>
+                          <td className="p-2">{item.method}</td>
+                          <td className="p-2">{item.criteria}</td>
+                          <td className="p-2">
+                            <div className="flex justify-center space-x-4">
+                              <div className="flex items-center space-x-1">
+                                <Checkbox 
+                                  id={`ok-${item.id}`} 
+                                  checked={item.result === "OK"} 
+                                  onCheckedChange={() => updateInspectionResult(item.id, "OK")}
+                                />
+                                <label htmlFor={`ok-${item.id}`}>良</label>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <Checkbox 
+                                  id={`ng-${item.id}`} 
+                                  checked={item.result === "NG"} 
+                                  onCheckedChange={() => updateInspectionResult(item.id, "NG")}
+                                />
+                                <label htmlFor={`ng-${item.id}`}>否</label>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="p-2">
+                            <Input 
+                              placeholder="備考" 
+                              value={item.remark || ""} 
+                              onChange={(e) => updateInspectionRemark(item.id, e.target.value)}
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="brake" className="space-y-4">
+              <div className="border rounded-lg overflow-hidden">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-muted">
+                      <th className="p-2 text-left">項目</th>
+                      <th className="p-2 text-left">確認要領</th>
+                      <th className="p-2 text-left">判断基準</th>
+                      <th className="p-2 text-center w-40">判定</th>
+                      <th className="p-2 text-left">備考</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {inspectionItems
+                      .filter(item => item.category.includes("ブレーキ") || item.category.includes("brake"))
+                      .map(item => (
+                        <tr key={item.id} className="border-t">
+                          <td className="p-2">{item.item}</td>
+                          <td className="p-2">{item.method}</td>
+                          <td className="p-2">{item.criteria}</td>
+                          <td className="p-2">
+                            <div className="flex justify-center space-x-4">
+                              <div className="flex items-center space-x-1">
+                                <Checkbox 
+                                  id={`ok-${item.id}`} 
+                                  checked={item.result === "OK"} 
+                                  onCheckedChange={() => updateInspectionResult(item.id, "OK")}
+                                />
+                                <label htmlFor={`ok-${item.id}`}>良</label>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <Checkbox 
+                                  id={`ng-${item.id}`} 
+                                  checked={item.result === "NG"} 
+                                  onCheckedChange={() => updateInspectionResult(item.id, "NG")}
+                                />
+                                <label htmlFor={`ng-${item.id}`}>否</label>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="p-2">
+                            <Input 
+                              placeholder="備考" 
+                              value={item.remark || ""} 
+                              onChange={(e) => updateInspectionRemark(item.id, e.target.value)}
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="other" className="space-y-4">
+              <div className="border rounded-lg overflow-hidden">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-muted">
+                      <th className="p-2 text-left">項目</th>
+                      <th className="p-2 text-left">確認要領</th>
+                      <th className="p-2 text-left">判断基準</th>
+                      <th className="p-2 text-center w-40">判定</th>
+                      <th className="p-2 text-left">備考</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {inspectionItems
+                      .filter(item => !item.category.includes("エンジン") && !item.category.includes("engine") && 
+                                     !item.category.includes("ブレーキ") && !item.category.includes("brake"))
+                      .map(item => (
+                        <tr key={item.id} className="border-t">
+                          <td className="p-2">{item.item}</td>
+                          <td className="p-2">{item.method}</td>
+                          <td className="p-2">{item.criteria}</td>
+                          <td className="p-2">
+                            <div className="flex justify-center space-x-4">
+                              <div className="flex items-center space-x-1">
+                                <Checkbox 
+                                  id={`ok-${item.id}`} 
+                                  checked={item.result === "OK"} 
+                                  onCheckedChange={() => updateInspectionResult(item.id, "OK")}
+                                />
+                                <label htmlFor={`ok-${item.id}`}>良</label>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <Checkbox 
+                                  id={`ng-${item.id}`} 
+                                  checked={item.result === "NG"} 
+                                  onCheckedChange={() => updateInspectionResult(item.id, "NG")}
+                                />
+                                <label htmlFor={`ng-${item.id}`}>否</label>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="p-2">
+                            <Input 
+                              placeholder="備考" 
+                              value={item.remark || ""} 
+                              onChange={(e) => updateInspectionRemark(item.id, e.target.value)}
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
-
-      {/* 点検項目追加/編集ダイアログ */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{isEditMode ? "点検項目の編集" : "点検項目の追加"}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="category">部位 *</Label>
-              <Input
-                id="category"
-                value={newItem.category}
-                onChange={handleInputChange}
-                placeholder="例: 機体前部"
-              />
-            </div>
-            <div>
-              <Label htmlFor="item">点検項目 *</Label>
-              <Input
-                id="item"
-                value={newItem.item}
-                onChange={handleInputChange}
-                placeholder="例: ブレーキの状態"
-              />
-            </div>
-            <div>
-              <Label htmlFor="method">点検方法</Label>
-              <Input
-                id="method"
-                value={newItem.method}
-                onChange={handleInputChange}
-                placeholder="例: 目視確認"
-              />
-            </div>
-            <div>
-              <Label htmlFor="criteria">判定基準</Label>
-              <Input
-                id="criteria"
-                value={newItem.criteria}
-                onChange={handleInputChange}
-                placeholder="例: 損傷がないこと"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={closeDialog}>キャンセル</Button>
-            <Button onClick={saveInspectionItem}>{isEditMode ? "更新" : "追加"}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

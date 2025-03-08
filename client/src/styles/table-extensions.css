@@ -15,6 +15,7 @@
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
+  z-index: 10;
 }
 
 .table-scroll-indicator-inner {
@@ -22,13 +23,14 @@
   top: 0;
   left: 0;
   height: 100%;
-  background-color: #d1d1d1;
+  background-color: #555;
   border-radius: 3px;
   transition: width 0.3s, left 0.3s;
   min-width: 10px;
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
+  z-index: 11;
 }
 
 .table-with-fixed-height {

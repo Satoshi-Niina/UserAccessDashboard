@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -48,6 +49,7 @@ const sampleModels = ["油圧ショベル ZX120", "ブルドーザー D51PX", "�
 
 // 実際の運用計画コンポーネントをインポート
 import OperationalPlanPage from "./operational-plan";
+import { useNavigate } from "react-router-dom";
 
 export default function Inspection() {
   // タイトルを設定
@@ -254,13 +256,12 @@ export default function Inspection() {
           <TabsTrigger value="inspection">仕業点検</TabsTrigger>
           <TabsTrigger value="operational-plan">運用計画</TabsTrigger>
         </TabsList>
-      </Tabs>
       
-      <Card>
-        <CardContent className="p-6">
-          <div className="space-y-6">
-            <TabsContent value="inspection">
-              <h2 className="text-2xl font-bold">仕業点検</h2>
+        <TabsContent value="inspection">
+          <Card>
+            <CardContent className="p-6">
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold">仕業点検</h2>
               <p className="text-muted-foreground">
                 メーカーと機種を選択して、点検項目を表示します。
               </p>
@@ -469,15 +470,15 @@ export default function Inspection() {
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
-            </TabsContent>
+            </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-            <TabsContent value="operational-plan">
-              <OperationalPlanPage />
-            </TabsContent>
-          </Tabs>
-        </div>
-      </CardContent>
-    </Card>
+        <TabsContent value="operational-plan">
+          <OperationalPlanPage />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

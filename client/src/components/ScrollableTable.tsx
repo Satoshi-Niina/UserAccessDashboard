@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface ScrollableTableProps {
   headers: string[];
@@ -46,8 +47,21 @@ export function ScrollableTable({ headers, data, renderRow }: ScrollableTablePro
     };
   }, [data]); // dataが変わった時にも再計算
 
+  // 左右スクロール関数
+  const scrollLeft = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: -100, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: 100, behavior: 'smooth' });
+    }
+  };
+
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 relative">
       {/* Scroll indicator */}
       <div className="table-scroll-indicator">
         <div 
@@ -57,6 +71,24 @@ export function ScrollableTable({ headers, data, renderRow }: ScrollableTablePro
             left: `${scrollIndicatorLeft}%` 
           }}
         />
+      </div>
+
+      {/* 左右スクロールボタン */}
+      <div className="flex justify-between absolute top-1/2 w-full px-1 z-20 pointer-events-none">
+        <button 
+          onClick={scrollLeft}
+          className="bg-white/80 rounded-full p-1 shadow hover:bg-white transition-colors pointer-events-auto"
+          aria-label="左へスクロール"
+        >
+          <ChevronLeft size={20} />
+        </button>
+        <button 
+          onClick={scrollRight}
+          className="bg-white/80 rounded-full p-1 shadow hover:bg-white transition-colors pointer-events-auto"
+          aria-label="右へスクロール"
+        >
+          <ChevronRight size={20} />
+        </button>
       </div>
 
       {/* Table container with scroll */}
@@ -71,8 +103,17 @@ export function ScrollableTable({ headers, data, renderRow }: ScrollableTablePro
                 {headers.map((header, i) => (
                   <TableHead 
                     key={i} 
-                    className={header === '装置' ? 'min-w-[15ch] w-[15ch]' : ''}
-                    style={header === '装置' ? {width: '15ch', minWidth: '15ch'} : {}}
+                    className={header === '装置' ? 'min-w-[20ch] w-[20ch]' : (
+                      header === '測定等記録' || header === '図形記録' || header === '結果' 
+                      ? 'min-w-[15ch] w-[15ch]' : ''
+                    )}
+                    style={header === '装置' 
+                      ? {width: '20ch', minWidth: '20ch'} 
+                      : (header === '測定等記録' || header === '図形記録' || header === '結果' 
+                        ? {width: '15ch', minWidth: '15ch'} 
+                        : {}
+                      )
+                    }
                   >
                     {header}
                   </TableHead>

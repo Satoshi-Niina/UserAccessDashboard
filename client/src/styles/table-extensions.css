@@ -1,0 +1,43 @@
+
+/* テーブル表示の拡張スタイル */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table-scroll-indicator {
+  position: relative;
+  width: 100%;
+  height: 6px;
+  background-color: #f1f1f1;
+  border-radius: 3px;
+  margin-bottom: 8px;
+}
+
+.table-scroll-indicator-inner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background-color: #d1d1d1;
+  border-radius: 3px;
+  transition: width 0.3s, left 0.3s;
+}
+
+.table-with-fixed-height tbody {
+  display: block;
+  max-height: 4.5rem;
+  overflow-y: auto;
+}
+
+.table-with-fixed-height thead, 
+.table-with-fixed-height tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.wide-device-cell {
+  min-width: 20ch;
+  width: 20ch;
+}

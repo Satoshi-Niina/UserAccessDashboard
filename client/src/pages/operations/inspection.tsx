@@ -322,18 +322,18 @@ export default function Inspection() {
 
               {/* 点検項目テーブル */}
               {inspectionItems.length > 0 ? (
-                <div className="border rounded-md">
+                <div className="border rounded-md overflow-x-auto"> {/* Added overflow-x-auto */}
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>カテゴリ</TableHead>
-                        <TableHead>点検項目</TableHead>
+                        <TableHead className="min-w-[20ch]">点検項目</TableHead> {/* Increased minimum width */}
                         <TableHead>点検方法</TableHead>
                         <TableHead>判定基準</TableHead>
                         <TableHead className="w-[100px]">操作</TableHead>
                       </TableRow>
                     </TableHeader>
-                    <TableBody>
+                    <TableBody className="max-h-[90px]"> {/* Reduced maximum height */}
                       {inspectionItems.map((item) => (
                         <TableRow key={item.id}>
                           <TableCell>{item.category}</TableCell>

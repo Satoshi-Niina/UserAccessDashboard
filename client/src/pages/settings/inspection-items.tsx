@@ -1253,7 +1253,7 @@ export default function InspectionItems() {
                     <TableHead className="w-[120px] py-2 border border-gray-200">製造メーカー</TableHead>
                      <TableHead className="w-[120px] py-2 border border-gray-200">機種</TableHead>
                     <TableHead className="w-[120px] py-2 border border-gray-200">部位</TableHead>
-                    <TableHead className="w-[120px] py-2 border border-gray-200">装置</TableHead>
+                    <TableHead className="w-[20ch] py-2 border border-gray-200">装置</TableHead>
                     <TableHead className="w-[200px] py-2 border border-gray-200">点検項目</TableHead>
                     <TableHead className="w-[450px] py-2 border border-gray-200">点検方法</TableHead>
                     <TableHead className="w-[300px] py-2 border border-gray-200">判定基準</TableHead>

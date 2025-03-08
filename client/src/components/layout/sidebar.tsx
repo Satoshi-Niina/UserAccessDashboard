@@ -38,10 +38,9 @@ const menuItems: MenuItem[] = [
     label: "仕業点検管理",
     href: "/operations",
     subItems: [
-      { icon: ClipboardCheck, label: "仕業点検", href: "/operations?tab=inspection" },
+      { icon: ClipboardCheck, label: "運用管理", href: "/operations?tab=inspection" },
     ],
   },
-  { icon: BarChart2, label: "運用計画", href: "/operations/operational-plan" },
   { icon: MessageSquare, label: "メッセージ", href: "/messages" },
   {
     icon: Settings,

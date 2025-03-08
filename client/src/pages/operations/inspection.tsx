@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -52,6 +51,8 @@ export default function Inspection() {
   const [endTime, setEndTime] = useState("");
   const [inspector, setInspector] = useState("");
   const [responsiblePerson, setResponsiblePerson] = useState("");
+  const [vehicleType, setVehicleType] = useState(""); // 追加
+
 
   // 画面切り替え処理
   const handleNavigation = (path: string) => {
@@ -207,8 +208,8 @@ export default function Inspection() {
           <CardTitle>基本情報</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* 1行目：点検日・時間・場所 */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* 1行目：点検日・開始/終了時間・点検場所 */}
             <div>
               <Label htmlFor="date">点検日</Label>
               <Input 
@@ -219,26 +220,22 @@ export default function Inspection() {
               />
             </div>
             <div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label htmlFor="startTime">開始時間</Label>
-                  <Input 
-                    type="time" 
-                    id="startTime" 
-                    value={startTime} 
-                    onChange={(e) => setStartTime(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="endTime">終了時間</Label>
-                  <Input 
-                    type="time" 
-                    id="endTime" 
-                    value={endTime} 
-                    onChange={(e) => setEndTime(e.target.value)}
-                  />
-                </div>
-              </div>
+              <Label htmlFor="startTime">開始時間</Label>
+              <Input 
+                type="time" 
+                id="startTime" 
+                value={startTime} 
+                onChange={(e) => setStartTime(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="endTime">終了時間</Label>
+              <Input 
+                type="time" 
+                id="endTime" 
+                value={endTime} 
+                onChange={(e) => setEndTime(e.target.value)}
+              />
             </div>
             <div>
               <Label htmlFor="location">点検場所</Label>
@@ -269,29 +266,23 @@ export default function Inspection() {
                 onChange={(e) => setInspector(e.target.value)}
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label htmlFor="model">機種</Label>
-                <Select value={model} onValueChange={setModel}>
-                  <SelectTrigger id="model">
-                    <SelectValue placeholder="機種を選択" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="MC300">MC300</SelectItem>
-                    <SelectItem value="MR400">MR400</SelectItem>
-                    <SelectItem value="MG500">MG500</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="vehicleNumber">機械番号</Label>
-                <Input 
-                  id="vehicleNumber" 
-                  placeholder="番号を入力" 
-                  value={vehicleNumber} 
-                  onChange={(e) => setVehicleNumber(e.target.value)}
-                />
-              </div>
+            <div>
+              <Label htmlFor="vehicleType">機種</Label>
+              <Input 
+                id="vehicleType" 
+                placeholder="機種を入力" 
+                value={vehicleType} 
+                onChange={(e) => setVehicleType(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="vehicleNumber">機械番号</Label>
+              <Input 
+                id="vehicleNumber" 
+                placeholder="機械番号を入力" 
+                value={vehicleNumber} 
+                onChange={(e) => setVehicleNumber(e.target.value)}
+              />
             </div>
           </div>
         </CardContent>

@@ -1,5 +1,7 @@
 
 import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useNavigate } from "react-router-dom";
 import { 
   Form,
   FormControl,
@@ -49,7 +51,16 @@ const planFormSchema = z.object({
 type PlanFormValues = z.infer<typeof planFormSchema>;
 
 export default function OperationalPlanPage() {
+  const navigate = useNavigate();
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [tabValue, setTabValue] = useState('operational-plan');
+
+  const handleTabChange = (value: string) => {
+    setTabValue(value);
+    if (value === 'inspection') {
+      navigate('/operations?tab=inspection');
+    }
+  };
 
   // デフォルト値の設定
   const defaultValues: Partial<PlanFormValues> = {
@@ -84,6 +95,13 @@ export default function OperationalPlanPage() {
 
   return (
     <div className="container mx-auto py-8">
+      <Tabs value={tabValue} onValueChange={handleTabChange} className="mb-6">
+        <TabsList>
+          <TabsTrigger value="inspection">仕業点検</TabsTrigger>
+          <TabsTrigger value="operational-plan">運用計画</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      
       <h1 className="text-2xl font-bold mb-6">運用計画登録</h1>
       
       <Card>

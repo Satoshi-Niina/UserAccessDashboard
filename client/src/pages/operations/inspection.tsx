@@ -1,33 +1,45 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState, useEffect } from 'react';
 import { useLocation } from "wouter";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import OperationsNav from "@/components/OperationsNav";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "@/hooks/use-toast";
-import { InspectionItem } from "@/types/inspection";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import OperationsNav from "@/components/OperationsNav";
 
-
-// 新規点検項目フォームインターフェース
-interface NewInspectionItemForm {
+// 点検項目インターフェース
+interface InspectionItem {
+  id: number;
   category: string;
+  equipment: string;
   item: string;
-  method?: string;
-  criteria?: string;
+  criteria: string;
+  method: string;
+  measurementRecord: string;
+  diagramRecord: string;
+  result?: string;
+  remark?: string;
+  manufacturer?: string;
+  model?: string;
+  engineType?: string;
 }
 
 export default function InspectionPage() {
-  const [location, navigate] = useLocation();
+  const [_, navigate] = useLocation();
+  const { toast } = useToast();
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<string>("engine");
   const [startTime, setStartTime] = useState<string>("");
   const [endTime, setEndTime] = useState<string>("");
   const [location_, setLocation] = useState<string>("");
@@ -35,154 +47,121 @@ export default function InspectionPage() {
   const [inspector, setInspector] = useState<string>("");
   const [manufacturer, setManufacturer] = useState<string>("");
   const [model, setModel] = useState<string>("");
-  const [engineModel, setEngineModel] = useState<string>("");
+  const [engineType, setEngineType] = useState<string>("");
   const [vehicleNumber, setVehicleNumber] = useState<string>("");
-  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
-  const [hasChanges, setHasChanges] = useState<boolean>(false);
-  const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
-  const [newItem, setNewItem] = useState<NewInspectionItemForm>({
-    category: "",
-    item: "",
-  });
 
-
-  // 運用計画ページへの移動
-  const navigateToOperationalPlan = () => {
-    if (hasChanges) {
-      const confirmLeave = window.confirm("変更が保存されていません。移動しますか？");
-      if (!confirmLeave) return;
-    }
-    navigate("/operations/operational-plan");
-  };
-
-  // 保存処理
-  const saveChanges = () => {
-    // APIに保存する処理
-    console.log("保存データ:", {
-      date,
-      startTime,
-      endTime,
-      location: location_,
-      responsible,
-      inspector,
-      manufacturer,
-      model,
-      engineModel,
-      vehicleNumber,
-      items: inspectionItems,
-    });
-
-    toast({
-      title: "保存完了",
-      description: "仕業点検が保存されました",
-    });
-
-    setHasChanges(false);
-    navigate("/operations");
-  };
-
-  // 点検結果の更新処理
-  const updateInspectionResult = (id: number, result: string) => {
-    setInspectionItems(
-      inspectionItems.map((item) =>
-        item.id === id ? { ...item, result } : item
-      )
-    );
-    setHasChanges(true);
-  };
-
-  // 点検備考の更新処理
-  const updateInspectionRemark = (id: number, remark: string) => {
-    setInspectionItems(
-      inspectionItems.map((item) =>
-        item.id === id ? { ...item, remark } : item
-      )
-    );
-    setHasChanges(true);
-  };
-
-  // 新規項目追加処理
-  const handleAddNewItem = () => {
-    if (newItem.category && newItem.item) {
-      // 新しい点検項目を追加
-      const newInspectionItem: InspectionItem = {
-        id: Date.now(),
-        manufacturer: manufacturer,
-        model: model,
-        category: newItem.category,
-        item: newItem.item,
-        method: newItem.method || "",
-        criteria: newItem.criteria || "",
-        result: "",
-        remark: ""
-      };
-      setInspectionItems([...inspectionItems, newInspectionItem]);
-      toast({
-        title: "追加完了",
-        description: "新しい点検項目を追加しました",
-      });
-    }
-    setIsDialogOpen(false);
-    setHasChanges(true);
-  };
-
-  // コンポーネントマウント時に点検項目を取得
   useEffect(() => {
-    // APIから点検項目を取得する処理
-    // ここではモックデータを使用
     const fetchInspectionItems = async () => {
       try {
-        const response = await fetch("/api/inspection-items");
-        if (response.ok) {
-          const data = await response.json();
-          // 取得したデータをフォーマット
-          const formattedItems: InspectionItem[] = data.map((item: any, index: number) => ({
-            id: index + 1,
-            manufacturer: item[0] || "",
-            model: item[1] || "",
-            category: item[4] || "",
-            item: item[5] || "",
-            method: item[7] || "",
-            criteria: item[6] || "",
-            result: "",
-            remark: ""
-          }));
-          setInspectionItems(formattedItems);
+        setLoading(true);
+        const response = await fetch('/api/inspection-items?latest=true');
+
+        if (!response.ok) {
+          throw new Error('点検項目の取得に失敗しました');
         }
-      } catch (error) {
-        console.error("点検項目の取得に失敗しました", error);
+
+        const csvText = await response.text();
+
+        // CSVパース（簡易的な実装）
+        const rows = csvText.split('\n');
+        const headers = rows[0].split(',');
+
+        // ヘッダーのインデックスを取得
+        const categoryIndex = headers.findIndex(h => h === '部位' || h === 'category');
+        const equipmentIndex = headers.findIndex(h => h === '装置' || h === 'equipment');
+        const itemIndex = headers.findIndex(h => h === '確認箇所' || h === 'item');
+        const criteriaIndex = headers.findIndex(h => h === '判断基準' || h === 'criteria');
+        const methodIndex = headers.findIndex(h => h === '確認要領' || h === 'method');
+        const measurementRecordIndex = headers.findIndex(h => h === '測定等記録' || h === 'measurementRecord');
+        const diagramRecordIndex = headers.findIndex(h => h === '図形記録' || h === 'diagramRecord');
+        const idIndex = headers.findIndex(h => h === 'id');
+        const manufacturerIndex = headers.findIndex(h => h === '製造メーカー' || h === 'manufacturer');
+        const modelIndex = headers.findIndex(h => h === '機種' || h === 'model');
+        const engineTypeIndex = headers.findIndex(h => h === 'エンジン型式' || h === 'engineType');
+
+        // CSVから点検項目を作成
+        const items: InspectionItem[] = [];
+        for (let i = 1; i < rows.length; i++) {
+          if (!rows[i].trim()) continue; // 空行をスキップ
+
+          const values = rows[i].split(',');
+
+          // 各カラムの値を取得（存在しない場合は空文字）
+          const getId = () => idIndex >= 0 ? parseInt(values[idIndex]) || i : i;
+          const getCategory = () => categoryIndex >= 0 ? values[categoryIndex] || '' : '';
+          const getEquipment = () => equipmentIndex >= 0 ? values[equipmentIndex] || '' : '';
+          const getItem = () => itemIndex >= 0 ? values[itemIndex] || '' : '';
+          const getCriteria = () => criteriaIndex >= 0 ? values[criteriaIndex] || '' : '';
+          const getMethod = () => methodIndex >= 0 ? values[methodIndex] || '' : '';
+          const getMeasurementRecord = () => measurementRecordIndex >= 0 ? values[measurementRecordIndex] || '' : '';
+          const getDiagramRecord = () => diagramRecordIndex >= 0 ? values[diagramRecordIndex] || '' : '';
+          const getManufacturer = () => manufacturerIndex >= 0 ? values[manufacturerIndex] || '' : '';
+          const getModel = () => modelIndex >= 0 ? values[modelIndex] || '' : '';
+          const getEngineType = () => engineTypeIndex >= 0 ? values[engineTypeIndex] || '' : '';
+
+          items.push({
+            id: getId(),
+            category: getCategory(),
+            equipment: getEquipment(),
+            item: getItem(),
+            criteria: getCriteria(),
+            method: getMethod(),
+            measurementRecord: getMeasurementRecord(),
+            diagramRecord: getDiagramRecord(),
+            manufacturer: getManufacturer(),
+            model: getModel(),
+            engineType: getEngineType()
+          });
+        }
+
+        setInspectionItems(items);
+        setLoading(false);
+      } catch (err) {
+        console.error('点検項目取得エラー:', err);
         toast({
           title: "エラー",
           description: "点検項目の取得に失敗しました",
           variant: "destructive",
         });
+        setLoading(false);
       }
     };
 
     fetchInspectionItems();
   }, [toast]);
 
+  const updateInspectionResult = (id: number, result: string) => {
+    setInspectionItems(prevItems => prevItems.map(item =>
+      item.id === id ? {...item, result} : item
+    ));
+  };
+
+  const updateInspectionRemark = (id: number, remark: string) => {
+    setInspectionItems(prevItems => prevItems.map(item =>
+      item.id === id ? {...item, remark} : item
+    ));
+  };
 
   return (
     <div className="container mx-auto py-8">
       {/* ヘッダー部分 */}
-      <OperationsNav currentPage="inspection" /> {/* Added Navigation Component */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">仕業点検登録</h1>
+        <h1 className="text-2xl font-bold">仕業点検</h1>
         <div className="flex space-x-2">
-          <Button variant="outline" onClick={() => navigate("/operations/operational-plan")}>
-            運用計画へ
-          </Button>
-          <Button variant="outline" onClick={saveChanges}>
-            保存して戻る
+          <Button variant="outline" onClick={() => navigate("/operations")}>
+            戻る
           </Button>
         </div>
       </div>
 
-      {/* 基本情報フォーム */}
-      <Card className="mb-6">
+      {/* 運用画面ナビゲーション */}
+      <OperationsNav currentPage="inspection" />
+      
+      {/* 点検基本情報 */}
+      <Card className="w-full mb-6">
         <CardHeader>
-          <CardTitle>基本情報</CardTitle>
+          <CardTitle>点検基本情報</CardTitle>
+          <CardDescription>点検の基本情報を入力してください</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -198,7 +177,7 @@ export default function InspectionPage() {
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, "yyyy年MM月dd日") : <span>日付を選択</span>}
+                    {date ? format(date, "yyyy年MM月dd日") : "日付を選択"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
@@ -213,39 +192,86 @@ export default function InspectionPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="startTime">開始時間</Label>
-              <Input id="startTime" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+              <Input 
+                id="startTime" 
+                placeholder="開始時間を入力" 
+                type="time" 
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="endTime">終了時間</Label>
-              <Input id="endTime" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+              <Input 
+                id="endTime" 
+                placeholder="終了時間を入力" 
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="location">点検場所</Label>
-              <Input id="location" placeholder="場所を入力" value={location_} onChange={(e) => setLocation(e.target.value)} />
+              <Input 
+                id="location" 
+                placeholder="場所を入力"
+                value={location_}
+                onChange={(e) => setLocation(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="responsible">責任者</Label>
-              <Input id="responsible" placeholder="責任者名を入力" value={responsible} onChange={(e) => setResponsible(e.target.value)} />
+              <Input 
+                id="responsible" 
+                placeholder="責任者名を入力"
+                value={responsible}
+                onChange={(e) => setResponsible(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="inspector">点検者</Label>
-              <Input id="inspector" placeholder="点検者名を入力" value={inspector} onChange={(e) => setInspector(e.target.value)} />
+              <Input 
+                id="inspector" 
+                placeholder="点検者名を入力"
+                value={inspector}
+                onChange={(e) => setInspector(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="manufacturer">製造メーカー</Label>
-              <Input id="manufacturer" placeholder="メーカー名を入力" value={manufacturer} onChange={(e) => setManufacturer(e.target.value)} />
+              <Input 
+                id="manufacturer" 
+                placeholder="製造メーカーを入力"
+                value={manufacturer}
+                onChange={(e) => setManufacturer(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="model">機種</Label>
-              <Input id="model" placeholder="機種を入力" value={model} onChange={(e) => setModel(e.target.value)} />
+              <Input 
+                id="model" 
+                placeholder="機種を入力"
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="engineModel">エンジン型式</Label>
-              <Input id="engineModel" placeholder="エンジン型式を入力" value={engineModel} onChange={(e) => setEngineModel(e.target.value)} />
+              <Label htmlFor="engineType">エンジン型式</Label>
+              <Input 
+                id="engineType" 
+                placeholder="エンジン型式を入力"
+                value={engineType}
+                onChange={(e) => setEngineType(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="vehicleNumber">車両番号</Label>
-              <Input id="vehicleNumber" placeholder="車両番号を入力" value={vehicleNumber} onChange={(e) => setVehicleNumber(e.target.value)} />
+              <Input 
+                id="vehicleNumber" 
+                placeholder="車両番号を入力"
+                value={vehicleNumber}
+                onChange={(e) => setVehicleNumber(e.target.value)}
+              />
             </div>
           </div>
         </CardContent>
@@ -255,17 +281,18 @@ export default function InspectionPage() {
       <Card className="w-full">
         <CardHeader>
           <CardTitle>点検項目</CardTitle>
+          <CardDescription>点検項目を確認し、結果を入力してください</CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="engine">
-            <TabsList>
+          <Tabs defaultValue="engine" value={activeTab} onValueChange={(value) => setActiveTab(value)}>
+            <TabsList className="grid grid-cols-3">
               <TabsTrigger value="engine">エンジン関係</TabsTrigger>
               <TabsTrigger value="brake">ブレーキ関係</TabsTrigger>
               <TabsTrigger value="other">その他</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="engine" className="space-y-4">
-              <div className="border rounded-lg overflow-hidden">
+            <TabsContent value="engine">
+              <div className="border rounded-lg overflow-hidden overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="bg-muted">
@@ -278,7 +305,9 @@ export default function InspectionPage() {
                   </thead>
                   <tbody>
                     {inspectionItems
-                      .filter((item) => item.category.includes("エンジン") || item.category.includes("engine"))
+                      .filter((item) => 
+                        item.category.toLowerCase().includes("エンジン") || 
+                        item.category.toLowerCase().includes("engine"))
                       .map((item) => (
                         <tr key={item.id} className="border-t">
                           <td className="p-2">{item.item}</td>
@@ -318,8 +347,8 @@ export default function InspectionPage() {
               </div>
             </TabsContent>
 
-            <TabsContent value="brake" className="space-y-4">
-              <div className="border rounded-lg overflow-hidden">
+            <TabsContent value="brake">
+              <div className="border rounded-lg overflow-hidden overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="bg-muted">
@@ -332,7 +361,9 @@ export default function InspectionPage() {
                   </thead>
                   <tbody>
                     {inspectionItems
-                      .filter((item) => item.category.includes("ブレーキ") || item.category.includes("brake"))
+                      .filter((item) => 
+                        item.category.toLowerCase().includes("ブレーキ") || 
+                        item.category.toLowerCase().includes("brake"))
                       .map((item) => (
                         <tr key={item.id} className="border-t">
                           <td className="p-2">{item.item}</td>
@@ -372,8 +403,8 @@ export default function InspectionPage() {
               </div>
             </TabsContent>
 
-            <TabsContent value="other" className="space-y-4">
-              <div className="border rounded-lg overflow-hidden">
+            <TabsContent value="other">
+              <div className="border rounded-lg overflow-hidden overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="bg-muted">
@@ -386,13 +417,11 @@ export default function InspectionPage() {
                   </thead>
                   <tbody>
                     {inspectionItems
-                      .filter(
-                        (item) =>
-                          !item.category.includes("エンジン") &&
-                          !item.category.includes("engine") &&
-                          !item.category.includes("ブレーキ") &&
-                          !item.category.includes("brake")
-                      )
+                      .filter((item) => 
+                        !item.category.toLowerCase().includes("エンジン") && 
+                        !item.category.toLowerCase().includes("engine") &&
+                        !item.category.toLowerCase().includes("ブレーキ") &&
+                        !item.category.toLowerCase().includes("brake"))
                       .map((item) => (
                         <tr key={item.id} className="border-t">
                           <td className="p-2">{item.item}</td>
@@ -433,47 +462,9 @@ export default function InspectionPage() {
             </TabsContent>
           </Tabs>
         </CardContent>
-      </Card>
-    </div>
-  );
-}
-import React, { useState, useEffect } from 'react';
-import { useLocation } from "wouter";
-import OperationsNav from "@/components/OperationsNav";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-
-export default function InspectionPage() {
-  const [_, navigate] = useLocation();
-  const { toast } = useToast();
-  
-  return (
-    <div className="container mx-auto py-8">
-      {/* ヘッダー部分 */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">仕業点検</h1>
-        <div className="flex space-x-2">
-          <Button variant="outline" onClick={() => navigate("/operations")}>
-            戻る
-          </Button>
-        </div>
-      </div>
-
-      {/* 運用画面ナビゲーション */}
-      <OperationsNav currentPage="inspection" />
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>仕業点検</CardTitle>
-          <CardDescription>保守用車の点検を記録します</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p>仕業点検のフォームをここに実装します。</p>
-        </CardContent>
         <CardFooter className="flex justify-between">
-          <Button variant="outline">キャンセル</Button>
-          <Button>保存</Button>
+          <Button variant="outline" onClick={() => navigate("/operations")}>キャンセル</Button>
+          <Button>点検結果を保存</Button>
         </CardFooter>
       </Card>
     </div>

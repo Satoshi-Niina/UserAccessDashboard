@@ -140,250 +140,35 @@ export default function OperationsPage() {
 
         <Card className="w-full">
           <CardHeader>
-            <CardTitle>点検基本情報</CardTitle>
-            <CardDescription>点検の基本情報を入力してください</CardDescription>
+            <CardTitle>運用管理システム</CardTitle>
+            <CardDescription>保守用車の点検・運用計画を管理するシステムです</CardDescription>
           </CardHeader>
           <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="date">点検日</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !date && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, "yyyy年MM月dd日") : "日付を選択"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={setDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="rounded-lg border p-6 flex flex-col items-center justify-center space-y-4">
+                <h3 className="text-xl font-medium">仕業点検</h3>
+                <p className="text-muted-foreground text-center">
+                  保守用車の仕業点検記録を登録・管理します。
+                  エンジン、ブレーキなどの各部位の点検結果を記録することができます。
+                </p>
+                <Button onClick={() => navigate("/operations/inspection")}>
+                  仕業点検を開始
+                </Button>
+              </div>
+              
+              <div className="rounded-lg border p-6 flex flex-col items-center justify-center space-y-4">
+                <h3 className="text-xl font-medium">運用計画</h3>
+                <p className="text-muted-foreground text-center">
+                  保守用車の運用計画を登録・確認します。
+                  作業日時、区間、車両情報などを管理することができます。
+                </p>
+                <Button onClick={() => navigate("/operations/operational-plan")}>
+                  運用計画を作成
+                </Button>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="startTime">開始時間</Label>
-              <Input id="startTime" placeholder="開始時間を入力" type="time" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="endTime">終了時間</Label>
-              <Input id="endTime" placeholder="終了時間を入力" type="time" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="location">点検場所</Label>
-              <Input id="location" placeholder="場所を入力" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="inspector">責任者</Label>
-              <Input id="inspector" placeholder="責任者名を入力" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="inspectorId">点検者</Label>
-              <Input id="inspectorId" placeholder="点検者名を入力" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-        <Card className="w-full">
-          <CardHeader>
-            <CardTitle>点検表</CardTitle>
-            <CardDescription>点検項目を確認し、結果を入力してください</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="periodic" value={activeTab} onValueChange={(value) => setActiveTab(value as InspectionTab)}>
-              <TabsList className="grid grid-cols-3">
-                <TabsTrigger value="periodic">仕業点検</TabsTrigger>
-                <TabsTrigger value="exit">出発前点検</TabsTrigger>
-                <TabsTrigger value="entry">帰着点検</TabsTrigger>
-              </TabsList>
-
-        <TabsContent value="periodic">
-          <Card>
-            <CardHeader>
-              <CardTitle>仕業点検表</CardTitle>
-              <CardDescription>保守用車の定期的な仕業点検を行います</CardDescription>
-            </CardHeader>
-            <CardContent className="overflow-x-auto" style={{ scrollbarWidth: 'thin', scrollbarGutter: 'stable' }}>
-              <Table className="border-collapse border">
-                  <TableHeader className="sticky top-0 z-10">
-                    <TableRow className="h-8">
-                      <TableHead className="w-[100px] min-w-[100px] text-xs border">部位</TableHead>
-                      <TableHead className="w-[120px] min-w-[120px] text-xs border">装置</TableHead>
-                      <TableHead className="w-[250px] min-w-[250px] text-xs border">確認箇所</TableHead>
-                      <TableHead className="w-[250px] min-w-[250px] text-xs border">判断基準</TableHead>
-                      <TableHead className="w-[250px] min-w-[250px] text-xs border">確認要領</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px] text-xs border">測定等記録</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px] text-xs border">図形記録</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px] text-xs border">結果</TableHead>
-                      <TableHead className="w-[250px] min-w-[250px] text-xs border">特記事項</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {inspectionItems.map((item, index) => (
-                      <TableRow key={item.id} className="h-10 max-h-12 border">
-                        <TableCell className="text-xs border">{item.category}</TableCell>
-                        <TableCell className="text-xs border">{item.equipment}</TableCell>
-                        <TableCell className="text-xs border">{item.item}</TableCell>
-                        <TableCell className="text-xs border">{item.criteria}</TableCell>
-                        <TableCell className="text-xs border">{item.method}</TableCell>
-                        <TableCell className="text-xs border">{item.measurementRecord}</TableCell>
-                        <TableCell className="text-xs border">{item.diagramRecord}</TableCell>
-                        <TableCell className="text-xs border">
-                          <Select>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="選択" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="完了">完了</SelectItem>
-                              <SelectItem value="調整">調整</SelectItem>
-                              <SelectItem value="補充">補充</SelectItem>
-                              <SelectItem value="交換">交換</SelectItem>
-                              <SelectItem value="経過観察">経過観察</SelectItem>
-                              <SelectItem value="その他">その他</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell className="text-xs border">
-                          <Input className="text-xs h-8" value={item.notes || ''} onChange={(e) => handleNotesChange(item.id, e.target.value)} />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="exit">
-          <Card>
-            <CardHeader>
-              <CardTitle>出発前点検表</CardTitle>
-              <CardDescription>保守用車の出発前点検を行います</CardDescription>
-            </CardHeader>
-            <CardContent className="overflow-x-auto" style={{ scrollbarWidth: 'thin', scrollbarGutter: 'stable' }}>
-              <Table className="border-collapse border">
-                  <TableHeader className="sticky top-0 z-10">
-                    <TableRow className="h-8">
-                      <TableHead className="w-[100px] min-w-[100px] text-xs border">部位</TableHead>
-                      <TableHead className="w-[120px] min-w-[120px] text-xs border">装置</TableHead>
-                      <TableHead className="w-[250px] min-w-[250px] text-xs border">確認箇所</TableHead>
-                      <TableHead className="w-[250px] min-w-[250px] text-xs border">判断基準</TableHead>
-                      <TableHead className="w-[250px] min-w-[250px] text-xs border">確認要領</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px] text-xs border">測定等記録</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px] text-xs border">図形記録</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px] text-xs border">結果</TableHead>
-                      <TableHead className="w-[250px] min-w-[250px] text-xs border">特記事項</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {inspectionItems.map((item, index) => (
-                      <TableRow key={item.id} className="h-10 max-h-12 border">
-                        <TableCell className="text-xs border">{item.category}</TableCell>
-                        <TableCell className="text-xs border">{item.equipment}</TableCell>
-                        <TableCell className="text-xs border">{item.item}</TableCell>
-                        <TableCell className="text-xs border">{item.criteria}</TableCell>
-                        <TableCell className="text-xs border">{item.method}</TableCell>
-                        <TableCell className="text-xs border">{item.measurementRecord}</TableCell>
-                        <TableCell className="text-xs border">{item.diagramRecord}</TableCell>
-                        <TableCell className="text-xs border">
-                          <Select>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="選択" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="完了">完了</SelectItem>
-                              <SelectItem value="調整">調整</SelectItem>
-                              <SelectItem value="補充">補充</SelectItem>
-                              <SelectItem value="交換">交換</SelectItem>
-                              <SelectItem value="経過観察">経過観察</SelectItem>
-                              <SelectItem value="その他">その他</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell className="text-xs border">
-                          <Input className="text-xs h-8" value={item.notes || ''} onChange={(e) => handleNotesChange(item.id, e.target.value)} />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="entry">
-          <Card>
-            <CardHeader>
-              <CardTitle>帰着点検表</CardTitle>
-              <CardDescription>保守用車の帰着点検を行います</CardDescription>
-            </CardHeader>
-            <CardContent className="overflow-x-auto" style={{ scrollbarWidth: 'thin', scrollbarGutter: 'stable' }}>
-              <Table className="border-collapse border">
-                  <TableHeader className="sticky top-0 z-10">
-                    <TableRow className="h-8">
-                      <TableHead className="w-[100px] min-w-[100px] text-xs border">部位</TableHead>
-                      <TableHead className="w-[120px] min-w-[120px] text-xs border">装置</TableHead>
-                      <TableHead className="w-[250px] min-w-[250px] text-xs border">確認箇所</TableHead>
-                      <TableHead className="w-[250px] min-w-[250px] text-xs border">判断基準</TableHead>
-                      <TableHead className="w-[250px] min-w-[250px] text-xs border">確認要領</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px] text-xs border">測定等記録</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px] text-xs border">図形記録</TableHead>
-                      <TableHead className="w-[150px] min-w-[150px] text-xs border">結果</TableHead>
-                      <TableHead className="w-[250px] min-w-[250px] text-xs border">特記事項</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {inspectionItems.map((item, index) => (
-                      <TableRow key={item.id} className="h-10 max-h-12 border">
-                        <TableCell className="text-xs border">{item.category}</TableCell>
-                        <TableCell className="text-xs border">{item.equipment}</TableCell>
-                        <TableCell className="text-xs border">{item.item}</TableCell>
-                        <TableCell className="text-xs border">{item.criteria}</TableCell>
-                        <TableCell className="text-xs border">{item.method}</TableCell>
-                        <TableCell className="text-xs border">{item.measurementRecord}</TableCell>
-                        <TableCell className="text-xs border">{item.diagramRecord}</TableCell>
-                        <TableCell className="text-xs border">
-                          <Select>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="選択" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="完了">完了</SelectItem>
-                              <SelectItem value="調整">調整</SelectItem>
-                              <SelectItem value="補充">補充</SelectItem>
-                              <SelectItem value="交換">交換</SelectItem>
-                              <SelectItem value="経過観察">経過観察</SelectItem>
-                              <SelectItem value="その他">その他</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell className="text-xs border">
-                          <Input className="text-xs h-8" value={item.notes || ''} onChange={(e) => handleNotesChange(item.id, e.target.value)} />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </CardContent>
-    <CardFooter className="flex justify-between">
-      <Button variant="outline">キャンセル</Button>
-      <Button>点検結果を保存</Button>
-    </CardFooter>
-  </Card>
+          </CardContent>
+        </Card>
 </div>
 </div>
 );

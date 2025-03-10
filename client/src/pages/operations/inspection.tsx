@@ -321,16 +321,6 @@ export default function InspectionPage() {
           <CardContent>
             {/* 検索フィルター */}
             <div className="mb-2 p-2 bg-muted/20 rounded-md">
-              {/* テキスト検索フィールド */}
-              <div className="mb-4">
-                <Input
-                  type="text"
-                  placeholder="記事を検索..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full"
-                />
-              </div>
               <div className="flex flex-wrap gap-2">
                 {/* 部位フィルター */}
                 <div className="min-w-[150px]">
@@ -400,6 +390,17 @@ export default function InspectionPage() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              
+              {/* テキスト検索フィールド */}
+              <div className="mt-4">
+                <Input
+                  type="text"
+                  placeholder="記事を検索..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full"
+                />
               </div>
             </div>
             <div className="border rounded-md">

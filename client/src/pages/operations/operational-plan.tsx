@@ -44,7 +44,7 @@ const planFormSchema = z.object({
   plannedStartTime: z.string().min(1, "予定出発時刻を入力してください"),
   plannedEndTime: z.string().min(1, "予定終了時刻を入力してください"),
   purpose: z.string().min(1, "作業目的を入力してください"),
-  driverName: z.string().min(1, "運転手名を入力してください"),
+  driverName: z.string().min(1, "責任者名を入力してください"),
   supportStaffName: z.string().optional(),
   remarks: z.string().optional(),
 });
@@ -281,7 +281,7 @@ export default function OperationalPlanPage() {
                   name="driverName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>運転手</FormLabel>
+                      <FormLabel>責任者</FormLabel>
                       <FormControl>
                         <Input {...field} placeholder="運転手名を入力" />
                       </FormControl>

@@ -66,6 +66,11 @@ export default function InspectionPage() {
   const [scrollIndicatorLeft, setScrollIndicatorLeft] = useState(0);
   const [filterCriteria, setFilterCriteria] = useState({ category: "all", equipment: "all", result: "all" });
 
+  // フィルター状態
+  const [categoryFilter, setCategoryFilter] = useState<string>("");
+  const [equipmentFilter, setEquipmentFilter] = useState<string>("");
+  const [resultFilter, setResultFilter] = useState<string>("");
+
 
   useEffect(() => {
     const fetchInspectionItems = async () => {
@@ -309,135 +314,169 @@ export default function InspectionPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="relative">
-              <div className="flex gap-2 mb-2">
-                <Label htmlFor="filter-category">部位:</Label>
-                <Select value={filterCriteria.category} onValueChange={e => setFilterCriteria({...filterCriteria, category: e})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="すべて"/>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={"all"}>すべて</SelectItem>
-                    { [...new Set(inspectionItems.map(item => item.category))].map(category => (
-                      <SelectItem key={category} value={category}>{category}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Label htmlFor="filter-equipment">装置:</Label>
-                <Select value={filterCriteria.equipment} onValueChange={e => setFilterCriteria({...filterCriteria, equipment: e})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="すべて"/>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={"all"}>すべて</SelectItem>
-                    { [...new Set(inspectionItems.map(item => item.equipment))].map(equipment => (
-                      <SelectItem key={equipment} value={equipment}>{equipment}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Label htmlFor="filter-result">判定:</Label>
-                <Select value={filterCriteria.result} onValueChange={e => setFilterCriteria({...filterCriteria, result: e})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="すべて"/>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={"all"}>すべて</SelectItem>
-                    <SelectItem value={""}>未判定</SelectItem>
-                    {resultOptions.map(result => (
-                      <SelectItem key={result} value={result}>{result}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="overflow-x-auto border rounded-md" style={{minWidth: '100%', width: '100%'}}>
-                <Table>
-                  <TableHeader>
-                    <tr>
-                      <th className="p-2 text-center whitespace-nowrap w-[20ch] text-xs">部位</th>
-                      <th className="p-2 text-center whitespace-nowrap w-[15ch] text-xs">装置</th>
-                      <th className="p-2 text-center whitespace-nowrap w-[20ch] text-xs">確認箇所</th>
-                      <th className="p-2 text-center whitespace-nowrap w-[25ch] text-xs">判断基準</th>
-                      <th className="p-2 text-center whitespace-nowrap w-[30ch] text-xs">確認要領</th>
-                      <th className="p-2 text-center whitespace-nowrap text-xs">測定等記録</th>
-                      <th className="p-2 text-center whitespace-nowrap w-[30ch] text-xs">図形記録</th>
-                      <th className="p-2 text-center whitespace-nowrap w-[15ch] text-xs">判定</th>
-                      <th className="p-2 text-center whitespace-nowrap w-[50ch] text-xs">記事</th>
-                    </tr>
-                  </TableHeader>
-                  <TableBody>
-                    {loading ? (
-                      <TableRow>
-                        <TableCell colSpan={9} className="text-center">
-                          データを読み込み中...
-                        </TableCell>
-                      </TableRow>
-                    ) : error ? (
-                      <TableRow>
-                        <TableCell colSpan={9} className="text-center text-red-500">
-                          {error}
-                        </TableCell>
-                      </TableRow>
-                    ) : inspectionItems.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={9} className="text-center">
-                          表示する点検項目がありません
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      inspectionItems
-                        .filter(item => 
-                          (filterCriteria.category === "all" || item.category === filterCriteria.category) &&
-                          (filterCriteria.equipment === "all" || item.equipment === filterCriteria.equipment) &&
-                          (filterCriteria.result === "all" || 
-                            (filterCriteria.result === "" && !item.result) || 
-                            item.result === filterCriteria.result)
-                        )
-                        .map((item) => (
-                          <tr key={item.id} className="border-t">
-                            <td className="p-1 text-xs">{item.category}</td>
-                            <td className="p-1 text-xs">{item.equipment}</td>
-                            <td className="p-1 text-xs">{item.item}</td>
-                            <td className="p-1 text-xs">{item.criteria}</td>
-                            <td className="p-1 text-xs">{item.method}</td>
-                            <td className="p-1 text-xs">{item.measurementRecord}</td>
-                            <td className="p-1 text-xs">{item.diagramRecord}</td>
-                            <td className="p-1 text-xs">
-                              <Select
-                                value={item.result}
-                                onValueChange={(value) => updateInspectionResult(item.id, value)}
-                              >
-                                <SelectTrigger className="w-full text-xs p-1">
-                                  <SelectValue placeholder="選択" />
-                                </SelectTrigger>
-                                <SelectContent className="text-xs">
-                                  {resultOptions.map((option) => (
-                                    <SelectItem key={option} value={option}>
-                                      {option}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </td>
-                            <td className="p-1 text-xs">
-                              <Textarea
-                                value={item.remark || ""}
-                                onChange={(e) => updateInspectionRemark(item.id, e.target.value)}
-                                placeholder="備考"
-                                className="h-20 w-full text-xs p-0.5"
-                              />
-                            </td>
-                          </tr>
-                        ))
-                    )}
-                  </TableBody>
-                </Table>
+            {/* 検索フィルター */}
+            <div className="mb-2 p-2 bg-muted/20 rounded-md">
+              <div className="flex flex-wrap gap-2">
+                {/* 部位フィルター */}
+                <div className="min-w-[150px]">
+                  <Label htmlFor="categoryFilter" className="text-xs">部位</Label>
+                  <Select
+                    value={categoryFilter}
+                    onValueChange={setCategoryFilter}
+                  >
+                    <SelectTrigger id="categoryFilter" className="h-8">
+                      <SelectValue placeholder="すべて" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">すべて</SelectItem>
+                      {[...new Set(inspectionItems.map(item => item.category))]
+                        .filter(Boolean)
+                        .sort()
+                        .map(category => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* 装置フィルター */}
+                <div className="min-w-[150px]">
+                  <Label htmlFor="equipmentFilter" className="text-xs">装置</Label>
+                  <Select
+                    value={equipmentFilter}
+                    onValueChange={setEquipmentFilter}
+                  >
+                    <SelectTrigger id="equipmentFilter" className="h-8">
+                      <SelectValue placeholder="すべて" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">すべて</SelectItem>
+                      {[...new Set(inspectionItems
+                        .filter(item => !categoryFilter || item.category === categoryFilter)
+                        .map(item => item.equipment))]
+                        .filter(Boolean)
+                        .sort()
+                        .map(equipment => (
+                          <SelectItem key={equipment} value={equipment}>
+                            {equipment}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* 判定フィルター */}
+                <div className="min-w-[150px]">
+                  <Label htmlFor="resultFilter" className="text-xs">判定</Label>
+                  <Select
+                    value={resultFilter}
+                    onValueChange={setResultFilter}
+                  >
+                    <SelectTrigger id="resultFilter" className="h-8">
+                      <SelectValue placeholder="すべて" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">すべて</SelectItem>
+                      {resultOptions.map(result => (
+                        <SelectItem key={result} value={result}>{result}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
+            <div className="border rounded-md">
+              <Table>
+                <TableHeader>
+                  <tr>
+                    <th className="p-2 text-center whitespace-nowrap text-xs">部位</th>
+                    <th className="p-2 text-center whitespace-nowrap text-xs">装置</th>
+                    <th className="p-2 text-center whitespace-nowrap text-xs">確認箇所</th>
+                    <th className="p-2 text-center whitespace-nowrap text-xs">判断基準</th>
+                    <th className="p-2 text-center whitespace-nowrap text-xs">確認要領</th>
+                    <th className="p-2 text-center whitespace-nowrap text-xs">測定等記録</th>
+                    <th className="p-2 text-center whitespace-nowrap w-[30ch] text-xs">図形記録</th>
+                    <th className="p-2 text-center whitespace-nowrap w-[15ch] text-xs">判定</th>
+                    <th className="p-2 text-center whitespace-nowrap w-[50ch] text-xs">記事</th>
+                  </tr>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center">
+                        データを読み込み中...
+                      </TableCell>
+                    </TableRow>
+                  ) : error ? (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center text-red-500">
+                        {error}
+                      </TableCell>
+                    </TableRow>
+                  ) : inspectionItems.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center">
+                        表示する点検項目がありません
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    inspectionItems
+                      .filter(item => {
+                        // カテゴリフィルター
+                        if (categoryFilter && item.category !== categoryFilter) return false;
+                        // 装置フィルター
+                        if (equipmentFilter && item.equipment !== equipmentFilter) return false;
+                        // 判定フィルター
+                        if (resultFilter && item.result !== resultFilter) return false;
+                        return true;
+                      })
+                      .map((item) => (
+                        <tr key={item.id} className="border-t">
+                          <td className="p-1 text-xs">{item.category}</td>
+                          <td className="p-1 text-xs">{item.equipment}</td>
+                          <td className="p-1 text-xs">{item.item}</td>
+                          <td className="p-1 text-xs">{item.criteria}</td>
+                          <td className="p-1 text-xs">{item.method}</td>
+                          <td className="p-1 text-xs">{item.measurementRecord}</td>
+                          <td className="p-1 text-xs">{item.diagramRecord}</td>
+                          <td className="p-1 text-xs">
+                            <Select
+                              value={item.result}
+                              onValueChange={(value) => updateInspectionResult(item.id, value)}
+                            >
+                              <SelectTrigger className="w-full text-xs p-1">
+                                <SelectValue placeholder="選択" />
+                              </SelectTrigger>
+                              <SelectContent className="text-xs">
+                                {resultOptions.map((option) => (
+                                  <SelectItem key={option} value={option}>
+                                    {option}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </td>
+                          <td className="p-1 text-xs">
+                            <Textarea
+                              value={item.remark || ""}
+                              onChange={(e) => updateInspectionRemark(item.id, e.target.value)}
+                              placeholder="備考"
+                              className="h-20 w-full text-xs p-0.5"
+                            />
+                          </td>
+                        </tr>
+                      ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
-          <CardFooter className="flex justify-end space-x-4">
+          <div className="p-4">
             <Button variant="outline">キャンセル</Button>
             <Button>点検完了</Button>
-          </CardFooter>
+          </div>
         </Card>
       )}
     </div>

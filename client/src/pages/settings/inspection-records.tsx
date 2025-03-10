@@ -1,4 +1,3 @@
-
 // 点検実績管理ページ
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -106,21 +105,21 @@ export default function InspectionRecords() {
   // 検索フィルタリング
   useEffect(() => {
     let result = records;
-    
+
     // 日付でフィルタリング
     if (dateFilter) {
       result = result.filter(record => 
         record.date.includes(dateFilter)
       );
     }
-    
+
     // 機種でフィルタリング
     if (modelFilter) {
       result = result.filter(record => 
         record.model.toLowerCase().includes(modelFilter.toLowerCase())
       );
     }
-    
+
     // 検索語でフィルタリング（複数フィールドから）
     if (searchTerm) {
       const lowercasedFilter = searchTerm.toLowerCase();
@@ -133,7 +132,7 @@ export default function InspectionRecords() {
         );
       });
     }
-    
+
     setFilteredRecords(result);
   }, [records, searchTerm, dateFilter, modelFilter]);
 
@@ -267,15 +266,12 @@ export default function InspectionRecords() {
                 <th className="px-4 py-3 text-left font-medium">
                   特記事項
                 </th>
-                <th className="px-4 py-3 text-left font-medium">
-                  アクション
-                </th>
               </tr>
             </thead>
             <tbody>
               {filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-4 py-3 text-center text-muted-foreground">
+                  <td colSpan={9} className="px-4 py-3 text-center text-muted-foreground">
                     点検記録がありません
                   </td>
                 </tr>
@@ -291,16 +287,6 @@ export default function InspectionRecords() {
                     <td className="px-4 py-3">{record.startTime}</td>
                     <td className="px-4 py-3">{record.endTime}</td>
                     <td className="px-4 py-3 max-w-xs truncate">{record.notes}</td>
-                    <td className="px-4 py-3">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => handleDelete(record.id)}
-                      >
-                        削除
-                      </Button>
-                    </td>
                   </tr>
                 ))
               )}

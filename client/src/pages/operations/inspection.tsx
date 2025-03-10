@@ -68,7 +68,7 @@ export default function InspectionPage() {
   const [searchQuery, setSearchQuery] = useState(""); // 検索クエリ
 
   // フィルター状態
-  const [categoryFilter, setCategoryFilter] = useState<string>("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [equipmentFilter, setEquipmentFilter] = useState<string>("");
   const [resultFilter, setResultFilter] = useState<string>("");
 
@@ -325,7 +325,7 @@ export default function InspectionPage() {
               <div className="mb-4">
                 <Input
                   type="text"
-                  placeholder="キーワードで検索..."
+                  placeholder="記事を検索..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full"
@@ -445,11 +445,13 @@ export default function InspectionPage() {
                         if (equipmentFilter !== "all" && item.equipment !== equipmentFilter) return false;
                         // 判定フィルター
                         if (resultFilter !== "all" && item.result !== resultFilter) return false;
-                        // 検索クエリによるフィルター
-                        const searchTermLower = searchQuery.toLowerCase();
-                        return Object.values(item).some(value =>
-                          typeof value === 'string' && value.toLowerCase().includes(searchTermLower)
-                        );
+                        // 検索クエリによるフィルター（記事欄のみ）
+                        if (searchQuery) {
+                          const searchTermLower = searchQuery.toLowerCase();
+                          const remarkText = item.remark || '';
+                          return remarkText.toLowerCase().includes(searchTermLower);
+                        }
+                        return true;
                       })
                       .map((item) => (
                         <tr key={item.id} className="border-t">

@@ -53,6 +53,7 @@ const menuItems: MenuItem[] = [
       { icon: Database, label: "基本データ処理", href: "/settings/basic-data" },
       { icon: List, label: "点検項目編集", href: "/settings/inspection-items" },
       { icon: BarChart2, label: "測定基準値設定", href: "/settings/measurement-standards" },
+      { icon: List, label: "点検実績管理", href: "/settings/inspection-records" }, // Added Inspection Records
       { icon: History, label: "履歴検索", href: "/settings/history" },
       { icon: Users, label: "ユーザー登録", href: "/settings/user-management" },
     ],

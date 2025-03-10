@@ -1,228 +1,244 @@
 
-import React, { useState, useEffect } from 'react';
-import { 
-  Table, TableBody, TableCaption, TableCell, TableHead, 
-  TableHeader, TableRow 
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect } from "react";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, FileText } from "lucide-react";
-import { format } from 'date-fns';
-import Papa from 'papaparse';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Check, X, FileText, ArrowUpDown, ExternalLink } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
+// 点検記録データの型定義
 interface InspectionRecord {
-  fileName: string;
+  id: number;
   date: string;
-  startTime: string;
-  endTime: string;
-  location: string;
-  supervisor: string;
-  model: string;
-  status: "作業中" | "終了";
-  remarks: string[];
+  inspector: string;
+  status: "completed" | "incomplete" | "pending";
+  items: number;
+  completedItems: number;
 }
 
-export default function InspectionRecordsPage() {
+export default function InspectionRecords() {
+  const { toast } = useToast();
   const [records, setRecords] = useState<InspectionRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [filteredRecords, setFilteredRecords] = useState<InspectionRecord[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof InspectionRecord;
+    direction: "ascending" | "descending";
+  } | null>(null);
 
+  // サンプルデータを読み込む
   useEffect(() => {
-    const fetchInspectionRecords = async () => {
-      try {
-        setLoading(true);
-        // 点検ファイル一覧を取得
-        const response = await fetch('/api/inspection-files');
-        if (!response.ok) {
-          throw new Error('点検ファイル一覧の取得に失敗しました');
-        }
-        
-        const { files } = await response.json();
-        if (!files || !files.length) {
-          setRecords([]);
-          setLoading(false);
-          return;
-        }
-
-        // 各ファイルの内容を取得して解析
-        const recordsData: InspectionRecord[] = [];
-        
-        for (const file of files) {
-          try {
-            const fileResponse = await fetch(`/api/inspection-items?file=${encodeURIComponent(file.name)}`);
-            if (!fileResponse.ok) continue;
-            
-            const csvData = await fileResponse.text();
-            const lines = csvData.split('\n');
-            
-            // ヘッダーコメントから情報を抽出（最初の数行）
-            let date = '';
-            let startTime = '';
-            let endTime = '';
-            let location = '';
-            let supervisor = '';
-            let model = '';
-            const remarks: string[] = [];
-            
-            for (let i = 0; i < Math.min(20, lines.length); i++) {
-              const line = lines[i].trim();
-              if (line.startsWith('#点検年月日:')) {
-                date = line.replace('#点検年月日:', '').trim();
-              } else if (line.startsWith('#開始時刻:')) {
-                startTime = line.replace('#開始時刻:', '').trim();
-              } else if (line.startsWith('#終了時刻:')) {
-                endTime = line.replace('#終了時刻:', '').trim();
-              } else if (line.startsWith('#実施箇所:')) {
-                location = line.replace('#実施箇所:', '').trim();
-              } else if (line.startsWith('#責任者:')) {
-                supervisor = line.replace('#責任者:', '').trim();
-              }
-            }
-            
-            // CSVの本体を解析して機種と記事欄を取得
-            const parsedData = Papa.parse(csvData, { header: true });
-            if (parsedData.data && parsedData.data.length > 0) {
-              // 機種情報を取得
-              const modelData = parsedData.data.find((item: any) => item['機種']);
-              if (modelData) {
-                model = modelData['機種'];
-              }
-              
-              // 記事欄の内容を収集
-              parsedData.data.forEach((item: any) => {
-                if (item['記事'] && item['記事'].trim()) {
-                  remarks.push(item['記事'].trim());
-                }
-              });
-            }
-            
-            // ステータスを決定（終了時刻があれば「終了」、なければ「作業中」）
-            const status = endTime ? "終了" : "作業中";
-            
-            recordsData.push({
-              fileName: file.name,
-              date,
-              startTime,
-              endTime,
-              location,
-              supervisor,
-              model,
-              status,
-              remarks
-            });
-          } catch (err) {
-            console.error(`${file.name}の解析中にエラーが発生しました:`, err);
-          }
-        }
-        
-        setRecords(recordsData);
-      } catch (err) {
-        console.error('点検実績の取得中にエラーが発生しました:', err);
-        setError(err instanceof Error ? err.message : '点検実績の取得に失敗しました');
-      } finally {
-        setLoading(false);
+    // APIからデータを取得する代わりに、サンプルデータを使用
+    const sampleData: InspectionRecord[] = [
+      {
+        id: 1,
+        date: "2023-01-15",
+        inspector: "山田太郎",
+        status: "completed",
+        items: 25,
+        completedItems: 25
+      },
+      {
+        id: 2,
+        date: "2023-01-16",
+        inspector: "佐藤次郎",
+        status: "incomplete",
+        items: 25,
+        completedItems: 18
+      },
+      {
+        id: 3,
+        date: "2023-01-17",
+        inspector: "鈴木三郎",
+        status: "pending",
+        items: 25,
+        completedItems: 0
+      },
+      {
+        id: 4,
+        date: "2023-01-18",
+        inspector: "田中四郎",
+        status: "completed",
+        items: 25,
+        completedItems: 25
+      },
+      {
+        id: 5,
+        date: "2023-01-19",
+        inspector: "小林五郎",
+        status: "incomplete",
+        items: 25,
+        completedItems: 20
       }
-    };
-
-    fetchInspectionRecords();
+    ];
+    
+    setRecords(sampleData);
+    setFilteredRecords(sampleData);
   }, []);
 
   // 検索機能
-  const filteredRecords = records.filter(record => {
-    const searchLower = searchQuery.toLowerCase();
-    return (
-      record.fileName.toLowerCase().includes(searchLower) ||
-      record.date.toLowerCase().includes(searchLower) ||
-      record.location.toLowerCase().includes(searchLower) ||
-      record.supervisor.toLowerCase().includes(searchLower) ||
-      record.model.toLowerCase().includes(searchLower) ||
-      record.remarks.some(remark => remark.toLowerCase().includes(searchLower))
+  useEffect(() => {
+    const results = records.filter(record => 
+      record.inspector.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.date.includes(searchTerm)
     );
-  });
+    setFilteredRecords(results);
+  }, [searchTerm, records]);
+
+  // ソート機能
+  const requestSort = (key: keyof InspectionRecord) => {
+    let direction: "ascending" | "descending" = "ascending";
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === "ascending") {
+      direction = "descending";
+    }
+    setSortConfig({ key, direction });
+
+    setFilteredRecords([...filteredRecords].sort((a, b) => {
+      if (a[key] < b[key]) {
+        return direction === "ascending" ? -1 : 1;
+      }
+      if (a[key] > b[key]) {
+        return direction === "ascending" ? 1 : -1;
+      }
+      return 0;
+    }));
+  };
+
+  // ステータスに応じたバッジを表示
+  const StatusBadge = ({ status }: { status: string }) => {
+    switch (status) {
+      case "completed":
+        return <Badge variant="success">完了</Badge>;
+      case "incomplete":
+        return <Badge variant="warning">未完了</Badge>;
+      case "pending":
+        return <Badge variant="outline">未着手</Badge>;
+      default:
+        return <Badge>{status}</Badge>;
+    }
+  };
+
+  // 詳細ページへのリンク（実装例）
+  const viewRecordDetails = (id: number) => {
+    toast({
+      title: "開発中",
+      description: `記録 ID: ${id} の詳細表示は現在開発中です。`,
+    });
+  };
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">点検実績管理</h1>
-      
+      <PageHeader
+        title="点検実績管理"
+        description="点検の実施状況と結果を確認・管理します"
+      />
+
       <Card className="mb-6">
-        <CardHeader className="pb-3">
-          <CardTitle>点検実績一覧</CardTitle>
-          <CardDescription>仕業点検の実施状況と記録の管理</CardDescription>
+        <CardHeader>
+          <CardTitle>検索フィルター</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex justify-between items-center mb-4">
-            <div className="relative w-full max-w-sm">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <div className="flex flex-col gap-4 md:flex-row">
+            <div className="flex-1">
               <Input
-                type="search"
-                placeholder="検索..."
-                className="pl-8"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="点検者名または日付で検索..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
           </div>
-          
-          {loading ? (
-            <div className="text-center py-6">データを読み込み中...</div>
-          ) : error ? (
-            <div className="text-center py-6 text-red-500">{error}</div>
-          ) : filteredRecords.length === 0 ? (
-            <div className="text-center py-6">点検実績が見つかりません</div>
-          ) : (
-            <div className="border rounded-md overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="whitespace-nowrap w-[180px]">ファイル名</TableHead>
-                    <TableHead className="whitespace-nowrap w-[100px]">点検日</TableHead>
-                    <TableHead className="whitespace-nowrap w-[100px]">機種</TableHead>
-                    <TableHead className="whitespace-nowrap w-[120px]">実施箇所</TableHead>
-                    <TableHead className="whitespace-nowrap w-[100px]">責任者</TableHead>
-                    <TableHead className="whitespace-nowrap w-[80px]">状態</TableHead>
-                    <TableHead className="whitespace-nowrap">特記事項</TableHead>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>点検記録一覧</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => requestSort("date")}>
+                    日付
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => requestSort("inspector")}>
+                    点検者
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => requestSort("status")}>
+                    状態
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead>進捗</TableHead>
+                <TableHead>アクション</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredRecords.length > 0 ? (
+                filteredRecords.map((record) => (
+                  <TableRow key={record.id}>
+                    <TableCell className="font-medium">
+                      {new Date(record.date).toLocaleDateString("ja-JP", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric"
+                      })}
+                    </TableCell>
+                    <TableCell>{record.inspector}</TableCell>
+                    <TableCell>
+                      <StatusBadge status={record.status} />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-xs">
+                            {record.completedItems}/{record.items} 項目
+                          </span>
+                          <span className="text-xs">
+                            {Math.round((record.completedItems / record.items) * 100)}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2">
+                          <div
+                            className="bg-primary rounded-full h-2"
+                            style={{
+                              width: `${(record.completedItems / record.items) * 100}%`,
+                            }}
+                          ></div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => viewRecordDetails(record.id)}
+                      >
+                        <FileText className="mr-1 h-4 w-4" />
+                        詳細
+                      </Button>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredRecords.map((record, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center">
-                          <FileText className="h-4 w-4 mr-2" />
-                          {record.fileName}
-                        </div>
-                      </TableCell>
-                      <TableCell>{record.date}</TableCell>
-                      <TableCell>{record.model}</TableCell>
-                      <TableCell>{record.location}</TableCell>
-                      <TableCell>{record.supervisor}</TableCell>
-                      <TableCell>
-                        <Badge className={record.status === "終了" ? "bg-green-500" : "bg-blue-500"}>
-                          {record.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="max-h-24 overflow-y-auto">
-                          {record.remarks.length > 0 ? (
-                            <ul className="list-disc pl-5 text-sm">
-                              {record.remarks.map((remark, idx) => (
-                                <li key={idx}>{remark}</li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">特記事項なし</span>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-4">
+                    記録が見つかりません
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>

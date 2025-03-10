@@ -328,7 +328,7 @@ export default function InspectionPage() {
                       <SelectValue placeholder="すべて" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">すべて</SelectItem>
+                      <SelectItem value="all">すべて</SelectItem>
                       {[...new Set(inspectionItems.map(item => item.category))]
                         .filter(Boolean)
                         .sort()
@@ -352,7 +352,7 @@ export default function InspectionPage() {
                       <SelectValue placeholder="すべて" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">すべて</SelectItem>
+                      <SelectItem value="all">すべて</SelectItem>
                       {[...new Set(inspectionItems
                         .filter(item => !categoryFilter || item.category === categoryFilter)
                         .map(item => item.equipment))]
@@ -378,7 +378,7 @@ export default function InspectionPage() {
                       <SelectValue placeholder="すべて" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">すべて</SelectItem>
+                      <SelectItem value="all">すべて</SelectItem>
                       {resultOptions.map(result => (
                         <SelectItem key={result} value={result}>{result}</SelectItem>
                       ))}
@@ -425,11 +425,11 @@ export default function InspectionPage() {
                     inspectionItems
                       .filter(item => {
                         // カテゴリフィルター
-                        if (categoryFilter && item.category !== categoryFilter) return false;
+                        if (categoryFilter !== "all" && item.category !== categoryFilter) return false;
                         // 装置フィルター
-                        if (equipmentFilter && item.equipment !== equipmentFilter) return false;
+                        if (equipmentFilter !== "all" && item.equipment !== equipmentFilter) return false;
                         // 判定フィルター
-                        if (resultFilter && item.result !== resultFilter) return false;
+                        if (resultFilter !== "all" && item.result !== resultFilter) return false;
                         return true;
                       })
                       .map((item) => (

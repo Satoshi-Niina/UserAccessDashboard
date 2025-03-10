@@ -69,8 +69,10 @@ export default function InspectionPage() {
 
   // フィルター状態
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [equipmentFilter, setEquipmentFilter] = useState<string>("");
-  const [resultFilter, setResultFilter] = useState<string>("");
+  const [equipmentFilter, setEquipmentFilter] = useState<string>("all");
+  const [resultFilter, setResultFilter] = useState<string>("all");
+  const [manufacturerFilter, setManufacturerFilter] = useState<string>("all"); // 追加
+  const [modelFilter, setModelFilter] = useState<string>("all"); // 追加
 
 
   useEffect(() => {
@@ -322,6 +324,38 @@ export default function InspectionPage() {
             {/* 検索フィルター */}
             <div className="mb-2 p-2 bg-muted/20 rounded-md">
               <div className="flex flex-wrap gap-2">
+                {/* 製造メーカーフィルターを追加 */}
+                <div className="min-w-[150px]">
+                  <Label htmlFor="manufacturerFilter" className="text-xs">製造メーカー</Label>
+                  <Select value={manufacturerFilter} onValueChange={setManufacturerFilter}>
+                    <SelectTrigger id="manufacturerFilter" className="h-8">
+                      <SelectValue placeholder="すべて" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">すべて</SelectItem>
+                      {[...new Set(inspectionItems.map(item => item.manufacturer))].filter(Boolean).sort().map(manufacturer => (
+                        <SelectItem key={manufacturer} value={manufacturer}>{manufacturer}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* 機種フィルターを追加 */}
+                <div className="min-w-[150px]">
+                  <Label htmlFor="modelFilter" className="text-xs">機種</Label>
+                  <Select value={modelFilter} onValueChange={setModelFilter}>
+                    <SelectTrigger id="modelFilter" className="h-8">
+                      <SelectValue placeholder="すべて" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">すべて</SelectItem>
+                      {[...new Set(inspectionItems.map(item => item.model))].filter(Boolean).sort().map(model => (
+                        <SelectItem key={model} value={model}>{model}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 {/* 部位フィルター */}
                 <div className="min-w-[150px]">
                   <Label htmlFor="categoryFilter" className="text-xs">部位</Label>
@@ -391,7 +425,7 @@ export default function InspectionPage() {
                   </Select>
                 </div>
               </div>
-              
+
               {/* テキスト検索フィールド */}
               <div className="mt-4">
                 <Input
@@ -440,6 +474,10 @@ export default function InspectionPage() {
                   ) : (
                     inspectionItems
                       .filter(item => {
+                        // 製造メーカーフィルターを追加
+                        if (manufacturerFilter !== "all" && item.manufacturer !== manufacturerFilter) return false;
+                        // 機種フィルターを追加
+                        if (modelFilter !== "all" && item.model !== modelFilter) return false;
                         // カテゴリフィルター
                         if (categoryFilter !== "all" && item.category !== categoryFilter) return false;
                         // 装置フィルター

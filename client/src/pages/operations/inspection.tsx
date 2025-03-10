@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import OperationsNav from "@/components/OperationsNav";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -64,6 +64,7 @@ export default function InspectionPage() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [scrollIndicatorWidth, setScrollIndicatorWidth] = useState(100);
   const [scrollIndicatorLeft, setScrollIndicatorLeft] = useState(0);
+  const [filterCriteria, setFilterCriteria] = useState({ category: "all", equipment: "all", result: "all" });
 
 
   useEffect(() => {
@@ -199,18 +200,10 @@ export default function InspectionPage() {
     };
   }, [showBasicInfo, inspectionItems]);
 
-  // 左右スクロール関数
-  const scrollLeft = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: -100, behavior: 'smooth' });
-    }
-  };
+  // 左右スクロール関数 - これらはもう使用されません
+  const scrollLeft = () => {};
+  const scrollRight = () => {};
 
-  const scrollRight = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: 100, behavior: 'smooth' });
-    }
-  };
 
   return (
     <div className="container mx-auto py-8">
@@ -316,70 +309,47 @@ export default function InspectionPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="relative overflow-x-auto" style={{ maxWidth: '100%' }}>
-              {/* スクロールインジケーター */}
-              <div className="table-scroll-indicator-container" 
-                onClick={(e) => {
-                  const container = e.currentTarget;
-                  const rect = container.getBoundingClientRect();
-                  const x = e.clientX - rect.left;
-                  const percentage = x / rect.width;
-                  const scrollContainer = scrollContainerRef.current;
-                  if (scrollContainer) {
-                    const maxScroll = scrollContainer.scrollWidth - scrollContainer.clientWidth;
-                    scrollContainer.scrollLeft = percentage * maxScroll;
-                  }
-                }}
-                onMouseDown={(e) => {
-                  // ドラッグ開始
-                  const container = scrollContainerRef.current;
-                  if (!container) return;
-
-                  const startX = e.clientX;
-                  const startScrollLeft = container.scrollLeft;
-                  const maxScroll = container.scrollWidth - container.clientWidth;
-                  // ドラッグ開始時にスクロールバーの幅を取得して保存
-                  const scrollBarWidth = e.currentTarget.getBoundingClientRect().width;
-
-                  const handleMouseMove = (moveEvent: MouseEvent) => {
-                    const dx = moveEvent.clientX - startX;
-                    // e.currentTargetではなく、保存した値を使用
-                    const scrollRatio = dx / scrollBarWidth;
-                    const newScrollLeft = startScrollLeft + (maxScroll * scrollRatio);
-                    container.scrollLeft = Math.max(0, Math.min(maxScroll, newScrollLeft));
-                  };
-
-                  const handleMouseUp = () => {
-                    document.removeEventListener('mousemove', handleMouseMove);
-                    document.removeEventListener('mouseup', handleMouseUp);
-                  };
-
-                  document.addEventListener('mousemove', handleMouseMove);
-                  document.addEventListener('mouseup', handleMouseUp);
-                }}>
-                <div 
-                  className="table-scroll-indicator"
-                  style={{ width: `${scrollIndicatorWidth}%`, left: `${scrollIndicatorLeft}%` }}
-                ></div>
+            <div className="relative">
+              <div className="flex gap-2 mb-2">
+                <Label htmlFor="filter-category">部位:</Label>
+                <Select value={filterCriteria.category} onValueChange={e => setFilterCriteria({...filterCriteria, category: e})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="すべて"/>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={"all"}>すべて</SelectItem>
+                    { [...new Set(inspectionItems.map(item => item.category))].map(category => (
+                      <SelectItem key={category} value={category}>{category}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Label htmlFor="filter-equipment">装置:</Label>
+                <Select value={filterCriteria.equipment} onValueChange={e => setFilterCriteria({...filterCriteria, equipment: e})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="すべて"/>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={"all"}>すべて</SelectItem>
+                    { [...new Set(inspectionItems.map(item => item.equipment))].map(equipment => (
+                      <SelectItem key={equipment} value={equipment}>{equipment}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Label htmlFor="filter-result">判定:</Label>
+                <Select value={filterCriteria.result} onValueChange={e => setFilterCriteria({...filterCriteria, result: e})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="すべて"/>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={"all"}>すべて</SelectItem>
+                    <SelectItem value={""}>未判定</SelectItem>
+                    {resultOptions.map(result => (
+                      <SelectItem key={result} value={result}>{result}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              {/* スクロールコントロールボタン */}
-              <div className="flex justify-between absolute w-full top-0">
-                <button 
-                  onClick={scrollLeft} 
-                  className="bg-white/80 rounded-full p-1 shadow hover:bg-white transition-colors"
-                  aria-label="左へスクロール"
-                >
-                  <ChevronLeft size={20} />
-                </button>
-                <button 
-                  onClick={scrollRight} 
-                  className="bg-white/80 rounded-full p-1 shadow hover:bg-white transition-colors"
-                  aria-label="右へスクロール"
-                >
-                  <ChevronRight size={20} />
-                </button>
-              </div>
-              <div ref={scrollContainerRef} className="w-full overflow-x-auto border rounded-md" style={{ minWidth: '100%', width: '100%', overflowX: 'auto'}}>
+              <div className="overflow-x-auto border rounded-md" style={{minWidth: '100%', width: '100%'}}>
                 <Table>
                   <TableHeader>
                     <tr>
@@ -414,42 +384,50 @@ export default function InspectionPage() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      inspectionItems.map((item) => (
-                        <tr key={item.id} className="border-t">
-                          <td className="p-1 text-xs">{item.category}</td>
-                          <td className="p-1 text-xs">{item.equipment}</td>
-                          <td className="p-1 text-xs">{item.item}</td>
-                          <td className="p-1 text-xs">{item.criteria}</td>
-                          <td className="p-1 text-xs">{item.method}</td>
-                          <td className="p-1 text-xs">{item.measurementRecord}</td>
-                          <td className="p-1 text-xs">{item.diagramRecord}</td>
-                          <td className="p-1 text-xs">
-                            <Select
-                              value={item.result}
-                              onValueChange={(value) => updateInspectionResult(item.id, value)}
-                            >
-                              <SelectTrigger className="w-full text-xs p-1">
-                                <SelectValue placeholder="選択" />
-                              </SelectTrigger>
-                              <SelectContent className="text-xs">
-                                {resultOptions.map((option) => (
-                                  <SelectItem key={option} value={option}>
-                                    {option}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </td>
-                          <td className="p-1 text-xs">
-                            <Textarea
-                              value={item.remark || ""}
-                              onChange={(e) => updateInspectionRemark(item.id, e.target.value)}
-                              placeholder="備考"
-                              className="h-20 w-full text-xs p-0.5"
-                            />
-                          </td>
-                        </tr>
-                      ))
+                      inspectionItems
+                        .filter(item => 
+                          (filterCriteria.category === "all" || item.category === filterCriteria.category) &&
+                          (filterCriteria.equipment === "all" || item.equipment === filterCriteria.equipment) &&
+                          (filterCriteria.result === "all" || 
+                            (filterCriteria.result === "" && !item.result) || 
+                            item.result === filterCriteria.result)
+                        )
+                        .map((item) => (
+                          <tr key={item.id} className="border-t">
+                            <td className="p-1 text-xs">{item.category}</td>
+                            <td className="p-1 text-xs">{item.equipment}</td>
+                            <td className="p-1 text-xs">{item.item}</td>
+                            <td className="p-1 text-xs">{item.criteria}</td>
+                            <td className="p-1 text-xs">{item.method}</td>
+                            <td className="p-1 text-xs">{item.measurementRecord}</td>
+                            <td className="p-1 text-xs">{item.diagramRecord}</td>
+                            <td className="p-1 text-xs">
+                              <Select
+                                value={item.result}
+                                onValueChange={(value) => updateInspectionResult(item.id, value)}
+                              >
+                                <SelectTrigger className="w-full text-xs p-1">
+                                  <SelectValue placeholder="選択" />
+                                </SelectTrigger>
+                                <SelectContent className="text-xs">
+                                  {resultOptions.map((option) => (
+                                    <SelectItem key={option} value={option}>
+                                      {option}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </td>
+                            <td className="p-1 text-xs">
+                              <Textarea
+                                value={item.remark || ""}
+                                onChange={(e) => updateInspectionRemark(item.id, e.target.value)}
+                                placeholder="備考"
+                                className="h-20 w-full text-xs p-0.5"
+                              />
+                            </td>
+                          </tr>
+                        ))
                     )}
                   </TableBody>
                 </Table>

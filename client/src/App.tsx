@@ -16,6 +16,7 @@ import BasicData from "@/pages/settings/basic-data";
 import History from "@/pages/settings/history";
 import UserManagement from "@/pages/settings/user-management";
 import InspectionItems from "@/pages/settings/inspection-items";
+import MeasurementStandards from "@/pages/settings/measurement-standards"; // Added import
 import { ProtectedRoute } from "./lib/protected-route";
 import React, { lazy, Suspense } from "react";
 

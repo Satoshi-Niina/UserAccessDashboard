@@ -65,6 +65,7 @@ export default function InspectionPage() {
   const [scrollIndicatorWidth, setScrollIndicatorWidth] = useState(100);
   const [scrollIndicatorLeft, setScrollIndicatorLeft] = useState(0);
   const [filterCriteria, setFilterCriteria] = useState({ category: "all", equipment: "all", result: "all" });
+  const [searchQuery, setSearchQuery] = useState(""); // 検索クエリ
 
   // フィルター状態
   const [categoryFilter, setCategoryFilter] = useState<string>("");
@@ -103,6 +104,8 @@ export default function InspectionPage() {
         const manufacturerIndex = headers.findIndex(h => h === '製造メーカー' || h === 'manufacturer');
         const modelIndex = headers.findIndex(h => h === '機種' || h === 'model');
         const engineTypeIndex = headers.findIndex(h => h === 'エンジン型式' || h === 'engineType');
+        const remarkIndex = headers.findIndex(h => h === '記事' || h === 'remark');
+
 
         // CSVから点検項目を作成
         const items: InspectionItem[] = [];
@@ -123,6 +126,7 @@ export default function InspectionPage() {
           const getManufacturer = () => manufacturerIndex >= 0 ? values[manufacturerIndex] || '' : '';
           const getModel = () => modelIndex >= 0 ? values[modelIndex] || '' : '';
           const getEngineType = () => engineTypeIndex >= 0 ? values[engineTypeIndex] || '' : '';
+          const getRemark = () => remarkIndex >= 0 ? values[remarkIndex] || '' : '';
 
           items.push({
             id: getId(),
@@ -135,7 +139,8 @@ export default function InspectionPage() {
             diagramRecord: getDiagramRecord(),
             manufacturer: getManufacturer(),
             model: getModel(),
-            engineType: getEngineType()
+            engineType: getEngineType(),
+            remark: getRemark()
           });
         }
 
@@ -316,6 +321,16 @@ export default function InspectionPage() {
           <CardContent>
             {/* 検索フィルター */}
             <div className="mb-2 p-2 bg-muted/20 rounded-md">
+              {/* テキスト検索フィールド */}
+              <div className="mb-4">
+                <Input
+                  type="text"
+                  placeholder="キーワードで検索..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full"
+                />
+              </div>
               <div className="flex flex-wrap gap-2">
                 {/* 部位フィルター */}
                 <div className="min-w-[150px]">
@@ -430,7 +445,11 @@ export default function InspectionPage() {
                         if (equipmentFilter !== "all" && item.equipment !== equipmentFilter) return false;
                         // 判定フィルター
                         if (resultFilter !== "all" && item.result !== resultFilter) return false;
-                        return true;
+                        // 検索クエリによるフィルター
+                        const searchTermLower = searchQuery.toLowerCase();
+                        return Object.values(item).some(value =>
+                          typeof value === 'string' && value.toLowerCase().includes(searchTermLower)
+                        );
                       })
                       .map((item) => (
                         <tr key={item.id} className="border-t">

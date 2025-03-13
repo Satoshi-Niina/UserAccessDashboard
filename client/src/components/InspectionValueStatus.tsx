@@ -1,73 +1,84 @@
-
 import { AlertCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import React, { useState, useEffect } from 'react';
 
 interface InspectionValueStatusProps {
   value: string;
-  minValue?: string;
-  maxValue?: string;
+  standardValue: string;
 }
 
-/**
- * 測定値が基準値内に収まっているかを表示するコンポーネント
- */
-export function InspectionValueStatus({ value, minValue, maxValue }: InspectionValueStatusProps) {
-  // 測定値がない場合は何も表示しない
-  if (!value || value.trim() === '') return null;
-  // 基準値がない場合は値だけを表示
-  if (!minValue || !maxValue) return <span>{value}</span>;
-  
-  const numValue = parseFloat(value);
-  const min = parseFloat(minValue);
-  const max = parseFloat(maxValue);
-  
-  // 数値に変換できない場合は値だけを表示
-  if (isNaN(numValue) || isNaN(min) || isNaN(max)) return <span>{value}</span>;
-  
-  let status = '';
-  let statusColor = '';
-  let isAbnormal = false;
-  
-  if (numValue < min) {
-    status = '減少';
-    statusColor = 'text-blue-600 font-bold';
-    isAbnormal = true;
-  } else if (numValue > max) {
-    status = '増加';
-    statusColor = 'text-red-600 font-bold';
-    isAbnormal = true;
-  } else {
-    status = '正常';
-    statusColor = 'text-green-600 font-bold';
-  }
-  
+export const InspectionValueStatus: React.FC<InspectionValueStatusProps> = ({ value, standardValue }) => {
+  const [isAbnormal, setIsAbnormal] = useState(false);
+
+  useEffect(() => {
+    if (!value || !standardValue) return;
+
+    // 基準値の解析
+    try {
+      // 数値範囲（例: 10-20）を処理
+      if (standardValue.includes('-')) {
+        const [min, max] = standardValue.split('-').map(v => parseFloat(v.trim()));
+        const numValue = parseFloat(value);
+
+        if (!isNaN(min) && !isNaN(max) && !isNaN(numValue)) {
+          setIsAbnormal(numValue < min || numValue > max);
+        }
+        return;
+      }
+
+      // 以上・以下の処理（例: <=20, >=10）
+      if (standardValue.includes('<=') || standardValue.includes('>=') || 
+          standardValue.includes('<') || standardValue.includes('>')) {
+
+        let operator = '';
+        let threshold = 0;
+
+        if (standardValue.includes('<=')) {
+          operator = '<=';
+          threshold = parseFloat(standardValue.replace('<=', '').trim());
+        } else if (standardValue.includes('>=')) {
+          operator = '>=';
+          threshold = parseFloat(standardValue.replace('>=', '').trim());
+        } else if (standardValue.includes('<')) {
+          operator = '<';
+          threshold = parseFloat(standardValue.replace('<', '').trim());
+        } else if (standardValue.includes('>')) {
+          operator = '>';
+          threshold = parseFloat(standardValue.replace('>', '').trim());
+        }
+
+        const numValue = parseFloat(value);
+
+        if (!isNaN(threshold) && !isNaN(numValue)) {
+          if (operator === '<=') setIsAbnormal(numValue > threshold);
+          else if (operator === '>=') setIsAbnormal(numValue < threshold);
+          else if (operator === '<') setIsAbnormal(numValue >= threshold);
+          else if (operator === '>') setIsAbnormal(numValue <= threshold);
+        }
+        return;
+      }
+
+      // 単純な数値比較
+      const standardNum = parseFloat(standardValue);
+      const valueNum = parseFloat(value);
+
+      if (!isNaN(standardNum) && !isNaN(valueNum)) {
+        setIsAbnormal(valueNum !== standardNum);
+      }
+    } catch (error) {
+      console.error('測定値の比較中にエラーが発生しました:', error);
+    }
+  }, [value, standardValue]);
+
+  if (!isAbnormal) return null;
+
   return (
-    <div className="flex items-center gap-2">
-      <span>{value}</span>
-      {isAbnormal ? (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className={`text-sm ${statusColor} inline-flex items-center px-2 py-0.5 rounded bg-opacity-20 ${
-                status === '減少' ? 'bg-blue-100' : 'bg-red-100'
-              }`}>
-                {status} <AlertCircle className="ml-1 h-4 w-4" />
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="bg-red-50 border border-red-300 text-red-700 px-3 py-2 rounded shadow-lg">
-              <p className="font-bold">異常値です！</p>
-              <p className="text-xs">基準値範囲: {minValue} 〜 {maxValue}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      ) : (
-        <span className={`text-sm ${statusColor} inline-block px-2 py-0.5 rounded bg-opacity-20 bg-green-100`}>
-          {status}
-        </span>
-      )}
+    <div className="absolute bg-red-500 text-white rounded-lg px-2 py-1 text-xs whitespace-nowrap z-10 mt-1">
+      異常値です！
+      <div className="absolute w-2 h-2 bg-red-500 rotate-45 -top-1 left-1/2 transform -translate-x-1/2"></div>
     </div>
   );
-}
+};
 
 /**
  * 測定値と基準値を比較してステータスを表示する単純なコンポーネント

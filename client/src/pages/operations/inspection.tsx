@@ -17,6 +17,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { InspectionValueStatus } from "@/components/InspectionValueStatus"; // Import the component
+
 
 // 点検項目の型定義
 interface InspectionItem {
@@ -60,18 +62,6 @@ const findStandardValue = (category: string, equipment: string, item: string) =>
   return measurementStandards[item];
 };
 
-
-// 異常値表示コンポーネント（仮実装）
-const InspectionValueStatus = ({ value, minValue, maxValue }: { value: string, minValue: string, maxValue: string }) => {
-  const numValue = parseFloat(value);
-  const numMinValue = parseFloat(minValue);
-  const numMaxValue = parseFloat(maxValue);
-
-  if (numValue < numMinValue || numValue > numMaxValue) {
-    return <span className="text-red-500 text-xs">異常値です！</span>;
-  }
-  return null;
-};
 
 
 export default function InspectionPage() {
@@ -561,28 +551,25 @@ export default function InspectionPage() {
                               className="h-20 w-full text-xs p-0.5"
                             />
                           </td>
-                          <TableCell className="text-right">
-                            <div className="flex items-center space-x-2">
-                              <Input
-                                type="text"
+                          <TableCell className="p-2 relative">
+                            <Input
+                              type="text"
+                              value={item.measurementValue || ''}
+                              onChange={(e) => handleMeasurementValueChange(item.id, e.target.value)}
+                              className={`w-24 ${
+                                item.measurementValue && findStandardValue(item.category, item.equipment, item.item) &&
+                                (
+                                  parseFloat(item.measurementValue) < parseFloat(findStandardValue(item.category, item.equipment, item.item)?.minValue || '0') ||
+                                  parseFloat(item.measurementValue) > parseFloat(findStandardValue(item.category, item.equipment, item.item)?.maxValue || '9999')
+                                ) ? 'border-red-500' : ''
+                              }`}
+                              placeholder="数値入力"
+                            />
+                            <div className="absolute top-0 right-0"> {/* Positioning the InspectionValueStatus component */}
+                              <InspectionValueStatus
                                 value={item.measurementValue || ''}
-                                onChange={(e) => handleMeasurementValueChange(item.id, e.target.value)}
-                                className={`w-24 ${
-                                  item.measurementValue && findStandardValue(item.category, item.equipment, item.item) &&
-                                  (
-                                    parseFloat(item.measurementValue) < parseFloat(findStandardValue(item.category, item.equipment, item.item)?.minValue || '0') ||
-                                    parseFloat(item.measurementValue) > parseFloat(findStandardValue(item.category, item.equipment, item.item)?.maxValue || '9999')
-                                  ) ? 'border-red-500' : ''
-                                }`}
-                                placeholder="数値入力"
+                                standardValue={item.measurementRecord || ''}
                               />
-                              {item.measurementValue && findStandardValue(item.category, item.equipment, item.item) && (
-                                <InspectionValueStatus
-                                  value={item.measurementValue}
-                                  minValue={findStandardValue(item.category, item.equipment, item.item)?.minValue}
-                                  maxValue={findStandardValue(item.category, item.equipment, item.item)?.maxValue}
-                                />
-                              )}
                             </div>
                           </TableCell>
                         </tr>

@@ -10,7 +10,7 @@ import {
   SelectItem,
   SelectGroup 
 } from "@/components/ui/select";
-import { SidebarProvider } from "@/components/layout/sidebar-provider";
+import { useSidebar } from "@/components/ui/sidebar";
 import { useToast } from "@/components/ui/use-toast";
 import {
   Table,
@@ -159,7 +159,7 @@ export default function MeasurementStandards() {
   const uniqueModels = Array.from(new Set(inspectionItems.map(item => item.model))).filter(model => model && model.trim() !== '').sort();
 
   return (
-    <SidebarProvider isExpanded={isMenuExpanded} setIsExpanded={setIsMenuExpanded}>
+    <div className={isMenuExpanded ? "" : "sidebar-collapsed"}>
       <div className="container py-4">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold">基準値設定</h1>
@@ -330,6 +330,6 @@ export default function MeasurementStandards() {
           </Card>
         )}
       </div>
-    </SidebarProvider>
+    </div>
   );
 }

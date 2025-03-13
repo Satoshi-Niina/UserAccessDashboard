@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Sidebar } from "@/components/ui/sidebar";
 import { PageHeader } from "@/components/ui/page-header";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";

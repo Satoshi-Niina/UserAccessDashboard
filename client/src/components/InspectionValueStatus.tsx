@@ -43,6 +43,8 @@ export const InspectionValueStatus: React.FC<InspectionValueStatusProps> = ({
       const belowMin = numMinValue !== null && numValue < numMinValue;
       const aboveMax = numMaxValue !== null && numValue > numMaxValue;
 
+      console.log(`値のチェック: 入力値=${numValue}, 最小値=${numMinValue}, 最大値=${numMaxValue}, 範囲外=${belowMin || aboveMax}`);
+      
       setIsOutOfRange(belowMin || aboveMax);
     } else {
       setIsOutOfRange(false);

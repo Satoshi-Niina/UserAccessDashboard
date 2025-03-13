@@ -17,27 +17,25 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import InspectionValueStatus from "@/components/InspectionValueStatus"; // デフォルトインポートに変更
+import InspectionValueStatus from "@/components/InspectionValueStatus";
 
 
-// 点検項目の型定義
 interface InspectionItem {
   id: number;
-  category: string;          // 部位
-  equipment: string;         // 装置
-  item: string;              // 確認箇所
-  criteria: string;          // 判断基準
-  method: string;            // 確認要領
-  measurementRecord: string; // 測定等記録
-  diagramRecord: string;     // 図形記録
-  manufacturer?: string;     // 製造メーカー
-  model?: string;            // 機種
-  engineType?: string;       // エンジン型式
-  result?: string;           // 判定結果
-  remark?: string;           // 記事（特記事項）
+  category: string;
+  equipment: string;
+  item: string;
+  criteria: string;
+  method: string;
+  measurementRecord: string;
+  diagramRecord: string;
+  manufacturer?: string;
+  model?: string;
+  engineType?: string;
+  result?: string;
+  remark?: string;
 }
 
-// 判定結果の選択肢
 const resultOptions = [
   "良好",
   "補給・給脂",
@@ -48,7 +46,6 @@ const resultOptions = [
 
 type InspectionTab = "general";
 
-// 測定基準テーブル（仮データ） -  このデータ構造を標準値データ構造に変更
 interface StandardValue {
   category: string;
   equipment: string;
@@ -65,94 +62,78 @@ const standardValues: StandardValue[] = [
   // ... 他の測定基準を追加
 ];
 
-
-// 基準値取得関数
 const findStandardValue = (item: InspectionItem) => {
-  // 基準値が未設定の場合
   if (!standardValues || standardValues.length === 0) {
-    return { minValue: undefined, maxValue: undefined };
+    console.log('基準値データが存在しません');
+    return null;
   }
 
-  // 一致する項目を検索（より詳細に一致するものを優先）
-  const exactMatch = standardValues.find(sv =>
-    sv.item === item.item &&
-    sv.category === item.category &&
-    sv.equipment === item.equipment &&
-    (!item.manufacturer || sv.manufacturer === item.manufacturer) &&
-    (!item.model || sv.model === item.model)
-  );
+  const matchConditions = [
+    { field: 'manufacturer', itemField: 'manufacturer' },
+    { field: 'model', itemField: 'model' },
+    { field: 'category', itemField: 'category' },
+    { field: 'equipment', itemField: 'equipment' },
+    { field: 'item', itemField: 'item' }
+  ];
 
-  if (exactMatch) {
-    console.log('基準値一致:', item.item, exactMatch.minValue, exactMatch.maxValue);
-    return {
-      minValue: exactMatch.minValue,
-      maxValue: exactMatch.maxValue
-    };
+  const matchedStandard = standardValues.find(standard => {
+    const isMatch = matchConditions.every(condition => {
+      const standardValue = standard[condition.field];
+      const itemValue = item[condition.itemField];
+
+      if (standardValue === undefined || itemValue === undefined) return true;
+
+      return standardValue === itemValue;
+    });
+
+    return isMatch;
+  });
+
+  if (matchedStandard) {
+    console.log(`基準値が見つかりました: 項目=${item.item}, 最小値=${matchedStandard.minValue}, 最大値=${matchedStandard.maxValue}`);
+  } else {
+    console.log(`基準値が見つかりません: 項目=${item.item}, カテゴリ=${item.category}, 装置=${item.equipment}`);
   }
 
-  // 部分一致の検索（メーカーと機種は問わない）
-  const partialMatch = standardValues.find(sv =>
-    sv.item === item.item &&
-    sv.category === item.category &&
-    sv.equipment === item.equipment
-  );
-
-  if (partialMatch) {
-    console.log('部分一致:', item.item, partialMatch.minValue, partialMatch.maxValue);
-    return {
-      minValue: partialMatch.minValue,
-      maxValue: partialMatch.maxValue
-    };
-  }
-
-  return { minValue: undefined, maxValue: undefined };
+  return matchedStandard || null;
 };
-
-
 
 export default function InspectionPage() {
   const [location, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState<InspectionTab>("general");
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [startTime, setStartTime] = useState<string>(""); // 開始時刻
-  const [endTime, setEndTime] = useState<string>("");     // 終了時刻
+  const [startTime, setStartTime] = useState<string>("");
+  const [endTime, setEndTime] = useState<string>("");
   const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showBasicInfo, setShowBasicInfo] = useState(false);
-  const [locationInput, setLocationInput] = useState(""); // 点検場所
-  const [responsiblePerson, setResponsiblePerson] = useState(""); // 責任者
-  const [inspectorInput, setInspectorInput] = useState(""); // 点検者
-  const [vehicleId, setVehicleId] = useState(""); // 車両番号
+  const [locationInput, setLocationInput] = useState("");
+  const [responsiblePerson, setResponsiblePerson] = useState("");
+  const [inspectorInput, setInspectorInput] = useState("");
+  const [vehicleId, setVehicleId] = useState("");
   const { toast } = useToast();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [scrollIndicatorWidth, setScrollIndicatorWidth] = useState(100);
   const [scrollIndicatorLeft, setScrollIndicatorLeft] = useState(0);
   const [filterCriteria, setFilterCriteria] = useState({ category: "all", equipment: "all", result: "all" });
-  const [searchQuery, setSearchQuery] = useState(""); // 検索クエリ
-
-  // フィルター状態
+  const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [equipmentFilter, setEquipmentFilter] = useState<string>("all");
   const [resultFilter, setResultFilter] = useState<string>("all");
-  const [manufacturerFilter, setManufacturerFilter] = useState<string>("all"); // 追加
-  const [modelFilter, setModelFilter] = useState<string>("all"); // 追加
-
+  const [manufacturerFilter, setManufacturerFilter] = useState<string>("all");
+  const [modelFilter, setModelFilter] = useState<string>("all");
 
   useEffect(() => {
     const fetchInspectionItems = async () => {
       setLoading(true);
       try {
-        // 仕業点検テンプレートを取得（useLatest=trueで最新のマスタファイルを取得）
         const response = await fetch('/api/inspection-items?useLatest=true');
         const data = await response.json();
 
         console.log('点検項目データ取得:', data.length, '件');
 
-        // 取得したデータを処理して適切な形式に変換
         const items = [];
-
-        // ヘッダーマッピング
         const headerMapping = {
           '製造メーカー': 'manufacturer',
           '機種': 'model',
@@ -167,23 +148,16 @@ export default function InspectionPage() {
           '備考': 'remark'
         };
 
-        // データ変換処理
         for (let i = 0; i < data.length; i++) {
           const row = data[i];
-
-          // 空のオブジェクトをスキップ
           if (!row || Object.keys(row).length === 0) continue;
 
           const item: any = { id: i + 1 };
-
-          // すべてのヘッダーに対して処理
           Object.keys(row).forEach(header => {
-            // マッピングされたプロパティ名があればそれを使用、なければヘッダー名をそのまま使用
             const propName = headerMapping[header] || header;
             item[propName] = row[header] || '';
           });
 
-          // 必要なプロパティが存在することを確認
           const requiredProps = ['category', 'equipment', 'item', 'criteria'];
           const hasRequiredProps = requiredProps.every(prop => item.hasOwnProperty(prop));
 
@@ -221,7 +195,6 @@ export default function InspectionPage() {
     ));
   };
 
-  // 測定等記録の値を直接更新
   const updateInspectionMeasurementRecord = (id: number, value: string) => {
     setInspectionItems(
       inspectionItems.map(item =>
@@ -230,7 +203,6 @@ export default function InspectionPage() {
     );
   };
 
-  // スクロール位置の更新処理
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
     if (!scrollContainer) return;
@@ -240,7 +212,7 @@ export default function InspectionPage() {
       const maxScrollLeft = scrollWidth - clientWidth;
 
       if (maxScrollLeft > 0) {
-        const indicatorWidth = Math.max((clientWidth / scrollWidth) * 100, 10); // 最小幅を10%に設定
+        const indicatorWidth = Math.max((clientWidth / scrollWidth) * 100, 10);
         const indicatorLeft = (scrollLeft / maxScrollLeft) * (100 - indicatorWidth);
 
         setScrollIndicatorWidth(indicatorWidth);
@@ -251,14 +223,11 @@ export default function InspectionPage() {
       }
     };
 
-    // スクロールとウィンドウリサイズイベントでインジケーターを更新
     scrollContainer.addEventListener('scroll', handleScroll);
     window.addEventListener('resize', handleScroll);
 
-    // 初期計算
     handleScroll();
 
-    // 更新を毎秒行って確実に表示されるようにする
     const intervalId = setInterval(handleScroll, 1000);
 
     return () => {
@@ -268,14 +237,11 @@ export default function InspectionPage() {
     };
   }, [showBasicInfo, inspectionItems]);
 
-  // 左右スクロール関数 - これらはもう使用されません
   const scrollLeft = () => {};
   const scrollRight = () => {};
 
-
   return (
     <div className="container mx-auto py-8">
-      {/* ヘッダー部分 */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">仕業点検</h1>
         <div className="flex space-x-2">
@@ -288,7 +254,6 @@ export default function InspectionPage() {
         </div>
       </div>
 
-      {/* 運用画面ナビゲーション */}
       <OperationsNav currentPage="inspection" />
 
       <Card className="mb-6">
@@ -364,14 +329,11 @@ export default function InspectionPage() {
               </CardDescription>
             </div>
             <div className="ml-auto flex space-x-2">
-              {/* 左右スクロールボタンは削除 */}
             </div>
           </CardHeader>
           <CardContent>
-            {/* 検索フィルター */}
             <div className="mb-2 p-2 bg-muted/20 rounded-md">
               <div className="flex flex-wrap gap-2">
-                {/* 製造メーカーフィルターを追加 */}
                 <div className="min-w-[150px]">
                   <Label htmlFor="manufacturerFilter" className="text-xs">製造メーカー</Label>
                   <Select value={manufacturerFilter} onValueChange={setManufacturerFilter}>
@@ -387,7 +349,6 @@ export default function InspectionPage() {
                   </Select>
                 </div>
 
-                {/* 機種フィルターを追加 */}
                 <div className="min-w-[150px]">
                   <Label htmlFor="modelFilter" className="text-xs">機種</Label>
                   <Select value={modelFilter} onValueChange={setModelFilter}>
@@ -403,7 +364,6 @@ export default function InspectionPage() {
                   </Select>
                 </div>
 
-                {/* 部位フィルター */}
                 <div className="min-w-[150px]">
                   <Label htmlFor="categoryFilter" className="text-xs">部位</Label>
                   <Select
@@ -427,7 +387,6 @@ export default function InspectionPage() {
                   </Select>
                 </div>
 
-                {/* 装置フィルター */}
                 <div className="min-w-[150px]">
                   <Label htmlFor="equipmentFilter" className="text-xs">装置</Label>
                   <Select
@@ -453,7 +412,6 @@ export default function InspectionPage() {
                   </Select>
                 </div>
 
-                {/* 判定フィルター */}
                 <div className="min-w-[150px]">
                   <Label htmlFor="resultFilter" className="text-xs">判定</Label>
                   <Select
@@ -473,7 +431,6 @@ export default function InspectionPage() {
                 </div>
               </div>
 
-              {/* テキスト検索フィールド */}
               <div className="mt-4">
                 <Input
                   type="text"
@@ -521,17 +478,11 @@ export default function InspectionPage() {
                   ) : (
                     inspectionItems
                       .filter(item => {
-                        // 製造メーカーフィルターを追加
                         if (manufacturerFilter !== "all" && item.manufacturer !== manufacturerFilter) return false;
-                        // 機種フィルターを追加
                         if (modelFilter !== "all" && item.model !== modelFilter) return false;
-                        // カテゴリフィルター
                         if (categoryFilter !== "all" && item.category !== categoryFilter) return false;
-                        // 装置フィルター
                         if (equipmentFilter !== "all" && item.equipment !== equipmentFilter) return false;
-                        // 判定フィルター
                         if (resultFilter !== "all" && item.result !== resultFilter) return false;
-                        // 検索クエリによるフィルター（記事欄のみ）
                         if (searchQuery) {
                           const searchTermLower = searchQuery.toLowerCase();
                           const remarkText = item.remark || '';
@@ -550,7 +501,12 @@ export default function InspectionPage() {
                             <td className="p-1 text-xs">{item.method}</td>
                             <td className="p-1 text-xs">
                               <Input type="number" value={item.measurementRecord || ''} onChange={e => updateInspectionMeasurementRecord(item.id, e.target.value)} className="w-24"/>
-                              <InspectionValueStatus item={item} standard={standard} />
+                              <InspectionValueStatus
+                                value={item.measurementRecord || ''}
+                                minValue={standard?.minValue || ''}
+                                maxValue={standard?.maxValue || ''}
+                                onChange={(value) => updateInspectionMeasurementRecord(item.id, value)}
+                              />
                             </td>
                             <td className="p-1 text-xs">{item.diagramRecord}</td>
                             <td className="p-1 text-xs">

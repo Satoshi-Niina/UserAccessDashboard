@@ -35,7 +35,6 @@ interface InspectionItem {
   engineType?: string;       // エンジン型式
   result?: string;           // 判定結果
   remark?: string;           // 記事（特記事項）
-  measurementValue?: string; // 測定値を追加
 }
 
 // 判定結果の選択肢
@@ -175,10 +174,13 @@ export default function InspectionPage() {
     ));
   };
 
-  const handleMeasurementValueChange = (id: number, value: string) => {
-    setInspectionItems(prevItems => prevItems.map(item =>
-      item.id === id ? { ...item, measurementValue: value } : item
-    ));
+  // 測定等記録の値を直接更新
+  const updateInspectionMeasurementRecord = (id: number, value: string) => {
+    setInspectionItems(
+      inspectionItems.map(item =>
+        item.id === id ? { ...item, measurementRecord: value } : item
+      )
+    );
   };
 
   // スクロール位置の更新処理
@@ -299,16 +301,7 @@ export default function InspectionPage() {
 
             <div className="space-y-2">
               <Label htmlFor="vehicle-id">車両番号</Label>
-              <Select value={vehicleId} onValueChange={setVehicleId}>
-                <SelectTrigger id="vehicle-id">
-                  <SelectValue placeholder="車両番号を選択" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="MC300-1">MC300-1</SelectItem>
-                  <SelectItem value="MC300-2">MC300-2</SelectItem>
-                  <SelectItem value="MR400-1">MR400-1</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input id="vehicle-id" placeholder="車両番号を入力" value={vehicleId} onChange={e => setVehicleId(e.target.value)}/>
             </div>
           </div>
         </CardContent>
@@ -457,25 +450,24 @@ export default function InspectionPage() {
                     <th className="p-2 text-center whitespace-nowrap w-[30ch] text-xs">図形記録</th>
                     <th className="p-2 text-center whitespace-nowrap w-[15ch] text-xs">判定</th>
                     <th className="p-2 text-center whitespace-nowrap w-[50ch] text-xs">記事</th>
-                    <th className="p-2 text-center whitespace-nowrap w-[15ch] text-xs">測定値</th> {/* 測定値カラムを追加 */}
                   </tr>
                 </TableHeader>
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={10} className="text-center">
+                      <TableCell colSpan={9} className="text-center">
                         データを読み込み中...
                       </TableCell>
                     </TableRow>
                   ) : error ? (
                     <TableRow>
-                      <TableCell colSpan={10} className="text-center text-red-500">
+                      <TableCell colSpan={9} className="text-center text-red-500">
                         {error}
                       </TableCell>
                     </TableRow>
                   ) : inspectionItems.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={10} className="text-center">
+                      <TableCell colSpan={9} className="text-center">
                         表示する点検項目がありません
                       </TableCell>
                     </TableRow>
@@ -507,7 +499,9 @@ export default function InspectionPage() {
                           <td className="p-1 text-xs">{item.item}</td>
                           <td className="p-1 text-xs">{item.criteria}</td>
                           <td className="p-1 text-xs">{item.method}</td>
-                          <td className="p-1 text-xs">{item.measurementRecord}</td>
+                          <td className="p-1 text-xs">
+                            <Input type="number" value={item.measurementRecord || ''} onChange={e => updateInspectionMeasurementRecord(item.id, e.target.value)} className="w-24"/>
+                          </td>
                           <td className="p-1 text-xs">{item.diagramRecord}</td>
                           <td className="p-1 text-xs">
                             <Select
@@ -534,27 +528,6 @@ export default function InspectionPage() {
                               className="h-20 w-full text-xs p-0.5"
                             />
                           </td>
-                          <TableCell className="p-2 relative">
-                            <Input
-                              type="text"
-                              value={item.measurementValue || ''}
-                              onChange={(e) => handleMeasurementValueChange(item.id, e.target.value)}
-                              className={`w-24 ${
-                                item.measurementValue && findStandardValue(item.category, item.equipment, item.item) &&
-                                (
-                                  parseFloat(item.measurementValue) < parseFloat(findStandardValue(item.category, item.equipment, item.item)?.minValue || '0') ||
-                                  parseFloat(item.measurementValue) > parseFloat(findStandardValue(item.category, item.equipment, item.item)?.maxValue || '9999')
-                                ) ? 'border-red-500' : ''
-                              }`}
-                              placeholder="数値入力"
-                            />
-                            <div className="absolute top-0 right-0"> {/* Positioning the InspectionValueStatus component */}
-                              <InspectionValueStatus
-                                value={item.measurementValue || ''}
-                                standardValue={item.measurementRecord || ''}
-                              />
-                            </div>
-                          </TableCell>
                         </tr>
                       ))
                   )}

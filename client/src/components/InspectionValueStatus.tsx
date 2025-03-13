@@ -1,119 +1,73 @@
 import { AlertCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import React, { useState, useEffect } from 'react';
+import { Input } from '@/components/ui/input'; // Added import statement
+
 
 interface InspectionValueStatusProps {
   value: string;
-  criteria?: string;
+  minValue?: string;
+  maxValue?: string;
+  onChange: (value: string) => void;
 }
 
-export const InspectionValueStatus: React.FC<InspectionValueStatusProps> = ({
+const InspectionValueStatus: React.FC<InspectionValueStatusProps> = ({
   value,
-  criteria
+  minValue,
+  maxValue,
+  onChange,
 }) => {
-  const [isAbnormal, setIsAbnormal] = useState(false);
-
-  // 空の値の場合は何も表示しない
-  if (!value || value.trim() === '') {
-    return null;
-  }
+  const [isOutOfRange, setIsOutOfRange] = useState(false);
 
   useEffect(() => {
-    // 基準値のパターンにマッチするか検証
-    const checkValueAgainstCriteria = () => {
-      if (!criteria || !value) return false;
+    // 数値をチェック
+    if (value && minValue && maxValue) {
+      const numValue = parseFloat(value);
+      const numMinValue = parseFloat(minValue);
+      const numMaxValue = parseFloat(maxValue);
 
-      try {
-        // 数値の範囲を抽出するパターン
-        const rangePattern = /(\d+(\.\d+)?)\s*[~～-]\s*(\d+(\.\d+)?)/;
-        const equalPattern = /[=＝]\s*(\d+(\.\d+)?)/;
-        const lessThanPattern = /[<＜]\s*(\d+(\.\d+)?)/;
-        const greaterThanPattern = /[>＞]\s*(\d+(\.\d+)?)/;
-        const lessEqualPattern = /[≤≦]\s*(\d+(\.\d+)?)/;
-        const greaterEqualPattern = /[≥≧]\s*(\d+(\.\d+)?)/;
-
-        // 数値かどうかをチェック
-        const numValue = parseFloat(value);
-        if (isNaN(numValue)) return false;
-
-        // 範囲チェック (10~20, 10～20, 10-20 などの形式)
-        const rangeMatch = criteria.match(rangePattern);
-        if (rangeMatch) {
-          const min = parseFloat(rangeMatch[1]);
-          const max = parseFloat(rangeMatch[3]);
-          return !(numValue >= min && numValue <= max);
-        }
-
-        // 等値チェック (=10, ＝10 などの形式)
-        const equalMatch = criteria.match(equalPattern);
-        if (equalMatch) {
-          const targetValue = parseFloat(equalMatch[1]);
-          return numValue !== targetValue;
-        }
-
-        // 未満チェック (<10, ＜10 などの形式)
-        const lessThanMatch = criteria.match(lessThanPattern);
-        if (lessThanMatch) {
-          const targetValue = parseFloat(lessThanMatch[1]);
-          return !(numValue < targetValue);
-        }
-
-        // 超過チェック (>10, ＞10 などの形式)
-        const greaterThanMatch = criteria.match(greaterThanPattern);
-        if (greaterThanMatch) {
-          const targetValue = parseFloat(greaterThanMatch[1]);
-          return !(numValue > targetValue);
-        }
-
-        // 以下チェック (≤10, ≦10 などの形式)
-        const lessEqualMatch = criteria.match(lessEqualPattern);
-        if (lessEqualMatch) {
-          const targetValue = parseFloat(lessEqualMatch[1]);
-          return !(numValue <= targetValue);
-        }
-
-        // 以上チェック (≥10, ≧10 などの形式)
-        const greaterEqualMatch = criteria.match(greaterEqualPattern);
-        if (greaterEqualMatch) {
-          const targetValue = parseFloat(greaterEqualMatch[1]);
-          return !(numValue >= targetValue);
-        }
-
-        return false;
-      } catch (error) {
-        console.error('基準値チェックエラー:', error);
-        return false;
+      // 数値として有効かつ範囲外の場合のみ警告を表示
+      if (!isNaN(numValue) && !isNaN(numMinValue) && !isNaN(numMaxValue)) {
+        setIsOutOfRange(numValue < numMinValue || numValue > numMaxValue);
+      } else {
+        setIsOutOfRange(false);
       }
-    };
-
-    setIsAbnormal(checkValueAgainstCriteria());
-  }, [value, criteria]);
+    } else {
+      setIsOutOfRange(false);
+    }
+  }, [value, minValue, maxValue]);
 
   return (
-    <div className={`text-sm ${isAbnormal ? 'text-red-500 font-bold' : 'text-gray-700'}`}>
-      {isAbnormal ? (
+    <div className="relative">
+      <Input
+        type="number"
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+        className={`w-full text-xs p-1 h-7 ${isOutOfRange ? 'border-red-500' : ''}`}
+        placeholder="数値を入力"
+        step="0.1"
+      />
+      {isOutOfRange && (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center">
-                <span>{value}</span>
-                <span className="ml-2 inline-block bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">
-                  異常値です！
-                </span>
+              <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                <AlertCircle className="h-4 w-4 text-red-500" />
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              <p>基準値: {criteria}</p>
-              <p>入力値: {value}</p>
+              <p>異常値です！</p>
+              <p className="text-xs">基準値: {minValue} 〜 {maxValue}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-      ) : (
-        value
       )}
     </div>
   );
 };
+
+export default InspectionValueStatus;
+
 
 /**
  * 測定値と基準値を比較してステータスを表示する単純なコンポーネント

@@ -33,6 +33,7 @@ interface InspectionItem {
   engineType?: string;       // エンジン型式
   result?: string;           // 判定結果
   remark?: string;           // 記事（特記事項）
+  measurementValue?: string; // 測定値を追加
 }
 
 // 判定結果の選択肢
@@ -45,6 +46,33 @@ const resultOptions = [
 ];
 
 type InspectionTab = "general";
+
+// 測定基準テーブル（仮データ）
+const measurementStandards = {
+  "エンジンオイルレベル": { minValue: "1.5", maxValue: "2.5" },
+  "冷却水温度": { minValue: "80", maxValue: "100" },
+  // ... 他の測定基準を追加
+};
+
+// 基準値取得関数（仮実装）
+const findStandardValue = (category: string, equipment: string, item: string) => {
+  // 実際の基準値取得ロジックをここに記述
+  return measurementStandards[item];
+};
+
+
+// 異常値表示コンポーネント（仮実装）
+const InspectionValueStatus = ({ value, minValue, maxValue }: { value: string, minValue: string, maxValue: string }) => {
+  const numValue = parseFloat(value);
+  const numMinValue = parseFloat(minValue);
+  const numMaxValue = parseFloat(maxValue);
+
+  if (numValue < numMinValue || numValue > numMaxValue) {
+    return <span className="text-red-500 text-xs">異常値です！</span>;
+  }
+  return null;
+};
+
 
 export default function InspectionPage() {
   const [location, navigate] = useLocation();
@@ -171,6 +199,12 @@ export default function InspectionPage() {
   const updateInspectionRemark = (id: number, remark: string) => {
     setInspectionItems(prevItems => prevItems.map(item =>
       item.id === id ? {...item, remark} : item
+    ));
+  };
+
+  const handleMeasurementValueChange = (id: number, value: string) => {
+    setInspectionItems(prevItems => prevItems.map(item =>
+      item.id === id ? { ...item, measurementValue: value } : item
     ));
   };
 
@@ -450,24 +484,25 @@ export default function InspectionPage() {
                     <th className="p-2 text-center whitespace-nowrap w-[30ch] text-xs">図形記録</th>
                     <th className="p-2 text-center whitespace-nowrap w-[15ch] text-xs">判定</th>
                     <th className="p-2 text-center whitespace-nowrap w-[50ch] text-xs">記事</th>
+                    <th className="p-2 text-center whitespace-nowrap w-[15ch] text-xs">測定値</th> {/* 測定値カラムを追加 */}
                   </tr>
                 </TableHeader>
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center">
+                      <TableCell colSpan={10} className="text-center">
                         データを読み込み中...
                       </TableCell>
                     </TableRow>
                   ) : error ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center text-red-500">
+                      <TableCell colSpan={10} className="text-center text-red-500">
                         {error}
                       </TableCell>
                     </TableRow>
                   ) : inspectionItems.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center">
+                      <TableCell colSpan={10} className="text-center">
                         表示する点検項目がありません
                       </TableCell>
                     </TableRow>
@@ -492,7 +527,7 @@ export default function InspectionPage() {
                         }
                         return true;
                       })
-                      .map((item) => (
+                      .map((item, index) => (
                         <tr key={item.id} className="border-t">
                           <td className="p-1 text-xs">{item.category}</td>
                           <td className="p-1 text-xs">{item.equipment}</td>
@@ -526,6 +561,30 @@ export default function InspectionPage() {
                               className="h-20 w-full text-xs p-0.5"
                             />
                           </td>
+                          <TableCell className="text-right">
+                            <div className="flex items-center space-x-2">
+                              <Input
+                                type="text"
+                                value={item.measurementValue || ''}
+                                onChange={(e) => handleMeasurementValueChange(item.id, e.target.value)}
+                                className={`w-24 ${
+                                  item.measurementValue && findStandardValue(item.category, item.equipment, item.item) &&
+                                  (
+                                    parseFloat(item.measurementValue) < parseFloat(findStandardValue(item.category, item.equipment, item.item)?.minValue || '0') ||
+                                    parseFloat(item.measurementValue) > parseFloat(findStandardValue(item.category, item.equipment, item.item)?.maxValue || '9999')
+                                  ) ? 'border-red-500' : ''
+                                }`}
+                                placeholder="数値入力"
+                              />
+                              {item.measurementValue && findStandardValue(item.category, item.equipment, item.item) && (
+                                <InspectionValueStatus
+                                  value={item.measurementValue}
+                                  minValue={findStandardValue(item.category, item.equipment, item.item)?.minValue}
+                                  maxValue={findStandardValue(item.category, item.equipment, item.item)?.maxValue}
+                                />
+                              )}
+                            </div>
+                          </TableCell>
                         </tr>
                       ))
                   )}

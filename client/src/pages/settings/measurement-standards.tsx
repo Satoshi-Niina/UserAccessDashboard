@@ -133,39 +133,39 @@ export default function MeasurementStandards() {
   const [currentStandard, setCurrentStandard] = useState<MeasurementStandard | null>(null);
   const [newStandard, setNewStandard] = useState<Partial<MeasurementStandard>>({});
   const [selectedItemId, setSelectedItemId] = useState<string>('');
-  const [selectedPart, setSelectedPart] = useState<string>('すべて');
-  const [activeTab, setActiveTab] = useState('all');
+  const [selectedTab, setSelectedTab] = useState<string>('all');
+  const [searchManufacturer, setSearchManufacturer] = useState<string>('');
+  const [searchModel, setSearchModel] = useState<string>('');
 
-  // 部位のリスト（フィルター用）
-  const [parts, setParts] = useState<string[]>(['すべて']);
-
-  // 初期データの読み込み
+  // 初期データのロード
   useEffect(() => {
-    // 実際の実装ではAPI呼び出しになる
+    // 実際のアプリでは、APIからデータを取得するロジックに置き換えます
     setStandards(sampleStandards);
     setItems(sampleItems);
-
-    // 部位のリストを作成
-    const uniqueParts = Array.from(new Set(sampleItems.map(item => item.part)));
-    setParts(['すべて', ...uniqueParts]);
   }, []);
 
-  // フィルター後の基準値リスト
-  const filteredStandards = standards.filter(std => {
-    if (selectedPart !== 'すべて' && std.part !== selectedPart) return false;
+  // 検索とフィルタリング
+  const filteredStandards = standards.filter(standard => {
+    if (selectedTab !== 'all' && standard.part !== selectedTab) {
+      return false;
+    }
 
-    // タブによるフィルタリング
-    if (activeTab === 'all') return true;
-    if (activeTab === 'engine' && std.part === 'エンジン') return true;
-    if (activeTab === 'transmission' && std.part === '動力伝達') return true;
-    if (activeTab === 'brake' && (std.part === '制動装置' || std.part === '駐車ブレーキ')) return true;
-    if (activeTab === 'electric' && std.part === '電気装置') return true;
+    if (
+      searchManufacturer &&
+      !standard.manufacturer.toLowerCase().includes(searchManufacturer.toLowerCase())
+    ) {
+      return false;
+    }
 
-    return false;
+    if (searchModel && !standard.modelType.toLowerCase().includes(searchModel.toLowerCase())) {
+      return false;
+    }
+
+    return true;
   });
 
-  // 新規基準値の追加初期化
-  const initAddStandard = () => {
+  // 新しい基準値の追加ダイアログを開く
+  const openAddStandard = () => {
     setNewStandard({});
     setSelectedItemId('');
     setIsAddOpen(true);
@@ -293,102 +293,66 @@ export default function MeasurementStandards() {
       return `${std.manufacturer},${std.modelType},${std.engineType},${std.part},${std.device},${std.checkPoint},${std.criteria},${std.method},${std.minValue},${std.maxValue},${std.unit},${std.warningThreshold}`;
     }).join('\n');
 
-    const csv = `${headers}\n${rows}`;
-
-    // ダウンロード
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const csvContent = `${headers}\n${rows}`;
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.setAttribute('hidden', '');
-    a.setAttribute('href', url);
-    a.setAttribute('download', '測定基準値リスト.csv');
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-
-    toast({
-      title: "エクスポート完了",
-      description: "CSVファイルをエクスポートしました。",
-    });
-  };
-
-  // 測定値の状態を評価する関数
-  const evaluateMeasurement = (value: string, standard: MeasurementStandard) => {
-    if (!value || value.trim() === '') return null;
-    
-    const numValue = parseFloat(value);
-    const min = parseFloat(standard.minValue);
-    const max = parseFloat(standard.maxValue);
-    
-    if (isNaN(numValue) || isNaN(min) || isNaN(max)) return null;
-    
-    if (numValue < min) return "減少";
-    if (numValue > max) return "増加";
-    return "正常";
-  };
-
-  // 測定値の状態に応じたスタイルを返す関数
-  const getStatusStyle = (status: string | null) => {
-    if (!status) return {};
-    
-    switch(status) {
-      case "減少":
-        return { color: 'blue', fontWeight: 'bold' };
-      case "増加":
-        return { color: 'red', fontWeight: 'bold' };
-      case "正常":
-        return { color: 'green', fontWeight: 'bold' };
-      default:
-        return {};
-    }
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', '測定基準値.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto py-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">測定基準値設定</h1>
+        <h1 className="text-3xl font-bold">測定基準値設定</h1>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleExportCSV}>
-            <Save className="mr-2 h-4 w-4" />
             CSVエクスポート
           </Button>
-          <Button onClick={initAddStandard}>
-            <Plus className="mr-2 h-4 w-4" />
-            基準値追加
+          <Button onClick={openAddStandard}>
+            <Plus className="h-4 w-4 mr-2" /> 新規作成
           </Button>
         </div>
       </div>
 
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>フィルター</CardTitle>
+          <CardTitle>検索・フィルタ</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-4">
-            <div className="w-full md:w-1/3">
-              <Label htmlFor="part-filter">部位</Label>
-              <Select value={selectedPart} onValueChange={setSelectedPart}>
-                <SelectTrigger id="part-filter">
-                  <SelectValue placeholder="部位を選択" />
-                </SelectTrigger>
-                <SelectContent>
-                  {parts.map(part => (
-                    <SelectItem key={part} value={part}>{part}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <div className="flex flex-col gap-4 md:flex-row md:items-end">
+            <div className="grid w-full max-w-sm items-center gap-1.5">
+              <Label htmlFor="manufacturer">製造メーカー</Label>
+              <Input
+                id="manufacturer"
+                value={searchManufacturer}
+                onChange={(e) => setSearchManufacturer(e.target.value)}
+                placeholder="製造メーカーで検索"
+              />
+            </div>
+            <div className="grid w-full max-w-sm items-center gap-1.5">
+              <Label htmlFor="model">機種</Label>
+              <Input
+                id="model"
+                value={searchModel}
+                onChange={(e) => setSearchModel(e.target.value)}
+                placeholder="機種で検索"
+              />
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-        <TabsList>
+      <Tabs defaultValue="all" value={selectedTab} onValueChange={setSelectedTab} className="mb-6">
+        <TabsList className="overflow-x-auto pb-1">
           <TabsTrigger value="all">すべて</TabsTrigger>
-          <TabsTrigger value="engine">エンジン</TabsTrigger>
-          <TabsTrigger value="transmission">動力伝達</TabsTrigger>
-          <TabsTrigger value="brake">制動装置</TabsTrigger>
-          <TabsTrigger value="electric">電気装置</TabsTrigger>
+          <TabsTrigger value="エンジン">エンジン</TabsTrigger>
+          <TabsTrigger value="油圧系統">油圧系統</TabsTrigger>
+          <TabsTrigger value="走行装置">走行装置</TabsTrigger>
+          <TabsTrigger value="電装品">電装品</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -430,19 +394,19 @@ export default function MeasurementStandards() {
                     <TableCell>{standard.minValue}</TableCell>
                     <TableCell>{standard.maxValue}</TableCell>
                     <TableCell>{standard.unit}</TableCell>
-                    <TableCell>{standard.warningThreshold || '-'}</TableCell>
+                    <TableCell>{standard.warningThreshold}</TableCell>
                     <TableCell>
-                      <div className="flex gap-1">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => initEditStandard(standard)}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => handleDeleteStandard(standard.id)}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -451,6 +415,13 @@ export default function MeasurementStandards() {
                     </TableCell>
                   </TableRow>
                 ))}
+                {filteredStandards.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={13} className="text-center py-4">
+                      基準値が見つかりませんでした。
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
@@ -465,20 +436,20 @@ export default function MeasurementStandards() {
           </DialogHeader>
           <div className="py-4">
             <div className="grid grid-cols-4 items-center gap-4 mb-4">
-              <Label htmlFor="item" className="text-right">
-                点検項目
+              <Label htmlFor="item-select" className="text-right">
+                点検項目 <span className="text-red-500">*</span>
               </Label>
-              <Select 
-                value={selectedItemId} 
+              <Select
+                value={selectedItemId}
                 onValueChange={handleItemSelect}
               >
-                <SelectTrigger id="item" className="col-span-3">
-                  <SelectValue placeholder="点検項目を選択" />
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="点検項目を選択してください" />
                 </SelectTrigger>
                 <SelectContent>
-                  {items.map(item => (
+                  {items.map((item) => (
                     <SelectItem key={item.id} value={item.id}>
-                      {`${item.manufacturer} - ${item.modelType} - ${item.part} - ${item.checkPoint}`}
+                      {item.checkPoint}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -515,14 +486,14 @@ export default function MeasurementStandards() {
                   <div className="text-right pr-4 text-muted-foreground text-sm">判断基準:</div>
                   <div className="col-span-3">{newStandard.criteria}</div>
                 </div>
-                <div className="grid grid-cols-4 mb-4">
+                <div className="grid grid-cols-4 mb-2">
                   <div className="text-right pr-4 text-muted-foreground text-sm">確認要領:</div>
                   <div className="col-span-3">{newStandard.method}</div>
                 </div>
               </>
             )}
 
-            <div className="grid grid-cols-4 items-center gap-4">
+            <div className="grid grid-cols-4 items-center gap-4 mt-4">
               <Label htmlFor="min-value" className="text-right">
                 最小値 <span className="text-red-500">*</span>
               </Label>
@@ -570,7 +541,9 @@ export default function MeasurementStandards() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddOpen(false)}>キャンセル</Button>
+            <Button variant="outline" onClick={() => setIsAddOpen(false)}>
+              キャンセル
+            </Button>
             <Button onClick={handleAddStandard}>追加</Button>
           </DialogFooter>
         </DialogContent>
@@ -612,12 +585,12 @@ export default function MeasurementStandards() {
                 <div className="text-right pr-4 text-muted-foreground text-sm">判断基準:</div>
                 <div className="col-span-3">{currentStandard.criteria}</div>
               </div>
-              <div className="grid grid-cols-4 mb-4">
+              <div className="grid grid-cols-4 mb-2">
                 <div className="text-right pr-4 text-muted-foreground text-sm">確認要領:</div>
                 <div className="col-span-3">{currentStandard.method}</div>
               </div>
 
-              <div className="grid grid-cols-4 items-center gap-4">
+              <div className="grid grid-cols-4 items-center gap-4 mt-4">
                 <Label htmlFor="edit-min-value" className="text-right">
                   最小値 <span className="text-red-500">*</span>
                 </Label>
@@ -666,7 +639,9 @@ export default function MeasurementStandards() {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditOpen(false)}>キャンセル</Button>
+            <Button variant="outline" onClick={() => setIsEditOpen(false)}>
+              キャンセル
+            </Button>
             <Button onClick={handleUpdateStandard}>更新</Button>
           </DialogFooter>
         </DialogContent>

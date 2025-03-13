@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { InspectionValueStatus } from "@/components/InspectionValueStatus";
-import { Label, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@radix-ui/react-select'
+import { Label, Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup } from '@radix-ui/react-select'
 
 
 export default function MeasurementStandards() {
@@ -94,11 +94,13 @@ export default function MeasurementStandards() {
                       <SelectValue placeholder="ファイルを選択" />
                     </SelectTrigger>
                     <SelectContent>
-                      {availableFiles.map((file) => (
-                        <SelectItem key={file.name} value={file.name}>
-                          {file.name}
-                        </SelectItem>
-                      ))}
+                      <SelectGroup> {/* Added SelectGroup */}
+                        {availableFiles.map((file) => (
+                          <SelectItem key={file.name} value={file.name}>
+                            {file.name}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup> {/* Added SelectGroup */}
                     </SelectContent>
                   </Select>
                 </div>

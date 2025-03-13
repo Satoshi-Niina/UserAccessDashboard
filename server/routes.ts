@@ -83,7 +83,7 @@ export function registerRoutes(app: Express): Server {
       // 最新のCSVファイルを探す
       let csvFilePath;
       if (useLatest) {
-        const assetsDir = path.join(__dirname, '../attached_assets');
+        const assetsDir = path.join(process.cwd(), 'attached_assets');
         const files = await fs.promises.readdir(assetsDir);
         // CSVファイルだけをフィルタリング
         const csvFiles = files.filter(file => file.endsWith('.csv') && file.includes('仕業点検マスタ'));
@@ -96,11 +96,11 @@ export function registerRoutes(app: Express): Server {
           console.log('CSVヘッダー:', csvFilePath);
         } else {
           // CSVファイルが見つからない場合はデフォルトを使用
-          csvFilePath = path.join(__dirname, '../attached_assets/仕業点検マスタ.csv');
+          csvFilePath = path.join(process.cwd(), 'attached_assets/仕業点検マスタ.csv');
         }
       } else {
         // デフォルトのCSVファイル
-        csvFilePath = path.join(__dirname, '../attached_assets/仕業点検マスタ.csv');
+        csvFilePath = path.join(process.cwd(), 'attached_assets/仕業点検マスタ.csv');
       }
 
       const data = await readCsvFile(csvFilePath);

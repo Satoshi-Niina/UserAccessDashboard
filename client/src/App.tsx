@@ -12,7 +12,7 @@ import OperationalPlanPage from "@/pages/operations/operational-plan";
 import Messages from "@/pages/messages";
 import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
-import BasicData from "@/pages/settings/basic-data";
+import TechSupportData from "@/pages/settings/tech-support-data";
 import History from "@/pages/settings/history";
 import UserManagement from "@/pages/settings/user-management";
 import InspectionItems from "@/pages/settings/inspection-items";
@@ -36,7 +36,7 @@ export default function App() {
             <ProtectedRoute path="/operations/inspection" component={LazyInspectionPage} />
             <ProtectedRoute path="/operations/operational-plan" component={OperationalPlanPage} />
             <ProtectedRoute path="/messages" component={Messages} />
-            <ProtectedRoute path="/settings/basic-data" component={BasicData} adminOnly={true} />
+            <ProtectedRoute path="/settings/tech-support-data" component={TechSupportData} adminOnly={true} />
             <ProtectedRoute path="/settings/inspection-items" component={InspectionItems} adminOnly={true} />
             <ProtectedRoute path="/settings/history" component={History} adminOnly={true} />
             <ProtectedRoute path="/settings/user-management" component={UserManagement} adminOnly={true} />

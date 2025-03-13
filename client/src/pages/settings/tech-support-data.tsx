@@ -1,13 +1,15 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Upload, FileX, FileText, Image } from "lucide-react";
+import { Upload, FileX, FileText, Image, ArrowLeft, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useLocation } from 'react-router-dom';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+
 
 function TechSupportData() {
   const [file, setFile] = useState<File | null>(null);
@@ -18,6 +20,9 @@ function TechSupportData() {
   const [fileData, setFileData] = useState<any>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const { toast } = useToast();
+  const [hasChanges, setHasChanges] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [_, navigate] = useLocation();
 
   useEffect(() => {
     // 処理済みファイル一覧を取得
@@ -45,7 +50,7 @@ function TechSupportData() {
     if (event.target.files && event.target.files[0]) {
       const selectedFile = event.target.files[0];
       const fileExtension = selectedFile.name.split('.').pop()?.toLowerCase();
-      
+
       if (fileExtension === 'pptx' || fileExtension === 'xlsx' || fileExtension === 'xls') {
         setFile(selectedFile);
       } else {
@@ -99,6 +104,7 @@ function TechSupportData() {
         setFile(null);
         // 処理済みファイル一覧を更新
         fetchProcessedFiles();
+        setHasChanges(true); //add this line
       } else {
         const error = await response.json();
         toast({
@@ -147,8 +153,63 @@ function TechSupportData() {
     setSelectedImage(imageName);
   };
 
+  // 保存して終了する関数
+  const handleSaveAndExit = async () => {
+    try {
+      // ここで保存処理を行う（現状はアップロード時に保存しているため、追加処理は不要）
+      toast({
+        title: "保存完了",
+        description: "変更が正常に保存されました。",
+      });
+      setHasChanges(false);
+      navigate("/settings");
+    } catch (error) {
+      console.error("保存エラー:", error);
+      toast({
+        variant: "destructive",
+        title: "保存エラー",
+        description: "変更の保存中にエラーが発生しました。",
+      });
+    }
+  };
+
+  // 戻るボタンの処理
+  const handleBack = () => {
+    if (hasChanges) {
+      setShowConfirmDialog(true);
+    } else {
+      navigate("/settings");
+    }
+  };
+
+  // 確認ダイアログで「確認」をクリックした場合
+  const handleConfirmBack = async () => {
+    await handleSaveAndExit();
+    setShowConfirmDialog(false);
+  };
+
+  // 確認ダイアログで「破棄」をクリックした場合
+  const handleDiscardBack = () => {
+    setHasChanges(false);
+    setShowConfirmDialog(false);
+    navigate("/settings");
+  };
+
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold">技術支援データ処理</h2>
+        <div className="flex space-x-2">
+          <Button variant="outline" onClick={handleBack} className="flex items-center gap-1">
+            <ArrowLeft className="h-4 w-4" />
+            戻る
+          </Button>
+          <Button onClick={handleSaveAndExit} className="flex items-center gap-1">
+            <Save className="h-4 w-4" />
+            保存して終了
+          </Button>
+        </div>
+      </div>
       <Card>
         <CardHeader>
           <CardTitle>技術支援データ処理</CardTitle>
@@ -338,6 +399,21 @@ function TechSupportData() {
         </Card>
       )}
 
+      {/* 確認ダイアログ */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>変更を保存しますか？</AlertDialogTitle>
+            <AlertDialogDescription>
+              保存されていない変更があります。保存して終了しますか？
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => handleDiscardBack()}>破棄</AlertDialogCancel>
+            <AlertDialogAction onClick={() => handleConfirmBack()}>確認</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -50,7 +50,7 @@ const menuItems: MenuItem[] = [
     href: "/settings",
     adminOnly: true,
     subItems: [
-      { icon: Database, label: "基本データ処理", href: "/settings/basic-data" },
+      { icon: Database, label: "技術支援データ処理", href: "/settings/tech-support-data" },
       { icon: List, label: "点検項目編集", href: "/settings/inspection-items" },
       { icon: BarChart2, label: "測定基準値設定", href: "/settings/measurement-standards" },
       { icon: List, label: "点検実績管理", href: "/settings/inspection-records" }, // Added Inspection Records

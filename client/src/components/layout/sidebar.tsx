@@ -165,6 +165,7 @@ export function Sidebar({ onExpandChange }: SidebarProps) {
                         "履歴検索",
                         "技術支援データ処理",
                         "点検項目編集",
+                        "測定基準値設定", 
                         "測定基準編集",
                         "ユーザー登録"
                       ];

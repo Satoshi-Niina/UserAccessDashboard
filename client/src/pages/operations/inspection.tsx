@@ -48,17 +48,64 @@ const resultOptions = [
 
 type InspectionTab = "general";
 
-// 測定基準テーブル（仮データ）
-const measurementStandards = {
-  "エンジンオイルレベル": { minValue: "1.5", maxValue: "2.5" },
-  "冷却水温度": { minValue: "80", maxValue: "100" },
-  // ... 他の測定基準を追加
-};
+// 測定基準テーブル（仮データ） -  このデータ構造を標準値データ構造に変更
+interface StandardValue {
+  category: string;
+  equipment: string;
+  item: string;
+  manufacturer?: string;
+  model?: string;
+  minValue: number;
+  maxValue: number;
+}
 
-// 基準値取得関数（仮実装）
-const findStandardValue = (category: string, equipment: string, item: string) => {
-  // 実際の基準値取得ロジックをここに記述
-  return measurementStandards[item];
+const standardValues: StandardValue[] = [
+  { category: "ブレーキ", equipment: "ブレーキシリンダー", item: "ブレーキストローク", minValue: 0.5, maxValue: 1.5 },
+  { category: "ブレーキ", equipment: "ブレーキシリンダー", item: "ブレーキパッド厚", minValue: 2, maxValue: 10 },
+  // ... 他の測定基準を追加
+];
+
+
+// 基準値取得関数
+const findStandardValue = (item: InspectionItem) => {
+  // 基準値が未設定の場合
+  if (!standardValues || standardValues.length === 0) {
+    return { minValue: undefined, maxValue: undefined };
+  }
+
+  // 一致する項目を検索（より詳細に一致するものを優先）
+  const exactMatch = standardValues.find(sv =>
+    sv.item === item.item &&
+    sv.category === item.category &&
+    sv.equipment === item.equipment &&
+    (!item.manufacturer || sv.manufacturer === item.manufacturer) &&
+    (!item.model || sv.model === item.model)
+  );
+
+  if (exactMatch) {
+    console.log('基準値一致:', item.item, exactMatch.minValue, exactMatch.maxValue);
+    return {
+      minValue: exactMatch.minValue,
+      maxValue: exactMatch.maxValue
+    };
+  }
+
+  // 部分一致の検索（メーカーと機種は問わない）
+  const partialMatch = standardValues.find(sv =>
+    sv.item === item.item &&
+    sv.category === item.category &&
+    sv.equipment === item.equipment
+  );
+
+  if (partialMatch) {
+    console.log('部分一致:', item.item, partialMatch.minValue, partialMatch.maxValue);
+    return {
+      minValue: partialMatch.minValue,
+      maxValue: partialMatch.maxValue
+    };
+  }
+
+  return { minValue: undefined, maxValue: undefined };
 };
 
 
@@ -492,44 +539,48 @@ export default function InspectionPage() {
                         }
                         return true;
                       })
-                      .map((item, index) => (
-                        <tr key={item.id} className="border-t">
-                          <td className="p-1 text-xs">{item.category}</td>
-                          <td className="p-1 text-xs">{item.equipment}</td>
-                          <td className="p-1 text-xs">{item.item}</td>
-                          <td className="p-1 text-xs">{item.criteria}</td>
-                          <td className="p-1 text-xs">{item.method}</td>
-                          <td className="p-1 text-xs">
-                            <Input type="number" value={item.measurementRecord || ''} onChange={e => updateInspectionMeasurementRecord(item.id, e.target.value)} className="w-24"/>
-                          </td>
-                          <td className="p-1 text-xs">{item.diagramRecord}</td>
-                          <td className="p-1 text-xs">
-                            <Select
-                              value={item.result}
-                              onValueChange={(value) => updateInspectionResult(item.id, value)}
-                            >
-                              <SelectTrigger className="w-full text-xs p-1">
-                                <SelectValue placeholder="選択" />
-                              </SelectTrigger>
-                              <SelectContent className="text-xs">
-                                {resultOptions.map((option) => (
-                                  <SelectItem key={option} value={option}>
-                                    {option}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </td>
-                          <td className="p-1 text-xs">
-                            <Textarea
-                              value={item.remark || ""}
-                              onChange={(e) => updateInspectionRemark(item.id, e.target.value)}
-                              placeholder="備考"
-                              className="h-20 w-full text-xs p-0.5"
-                            />
-                          </td>
-                        </tr>
-                      ))
+                      .map((item, index) => {
+                        const standard = findStandardValue(item);
+                        return (
+                          <tr key={item.id} className="border-t">
+                            <td className="p-1 text-xs">{item.category}</td>
+                            <td className="p-1 text-xs">{item.equipment}</td>
+                            <td className="p-1 text-xs">{item.item}</td>
+                            <td className="p-1 text-xs">{item.criteria}</td>
+                            <td className="p-1 text-xs">{item.method}</td>
+                            <td className="p-1 text-xs">
+                              <Input type="number" value={item.measurementRecord || ''} onChange={e => updateInspectionMeasurementRecord(item.id, e.target.value)} className="w-24"/>
+                              <InspectionValueStatus item={item} standard={standard} />
+                            </td>
+                            <td className="p-1 text-xs">{item.diagramRecord}</td>
+                            <td className="p-1 text-xs">
+                              <Select
+                                value={item.result}
+                                onValueChange={(value) => updateInspectionResult(item.id, value)}
+                              >
+                                <SelectTrigger className="w-full text-xs p-1">
+                                  <SelectValue placeholder="選択" />
+                                </SelectTrigger>
+                                <SelectContent className="text-xs">
+                                  {resultOptions.map((option) => (
+                                    <SelectItem key={option} value={option}>
+                                      {option}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </td>
+                            <td className="p-1 text-xs">
+                              <Textarea
+                                value={item.remark || ""}
+                                onChange={(e) => updateInspectionRemark(item.id, e.target.value)}
+                                placeholder="備考"
+                                className="h-20 w-full text-xs p-0.5"
+                              />
+                            </td>
+                          </tr>
+                        );
+                      })
                   )}
                 </TableBody>
               </Table>

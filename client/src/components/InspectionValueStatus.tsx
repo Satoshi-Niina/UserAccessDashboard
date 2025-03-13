@@ -1,7 +1,7 @@
 import { AlertCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import React, { useState, useEffect } from 'react';
-import { Input } from '@/components/ui/input'; // Added import statement
+import { Input } from './ui/input'; //Import statement from original code
 
 
 interface InspectionValueStatusProps {
@@ -20,18 +20,30 @@ const InspectionValueStatus: React.FC<InspectionValueStatusProps> = ({
   const [isOutOfRange, setIsOutOfRange] = useState(false);
 
   useEffect(() => {
-    // 数値をチェック
-    if (value && minValue && maxValue) {
-      const numValue = parseFloat(value);
-      const numMinValue = parseFloat(minValue);
-      const numMaxValue = parseFloat(maxValue);
+    if (!value) {
+      setIsOutOfRange(false);
+      return;
+    }
 
-      // 数値として有効かつ範囲外の場合のみ警告を表示
-      if (!isNaN(numValue) && !isNaN(numMinValue) && !isNaN(numMaxValue)) {
-        setIsOutOfRange(numValue < numMinValue || numValue > numMaxValue);
-      } else {
-        setIsOutOfRange(false);
-      }
+    const numValue = parseFloat(value);
+
+    // 入力値が数値でない場合は比較しない
+    if (isNaN(numValue)) {
+      setIsOutOfRange(false);
+      return;
+    }
+
+    // 最小値と最大値の確認
+    const numMinValue = minValue ? parseFloat(minValue) : null;
+    const numMaxValue = maxValue ? parseFloat(maxValue) : null;
+
+    // 最小値または最大値のどちらかが設定されている場合のみチェック
+    if (numMinValue !== null || numMaxValue !== null) {
+      // 最小値より小さい、または最大値より大きい場合は範囲外
+      const belowMin = numMinValue !== null && numValue < numMinValue;
+      const aboveMax = numMaxValue !== null && numValue > numMaxValue;
+
+      setIsOutOfRange(belowMin || aboveMax);
     } else {
       setIsOutOfRange(false);
     }
@@ -57,7 +69,7 @@ const InspectionValueStatus: React.FC<InspectionValueStatusProps> = ({
             </TooltipTrigger>
             <TooltipContent>
               <p>異常値です！</p>
-              <p className="text-xs">基準値: {minValue} 〜 {maxValue}</p>
+              <p className="text-xs">基準値: {minValue || '-'} 〜 {maxValue || '-'}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -67,7 +79,6 @@ const InspectionValueStatus: React.FC<InspectionValueStatusProps> = ({
 };
 
 export default InspectionValueStatus;
-
 
 /**
  * 測定値と基準値を比較してステータスを表示する単純なコンポーネント
@@ -85,40 +96,11 @@ export function SimpleInspectionValueStatus({ currentValue, standardValue }: {cu
     return null;
   }
 
-  // 増加・減少・正常の判定
-  let status = "正常";
-  let color = "text-green-500";
-  let isAbnormal = false;
-
-  if (current > standard * 1.1) { // 10%以上増加
-    status = "増加";
-    color = "text-red-500";
-    isAbnormal = true;
-  } else if (current < standard * 0.9) { // 10%以上減少
-    status = "減少";
-    color = "text-blue-500";
-    isAbnormal = true;
-  }
+  const isMatched = current === standard;
 
   return (
-    <div className="flex items-center gap-1">
-      {isAbnormal ? (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className={`${color} flex items-center text-xs font-semibold`}>
-                {status} <AlertCircle className="ml-1 h-3 w-3" />
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="bg-red-50 border border-red-300 text-red-700 px-3 py-2 rounded shadow-lg">
-              <p className="font-bold">異常値です！</p>
-              <p className="text-xs">基準値: {standardValue}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      ) : (
-        <span className={`${color} text-xs font-semibold`}>{status}</span>
-      )}
+    <div className={`text-xs ${isMatched ? 'text-green-500' : 'text-red-500'}`}>
+      {isMatched ? '✓ 一致' : '✗ 不一致'}
     </div>
   );
 }

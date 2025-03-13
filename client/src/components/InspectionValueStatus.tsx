@@ -1,8 +1,8 @@
-import { AlertCircle } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import React, { useState, useEffect } from 'react';
-import { Input } from './ui/input'; //Import statement from original code
 
+import React, { useState, useEffect } from 'react';
+import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { AlertCircle } from "lucide-react";
 
 interface InspectionValueStatusProps {
   value: string;
@@ -11,7 +11,7 @@ interface InspectionValueStatusProps {
   onChange: (value: string) => void;
 }
 
-const InspectionValueStatus: React.FC<InspectionValueStatusProps> = ({
+export const InspectionValueStatus: React.FC<InspectionValueStatusProps> = ({
   value,
   minValue,
   maxValue,
@@ -78,8 +78,6 @@ const InspectionValueStatus: React.FC<InspectionValueStatusProps> = ({
   );
 };
 
-export default InspectionValueStatus;
-
 /**
  * 測定値と基準値を比較してステータスを表示する単純なコンポーネント
  */
@@ -96,11 +94,13 @@ export function SimpleInspectionValueStatus({ currentValue, standardValue }: {cu
     return null;
   }
 
-  const isMatched = current === standard;
+  // 基準値と比較して異なる場合に警告表示
+  const isDifferent = current !== standard;
 
-  return (
-    <div className={`text-xs ${isMatched ? 'text-green-500' : 'text-red-500'}`}>
-      {isMatched ? '✓ 一致' : '✗ 不一致'}
-    </div>
-  );
+  return isDifferent ? (
+    <div className="text-red-500 text-xs">異常値</div>
+  ) : null;
 }
+
+// デフォルトエクスポートも追加して両方の使い方をサポート
+export default InspectionValueStatus;

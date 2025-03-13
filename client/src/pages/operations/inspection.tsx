@@ -17,7 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { InspectionValueStatus } from "@/components/InspectionValueStatus"; // Import the component
+import InspectionValueStatus from "@/components/InspectionValueStatus"; // デフォルトインポートに変更
 
 
 // 点検項目の型定義

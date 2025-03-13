@@ -40,7 +40,8 @@ export default function App() {
             <ProtectedRoute path="/settings/inspection-items" component={InspectionItems} adminOnly={true} />
             <ProtectedRoute path="/settings/history" component={History} adminOnly={true} />
             <ProtectedRoute path="/settings/user-management" component={UserManagement} adminOnly={true} />
-            <ProtectedRoute path="/settings/inspection-records" component={InspectionRecords} adminOnly={true} /> {/* Added route */}
+            <ProtectedRoute path="/settings/inspection-records" component={InspectionRecords} adminOnly={true} />
+            <ProtectedRoute path="/settings/measurement-standards" component={MeasurementStandards} adminOnly={true} />
             <ProtectedRoute path="/settings" component={Settings} adminOnly={true} />
             <ProtectedRoute path="/" component={Dashboard} />
             <Route component={NotFound} />

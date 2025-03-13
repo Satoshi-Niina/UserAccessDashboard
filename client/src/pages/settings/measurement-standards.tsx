@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Sidebar, SidebarProvider } from "@/components/ui/sidebar";
 import { PageHeader } from "@/components/ui/page-header";
@@ -5,7 +6,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
-import { InspectionValueStatus } from "@/components/InspectionValueStatus";
 import { Label } from "@/components/ui/label";
 import { 
   Select, 
@@ -15,118 +15,231 @@ import {
   SelectItem,
   SelectGroup 
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+
+// 点検項目の型定義
+interface InspectionItem {
+  id: number;
+  category: string;          // 部位
+  equipment: string;         // 装置
+  item: string;              // 確認箇所
+  criteria: string;          // 判断基準
+  method: string;            // 確認要領
+  measurementRecord: string; // 測定等記録
+  diagramRecord: string;     // 図形記録
+  manufacturer?: string;     // 製造メーカー
+  model?: string;            // 機種
+  engineType?: string;       // エンジン型式
+}
 
 export default function MeasurementStandards() {
   const [isMenuExpanded, setIsMenuExpanded] = useState(true); // Always expanded
-  const [inspectionItems, setInspectionItems] = useState([]);
+  const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filteredItems, setFilteredItems] = useState([]);
+  const [filteredItems, setFilteredItems] = useState<InspectionItem[]>([]);
+  const [selectedEquipment, setSelectedEquipment] = useState<string>("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedModel, setSelectedModel] = useState<string>("all");
   const { toast } = useToast();
 
-  // CSVデータの取得
+  // 点検項目データの取得
   useEffect(() => {
-    const fetchInspectionItems = async () => {
+    const fetchInspectionData = async () => {
       try {
-        const response = await fetch("/api/inspection-items");
+        const response = await fetch('/api/inspection-items');
         if (!response.ok) {
-          throw new Error("データの取得に失敗しました");
+          throw new Error(`サーバーエラー: ${response.status}`);
         }
+        
         const data = await response.json();
         setInspectionItems(data);
         setFilteredItems(data);
-      } catch (error) {
-        console.error("Error fetching inspection items:", error);
+        setLoading(false);
+        
+      } catch (err) {
+        console.error("Error fetching inspection items:", err);
+        setLoading(false);
         toast({
           title: "エラー",
-          description: "点検項目データの取得に失敗しました",
+          description: `データの読み込みに失敗しました: ${err instanceof Error ? err.message : '不明なエラー'}`,
           variant: "destructive",
         });
-      } finally {
-        setLoading(false);
+        setInspectionItems([]);
+        setFilteredItems([]);
       }
     };
 
-    fetchInspectionItems();
+    fetchInspectionData();
   }, [toast]);
 
-  // 装置・部位でフィルタリング
-  const filterByEquipment = (equipment) => {
-    if (!equipment || equipment === "all") {
-      setFilteredItems(inspectionItems);
-    } else {
-      const filtered = inspectionItems.filter(item => item.装置 === equipment);
-      setFilteredItems(filtered);
+  // フィルタリング関数
+  useEffect(() => {
+    let result = [...inspectionItems];
+    
+    // 装置でフィルタリング
+    if (selectedEquipment !== "all") {
+      result = result.filter(item => item.equipment === selectedEquipment);
     }
-  };
+    
+    // 部位でフィルタリング
+    if (selectedCategory !== "all") {
+      result = result.filter(item => item.category === selectedCategory);
+    }
+    
+    // 機種でフィルタリング
+    if (selectedModel !== "all") {
+      result = result.filter(item => item.model === selectedModel);
+    }
+    
+    setFilteredItems(result);
+  }, [selectedEquipment, selectedCategory, selectedModel, inspectionItems]);
 
-  // 装置リストの作成（重複なし）
-  const uniqueEquipments = Array.from(new Set(inspectionItems.map(item => item.装置))).filter(Boolean).filter(equipment => equipment.trim() !== '');
+  // ユニークな装置・部位・機種リストの作成
+  const uniqueEquipments = Array.from(
+    new Set(inspectionItems.map(item => item.equipment))
+  ).filter(equipment => equipment && equipment.trim() !== '');
+
+  const uniqueCategories = Array.from(
+    new Set(inspectionItems.map(item => item.category))
+  ).filter(category => category && category.trim() !== '');
+
+  const uniqueModels = Array.from(
+    new Set(inspectionItems.map(item => item.model))
+  ).filter(model => model && model.trim() !== '');
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen bg-background">
-        <Sidebar />
-        <div className="container mx-auto p-4 pt-20 pl-20 md:pl-40 lg:pl-60">
-          <PageHeader title="測定基準値設定" subtitle="記録シートの測定基準値を設定します" />
+      <div className="flex min-h-screen">
+        <Sidebar className="hidden lg:block border-r" expanded={isMenuExpanded}>
+          <div className="space-y-4 py-4">
+            <div className="px-4 py-2">
+              <h2 className="text-lg font-semibold">設定</h2>
+            </div>
+          </div>
+        </Sidebar>
+        <div className="flex-1">
+          <div className="container mx-auto">
+            <PageHeader
+              title="測定基準値設定"
+              description="測定基準値の管理"
+            />
+            <div className="pt-2">
+              <Card className="mb-6">
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* 装置フィルター */}
+                    <div className="space-y-2">
+                      <Label htmlFor="equipment-filter">装置</Label>
+                      <Select value={selectedEquipment} onValueChange={setSelectedEquipment}>
+                        <SelectTrigger id="equipment-filter">
+                          <SelectValue placeholder="装置を選択" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectItem value="all">すべて表示</SelectItem>
+                            {uniqueEquipments.map((equipment) => (
+                              <SelectItem key={equipment} value={equipment}>
+                                {equipment}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-          <Card className="w-full mt-6">
-            <CardContent className="p-4">
-              {/* フィルター部分 */}
-              <div className="mb-4 flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="equipment-filter">装置・部位でフィルター:</Label>
-                  <Select onValueChange={filterByEquipment}>
-                    <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder="装置を選択" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="all">すべて表示</SelectItem>
-                        {uniqueEquipments.map((equipment) => (
-                          <SelectItem key={equipment} value={equipment}>
-                            {equipment}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+                    {/* 部位フィルター */}
+                    <div className="space-y-2">
+                      <Label htmlFor="category-filter">部位</Label>
+                      <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                        <SelectTrigger id="category-filter">
+                          <SelectValue placeholder="部位を選択" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectItem value="all">すべて表示</SelectItem>
+                            {uniqueCategories.map((category) => (
+                              <SelectItem key={category} value={category}>
+                                {category}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-              {/* テーブル部分 */}
-              {loading ? (
-                <div className="text-center p-4">読み込み中...</div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>装置・部位</TableHead>
-                      <TableHead>点検項目</TableHead>
-                      <TableHead>測定基準値</TableHead>
-                      <TableHead>ステータス</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredItems.map((item, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{item.id || index + 1}</TableCell>
-                        <TableCell>{item.装置}</TableCell>
-                        <TableCell>{item.点検項目}</TableCell>
-                        <TableCell>{item.測定基準値 || '未設定'}</TableCell>
-                        <TableCell>
-                          <InspectionValueStatus 
-                            value={item.測定基準値} 
-                            status={item.測定基準値 ? '設定済' : '未設定'} 
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
+                    {/* 機種フィルター */}
+                    <div className="space-y-2">
+                      <Label htmlFor="model-filter">機種</Label>
+                      <Select value={selectedModel} onValueChange={setSelectedModel}>
+                        <SelectTrigger id="model-filter">
+                          <SelectValue placeholder="機種を選択" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectItem value="all">すべて表示</SelectItem>
+                            {uniqueModels.map((model) => (
+                              <SelectItem key={model} value={model}>
+                                {model}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="rounded-md border">
+                    <Table className="w-full">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[100px]">部位</TableHead>
+                          <TableHead className="w-[100px]">装置</TableHead>
+                          <TableHead className="w-[150px]">機種</TableHead>
+                          <TableHead className="w-[150px]">確認箇所</TableHead>
+                          <TableHead className="w-[200px]">判断基準</TableHead>
+                          <TableHead className="w-[200px]">確認要領</TableHead>
+                          <TableHead className="w-[120px]">測定等記録</TableHead>
+                          <TableHead className="w-[120px]">図形記録</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {loading ? (
+                          <TableRow>
+                            <TableCell colSpan={8} className="text-center py-4">
+                              データ読み込み中...
+                            </TableCell>
+                          </TableRow>
+                        ) : filteredItems.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={8} className="text-center py-4">
+                              表示するデータがありません
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          filteredItems.map((item) => (
+                            <TableRow key={item.id}>
+                              <TableCell className="font-medium">{item.category}</TableCell>
+                              <TableCell>{item.equipment}</TableCell>
+                              <TableCell>{item.model}</TableCell>
+                              <TableCell>{item.item}</TableCell>
+                              <TableCell>{item.criteria}</TableCell>
+                              <TableCell>{item.method}</TableCell>
+                              <TableCell>{item.measurementRecord}</TableCell>
+                              <TableCell>{item.diagramRecord}</TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
       </div>
     </SidebarProvider>

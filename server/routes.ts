@@ -440,6 +440,153 @@ export function registerRoutes(app: Express): Server {
         res.status(404).json({ error: "CSVファイルが見つかりません" });
       });
   });
+  
+  // 技術支援データ処理API
+  app.post('/api/tech-support/upload', (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "認証が必要です" });
+    }
+
+    const multer = require('multer');
+    const upload = multer({ 
+      storage: multer.memoryStorage(),
+      limits: { fileSize: 50 * 1024 * 1024 } // 50MB制限
+    }).single('file');
+
+    upload(req, res, async function(err) {
+      if (err) {
+        console.error('ファイルアップロードエラー:', err);
+        return res.status(500).json({ error: 'ファイルアップロードに失敗しました' });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ error: 'ファイルが提供されていません' });
+      }
+
+      try {
+        const dataDir = path.join(process.cwd(), 'attached_assets/data');
+        const imagesDir = path.join(process.cwd(), 'attached_assets/images');
+        
+        // ディレクトリの存在確認と作成
+        if (!fs.existsSync(dataDir)) {
+          fs.mkdirSync(dataDir, { recursive: true });
+        }
+        if (!fs.existsSync(imagesDir)) {
+          fs.mkdirSync(imagesDir, { recursive: true });
+        }
+
+        const originalFilename = req.file.originalname;
+        const timestamp = Date.now();
+        const fileExtension = path.extname(originalFilename).toLowerCase();
+        
+        // ファイル形式の確認
+        if (fileExtension !== '.pptx' && fileExtension !== '.xlsx' && fileExtension !== '.xls') {
+          return res.status(400).json({ error: '対応していないファイル形式です。PPTX、XLSXまたはXLSファイルをアップロードしてください。' });
+        }
+
+        // 一時ファイルの保存
+        const tempFilePath = path.join(process.cwd(), 'attached_assets', `temp_${timestamp}${fileExtension}`);
+        fs.writeFileSync(tempFilePath, req.file.buffer);
+
+        // ファイルの処理（PPTXまたはExcel）
+        let extractionResult;
+        if (fileExtension === '.pptx') {
+          // PPTXファイルの処理
+          const { extractPptxContent } = require('../server/file-utils'); // 後で実装
+          extractionResult = await extractPptxContent(tempFilePath, imagesDir, timestamp);
+        } else {
+          // Excelファイルの処理
+          const { extractExcelContent } = require('../server/file-utils'); // 後で実装
+          extractionResult = await extractExcelContent(tempFilePath, imagesDir, timestamp);
+        }
+
+        // JSONデータの保存
+        const jsonFilePath = path.join(dataDir, `data_${timestamp}.json`);
+        fs.writeFileSync(jsonFilePath, JSON.stringify(extractionResult.textData, null, 2));
+        
+        // 一時ファイルの削除
+        fs.unlinkSync(tempFilePath);
+
+        res.status(200).json({ 
+          message: 'ファイルが正常に処理されました',
+          fileName: originalFilename,
+          timestamp: timestamp,
+          textDataPath: `data_${timestamp}.json`,
+          imageCount: extractionResult.imageCount
+        });
+      } catch (error) {
+        console.error('ファイル処理エラー:', error);
+        res.status(500).json({ error: 'ファイルの処理に失敗しました', details: error.message });
+      }
+    });
+  });
+
+  // 処理済みファイル一覧を取得するAPI
+  app.get('/api/tech-support/files', async (req, res) => {
+    try {
+      const dataDir = path.join(process.cwd(), 'attached_assets/data');
+      if (!fs.existsSync(dataDir)) {
+        return res.json({ files: [] });
+      }
+      
+      const files = await fs.promises.readdir(dataDir);
+      const jsonFiles = files.filter(file => file.endsWith('.json'));
+      
+      const fileStats = await Promise.all(
+        jsonFiles.map(async (file) => {
+          const filePath = path.join(dataDir, file);
+          const stats = await fs.promises.stat(filePath);
+          return {
+            name: file,
+            modified: stats.mtime.toISOString(),
+          };
+        })
+      );
+
+      // 最終更新日時順にソート
+      fileStats.sort((a, b) => new Date(b.modified).getTime() - new Date(a.modified).getTime());
+
+      res.json({ files: fileStats });
+    } catch (error) {
+      console.error('処理済みファイル一覧取得エラー:', error);
+      res.status(500).json({ error: 'ファイル一覧の取得に失敗しました' });
+    }
+  });
+
+  // 処理済みのJSONデータを取得するAPI
+  app.get('/api/tech-support/data/:fileName', async (req, res) => {
+    try {
+      const fileName = req.params.fileName;
+      const filePath = path.join(process.cwd(), 'attached_assets/data', fileName);
+      
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'ファイルが見つかりません' });
+      }
+      
+      const data = await fs.promises.readFile(filePath, 'utf8');
+      res.json(JSON.parse(data));
+    } catch (error) {
+      console.error('データ取得エラー:', error);
+      res.status(500).json({ error: 'データの取得に失敗しました' });
+    }
+  });
+
+  // 処理済みの画像を取得するAPI
+  app.get('/api/tech-support/images/:fileName', async (req, res) => {
+    try {
+      const fileName = req.params.fileName;
+      const filePath = path.join(process.cwd(), 'attached_assets/images', fileName);
+      
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: '画像が見つかりません' });
+      }
+      
+      res.sendFile(filePath);
+    } catch (error) {
+      console.error('画像取得エラー:', error);
+      res.status(500).json({ error: '画像の取得に失敗しました' });
+    }
+  });
 
 
   app.delete("/api/users/:id", async (req, res) => {

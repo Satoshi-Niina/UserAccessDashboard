@@ -7,7 +7,14 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { InspectionValueStatus } from "@/components/InspectionValueStatus";
 import { Label } from "@/components/ui/label";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup } from "@/components/ui/select";
+import { 
+  Select, 
+  SelectTrigger, 
+  SelectValue, 
+  SelectContent, 
+  SelectItem,
+  SelectGroup 
+} from "@/components/ui/select";
 
 export default function MeasurementStandards() {
   const [isMenuExpanded, setIsMenuExpanded] = useState(true); // Always expanded
@@ -44,7 +51,7 @@ export default function MeasurementStandards() {
 
   // 装置・部位でフィルタリング
   const filterByEquipment = (equipment) => {
-    if (!equipment) {
+    if (!equipment || equipment === "all") {
       setFilteredItems(inspectionItems);
     } else {
       const filtered = inspectionItems.filter(item => item.装置 === equipment);
@@ -53,7 +60,7 @@ export default function MeasurementStandards() {
   };
 
   // 装置リストの作成（重複なし）
-  const uniqueEquipments = Array.from(new Set(inspectionItems.map(item => item.装置))).filter(Boolean);
+  const uniqueEquipments = Array.from(new Set(inspectionItems.map(item => item.装置))).filter(Boolean).filter(equipment => equipment.trim() !== '');
 
   return (
     <SidebarProvider>
@@ -74,7 +81,7 @@ export default function MeasurementStandards() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectItem value="">すべて表示</SelectItem>
+                        <SelectItem value="all">すべて表示</SelectItem>
                         {uniqueEquipments.map((equipment) => (
                           <SelectItem key={equipment} value={equipment}>
                             {equipment}

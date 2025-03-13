@@ -11,7 +11,7 @@ import {
   SelectGroup 
 } from "@/components/ui/select";
 import { useSidebar } from "@/components/ui/sidebar";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import {
   Table,
   TableBody,

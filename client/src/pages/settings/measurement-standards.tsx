@@ -6,13 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { InspectionValueStatus } from "@/components/InspectionValueStatus";
+import { Label, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@radix-ui/react-select'
 
 
 export default function MeasurementStandards() {
-  const [isMenuExpanded, setIsMenuExpanded] = useState(false);
+  const [isMenuExpanded, setIsMenuExpanded] = useState(true); // Always expanded
   const [inspectionItems, setInspectionItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filteredItems, setFilteredItems] = useState([]); // Added state for filtering
+  const [filteredItems, setFilteredItems] = useState([]);
+  const [availableFiles, setAvailableFiles] = useState([]); // Add state for available files
+  const [selectedFile, setSelectedFile] = useState(''); // Add state for selected file
   const { toast } = useToast();
 
   // CSVデータの取得
@@ -25,7 +28,15 @@ export default function MeasurementStandards() {
         }
         const data = await response.json();
         setInspectionItems(data);
-        setFilteredItems(data); // Initialize filteredItems
+        setFilteredItems(data);
+
+        //Simulate fetching available files - replace with actual API call if needed.
+        setAvailableFiles([
+          {name: 'file1.csv'},
+          {name: 'file2.csv'},
+          {name: 'file3.csv'}
+        ]);
+
       } catch (error) {
         console.error("Error fetching inspection items:", error);
         toast({
@@ -46,7 +57,7 @@ export default function MeasurementStandards() {
       const updatedItems = [...inspectionItems];
       updatedItems[index].measurementValue = value;
       setInspectionItems(updatedItems);
-      setFilteredItems(updatedItems); // Update filteredItems
+      setFilteredItems(updatedItems);
 
       // APIに保存処理
       await fetch(`/api/inspection-items/${updatedItems[index].id}`, {
@@ -69,58 +80,86 @@ export default function MeasurementStandards() {
   return (
     <SidebarProvider>
       <div className="flex h-screen">
-        <Sidebar defaultExpanded={false} /> {/* Sidebar remains unchanged */}
+        <Sidebar defaultExpanded={true} /> {/* サイドバーを常に展開 */}
         <div className={`flex-1 ${isMenuExpanded ? "ml-64" : "ml-20"} p-6 transition-all duration-300`}>
-          <PageHeader heading="測定基準値設定" description="点検項目の測定基準値を設定します" />
+          <PageHeader title="測定等基準値" description="各点検項目の測定基準値を管理します" />
 
-          <Card className="mt-6">
-            <CardContent className="pt-6">
+          <Card className="mt-4 mb-4">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-4 mb-4">
+                <div className="w-1/2">
+                  <Label htmlFor="csv-file">仕業点検項目ファイル</Label>
+                  <Select value={selectedFile} onValueChange={(value) => setSelectedFile(value)}>
+                    <SelectTrigger id="csv-file">
+                      <SelectValue placeholder="ファイルを選択" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableFiles.map((file) => (
+                        <SelectItem key={file.name} value={file.name}>
+                          {file.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="mt-4">
+            <CardContent className="p-4">
               {loading ? (
-                <p>読み込み中...</p>
-              ) : filteredItems.length === 0 ? ( // Use filteredItems here
-                <p>データがありません</p>
+                <div className="text-center py-4">データを読み込み中...</div>
               ) : (
                 <div className="overflow-x-auto">
-                  <Table className="border-collapse">
+                  <Table className="border-collapse w-full">
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="text-xs border border-gray-200 px-2 py-1 bg-gray-50">製造メーカー</TableHead>
-                        <TableHead className="text-xs border border-gray-200 px-2 py-1 bg-gray-50">機種</TableHead>
-                        <TableHead className="text-xs border border-gray-200 px-2 py-1 bg-gray-50">エンジン</TableHead>
-                        <TableHead className="text-xs border border-gray-200 px-2 py-1 bg-gray-50">部位</TableHead>
-                        <TableHead className="text-xs border border-gray-200 px-2 py-1 bg-gray-50">装置</TableHead>
-                        <TableHead className="text-xs border border-gray-200 px-2 py-1 bg-gray-50">確認箇所</TableHead>
-                        <TableHead className="text-xs border border-gray-200 px-2 py-1 bg-gray-50">測定基準値</TableHead>
-                        <TableHead className="text-xs border border-gray-200 px-2 py-1 bg-gray-50">確認要領</TableHead>
-                        <TableHead className="text-sm font-medium border border-gray-200 px-3 py-2 bg-gray-50">値</TableHead>
-                        <TableHead className="text-sm font-medium border border-gray-200 px-3 py-2 bg-gray-50">状態</TableHead>
+                        <TableHead className="border border-gray-200 px-2 py-1 font-semibold text-xs">製造メーカー</TableHead>
+                        <TableHead className="border border-gray-200 px-2 py-1 font-semibold text-xs">機種</TableHead>
+                        <TableHead className="border border-gray-200 px-2 py-1 font-semibold text-xs">部位</TableHead>
+                        <TableHead className="border border-gray-200 px-2 py-1 font-semibold text-xs">装置</TableHead>
+                        <TableHead className="border border-gray-200 px-2 py-1 font-semibold text-xs">確認箇所</TableHead>
+                        <TableHead className="border border-gray-200 px-2 py-1 font-semibold text-xs">判断基準</TableHead>
+                        <TableHead className="border border-gray-200 px-2 py-1 font-semibold text-xs">確認要領</TableHead>
+                        <TableHead className="border border-gray-200 px-2 py-1 font-semibold text-xs">測定等記録</TableHead>
+                        <TableHead className="border border-gray-200 px-2 py-1 font-semibold text-xs">測定値</TableHead>
+                        <TableHead className="border border-gray-200 px-2 py-1 font-semibold text-xs">状態</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredItems.map((item, index) => ( // Use filteredItems here
-                        <TableRow key={index}>
-                          <TableCell className="text-xs border border-gray-200 px-2 py-1">{item.manufacturer}</TableCell>
-                          <TableCell className="text-xs border border-gray-200 px-2 py-1">{item.model}</TableCell>
-                          <TableCell className="text-xs border border-gray-200 px-2 py-1">{item.engineType}</TableCell>
-                          <TableCell className="text-xs border border-gray-200 px-2 py-1">{item.category}</TableCell>
-                          <TableCell className="text-xs border border-gray-200 px-2 py-1">{item.equipment}</TableCell>
-                          <TableCell className="text-xs border border-gray-200 px-2 py-1">{item.item}</TableCell>
-                          <TableCell className="text-xs border border-gray-200 px-2 py-1">{item.criteria}</TableCell>
-                          <TableCell className="text-xs border border-gray-200 px-2 py-1">{item.method}</TableCell>
-                          <TableCell className="border border-gray-200 px-2 py-1">
-                            <input
-                              type="text"
-                              className="border p-1 rounded w-full"
-                              placeholder="測定値"
-                              value={item.measurementValue || ""} // corrected property name
-                              onChange={(e) => handleValueChange(index, e.target.value)}
-                            />
-                          </TableCell>
-                          <TableCell className="border border-gray-200 px-2 py-1">
-                            <InspectionValueStatus value={item.measurementValue} criteria={item.criteria} /> {/* corrected property name */}
+                      {filteredItems.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={11} className="text-center border border-gray-200 py-4">
+                            データがありません
                           </TableCell>
                         </TableRow>
-                      ))}
+                      ) : (
+                        filteredItems.map((item, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="border border-gray-200 px-2 py-1 text-sm">{item.manufacturer}</TableCell>
+                            <TableCell className="border border-gray-200 px-2 py-1 text-sm">{item.model}</TableCell>
+                            <TableCell className="border border-gray-200 px-2 py-1 text-sm">{item.category}</TableCell>
+                            <TableCell className="border border-gray-200 px-2 py-1 text-sm">{item.equipment}</TableCell>
+                            <TableCell className="border border-gray-200 px-2 py-1 text-sm">{item.item}</TableCell>
+                            <TableCell className="border border-gray-200 px-2 py-1 text-sm">{item.criteria}</TableCell>
+                            <TableCell className="border border-gray-200 px-2 py-1 text-sm">{item.method}</TableCell>
+                            <TableCell className="border border-gray-200 px-2 py-1 text-sm">{item.measurementRecord}</TableCell>
+                            <TableCell className="border border-gray-200 px-2 py-1">
+                              <input
+                                type="text"
+                                className="border p-1 rounded w-full"
+                                placeholder="測定値"
+                                value={item.measurementValue || ""}
+                                onChange={(e) => handleValueChange(index, e.target.value)}
+                              />
+                            </TableCell>
+                            <TableCell className="border border-gray-200 px-2 py-1">
+                              <InspectionValueStatus value={item.measurementValue} criteria={item.criteria} />
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
                     </TableBody>
                   </Table>
                 </div>

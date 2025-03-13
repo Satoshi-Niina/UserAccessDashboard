@@ -77,22 +77,25 @@ export function registerRoutes(app: Express): Server {
   // 点検項目データを取得するエンドポイント
   app.get('/api/inspection-items', async (req, res) => {
     try {
-      // CSVファイルからデータを読み込む
+      // パラメータからuseLatestのフラグとファイル名を取得
       const useLatest = req.query.useLatest === 'true';
+      const fileName = req.query.file as string | undefined;
 
       // 最新のCSVファイルを探す
       let csvFilePath;
-      if (useLatest) {
+      if (fileName) {
+        // 指定されたファイル名を使用
+        csvFilePath = path.join(process.cwd(), 'attached_assets', fileName);
+      } else if (useLatest) {
         const assetsDir = path.join(process.cwd(), 'attached_assets');
         const files = await fs.promises.readdir(assetsDir);
         // CSVファイルだけをフィルタリング
         const csvFiles = files.filter(file => file.endsWith('.csv') && file.includes('仕業点検マスタ'));
 
         if (csvFiles.length > 0) {
-          // 最新のファイルを取得（ファイル名でソート）
+          // ファイル名でソートして最新を取得
           csvFiles.sort();
-          const latestFile = csvFiles[csvFiles.length - 1];
-          csvFilePath = path.join(assetsDir, latestFile);
+          csvFilePath = path.join(assetsDir, csvFiles[csvFiles.length - 1]);
           console.log('CSVヘッダー:', csvFilePath);
         } else {
           // CSVファイルが見つからない場合はデフォルトを使用
@@ -293,73 +296,93 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // 利用可能なCSVファイル一覧を取得するエンドポイント
   app.get('/api/inspection-files', async (req, res) => {
     try {
-      if (!fs.existsSync(INSPECTION_FILES_DIR)) {
-        fs.mkdirSync(INSPECTION_FILES_DIR, { recursive: true });
-        return res.status(200).json({ files: [] });
-      }
+      const assetsDir = path.join(process.cwd(), 'attached_assets');
+      const files = await fs.promises.readdir(assetsDir);
 
-      const files = await promisify(fs.readdir)(INSPECTION_FILES_DIR);
-      const fileDetails = await Promise.all(
-        files
-          .filter(file => file.endsWith('.csv'))
-          .map(async (file) => {
-            const stats = await promisify(fs.stat)(path.join(INSPECTION_FILES_DIR, file));
-            return {
-              name: file,
-              size: stats.size,
-              modified: stats.mtime,
-              modifiedTime: new Date(stats.mtime).getTime()
-            };
-          })
+      const fileStats = await Promise.all(
+        files.map(async (file) => {
+          const filePath = path.join(assetsDir, file);
+          const stats = await fs.promises.stat(filePath);
+          return {
+            name: file,
+            modified: stats.mtime.toISOString(),
+          };
+        })
       );
 
-      fileDetails.sort((a, b) => b.modifiedTime - a.modifiedTime);
+      // 最終更新日時順にソート
+      fileStats.sort((a, b) => new Date(b.modified).getTime() - new Date(a.modified).getTime());
 
-      res.json({ 
-        files: fileDetails,
-        latestFile: fileDetails.length > 0 ? fileDetails[0].name : null 
-      });
+      res.json(fileStats);
     } catch (error) {
-      console.error('ファイル一覧取得エラー:', error);
+      console.error('Error reading attached_assets directory:', error);
       res.status(500).json({ error: 'ファイル一覧の取得に失敗しました' });
     }
   });
 
+  app.get('/api/files/:fileId', async (req, res) => {
+    const fileId = req.params.fileId;
+    const filePath = path.join(process.cwd(), 'attached_assets', fileId);
+    try {
+      if (await fs.promises.access(filePath, fs.constants.F_OK).then(() => true).catch(() => false)) {
+        res.sendFile(filePath);
+      } else {
+        res.status(404).json({error: 'File not found'});
+      }
+    } catch (err) {
+      console.error('Error sending file:', err);
+      res.status(500).json({ error: 'ファイルの送信に失敗しました' });
+    }
+  });
 
-  function getSampleInspectionData() {
-    const headers = [
-      'メーカー',
-      '機種',
-      'エンジン型式',
-      '部位',
-      '装置',
-      '手順',
-      '確認箇所',
-      '判断基準',
-      '確認要領',
-      '測定等記録',
-      '図形記録'
-    ].join(',');
+  app.post('/api/files', async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "認証が必要です" });
+    }
 
-    const dataRows = [
-      ['堀川工機', 'MC300', 'ボルボ', 'エンジン', '本体', '', 'エンジンヘッドカバー、ターボ', 'オイル、燃料漏れ', 'オイル等滲み・垂れ跡が無', '', ''].join(','),
-      ['堀川工機', 'MC300', 'ボルボ', 'エンジン', '本体', '', '排気及び吸気', '排気ガス色及びガス漏れ等の点検（マフラー等）', 'ほぼ透明の薄紫', '', ''].join(','),
-      ['堀川工機', 'MC500', 'ボルボ', 'エンジン', '冷却系統', '', 'ラジエター', '水漏れ、汚れ', '漏れ・汚れ無し', '', ''].join(','),
-      ['堀川工機', 'MC500', 'ボルボ', 'エンジン', '油圧系統', '', 'ホース・配管', '油漏れ、亀裂', '亀裂・油漏れ無し', '', ''].join(','),
-      ['クボタ', 'KT450', 'クボタV3300', 'エンジン', '冷却系統', '', 'ラジエター', '水漏れ、汚れ', '漏れ・汚れ無し', '', ''].join(','),
-      ['クボタ', 'KT450', 'クボタV3300', 'エンジン', '油圧系統', '', 'ホース・配管', '油漏れ、亀裂', '亀裂・油漏れ無し', '', ''].join(','),
-      ['クボタ', 'KT580', 'クボタV3800', '走行装置', 'ブレーキ', '', 'ブレーキペダル', '踏み代、効き', '規定の踏み代で確実に効く', '', ''].join(','),
-      ['クボタ', 'KT580', 'クボタV3800', '走行装置', 'クラッチ', '', 'クラッチペダル', '遊び、切れ', '規定の遊びがあり確実に切れる', '', ''].join(','),
-      ['ヤンマー', 'YT220', 'ヤンマー4TNV', '走行装置', 'ブレーキ', '', 'ブレーキペダル', '踏み代、効き', '規定の踏み代で確実に効く', '', ''].join(','),
-      ['ヤンマー', 'YT220', 'ヤンマー4TNV', '走行装置', 'クラッチ', '', 'クラッチペダル', '遊び、切れ', '規定の遊びがあり確実に切れる', '', ''].join(','),
-      ['ヤンマー', 'YT330', 'ヤンマー4TNV', '電装品', 'バッテリー', '', '端子', '緩み、腐食', '緩み・腐食無し', '', ''].join(','),
-      ['ヤンマー', 'YT330', 'ヤンマー4TNV', '電装品', 'ライト', '', 'ヘッドライト', '点灯確認', '正常に点灯する', '', ''].join(',')
-    ];
+    const multer = require('multer');
+    const upload = multer({ 
+      storage: multer.memoryStorage(),
+      limits: { fileSize: 10 * 1024 * 1024 } 
+    }).single('file');
 
-    return [headers, ...dataRows].join('\n');
-  }
+    upload(req, res, async function(err) {
+      if (err) {
+        console.error('ファイルアップロードエラー:', err);
+        return res.status(500).json({ error: 'ファイルアップロードに失敗しました' });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ error: 'ファイルが提供されていません' });
+      }
+
+      try {
+        const assetsDir = path.join(process.cwd(), 'attached_assets');
+        if (!fs.existsSync(assetsDir)) {
+          fs.mkdirSync(assetsDir, { recursive: true });
+        }
+
+        const fileName = req.file.originalname;
+        const csvFilePath = path.join(assetsDir, fileName);
+
+        await fs.promises.writeFile(csvFilePath, req.file.buffer);
+
+        console.log(`CSVファイルを保存しました: ${csvFilePath} (${req.file.buffer.length} バイト)`);
+
+        res.status(200).json({ 
+          message: 'ファイルが正常にアップロードされました',
+          fileName: fileName,
+          size: req.file.buffer.length
+        });
+      } catch (error) {
+        console.error('ファイル保存エラー:', error);
+        res.status(500).json({ error: 'ファイルの保存に失敗しました' });
+      }
+    });
+  });
 
   app.patch("/api/users/:id", async (req, res) => {
     if (!req.isAuthenticated()) {
@@ -446,6 +469,39 @@ export function registerRoutes(app: Express): Server {
       res.status(500).json({ error: "ユーザーの削除に失敗しました" });
     }
   });
+
+  function getSampleInspectionData() {
+    const headers = [
+      'メーカー',
+      '機種',
+      'エンジン型式',
+      '部位',
+      '装置',
+      '手順',
+      '確認箇所',
+      '判断基準',
+      '確認要領',
+      '測定等記録',
+      '図形記録'
+    ].join(',');
+
+    const dataRows = [
+      ['堀川工機', 'MC300', 'ボルボ', 'エンジン', '本体', '', 'エンジンヘッドカバー、ターボ', 'オイル、燃料漏れ', 'オイル等滲み・垂れ跡が無', '', ''].join(','),
+      ['堀川工機', 'MC300', 'ボルボ', 'エンジン', '本体', '', '排気及び吸気', '排気ガス色及びガス漏れ等の点検（マフラー等）', 'ほぼ透明の薄紫', '', ''].join(','),
+      ['堀川工機', 'MC500', 'ボルボ', 'エンジン', '冷却系統', '', 'ラジエター', '水漏れ、汚れ', '漏れ・汚れ無し', '', ''].join(','),
+      ['堀川工機', 'MC500', 'ボルボ', 'エンジン', '油圧系統', '', 'ホース・配管', '油漏れ、亀裂', '亀裂・油漏れ無し', '', ''].join(','),
+      ['クボタ', 'KT450', 'クボタV3300', 'エンジン', '冷却系統', '', 'ラジエター', '水漏れ、汚れ', '漏れ・汚れ無し', '', ''].join(','),
+      ['クボタ', 'KT450', 'クボタV3300', 'エンジン', '油圧系統', '', 'ホース・配管', '油漏れ、亀裂', '亀裂・油漏れ無し', '', ''].join(','),
+      ['クボタ', 'KT580', 'クボタV3800', '走行装置', 'ブレーキ', '', 'ブレーキペダル', '踏み代、効き', '規定の踏み代で確実に効く', '', ''].join(','),
+      ['クボタ', 'KT580', 'クボタV3800', '走行装置', 'クラッチ', '', 'クラッチペダル', '遊び、切れ', '規定の遊びがあり確実に切れる', '', ''].join(','),
+      ['ヤンマー', 'YT220', 'ヤンマー4TNV', '走行装置', 'ブレーキ', '', 'ブレーキペダル', '踏み代、効き', '規定の踏み代で確実に効く', '', ''].join(','),
+      ['ヤンマー', 'YT220', 'ヤンマー4TNV', '走行装置', 'クラッチ', '', 'クラッチペダル', '遊び、切れ', '規定の遊びがあり確実に切れる', '', ''].join(','),
+      ['ヤンマー', 'YT330', 'ヤンマー4TNV', '電装品', 'バッテリー', '', '端子', '緩み、腐食', '緩み・腐食無し', '', ''].join(','),
+      ['ヤンマー', 'YT330', 'ヤンマー4TNV', '電装品', 'ライト', '', 'ヘッドライト', '点灯確認', '正常に点灯する', '', ''].join(',')
+    ];
+
+    return [headers, ...dataRows].join('\n');
+  }
 
   const httpServer = createServer(app);
   return httpServer;

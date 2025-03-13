@@ -1,27 +1,11 @@
-import React, { useState, useEffect, createContext, useContext } from "react";
-import { Sidebar } from "@/components/ui/sidebar";
+import React, { useState, useEffect } from "react";
+import { Sidebar, SidebarProvider } from "@/components/ui/sidebar";
 import { PageHeader } from "@/components/ui/page-header";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { InspectionValueStatus } from "@/components/InspectionValueStatus";
-
-const SidebarContext = createContext(null);
-
-const SidebarProvider = ({ children }) => {
-  //Example Sidebar context value. Replace with your actual context.
-  const sidebarContextValue = { isOpen: false, setIsOpen: () => {} };
-  return <SidebarContext.Provider value={sidebarContextValue}>{children}</SidebarContext.Provider>;
-};
-
-const useSidebar = () => {
-  const context = useContext(SidebarContext);
-  if (!context) {
-    throw new Error("useSidebar must be used within a SidebarProvider.");
-  }
-  return context;
-};
 
 
 export default function MeasurementStandards() {
@@ -82,7 +66,7 @@ export default function MeasurementStandards() {
   return (
     <SidebarProvider>
       <div className="flex h-screen">
-        <Sidebar onExpandChange={setIsMenuExpanded} />
+        <Sidebar />
         <div className={`flex-1 ${isMenuExpanded ? "ml-64" : "ml-20"} p-6 transition-all duration-300`}>
           <PageHeader heading="測定基準値設定" description="点検項目の測定基準値を設定します" />
 

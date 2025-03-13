@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface InspectionValueStatusProps {
@@ -49,5 +48,38 @@ export function InspectionValueStatus({ value, minValue, maxValue }: InspectionV
     </div>
   );
 }
+
+export function SimpleInspectionValueStatus({ currentValue, standardValue }: {currentValue: string; standardValue: string}) {
+  if (!currentValue || !standardValue) {
+    return null;
+  }
+
+  // 数値変換
+  const current = parseFloat(currentValue);
+  const standard = parseFloat(standardValue);
+
+  if (isNaN(current) || isNaN(standard)) {
+    return null;
+  }
+
+  // 増加・減少・正常の判定
+  let status = "正常";
+  let color = "text-green-500";
+
+  if (current > standard * 1.1) { // 10%以上増加
+    status = "増加";
+    color = "text-red-500";
+  } else if (current < standard * 0.9) { // 10%以上減少
+    status = "減少";
+    color = "text-yellow-500";
+  }
+
+  return (
+    <span className={`font-medium ${color}`}>
+      {status}
+    </span>
+  );
+}
+
 
 export default InspectionValueStatus;

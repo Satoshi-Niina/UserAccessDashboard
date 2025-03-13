@@ -328,6 +328,30 @@ export function registerRoutes(app: Express): Server {
     const filePath = path.join(process.cwd(), 'attached_assets', fileId);
     try {
       if (await fs.promises.access(filePath, fs.constants.F_OK).then(() => true).catch(() => false)) {
+        // Set proper content type based on file extension
+        const ext = path.extname(filePath).toLowerCase();
+        
+        switch (ext) {
+          case '.png':
+            res.set('Content-Type', 'image/png');
+            break;
+          case '.jpg':
+          case '.jpeg':
+            res.set('Content-Type', 'image/jpeg');
+            break;
+          case '.csv':
+            res.set('Content-Type', 'text/csv');
+            break;
+          case '.pptx':
+            res.set('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+            break;
+          case '.xlsx':
+            res.set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            break;
+          default:
+            res.set('Content-Type', 'application/octet-stream');
+        }
+        
         res.sendFile(filePath);
       } else {
         res.status(404).json({error: 'File not found'});
@@ -506,3 +530,38 @@ export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
   return httpServer;
 }
+
+  app.get('/api/technical-preview/:fileId', async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "認証が必要です" });
+    }
+
+    const fileId = req.params.fileId;
+    const filePath = path.join(process.cwd(), 'attached_assets', fileId);
+    
+    try {
+      // Check if file exists
+      if (!await fs.promises.access(filePath, fs.constants.F_OK).then(() => true).catch(() => false)) {
+        return res.status(404).json({error: 'ファイルが見つかりません'});
+      }
+      
+      const ext = path.extname(filePath).toLowerCase();
+      
+      // 現在はシンプルなメタデータを返す
+      // 将来的にはPPTXやExcelファイルのパース処理を実装
+      const fileStats = await fs.promises.stat(filePath);
+      
+      res.json({
+        fileName: fileId,
+        fileSize: fileStats.size,
+        fileType: ext.replace('.', ''),
+        lastModified: fileStats.mtime,
+        previewAvailable: ['.png', '.jpg', '.jpeg', '.csv'].includes(ext),
+        message: 'プレビューデータを取得しました',
+      });
+      
+    } catch (err) {
+      console.error('Technical preview error:', err);
+      res.status(500).json({ error: 'プレビューの生成に失敗しました' });
+    }
+  });

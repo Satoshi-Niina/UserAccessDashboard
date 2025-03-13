@@ -15,8 +15,8 @@ import { ListChecks, Ruler } from 'lucide-react'; // Added imports for new icons
 export default function Settings() {
   const settingsLinks = [
     {
-      title: '基本データ処理',
-      description: 'システムの基本データを管理します',
+      title: '技術支援データ処理',
+      description: 'システムの技術支援データを管理します',
       icon: <Database className="h-8 w-8" />,
       href: '/settings/basic-data',
     },

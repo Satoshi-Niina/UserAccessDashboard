@@ -54,6 +54,7 @@ const SidebarProvider = React.forwardRef<
     defaultOpen?: boolean
     open?: boolean
     onOpenChange?: (open: boolean) => void
+    initialState?: "expanded" | "collapsed"
   }
 >(
   (
@@ -61,6 +62,7 @@ const SidebarProvider = React.forwardRef<
       defaultOpen = true,
       open: openProp,
       onOpenChange: setOpenProp,
+      initialState = "expanded",
       className,
       style,
       children,

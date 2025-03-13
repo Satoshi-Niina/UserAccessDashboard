@@ -10,6 +10,11 @@ import { promisify } from 'util';
 const INSPECTION_FILES_DIR = path.join(process.cwd(), 'attached_assets');
 const inspectionItemsDir = INSPECTION_FILES_DIR; // Added for clarity
 
+async function readCsvFile(filePath: string) {
+  const fileContent = await fs.promises.readFile(filePath, 'utf8');
+  return Papa.parse(fileContent, { header: true }).data;
+}
+
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
 
@@ -69,86 +74,40 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // 点検項目データを取得するエンドポイント
   app.get('/api/inspection-items', async (req, res) => {
-    console.log('API: /api/inspection-items が呼び出されました');
-
-    let requestedFile = (req.query.file || req.query.filename) as string;
-    if (!requestedFile || requestedFile === 'latest') {
-      try {
-        if (fs.existsSync(INSPECTION_FILES_DIR)) {
-          const files = await promisify(fs.readdir)(INSPECTION_FILES_DIR);
-          const csvFiles = files.filter(file => file.endsWith('.csv'));
-
-          if (csvFiles.length > 0) {
-            const fileStats = await Promise.all(
-              csvFiles.map(async file => {
-                const stats = await promisify(fs.stat)(path.join(INSPECTION_FILES_DIR, file));
-                return { 
-                  name: file, 
-                  mtime: stats.mtime.getTime() 
-                };
-              })
-            );
-
-            fileStats.sort((a, b) => b.mtime - a.mtime);
-            requestedFile = fileStats[0]?.name || '仕業点検マスタ.csv';
-          } else {
-            requestedFile = '仕業点検マスタ.csv';
-          }
-        } else {
-          requestedFile = '仕業点検マスタ.csv';
-        }
-      } catch (error) {
-        console.error('最新ファイル特定エラー:', error);
-        requestedFile = '仕業点検マスタ.csv';
-      }
-    }
-
-    console.log('リクエストされたファイル:', requestedFile);
-
-    res.set('Cache-Control', 'no-store, max-age=0');
-    res.set('Pragma', 'no-cache');
-    res.set('Expires', '0');
-
     try {
-      const filePath = path.join(INSPECTION_FILES_DIR, requestedFile);
+      // CSVファイルからデータを読み込む
+      const useLatest = req.query.useLatest === 'true';
 
-      if (!fs.existsSync(filePath)) {
-        console.warn('指定されたCSVファイルが見つかりません:', filePath);
-
-        const files = await promisify(fs.readdir)(INSPECTION_FILES_DIR);
-        const csvFiles = files.filter(file => file.endsWith('.csv'));
+      // 最新のCSVファイルを探す
+      let csvFilePath;
+      if (useLatest) {
+        const assetsDir = path.join(__dirname, '../attached_assets');
+        const files = await fs.promises.readdir(assetsDir);
+        // CSVファイルだけをフィルタリング
+        const csvFiles = files.filter(file => file.endsWith('.csv') && file.includes('仕業点検マスタ'));
 
         if (csvFiles.length > 0) {
-          const fileStats = await Promise.all(
-            csvFiles.map(async file => {
-              const stats = await promisify(fs.stat)(path.join(INSPECTION_FILES_DIR, file));
-              return { 
-                name: file, 
-                mtime: stats.mtime.getTime() 
-              };
-            })
-          );
-
-          fileStats.sort((a, b) => b.mtime - a.mtime);
-          const latestFile = fileStats[0].name;
-          const latestFilePath = path.join(INSPECTION_FILES_DIR, latestFile);
-
-          console.log('最新のCSVファイルを使用します:', latestFilePath);
-          const csvData = fs.readFileSync(latestFilePath, 'utf8');
-          res.set('Content-Type', 'text/csv; charset=utf-8');
-          return res.status(200).send(csvData);
+          // 最新のファイルを取得（ファイル名でソート）
+          csvFiles.sort();
+          const latestFile = csvFiles[csvFiles.length - 1];
+          csvFilePath = path.join(assetsDir, latestFile);
+          console.log('CSVヘッダー:', csvFilePath);
         } else {
-          return res.status(404).json({ error: 'CSVファイルが見つかりません' });
+          // CSVファイルが見つからない場合はデフォルトを使用
+          csvFilePath = path.join(__dirname, '../attached_assets/仕業点検マスタ.csv');
         }
+      } else {
+        // デフォルトのCSVファイル
+        csvFilePath = path.join(__dirname, '../attached_assets/仕業点検マスタ.csv');
       }
 
-      const fileContent = await promisify(fs.readFile)(filePath, 'utf8');
-      res.set('Content-Type', 'text/csv; charset=utf-8');
-      res.status(200).send(fileContent);
+      const data = await readCsvFile(csvFilePath);
+      res.json(data);
     } catch (error) {
-      console.error('点検項目取得エラー:', error);
-      res.status(500).json({ error: '点検項目の取得に失敗しました' });
+      console.error('Error loading inspection items:', error);
+      res.status(500).json({ error: 'データの読み込みに失敗しました' });
     }
   });
 

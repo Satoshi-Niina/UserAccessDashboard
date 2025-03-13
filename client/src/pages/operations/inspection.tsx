@@ -95,75 +95,58 @@ export default function InspectionPage() {
 
   useEffect(() => {
     const fetchInspectionItems = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
-        // 最新のCSVファイルを取得するためにlatestパラメータを追加
-        const response = await fetch('/api/inspection-items?latest=true');
+        // 仕業点検テンプレートを取得（useLatest=trueで最新のマスタファイルを取得）
+        const response = await fetch('/api/inspection-items?useLatest=true');
+        const data = await response.json();
 
-        if (!response.ok) {
-          throw new Error('点検項目の取得に失敗しました');
-        }
+        console.log('点検項目データ取得:', data.length, '件');
 
-        const csvText = await response.text();
+        // 取得したデータを処理して適切な形式に変換
+        const items = [];
 
-        // ヘッダー情報のログ
-        const rows = csvText.split('\n');
-        const headers = rows[0].split(',');
-        console.log("CSVヘッダー:", headers);
-        console.log("予想されるヘッダー数:", headers.length);
+        // ヘッダーマッピング
+        const headerMapping = {
+          '製造メーカー': 'manufacturer',
+          '機種': 'model',
+          'エンジン型式': 'engineType',
+          '部位': 'category',
+          '装置': 'equipment',
+          '確認箇所': 'item',
+          '判断基準': 'criteria',
+          '確認要領': 'method',
+          '測定等記録': 'measurementRecord',
+          '図形記録': 'diagramRecord',
+          '備考': 'remark'
+        };
 
-        // CSVパース（簡易的な実装）
-        const categoryIndex = headers.findIndex(h => h === '部位' || h === 'category');
-        const equipmentIndex = headers.findIndex(h => h === '装置' || h === 'equipment');
-        const itemIndex = headers.findIndex(h => h === '確認箇所' || h === 'item');
-        const criteriaIndex = headers.findIndex(h => h === '判断基準' || h === 'criteria');
-        const methodIndex = headers.findIndex(h => h === '確認要領' || h === 'method');
-        const measurementRecordIndex = headers.findIndex(h => h === '測定等記録' || h === 'measurementRecord');
-        const diagramRecordIndex = headers.findIndex(h => h === '図形記録' || h === 'diagramRecord');
-        const idIndex = headers.findIndex(h => h === 'id');
-        const manufacturerIndex = headers.findIndex(h => h === '製造メーカー' || h === 'manufacturer');
-        const modelIndex = headers.findIndex(h => h === '機種' || h === 'model');
-        const engineTypeIndex = headers.findIndex(h => h === 'エンジン型式' || h === 'engineType');
-        const remarkIndex = headers.findIndex(h => h === '記事' || h === 'remark');
+        // データ変換処理
+        for (let i = 0; i < data.length; i++) {
+          const row = data[i];
 
+          // 空のオブジェクトをスキップ
+          if (!row || Object.keys(row).length === 0) continue;
 
-        // CSVから点検項目を作成
-        const items: InspectionItem[] = [];
-        for (let i = 1; i < rows.length; i++) {
-          if (!rows[i].trim()) continue; // 空行をスキップ
+          const item: any = { id: i + 1 };
 
-          const values = rows[i].split(',');
-
-          // 各カラムの値を取得（存在しない場合は空文字）
-          const getId = () => idIndex >= 0 ? parseInt(values[idIndex]) || i : i;
-          const getCategory = () => categoryIndex >= 0 ? values[categoryIndex] || '' : '';
-          const getEquipment = () => equipmentIndex >= 0 ? values[equipmentIndex] || '' : '';
-          const getItem = () => itemIndex >= 0 ? values[itemIndex] || '' : '';
-          const getCriteria = () => criteriaIndex >= 0 ? values[criteriaIndex] || '' : '';
-          const getMethod = () => methodIndex >= 0 ? values[methodIndex] || '' : '';
-          const getMeasurementRecord = () => measurementRecordIndex >= 0 ? values[measurementRecordIndex] || '' : '';
-          const getDiagramRecord = () => diagramRecordIndex >= 0 ? values[diagramRecordIndex] || '' : '';
-          const getManufacturer = () => manufacturerIndex >= 0 ? values[manufacturerIndex] || '' : '';
-          const getModel = () => modelIndex >= 0 ? values[modelIndex] || '' : '';
-          const getEngineType = () => engineTypeIndex >= 0 ? values[engineTypeIndex] || '' : '';
-          const getRemark = () => remarkIndex >= 0 ? values[remarkIndex] || '' : '';
-
-          items.push({
-            id: getId(),
-            category: getCategory(),
-            equipment: getEquipment(),
-            item: getItem(),
-            criteria: getCriteria(),
-            method: getMethod(),
-            measurementRecord: getMeasurementRecord(),
-            diagramRecord: getDiagramRecord(),
-            manufacturer: getManufacturer(),
-            model: getModel(),
-            engineType: getEngineType(),
-            remark: getRemark()
+          // すべてのヘッダーに対して処理
+          Object.keys(row).forEach(header => {
+            // マッピングされたプロパティ名があればそれを使用、なければヘッダー名をそのまま使用
+            const propName = headerMapping[header] || header;
+            item[propName] = row[header] || '';
           });
+
+          // 必要なプロパティが存在することを確認
+          const requiredProps = ['category', 'equipment', 'item', 'criteria'];
+          const hasRequiredProps = requiredProps.every(prop => item.hasOwnProperty(prop));
+
+          if (hasRequiredProps) {
+            items.push(item);
+          }
         }
 
+        console.log('変換後の点検項目:', items.length, '件');
         setInspectionItems(items);
         setLoading(false);
       } catch (err) {

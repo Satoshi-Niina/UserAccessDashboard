@@ -156,18 +156,44 @@ export function Sidebar({ onExpandChange }: SidebarProps) {
               {/* サブメニューの表示 */}
               {isExpanded && isActive && hasSubItems && (
                 <div className="ml-10 space-y-1">
-                  {item.subItems?.filter(subItem => !subItem.adminOnly || (user && user.isAdmin)).map((subItem) => (
-                    <Link key={subItem.href} href={subItem.href}>
-                      <div 
-                        className={cn(
-                          "flex items-center p-2 rounded-md text-sm",
-                          location === subItem.href ? "bg-sidebar-selected/50 text-sidebar-foreground font-medium" : "text-sidebar-muted hover:bg-sidebar-hover"
+                  {item.subItems
+                    ?.filter(subItem => !subItem.adminOnly || (user && user.isAdmin))
+                    // サブメニューを指定した順序に並び替え
+                    .sort((a, b) => {
+                      const order = [
+                        "点検実績管理",
+                        "履歴検索",
+                        "技術支援データ処理",
+                        "点検項目編集",
+                        "測定基準編集",
+                        "ユーザー登録"
+                      ];
+                      const indexA = order.indexOf(a.label);
+                      const indexB = order.indexOf(b.label);
+                      if (indexA === -1) return 1; // リストにないものは後ろへ
+                      if (indexB === -1) return -1; // リストにないものは後ろへ
+                      if (a.label === "ユーザー登録" && b.label !== "ユーザー登録") return 1; // ユーザー登録を最後に
+                      if (a.label !== "ユーザー登録" && b.label === "ユーザー登録") return -1; // ユーザー登録を最後に
+                      return indexA - indexB;
+                    })
+                    .map((subItem, index, arr) => (
+                      <>
+                        {/* ユーザー登録の前に1行空ける */}
+                        {index > 0 && subItem.label === "ユーザー登録" && (
+                          <div className="h-2"></div>
                         )}
-                      >
-                        {subItem.label}
-                      </div>
-                    </Link>
-                  ))}
+                        <Link key={subItem.href} href={subItem.href}>
+                          <div 
+                            className={cn(
+                              "flex items-center p-2 rounded-md text-sm",
+                              location === subItem.href ? "bg-sidebar-selected/50 text-sidebar-foreground font-medium" : "text-sidebar-muted hover:bg-sidebar-hover"
+                            )}
+                          >
+                            {subItem.label}
+                          </div>
+                        </Link>
+                      </>
+                    ))}
                 </div>
               )}
             </div>

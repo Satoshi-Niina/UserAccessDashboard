@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { InspectionValueStatus } from "@/components/InspectionValueStatus";
-import { Label, Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup, SelectLabel } from '@radix-ui/react-select'
+import { Label, Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup } from '@radix-ui/react-select'
 
 
 export default function MeasurementStandards() {

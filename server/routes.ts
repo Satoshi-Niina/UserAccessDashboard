@@ -255,7 +255,8 @@ export function registerRoutes(app: Express): Server {
 
       const today = new Date().toISOString().slice(0, 10);
       const baseFileName = fileName || `測定基準値_${today}`;
-      const measurementDir = path.join(process.cwd(), 'attached_assets/Measurement Standard Value');
+      const assetsDir = path.join(process.cwd(), 'attached_assets');
+      const measurementDir = path.join(assetsDir, 'Measurement Standard Value');
       
       // 同じ日付のファイルをチェック
       const files = fs.readdirSync(measurementDir);
@@ -272,8 +273,6 @@ export function registerRoutes(app: Express): Server {
       });
 
       const outputFileName = `${baseFileName}_${String(maxIndex + 1).padStart(2, '0')}.csv`;
-
-      const assetsDir = path.join(process.cwd(), 'attached_assets');
       if (!fs.existsSync(assetsDir)) {
         fs.mkdirSync(assetsDir, { recursive: true });
       }

@@ -4,7 +4,15 @@
 import { useEffect, useState } from "react"
 
 export function useMounted() {
-  const [isMounted, setIsMounted] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  return mounted;
+}
 
   useEffect(() => {
     setIsMounted(true);

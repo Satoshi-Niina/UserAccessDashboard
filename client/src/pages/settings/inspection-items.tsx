@@ -164,10 +164,17 @@ export default function InspectionItems() {
 
     fetchInspectionData();
   }, [currentFileName, toast]);
+
+  // 利用可能なファイル一覧を取得
+  useEffect(() => {
+    const fetchAvailableFiles = async () => {
+      try {
+        const response = await fetch('/api/inspection-files');
+        const data = await response.json();
+        const fileList = Array.isArray(data) ? data.map(file => ({
           name: file.name,
           modified: new Date(file.modified).toLocaleString()
         })) : [];
-
         setAvailableFiles(fileList);
 
         // 最新のファイルを設定

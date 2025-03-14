@@ -931,7 +931,8 @@ export default function InspectionItems() {
               onClick={() => openEditDialog(item)}
             >
               <Edit className="h-4 w-4" />
-            </Button            <Button
+            </Button>
+            <Button
               variant="ghost"
               size="icon"
               onClick={() => deleteInspectionItem(item.id)}

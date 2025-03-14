@@ -77,34 +77,31 @@ export function registerRoutes(app: Express): Server {
   // 点検項目データを取得するエンドポイント
   app.get('/api/inspection-items', async (req, res) => {
     try {
-      // パラメータからuseLatestのフラグとファイル名を取得
-      const useLatest = req.query.useLatest === 'true';
+      // パラメータからファイル名を取得
       const fileName = req.query.file as string | undefined;
 
-      // 最新のCSVファイルを探す
+      // CSVファイルのパスを決定
+      const assetsDir = path.join(process.cwd(), 'attached_assets');
+      const inspectionDir = path.join(assetsDir, 'inspection');
       let csvFilePath;
+
       if (fileName) {
         // 指定されたファイル名を使用
-        csvFilePath = path.join(process.cwd(), 'attached_assets', fileName);
-      } else if (useLatest) {
-        const assetsDir = path.join(process.cwd(), 'attached_assets');
-        const inspectionDir = path.join(assetsDir, 'inspection');
-        const files = await fs.promises.readdir(inspectionDir);
-        // inspectionフォルダ内のCSVファイルをフィルタリング
-        const csvFiles = files.filter(file => file.endsWith('.csv'));
-
-        if (csvFiles.length > 0) {
-          // ファイル名でソートして最新を取得
-          csvFiles.sort();
-          csvFilePath = path.join(inspectionDir, csvFiles[csvFiles.length - 1]);
-          console.log('CSVヘッダー:', csvFilePath);
-        } else {
-          // CSVファイルが見つからない場合はデフォルトを使用
-          csvFilePath = path.join(process.cwd(), 'attached_assets/仕業点検マスタ.csv');
-        }
+        csvFilePath = path.join(inspectionDir, fileName);
       } else {
-        // デフォルトのCSVファイル
-        csvFilePath = path.join(process.cwd(), 'attached_assets/仕業点検マスタ.csv');
+        // デフォルトファイルを検索
+        const files = await fs.promises.readdir(inspectionDir);
+        const csvFiles = files.filter(file => file.endsWith('.csv'));
+        
+        if (csvFiles.length > 0) {
+          // 最新のファイルを使用
+          csvFiles.sort();
+          const latestFile = csvFiles[csvFiles.length - 1];
+          csvFilePath = path.join(inspectionDir, latestFile);
+          console.log('使用するCSVファイル:', csvFilePath);
+        } else {
+          return res.status(404).json({ error: '点検項目マスタファイルが見つかりません' });
+        }
       }
 
       const data = await readCsvFile(csvFilePath);

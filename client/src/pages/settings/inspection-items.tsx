@@ -117,21 +117,16 @@ export default function InspectionItems() {
         const response = await fetch('/api/inspection-files');
         const data = await response.json();
 
-        if (data.files && Array.isArray(data.files)) {
-          const fileList = data.files.map(file => ({
-            name: file.name,
-            modified: new Date(file.modified).toLocaleString()
-          }));
+        const fileList = Array.isArray(data) ? data.map(file => ({
+          name: file.name,
+          modified: new Date(file.modified).toLocaleString()
+        })) : [];
 
-          setAvailableFiles(fileList);
+        setAvailableFiles(fileList);
 
-          // 最新のファイルを取得して設定
-          if (data.latestFile) {
-            setCurrentFileName(data.latestFile);
-          } else if (fileList.length > 0) {
-            // latestFileがレスポンスに含まれていない場合は最初のファイル（すでにソート済み）
-            setCurrentFileName(fileList[0].name);
-          }
+        // 最新のファイルを設定
+        if (fileList.length > 0) {
+          setCurrentFileName(fileList[0].name);
         }
       } catch (err) {
         console.error("ファイル一覧取得エラー:", err);

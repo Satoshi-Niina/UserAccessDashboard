@@ -118,39 +118,17 @@ export function registerRoutes(app: Express): Server {
 
       const fileContent = await fs.promises.readFile(csvFilePath, 'utf8');
 
-      // BOMを削除
-      const cleanedContent = fileContent.replace(/^\uFEFF/, '');
-
-      // ファイル形式の判定（内容で判定）
-      const isJSON = cleanedContent.trim().startsWith('{') || cleanedContent.trim().startsWith('[');
-
-      if (isJSON) {
-        try {
-          const jsonData = JSON.parse(cleanedContent);
-          return res.json(jsonData);
-        } catch (error) {
-          console.error('JSONパースエラー:', error);
-          return res.status(500).json({ error: 'JSONの解析に失敗しました' });
-        }
-      }
-
-      // CSVパース用にデータをクリーニング
-      const cleanedContentCsv = cleanedContent
-        .replace(/\uFEFF/g, '') // BOMを削除
-        .replace(/[\r\n]+/g, '\n') // 改行コードを統一
-        .trim();
-
       // CSVパース処理
-      const results = Papa.parse(cleanedContentCsv, {
+      const results = Papa.parse(fileContent, {
         header: true,
         skipEmptyLines: true,
         transformHeader: (header) => header.trim(),
         transform: (value) => value?.trim() || '',
         delimiter: ',',
         encoding: 'UTF-8',
-        beforeFirstChunk: function(chunk) {
-          return chunk.replace(/^\[.*\]$/, ''); // JSON配列形式のデータを除去
-        },
+        error: (error) => {
+          console.error('CSVパースエラー:', error);
+        }
       });
 
       if (!results.data || results.data.length === 0) {

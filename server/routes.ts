@@ -81,16 +81,15 @@ export function registerRoutes(app: Express): Server {
       const fileName = req.query.file as string | undefined;
 
       // CSVファイルのパスを決定
-      const assetsDir = path.join(process.cwd(), 'attached_assets');
-      const inspectionDir = path.join(assetsDir, 'inspection');
+      const inspectionDir = path.join(process.cwd(), 'attached_assets/inspection');
       let csvFilePath;
 
       if (fileName) {
         // 指定されたファイル名を使用
-        csvFilePath = path.join(assetsDir, fileName);
-        // ファイルが存在しない場合はinspectionディレクトリを確認
+        csvFilePath = path.join(inspectionDir, fileName);
+        // ファイルが存在するか確認
         if (!fs.existsSync(csvFilePath)) {
-          csvFilePath = path.join(inspectionDir, fileName);
+          return res.status(404).json({ error: '指定されたファイルが見つかりません' });
         }
       } else {
         // デフォルトファイルを検索

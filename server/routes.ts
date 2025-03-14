@@ -110,7 +110,9 @@ export function registerRoutes(app: Express): Server {
       const fileContent = await fs.promises.readFile(csvFilePath, 'utf8');
       const results = Papa.parse(fileContent, {
         header: true,
-        skipEmptyLines: true
+        skipEmptyLines: true,
+        transformHeader: (header) => header.trim(),
+        transform: (value) => value.trim()
       });
 
       console.log('点検項目データ取得:', results.data.length, '件');
@@ -131,14 +133,23 @@ export function registerRoutes(app: Express): Server {
       };
 
       results.data.forEach((row, index) => {
-        if (Object.keys(row).length === 0) return;
+        if (!row || Object.keys(row).length === 0) return;
 
-        const item = { id: index + 1 };
+        const item: any = { id: index + 1 };
         Object.entries(row).forEach(([key, value]) => {
+          if (!key) return;
           const mappedKey = headerMapping[key] || key;
-          item[mappedKey] = value || '';
+          if (value && typeof value === 'string') {
+            item[mappedKey] = value.trim();
+          } else {
+            item[mappedKey] = value || '';
+          }
         });
-        items.push(item);
+
+        // 必須フィールドが存在する場合のみ追加
+        if (item.manufacturer && item.model && item.category && item.equipment && item.item) {
+          items.push(item);
+        }
       });
       res.json(items);
     } catch (error) {

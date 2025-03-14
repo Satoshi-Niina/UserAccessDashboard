@@ -184,7 +184,7 @@ export default function InspectionItems() {
     };
 
     fetchInspectionData();
-  }, [currentFileName, toast]);
+  }, [currentFileName]);
 
   // 利用可能なファイル一覧を取得
   useEffect(() => {
@@ -931,8 +931,7 @@ export default function InspectionItems() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => openEditDialog(item)}
-            >
+              onClick={() => openEditDialog(item)}            >
               <Edit className="h-4 w-4" />
             </Button>
             <Button

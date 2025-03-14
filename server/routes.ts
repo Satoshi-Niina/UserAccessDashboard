@@ -367,13 +367,19 @@ export function registerRoutes(app: Express): Server {
   // 利用可能なCSVファイル一覧を取得するエンドポイント
   app.get('/api/inspection-files', async (req, res) => {
     try {
-      const assetsDir = path.join(process.cwd(), 'attached_assets');
-      const inspectionDir = path.join(assetsDir, 'inspection'); // Added to specify inspection folder
-      const files = await fs.promises.readdir(inspectionDir); // Read from inspection folder
+      const inspectionDir = path.join(process.cwd(), 'attached_assets/inspection');
+      
+      // ディレクトリが存在しない場合は作成
+      if (!fs.existsSync(inspectionDir)) {
+        fs.mkdirSync(inspectionDir, { recursive: true });
+      }
+
+      const files = await fs.promises.readdir(inspectionDir);
+      const csvFiles = files.filter(file => file.endsWith('.csv'));
 
       const fileStats = await Promise.all(
-        files.map(async (file) => {
-          const filePath = path.join(inspectionDir, file); // Use inspectionDir
+        csvFiles.map(async (file) => {
+          const filePath = path.join(inspectionDir, file);
           const stats = await fs.promises.stat(filePath);
           return {
             name: file,

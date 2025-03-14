@@ -357,12 +357,16 @@ export function registerRoutes(app: Express): Server {
         csvContent = headerComments + csvContent;
       }
 
-      const csvFilePath = path.join(assetsDir, outputFileName);
+      const measurementDir = path.join(assetsDir, 'Measurement Standard Value');
+      if (!fs.existsSync(measurementDir)) {
+        fs.mkdirSync(measurementDir, { recursive: true });
+      }
+      const csvFilePath = path.join(measurementDir, outputFileName);
 
       fs.writeFileSync(csvFilePath, csvContent, 'utf8');
 
       const inspectionRecordData = inspectionRecord || {};
-      const inspectionRecordPath = path.join(assetsDir, `${outputFileName.replace('.csv', '')}_record.json`);
+      const inspectionRecordPath = path.join(measurementDir, `${outputFileName.replace('.csv', '')}_record.json`);
       fs.writeFileSync(inspectionRecordPath, JSON.stringify(inspectionRecordData, null, 2));
 
       console.log(`CSVデータを保存しました: ${csvFilePath}`);
@@ -758,7 +762,7 @@ export function registerRoutes(app: Express): Server {
   // 測定記録を取得するエンドポイント
   app.get('/api/measurement-records', async (req, res) => {
     try {
-      const measurementFilePath = path.join(process.cwd(), 'attached_assets/測定基準値_20250313_record.json');
+      const measurementFilePath = path.join(process.cwd(), 'attached_assets/Measurement Standard Value/measurement_standards_record.json');
       const data = await fs.promises.readFile(measurementFilePath, 'utf-8');
       res.json(JSON.parse(data));
     } catch (error) {

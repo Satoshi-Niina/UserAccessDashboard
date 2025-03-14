@@ -253,7 +253,25 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: '保存するデータがありません' });
       }
 
-      const outputFileName = fileName || `仕業点検_編集済_${new Date().toISOString().slice(0, 10)}.csv`;
+      const today = new Date().toISOString().slice(0, 10);
+      const baseFileName = fileName || `測定基準値_${today}`;
+      const measurementDir = path.join(process.cwd(), 'attached_assets/Measurement Standard Value');
+      
+      // 同じ日付のファイルをチェック
+      const files = fs.readdirSync(measurementDir);
+      let maxIndex = 0;
+      
+      files.forEach(file => {
+        if (file.startsWith(baseFileName)) {
+          const match = file.match(/_(\d+)\.csv$/);
+          if (match) {
+            const index = parseInt(match[1]);
+            maxIndex = Math.max(maxIndex, index);
+          }
+        }
+      });
+
+      const outputFileName = `${baseFileName}_${String(maxIndex + 1).padStart(2, '0')}.csv`;
 
       const assetsDir = path.join(process.cwd(), 'attached_assets');
       if (!fs.existsSync(assetsDir)) {

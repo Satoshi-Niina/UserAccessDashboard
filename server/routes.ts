@@ -257,11 +257,11 @@ export function registerRoutes(app: Express): Server {
       const baseFileName = fileName || `測定基準値_${today}`;
       const assetsDir = path.join(process.cwd(), 'attached_assets');
       const measurementDir = path.join(assetsDir, 'Measurement Standard Value');
-      
+
       // 同じ日付のファイルをチェック
       const files = fs.readdirSync(measurementDir);
       let maxIndex = 0;
-      
+
       files.forEach(file => {
         if (file.startsWith(baseFileName)) {
           const match = file.match(/_(\d+)\.csv$/);
@@ -277,7 +277,10 @@ export function registerRoutes(app: Express): Server {
         fs.mkdirSync(assetsDir, { recursive: true });
       }
 
-      const sourceFilePath = path.join(assetsDir, sourceFileName || '仕業点検マスタ.csv');
+      if (!fs.existsSync(measurementDir)) {
+        fs.mkdirSync(measurementDir, { recursive: true });
+      }
+      const csvFilePath = path.join(measurementDir, outputFileName);
 
       let originalHeaders = [];
       if (sourceFileName && fs.existsSync(sourceFilePath)) {
@@ -374,7 +377,6 @@ export function registerRoutes(app: Express): Server {
         csvContent = headerComments + csvContent;
       }
 
-      const measurementDir = path.join(assetsDir, 'Measurement Standard Value');
       if (!fs.existsSync(measurementDir)) {
         fs.mkdirSync(measurementDir, { recursive: true });
       }
@@ -543,10 +545,10 @@ export function registerRoutes(app: Express): Server {
     try {
       const filePath = path.join(process.cwd(), 'attached_assets', '仕業点検マスタ.csv');
       const data = await fs.promises.readFile(filePath, 'utf8');
-      
+
       // BOMを除去
       const cleanData = data.replace(/^\uFEFF/, '');
-      
+
       // CSVパース
       const results = Papa.parse(cleanData, {
         header: true,

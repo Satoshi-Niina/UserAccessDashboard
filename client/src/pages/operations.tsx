@@ -173,3 +173,110 @@ export default function OperationsPage() {
 </div>
 );
 }
+import { useState } from "react";
+import { useLocation } from "wouter";
+import { Card, CardDescription, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { 
+  ClipboardList, 
+  CheckSquare, 
+  Clock, 
+  Settings, 
+  FileText, 
+  Database, 
+  PenTool, 
+  BarChart
+} from "lucide-react";
+
+export default function OperationsPage() {
+  const [location, navigate] = useLocation();
+
+  return (
+    <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-6">作業管理</h1>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* 仕業点検実施 */}
+        <Card className="overflow-hidden transition-all hover:shadow-md">
+          <CardHeader className="bg-blue-50">
+            <CardTitle className="flex items-center gap-2">
+              <CheckSquare size={20} className="text-blue-600" />
+              仕業点検実施
+            </CardTitle>
+            <CardDescription>
+              機器の仕業点検を実施し、測定値の記録と異常判定を行います
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <p className="text-sm text-gray-500">
+              仕業点検マスタと測定基準値に基づいて、機器の点検を実施します。
+              実測値が基準範囲外の場合は自動的に異常と判定されます。
+            </p>
+          </CardContent>
+          <CardFooter>
+            <Button 
+              className="w-full" 
+              onClick={() => navigate("/operations/inspection-execution")}
+            >
+              点検実施へ
+            </Button>
+          </CardFooter>
+        </Card>
+
+        {/* 点検履歴 */}
+        <Card className="overflow-hidden transition-all hover:shadow-md">
+          <CardHeader className="bg-green-50">
+            <CardTitle className="flex items-center gap-2">
+              <Clock size={20} className="text-green-600" />
+              点検履歴
+            </CardTitle>
+            <CardDescription>
+              過去の点検結果を閲覧・ダウンロードできます
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <p className="text-sm text-gray-500">
+              保存された仕業点検の履歴を確認し、点検状況の分析や過去の点検データの参照が可能です。
+              点検データはCSV形式でダウンロードすることもできます。
+            </p>
+          </CardContent>
+          <CardFooter>
+            <Button 
+              className="w-full" 
+              onClick={() => navigate("/operations/inspection-history")}
+            >
+              履歴を表示
+            </Button>
+          </CardFooter>
+        </Card>
+
+        {/* 仕業点検設定 */}
+        <Card className="overflow-hidden transition-all hover:shadow-md">
+          <CardHeader className="bg-purple-50">
+            <CardTitle className="flex items-center gap-2">
+              <Settings size={20} className="text-purple-600" />
+              点検マスター設定
+            </CardTitle>
+            <CardDescription>
+              仕業点検項目や測定基準値の管理
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <p className="text-sm text-gray-500">
+              仕業点検マスタと測定基準値の編集・管理を行います。
+              点検項目の追加・編集や、測定基準範囲の設定などが可能です。
+            </p>
+          </CardContent>
+          <CardFooter>
+            <Button 
+              className="w-full" 
+              onClick={() => navigate("/settings/inspection-items")}
+            >
+              設定画面へ
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    </div>
+  );
+}

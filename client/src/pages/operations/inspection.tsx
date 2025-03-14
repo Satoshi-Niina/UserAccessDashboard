@@ -98,6 +98,57 @@ const findStandardValue = (item: InspectionItem) => {
   return matchedStandard || null;
 };
 
+// 測定基準値データを取得する関数
+const fetchMeasurementStandards = async () => {
+  try {
+    const response = await fetch('/api/files/測定基準値_20250313.csv');
+    if (!response.ok) {
+      throw new Error('測定基準値の取得に失敗しました');
+    }
+    
+    const csvText = await response.text();
+    const lines = csvText.split('\n');
+    const headers = lines[0].split(',');
+    
+    const manufacturerIndex = headers.findIndex(h => h === '製造メーカー' || h === 'manufacturer');
+    const modelIndex = headers.findIndex(h => h === '機種' || h === 'model');
+    const engineTypeIndex = headers.findIndex(h => h === 'エンジン型式' || h === 'engineType');
+    const categoryIndex = headers.findIndex(h => h === '部位' || h === 'category');
+    const equipmentIndex = headers.findIndex(h => h === '装置' || h === 'equipment');
+    const itemIndex = headers.findIndex(h => h === '確認箇所' || h === 'item');
+    const minValueIndex = headers.findIndex(h => h === 'minValue');
+    const maxValueIndex = headers.findIndex(h => h === 'maxValue');
+    
+    const standards = [];
+    
+    for (let i = 1; i < lines.length; i++) {
+      if (!lines[i].trim()) continue;
+      
+      const values = lines[i].split(',');
+      
+      if (values.length < Math.max(manufacturerIndex, modelIndex, categoryIndex, equipmentIndex, itemIndex, minValueIndex, maxValueIndex) + 1) {
+        continue;
+      }
+      
+      standards.push({
+        manufacturer: values[manufacturerIndex],
+        model: values[modelIndex],
+        engineType: engineTypeIndex >= 0 ? values[engineTypeIndex] : undefined,
+        category: values[categoryIndex],
+        equipment: values[equipmentIndex],
+        item: values[itemIndex],
+        minValue: parseFloat(values[minValueIndex]),
+        maxValue: parseFloat(values[maxValueIndex])
+      });
+    }
+    
+    return standards;
+  } catch (error) {
+    console.error('測定基準値取得エラー:', error);
+    return [];
+  }
+};
+
 export default function InspectionPage() {
   const [location, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState<InspectionTab>("general");

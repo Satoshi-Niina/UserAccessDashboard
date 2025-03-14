@@ -212,7 +212,10 @@ export function registerRoutes(app: Express): Server {
         'criteria': '判断基準',
         'method': '確認要領',
         'measurementRecord': '測定等記録',
-        'diagramRecord': '図形記録'
+        'diagramRecord': '図形記録',
+        'result': 'result',          // 点検結果を保存
+        'measuredValue': 'measuredValue', // 実測値を保存
+        'notes': 'notes'             // 備考を保存
       };
 
       const processedData = data.map(item => {
@@ -246,8 +249,16 @@ export function registerRoutes(app: Express): Server {
       if (originalHeaders.length > 0) {
         console.log('元のヘッダーを使用します:', originalHeaders);
 
-        const newKeys = Object.keys(processedData[0] || {});
+        // 新しいフィールドを追加
+        const additionalFields = ['result', 'measuredValue', 'notes'];
+        additionalFields.forEach(field => {
+          if (!originalHeaders.includes(field)) {
+            originalHeaders.push(field);
+            console.log('新しいフィールドを追加しました:', field);
+          }
+        });
 
+        const newKeys = Object.keys(processedData[0] || {});
         newKeys.forEach(key => {
           if (!originalHeaders.includes(key)) {
             originalHeaders.push(key);

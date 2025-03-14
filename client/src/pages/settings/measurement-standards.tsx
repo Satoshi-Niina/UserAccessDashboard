@@ -518,3 +518,560 @@ export default function MeasurementStandards() {
     </div>
   );
 }
+import { useEffect, useState } from "react";
+import { useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
+import Papa from "papaparse";
+
+interface MeasurementStandard {
+  id: number;
+  manufacturer: string;
+  model: string;
+  engineType?: string;
+  category: string;
+  equipment: string;
+  item: string;
+  minValue: number;
+  maxValue: number;
+}
+
+export default function MeasurementStandardsPage() {
+  const [, navigate] = useLocation();
+  const [standards, setStandards] = useState<MeasurementStandard[]>([]);
+  const [filteredStandards, setFilteredStandards] = useState<MeasurementStandard[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [currentStandard, setCurrentStandard] = useState<MeasurementStandard | null>(null);
+  const [newStandard, setNewStandard] = useState({
+    manufacturer: "",
+    model: "",
+    engineType: "",
+    category: "",
+    equipment: "",
+    item: "",
+    minValue: 0,
+    maxValue: 0
+  });
+  const [searchFilter, setSearchFilter] = useState("");
+  const [manufacturerFilter, setManufacturerFilter] = useState("all");
+  const [modelFilter, setModelFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const { toast } = useToast();
+
+  // 測定基準値データの読み込み
+  useEffect(() => {
+    const fetchMeasurementStandards = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/files/測定基準値_20250313.csv');
+        
+        if (!response.ok) {
+          throw new Error('測定基準値の取得に失敗しました');
+        }
+        
+        const csvText = await response.text();
+        
+        // CSVデータをパース
+        Papa.parse(csvText, {
+          header: true,
+          complete: (results) => {
+            const parsedData = results.data.filter((item: any) => 
+              item.manufacturer || item['製造メーカー']
+            ).map((item: any, index: number) => {
+              // フィールド名のマッピング
+              const standard: MeasurementStandard = {
+                id: index + 1,
+                manufacturer: item.manufacturer || item['製造メーカー'] || '',
+                model: item.model || item['機種'] || '',
+                engineType: item.engineType || item['エンジン型式'] || '',
+                category: item.category || item['部位'] || '',
+                equipment: item.equipment || item['装置'] || '',
+                item: item.item || item['確認箇所'] || '',
+                minValue: parseFloat(item.minValue) || 0,
+                maxValue: parseFloat(item.maxValue) || 0
+              };
+              return standard;
+            });
+            
+            setStandards(parsedData);
+            setFilteredStandards(parsedData);
+            setLoading(false);
+          },
+          error: (error) => {
+            console.error('CSV解析エラー:', error);
+            toast({
+              title: "エラー",
+              description: "データの解析に失敗しました",
+              variant: "destructive",
+            });
+            setLoading(false);
+          }
+        });
+      } catch (error) {
+        console.error('データ読み込みエラー:', error);
+        toast({
+          title: "エラー",
+          description: "データの取得に失敗しました",
+          variant: "destructive",
+        });
+        setLoading(false);
+      }
+    };
+    
+    fetchMeasurementStandards();
+  }, []);
+
+  // フィルタリング
+  useEffect(() => {
+    let filtered = [...standards];
+    
+    if (searchFilter) {
+      const lowerSearch = searchFilter.toLowerCase();
+      filtered = filtered.filter(standard => 
+        standard.manufacturer.toLowerCase().includes(lowerSearch) ||
+        standard.model.toLowerCase().includes(lowerSearch) ||
+        standard.category.toLowerCase().includes(lowerSearch) ||
+        standard.equipment.toLowerCase().includes(lowerSearch) ||
+        standard.item.toLowerCase().includes(lowerSearch)
+      );
+    }
+    
+    if (manufacturerFilter !== "all") {
+      filtered = filtered.filter(standard => standard.manufacturer === manufacturerFilter);
+    }
+    
+    if (modelFilter !== "all") {
+      filtered = filtered.filter(standard => standard.model === modelFilter);
+    }
+    
+    if (categoryFilter !== "all") {
+      filtered = filtered.filter(standard => standard.category === categoryFilter);
+    }
+    
+    setFilteredStandards(filtered);
+  }, [standards, searchFilter, manufacturerFilter, modelFilter, categoryFilter]);
+
+  // 新しい測定基準値の追加
+  const handleAddStandard = () => {
+    setIsEditMode(false);
+    setCurrentStandard(null);
+    setNewStandard({
+      manufacturer: "",
+      model: "",
+      engineType: "",
+      category: "",
+      equipment: "",
+      item: "",
+      minValue: 0,
+      maxValue: 0
+    });
+    setIsDialogOpen(true);
+  };
+
+  // 測定基準値の編集
+  const handleEditStandard = (standard: MeasurementStandard) => {
+    setIsEditMode(true);
+    setCurrentStandard(standard);
+    setNewStandard({
+      manufacturer: standard.manufacturer,
+      model: standard.model,
+      engineType: standard.engineType || "",
+      category: standard.category,
+      equipment: standard.equipment,
+      item: standard.item,
+      minValue: standard.minValue,
+      maxValue: standard.maxValue
+    });
+    setIsDialogOpen(true);
+  };
+
+  // 測定基準値の保存
+  const handleSaveStandard = () => {
+    if (!newStandard.manufacturer || !newStandard.model || 
+        !newStandard.category || !newStandard.equipment || !newStandard.item) {
+      toast({
+        title: "エラー",
+        description: "必須項目を入力してください",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (newStandard.minValue > newStandard.maxValue) {
+      toast({
+        title: "エラー",
+        description: "最小値は最大値以下にしてください",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (isEditMode && currentStandard) {
+      // 編集モード
+      const updatedStandards = standards.map(standard => 
+        standard.id === currentStandard.id ? 
+          { ...standard, 
+            manufacturer: newStandard.manufacturer,
+            model: newStandard.model,
+            engineType: newStandard.engineType,
+            category: newStandard.category,
+            equipment: newStandard.equipment,
+            item: newStandard.item,
+            minValue: newStandard.minValue,
+            maxValue: newStandard.maxValue
+          } : 
+          standard
+      );
+      setStandards(updatedStandards);
+    } else {
+      // 追加モード
+      const maxId = standards.reduce((max, standard) => Math.max(max, standard.id), 0);
+      const newId = maxId + 1;
+      
+      setStandards([
+        ...standards,
+        {
+          id: newId,
+          manufacturer: newStandard.manufacturer,
+          model: newStandard.model,
+          engineType: newStandard.engineType,
+          category: newStandard.category,
+          equipment: newStandard.equipment,
+          item: newStandard.item,
+          minValue: newStandard.minValue,
+          maxValue: newStandard.maxValue
+        }
+      ]);
+    }
+    
+    setIsDialogOpen(false);
+    
+    toast({
+      title: isEditMode ? "更新完了" : "追加完了",
+      description: `測定基準値を${isEditMode ? '更新' : '追加'}しました`,
+    });
+  };
+
+  // 測定基準値の削除
+  const handleDeleteStandard = (id: number) => {
+    if (confirm("この測定基準値を削除してもよろしいですか？")) {
+      const updatedStandards = standards.filter(standard => standard.id !== id);
+      setStandards(updatedStandards);
+      
+      toast({
+        title: "削除完了",
+        description: "測定基準値を削除しました",
+      });
+    }
+  };
+
+  // CSVとして保存
+  const handleSaveToCSV = async () => {
+    try {
+      // 測定基準値をCSV形式に変換
+      const csvData = standards.map(standard => ({
+        '製造メーカー': standard.manufacturer,
+        '機種': standard.model,
+        'エンジン型式': standard.engineType || '',
+        '部位': standard.category,
+        '装置': standard.equipment,
+        '確認箇所': standard.item,
+        'minValue': standard.minValue,
+        'maxValue': standard.maxValue
+      }));
+      
+      // CSVにヘッダー行を追加
+      const csv = Papa.unparse(csvData);
+      
+      // ファイル名を生成
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '').substring(0, 15);
+      const fileName = `測定基準値_${timestamp}.csv`;
+      
+      // APIを呼び出してCSVを保存
+      const formData = new FormData();
+      const blob = new Blob([csv], { type: 'text/csv' });
+      formData.append('file', blob, fileName);
+      
+      const response = await fetch('/api/files', {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (!response.ok) {
+        throw new Error('ファイルの保存に失敗しました');
+      }
+      
+      toast({
+        title: "保存完了",
+        description: `測定基準値を ${fileName} として保存しました`,
+      });
+    } catch (error) {
+      console.error('保存エラー:', error);
+      toast({
+        title: "エラー",
+        description: "ファイルの保存に失敗しました",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto p-4">
+        <h1 className="text-2xl font-bold mb-4">測定基準値設定</h1>
+        <p>データを読み込み中...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">測定基準値設定</h1>
+        <Button variant="outline" onClick={() => navigate('/settings')}>
+          戻る
+        </Button>
+      </div>
+      
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>測定基準値の管理</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col md:flex-row gap-4 mb-4">
+            <div className="flex-1">
+              <Label htmlFor="search">検索</Label>
+              <Input
+                id="search"
+                placeholder="検索..."
+                value={searchFilter}
+                onChange={(e) => setSearchFilter(e.target.value)}
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="manufacturer">製造メーカー</Label>
+              <select
+                id="manufacturer"
+                className="w-full p-2 border rounded"
+                value={manufacturerFilter}
+                onChange={(e) => setManufacturerFilter(e.target.value)}
+              >
+                <option value="all">すべて</option>
+                {[...new Set(standards.map(item => item.manufacturer))].map(manufacturer => (
+                  <option key={manufacturer} value={manufacturer}>{manufacturer}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div>
+              <Label htmlFor="model">機種</Label>
+              <select
+                id="model"
+                className="w-full p-2 border rounded"
+                value={modelFilter}
+                onChange={(e) => setModelFilter(e.target.value)}
+              >
+                <option value="all">すべて</option>
+                {[...new Set(standards.map(item => item.model))].map(model => (
+                  <option key={model} value={model}>{model}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div>
+              <Label htmlFor="category">部位</Label>
+              <select
+                id="category"
+                className="w-full p-2 border rounded"
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+              >
+                <option value="all">すべて</option>
+                {[...new Set(standards.map(item => item.category))].map(category => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          
+          <div className="flex gap-2 mb-4">
+            <Button onClick={handleAddStandard}>
+              新規追加
+            </Button>
+            <Button variant="outline" onClick={handleSaveToCSV}>
+              CSVに保存
+            </Button>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <Table>
+              <TableCaption>測定基準値一覧 (全 {filteredStandards.length} 件)</TableCaption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[120px]">製造メーカー</TableHead>
+                  <TableHead className="w-[100px]">機種</TableHead>
+                  <TableHead className="w-[120px]">部位</TableHead>
+                  <TableHead className="w-[120px]">装置</TableHead>
+                  <TableHead className="w-[150px]">確認箇所</TableHead>
+                  <TableHead className="w-[80px]">最小値</TableHead>
+                  <TableHead className="w-[80px]">最大値</TableHead>
+                  <TableHead className="w-[120px]">操作</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredStandards.map(standard => (
+                  <TableRow key={standard.id}>
+                    <TableCell>{standard.manufacturer}</TableCell>
+                    <TableCell>{standard.model}</TableCell>
+                    <TableCell>{standard.category}</TableCell>
+                    <TableCell>{standard.equipment}</TableCell>
+                    <TableCell>{standard.item}</TableCell>
+                    <TableCell>{standard.minValue}</TableCell>
+                    <TableCell>{standard.maxValue}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleEditStandard(standard)}
+                        >
+                          編集
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => handleDeleteStandard(standard.id)}
+                        >
+                          削除
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+      
+      {/* 測定基準値の追加・編集ダイアログ */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {isEditMode ? "測定基準値の編集" : "新規測定基準値の追加"}
+            </DialogTitle>
+            <DialogDescription>
+              測定基準値の詳細情報を入力してください
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid grid-cols-1 gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="manufacturer">製造メーカー</Label>
+                <Input
+                  id="manufacturer"
+                  value={newStandard.manufacturer}
+                  onChange={(e) => setNewStandard({...newStandard, manufacturer: e.target.value})}
+                  placeholder="例: 堀川工機"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="model">機種</Label>
+                <Input
+                  id="model"
+                  value={newStandard.model}
+                  onChange={(e) => setNewStandard({...newStandard, model: e.target.value})}
+                  placeholder="例: MC300"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="engineType">エンジン型式</Label>
+              <Input
+                id="engineType"
+                value={newStandard.engineType}
+                onChange={(e) => setNewStandard({...newStandard, engineType: e.target.value})}
+                placeholder="例: ボルボ"
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="category">部位</Label>
+                <Input
+                  id="category"
+                  value={newStandard.category}
+                  onChange={(e) => setNewStandard({...newStandard, category: e.target.value})}
+                  placeholder="例: 制動装置"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="equipment">装置</Label>
+                <Input
+                  id="equipment"
+                  value={newStandard.equipment}
+                  onChange={(e) => setNewStandard({...newStandard, equipment: e.target.value})}
+                  placeholder="例: ブレーキシリンダー"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="item">確認箇所</Label>
+              <Input
+                id="item"
+                value={newStandard.item}
+                onChange={(e) => setNewStandard({...newStandard, item: e.target.value})}
+                placeholder="例: ブレーキシリンダー"
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="minValue">最小値</Label>
+                <Input
+                  id="minValue"
+                  type="number"
+                  value={newStandard.minValue}
+                  onChange={(e) => setNewStandard({...newStandard, minValue: parseFloat(e.target.value)})}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="maxValue">最大値</Label>
+                <Input
+                  id="maxValue"
+                  type="number"
+                  value={newStandard.maxValue}
+                  onChange={(e) => setNewStandard({...newStandard, maxValue: parseFloat(e.target.value)})}
+                />
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setIsDialogOpen(false)}>
+              キャンセル
+            </Button>
+            <Button onClick={handleSaveStandard}>
+              {isEditMode ? "更新" : "追加"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

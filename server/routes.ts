@@ -121,7 +121,10 @@ export function registerRoutes(app: Express): Server {
         header: true,
         skipEmptyLines: true,
         transformHeader: (header) => header.trim(),
-        transform: (value) => value.trim()
+        transform: (value) => value.trim(),
+        delimiter: ',',
+        quoteChar: '"',
+        escapeChar: '"'
       });
 
       console.log('点検項目データ取得:', results.data.length, '件');

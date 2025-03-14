@@ -118,8 +118,8 @@ export function registerRoutes(app: Express): Server {
 
       const fileContent = await fs.promises.readFile(csvFilePath, 'utf8');
 
-      // ファイル形式の判定
-      const isJSON = fileContent.trim().startsWith('{') || fileContent.trim().startsWith('[');
+      // ファイル形式の判定（拡張子で判定）
+      const isJSON = csvFilePath.toLowerCase().endsWith('.json');
 
       if (isJSON) {
         try {
@@ -127,10 +127,11 @@ export function registerRoutes(app: Express): Server {
           return res.json(jsonData);
         } catch (error) {
           console.error('JSONパースエラー:', error);
+          return res.status(500).json({ error: 'JSONの解析に失敗しました' });
         }
       }
 
-      // 不要な文字を削除
+      // CSVパース用にデータをクリーニング
       const cleanedContent = fileContent
         .replace(/\uFEFF/g, '') // BOMを削除
         .replace(/[\r\n]+/g, '\n') // 改行コードを統一
@@ -138,7 +139,7 @@ export function registerRoutes(app: Express): Server {
 
       const results = Papa.parse(cleanedContent, {
         header: true,
-        skipEmptyLines: true,
+        skipEmptyLines: 'greedy',
         transformHeader: (header) => header.trim(),
         transform: (value) => value?.trim() || '',
         delimiter: ',',
@@ -146,13 +147,17 @@ export function registerRoutes(app: Express): Server {
         quoteChar: '"',
         escapeChar: '"',
         keepEmptyRows: false,
-        complete: (results) => {
-          console.log('CSVパース完了:', results.data.length, '件');
-        },
+        dynamicTyping: true,
+        comments: false,
         error: (error) => {
           console.error('CSVパースエラー:', error);
+          return res.status(500).json({ error: 'CSVの解析に失敗しました' });
         }
       });
+
+      if (!results.data || results.data.length === 0) {
+        return res.status(500).json({ error: 'データが見つかりません' });
+      }
 
       // 空のデータを除外
       results.data = results.data.filter(row => Object.values(row).some(value => value));

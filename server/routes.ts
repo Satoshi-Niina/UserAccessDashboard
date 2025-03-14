@@ -256,10 +256,10 @@ export function registerRoutes(app: Express): Server {
       const today = new Date().toISOString().slice(0, 10);
       const baseFileName = fileName || `測定基準値_${today}`;
       const assetsDir = path.join(process.cwd(), 'attached_assets');
-      const measurementDir = path.join(assetsDir, 'Measurement Standard Value');
+      const referenceDir = path.join(assetsDir, 'Reference value');
 
       // 同じ日付のファイルをチェック
-      const files = fs.readdirSync(measurementDir);
+      const files = fs.readdirSync(referenceDir);
       let maxIndex = 0;
 
       files.forEach(file => {
@@ -377,15 +377,15 @@ export function registerRoutes(app: Express): Server {
         csvContent = headerComments + csvContent;
       }
 
-      if (!fs.existsSync(measurementDir)) {
-        fs.mkdirSync(measurementDir, { recursive: true });
+      if (!fs.existsSync(referenceDir)) {
+        fs.mkdirSync(referenceDir, { recursive: true });
       }
 
-      const outputFilePath = path.join(measurementDir, outputFileName);
+      const outputFilePath = path.join(referenceDir, outputFileName);
       fs.writeFileSync(outputFilePath, csvContent, 'utf8');
 
       const inspectionRecordData = inspectionRecord || {};
-      const inspectionRecordPath = path.join(measurementDir, `${outputFileName.replace('.csv', '')}_record.json`);
+      const inspectionRecordPath = path.join(referenceDir, `${outputFileName.replace('.csv', '')}_record.json`);
       fs.writeFileSync(inspectionRecordPath, JSON.stringify(inspectionRecordData, null, 2));
 
       console.log(`CSVデータを保存しました: ${csvFilePath}`);

@@ -277,8 +277,8 @@ export function registerRoutes(app: Express): Server {
         fs.mkdirSync(assetsDir, { recursive: true });
       }
 
-      if (!fs.existsSync(measurementDir)) {
-        fs.mkdirSync(measurementDir, { recursive: true });
+      if (!fs.existsSync(referenceDir)) {
+        fs.mkdirSync(referenceDir, { recursive: true });
       }
 
       let originalHeaders = [];
@@ -388,7 +388,7 @@ export function registerRoutes(app: Express): Server {
       const inspectionRecordPath = path.join(referenceDir, `${outputFileName.replace('.csv', '')}_record.json`);
       fs.writeFileSync(inspectionRecordPath, JSON.stringify(inspectionRecordData, null, 2));
 
-      console.log(`CSVデータを保存しました: ${csvFilePath}`);
+      console.log(`CSVデータを保存しました: ${outputFilePath}`);
 
       res.status(200).json({
         message: 'データが正常に保存されました',

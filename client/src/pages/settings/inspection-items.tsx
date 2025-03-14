@@ -163,10 +163,7 @@ export default function InspectionItems() {
     };
 
     fetchInspectionData();
-  }, [currentFileName, toast]);it fetch('/api/inspection-files');
-        const data = await response.json();
-
-        const fileList = Array.isArray(data) ? data.map(file => ({
+  }, [currentFileName, toast]);
           name: file.name,
           modified: new Date(file.modified).toLocaleString()
         })) : [];

@@ -518,16 +518,32 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/inspection-data", (req, res) => {
-    fs.promises.readFile(path.join(process.cwd(), 'attached_assets', '仕業点検マスタ.csv'), 'utf8')
-      .then(data => {
-        res.set('Content-Type', 'text/csv');
-        res.send(data);
-      })
-      .catch(error => {
-        console.error("CSVファイル読み込みエラー:", error);
-        res.status(404).json({ error: "CSVファイルが見つかりません" });
+  app.get("/api/inspection-data", async (req, res) => {
+    try {
+      const filePath = path.join(process.cwd(), 'attached_assets', '仕業点検マスタ.csv');
+      const data = await fs.promises.readFile(filePath, 'utf8');
+      
+      // BOMを除去
+      const cleanData = data.replace(/^\uFEFF/, '');
+      
+      // CSVパース
+      const results = Papa.parse(cleanData, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (header) => header.trim(),
+        transform: (value) => value?.trim() || '',
+        encoding: 'UTF-8'
       });
+
+      if (results.errors && results.errors.length > 0) {
+        console.warn('CSVパース警告:', results.errors);
+      }
+
+      res.json(results.data);
+    } catch (error) {
+      console.error("CSVファイル読み込みエラー:", error);
+      res.status(404).json({ error: "CSVファイルが見つかりません" });
+    }
   });
 
   // 技術支援データ処理API

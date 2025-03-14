@@ -137,22 +137,17 @@ export function registerRoutes(app: Express): Server {
         .replace(/[\r\n]+/g, '\n') // 改行コードを統一
         .trim();
 
+      // CSVパース処理
       const results = Papa.parse(cleanedContent, {
         header: true,
-        skipEmptyLines: 'greedy',
+        skipEmptyLines: true,
         transformHeader: (header) => header.trim(),
         transform: (value) => value?.trim() || '',
         delimiter: ',',
         encoding: 'UTF-8',
-        quoteChar: '"',
-        escapeChar: '"',
-        keepEmptyRows: false,
-        dynamicTyping: true,
-        comments: false,
-        error: (error) => {
-          console.error('CSVパースエラー:', error);
-          return res.status(500).json({ error: 'CSVの解析に失敗しました' });
-        }
+        beforeFirstChunk: function(chunk) {
+          return chunk.replace(/^\[.*\]$/, ''); // JSON配列形式のデータを除去
+        },
       });
 
       if (!results.data || results.data.length === 0) {

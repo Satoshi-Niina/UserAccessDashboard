@@ -117,11 +117,18 @@ export function registerRoutes(app: Express): Server {
       }
 
       const fileContent = await fs.promises.readFile(csvFilePath, 'utf8');
-      const results = Papa.parse(fileContent, {
+      
+      // 不要な文字を削除
+      const cleanedContent = fileContent
+        .replace(/\uFEFF/g, '') // BOMを削除
+        .replace(/[\r\n]+/g, '\n') // 改行コードを統一
+        .trim();
+
+      const results = Papa.parse(cleanedContent, {
         header: true,
-        skipEmptyLines: true,
+        skipEmptyLines: 'greedy',
         transformHeader: (header) => header.trim(),
-        transform: (value) => value.trim(),
+        transform: (value) => value?.trim() || '',
         delimiter: ',',
         quoteChar: '"',
         escapeChar: '"'

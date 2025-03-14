@@ -112,6 +112,7 @@ export default function InspectionItems() {
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [saveFileName, setSaveFileName] = useState("");
   const [loading, setLoading] = useState(false); // ローディング状態を追加
+  const [isNewItemRegistered, setIsNewItemRegistered] = useState(false); // 新規登録状態を追加
 
   const { toast } = useToast();
 
@@ -448,11 +449,7 @@ export default function InspectionItems() {
         measurementRecord: newItem.measurementRecord || "",
         diagramRecord: newItem.diagramRecord || ""
       };
-      setInspectionItems([...inspectionItems, newInspectionItem]);
-      toast({
-        title: "追加完了",
-        description: "新しい点検項目を追加しました",
-      });
+      handleAddNewItem(newInspectionItem); // 新しい関数を呼び出す
     }
 
     setIsDialogOpen(false);
@@ -482,17 +479,33 @@ export default function InspectionItems() {
 
   // 変更を保存して戻る
   const handleSaveAndNavigate = async () => {
-    if (hasChanges) {
-      // 変更がある場合、保存ダイアログを開く
-      setPendingAction('save');
-      setIsSaveDialogOpen(true);
-      // デフォルトのファイル名設定（現在のファイル名に日付を追加）
-      const now = new Date();
-      const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-      const baseName = currentFileName.replace(/\.csv$/i, '');
-      setSaveFileName(`${baseName}_${dateStr}.csv`);
-    } else {
-      navigate('/');
+    if (!isNewItemRegistered && !hasChanges) {
+      navigate('/settings');
+      return;
+    }
+
+    setIsSaveDialogOpen(true);
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+    const baseName = currentFileName.replace(/\.csv$/i, '') || '点検項目マスタ';
+    setSaveFileName(`${baseName}_${dateStr}.csv`);
+  };
+
+  const handleAddNewItem = async (item: InspectionItem) => {
+    try {
+      setInspectionItems([...inspectionItems, item]);
+      setIsNewItemRegistered(true);
+      toast({
+        title: "登録完了",
+        description: "新規項目を登録しました",
+      });
+    } catch (error) {
+      console.error('新規登録エラー:', error);
+      toast({
+        title: "エラー",
+        description: "登録に失敗しました",
+        variant: "destructive",
+      });
     }
   };
 
@@ -626,6 +639,7 @@ export default function InspectionItems() {
       // 初期状態を更新
       setInitialItems(JSON.parse(JSON.stringify(inspectionItems)));
       setHasChanges(false);
+      setIsNewItemRegistered(false); // 新規登録フラグをリセット
 
       // 保存して戻る場合は画面遷移
       if (pendingAction === 'save') {
@@ -917,8 +931,7 @@ export default function InspectionItems() {
               onClick={() => openEditDialog(item)}
             >
               <Edit className="h-4 w-4" />
-            </Button>
-            <Button
+            </Button            <Button
               variant="ghost"
               size="icon"
               onClick={() => deleteInspectionItem(item.id)}

@@ -113,6 +113,7 @@ export default function InspectionItems() {
   const [saveFileName, setSaveFileName] = useState("");
   const [loading, setLoading] = useState(false); // ローディング状態を追加
   const [isNewItemRegistered, setIsNewItemRegistered] = useState(false); // 新規登録状態を追加
+  const [deletedRecords, setDeletedRecords] = useState<number[]>([]); // 削除されたレコードIDを保持
 
   const { toast } = useToast();
 
@@ -460,6 +461,8 @@ export default function InspectionItems() {
     if (window.confirm("この点検項目を削除してもよろしいですか？")) {
       const updatedItems = inspectionItems.filter((item) => item.id !== id);
       setInspectionItems(updatedItems);
+      setDeletedRecords(prev => [...prev, id]); // 削除されたレコードIDを追加
+      setHasChanges(true);
       toast({
         title: "削除完了",
         description: "点検項目を削除しました",
@@ -1059,6 +1062,7 @@ export default function InspectionItems() {
           data: inspectionItems,
           fileName: saveFileName,
           sourceFileName: currentFileName  // 元のファイル名を追加
+          , deletedRecords // 削除されたレコードIDを送信
         }),
       });
 
@@ -1071,6 +1075,7 @@ export default function InspectionItems() {
         setHasChanges(false);
         setIsSaveDialogOpen(false);
         setPendingAction(null);
+        setDeletedRecords([]); // 保存後に削除レコードをリセット
         // ファイル一覧を更新
         fetchInspectionFiles();
       } else {

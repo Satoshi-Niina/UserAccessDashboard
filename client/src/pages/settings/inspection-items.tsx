@@ -116,6 +116,55 @@ export default function InspectionItems() {
       try {
         const response = await fetch('/api/inspection-files');
         const data = await response.json();
+        setAvailableFiles(data);
+        if (data.length > 0) {
+          setCurrentFileName(data[0].name);
+        }
+      } catch (err) {
+        console.error("ファイル一覧取得エラー:", err);
+        toast({
+          title: "エラー",
+          description: "ファイル一覧の取得に失敗しました",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchAvailableFiles();
+  }, [toast]);
+
+  // 選択されたファイルから点検項目を読み込む
+  useEffect(() => {
+    const fetchInspectionData = async () => {
+      if (!currentFileName) return;
+
+      try {
+        const response = await fetch(`/api/inspection-items?file=${currentFileName}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const items = await response.json();
+        
+        if (Array.isArray(items)) {
+          setInspectionItems(items);
+          toast({
+            title: "データ読み込み完了",
+            description: `${items.length}件の点検項目を読み込みました`,
+          });
+        }
+      } catch (err) {
+        console.error("データ読み込みエラー:", err);
+        toast({
+          title: "エラー",
+          description: "点検項目の読み込みに失敗しました",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchInspectionData();
+  }, [currentFileName, toast]);it fetch('/api/inspection-files');
+        const data = await response.json();
 
         const fileList = Array.isArray(data) ? data.map(file => ({
           name: file.name,

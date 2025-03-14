@@ -58,6 +58,25 @@ interface InspectionItem {
   [key: string]: any;  // 動的なプロパティに対応
 }
 
+const ExitButton = ({ hasChanges, onSave, redirectTo }: { hasChanges: boolean; onSave: () => Promise<void>; redirectTo: string }) => {
+  const handleClick = async () => {
+    if (hasChanges) {
+      if (window.confirm("変更を保存しますか？")) {
+        await onSave();
+      }
+    }
+    window.location.href = redirectTo;
+  };
+
+  return (
+    <Button variant="default" onClick={handleClick}>
+      <Save className="h-4 w-4" />
+      保存して終了
+    </Button>
+  );
+};
+
+
 export default function InspectionItems() {
   // 状態管理
   const [manufacturer, setManufacturer] = useState<string>("");
@@ -144,7 +163,7 @@ export default function InspectionItems() {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const items = await response.json();
-        
+
         if (Array.isArray(items)) {
           setInspectionItems(items);
           toast({
@@ -914,7 +933,7 @@ export default function InspectionItems() {
 
   // 編集用ダイアログの状態
   const [editItem, setEditItem] = useState<InspectionItem | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen]= useState(false);
   const [dynamicFields, setDynamicFields] = useState<Array<{ key: string, label: string, value: string }>>([]);
   const [editComment, setEditComment] = useState(""); // 追加：コメント状態
 
@@ -1056,6 +1075,22 @@ export default function InspectionItems() {
     }
   };
 
+  // 変更を保存して終了
+  const handleSaveAndExit = async () => {
+    if (hasChanges) {
+      // 変更がある場合、保存ダイアログを開く
+      setIsSaveDialogOpen(true);
+      // デフォルトのファイル名設定（現在のファイル名に日付を追加）
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+      const baseName = currentFileName.replace(/\.csv$/i, '');
+      setSaveFileName(`${baseName}_${dateStr}.csv`);
+    } else {
+      navigate('/settings');
+    }
+  };
+
+
   return (
     <DndProvider backend={HTML5Backend}>
       <Card className="w-full">
@@ -1063,15 +1098,14 @@ export default function InspectionItems() {
         <div className="flex justify-between items-center">
           <CardTitle className="text-2xl">点検項目マスタ</CardTitle>
           <div className="flex gap-2">
-            <Button
-              variant="default"
-              size="sm"
-              className="gap-1"
-              onClick={handleSaveAndNavigate}
-            >
-              <Check className="h-4 w-4" />
-              編集終了
+            <Button variant="outline" onClick={() => navigate("/settings")}>
+              キャンセル
             </Button>
+            <ExitButton
+              hasChanges={hasChanges}
+              onSave={handleSaveAndExit}
+              redirectTo="/settings"
+            />
           </div>
         </div>
       </CardHeader>

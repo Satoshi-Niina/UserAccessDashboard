@@ -1,8 +1,13 @@
 import { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OperationsNav from "@/components/OperationsNav";
-import { 
+import {
   Form,
   FormControl,
   FormField,
@@ -12,19 +17,14 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { useForm } from "react-hook-form";
-import { useToast } from "@/hooks/use-toast";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
@@ -32,16 +32,13 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
-// バリデーションスキーマ
 const planFormSchema = z.object({
-  planDate: z.date({
-    required_error: "運用日を選択してください",
-  }),
-  vehicleId: z.string().min(1, "車両を選択してください"),
-  vehicleType: z.string().min(1, "車両型式を選択してください"),
-  route: z.string().min(1, "運用区間を入力してください"),
-  plannedStartTime: z.string().min(1, "予定出発時刻を入力してください"),
-  plannedEndTime: z.string().min(1, "予定終了時刻を入力してください"),
+  planDate: z.date(),
+  vehicleId: z.string().min(1, "車両IDを入力してください"),
+  vehicleType: z.string().min(1, "車両形式を入力してください"),
+  route: z.string().min(1, "運行区間を入力してください"),
+  plannedStartTime: z.string().min(1, "計画開始時刻を入力してください"),
+  plannedEndTime: z.string().min(1, "計画終了時刻を入力してください"),
   purpose: z.string().min(1, "作業目的を入力してください"),
   driverName: z.string().min(1, "責任者名を入力してください"),
   supportStaffName: z.string().optional(),
@@ -52,69 +49,36 @@ type PlanFormValues = z.infer<typeof planFormSchema>;
 
 export default function OperationalPlanPage() {
   const [location, navigate] = useLocation();
-  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [date, setDate] = useState<Date>(new Date());
   const [activeTab, setActiveTab] = useState("operational-plan");
   const { toast } = useToast();
 
-  // 画面切り替え処理
-  const handleNavigation = (path: string) => {
-    navigate(path);
-  };
-
-  // 保存して戻る処理
-  const handleSaveAndReturn = () => {
-    // フォームの内容を送信
-    form.handleSubmit(onSubmit)();
-    // 操作完了後、運用管理トップに戻る
-    setTimeout(() => {
-      navigate("/operations");
-    }, 1000);
-  };
-
-  // デフォルト値の設定
-  const defaultValues: Partial<PlanFormValues> = {
-    planDate: new Date(),
-    vehicleId: "",
-    vehicleType: "",
-    route: "",
-    plannedStartTime: "",
-    plannedEndTime: "",
-    purpose: "",
-    driverName: "",
-    supportStaffName: "",
-    remarks: "",
-  };
-
   const form = useForm<PlanFormValues>({
     resolver: zodResolver(planFormSchema),
-    defaultValues,
+    defaultValues: {
+      planDate: new Date(),
+      vehicleId: "",
+      vehicleType: "",
+      route: "",
+      plannedStartTime: "",
+      plannedEndTime: "",
+      purpose: "",
+      driverName: "",
+      supportStaffName: "",
+      remarks: "",
+    }
   });
 
-  function onSubmit(data: PlanFormValues) {
-    console.log(data);
+  const onSubmit = (data: PlanFormValues) => {
     toast({
-      title: "運用計画が登録されました",
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
+      title: "保存完了",
+      description: "運用計画が保存されました",
     });
-  }
+    navigate("/operations");
+  };
 
   return (
-    <div className="container mx-auto py-8">
-      {/* ヘッダー部分 */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">運用計画登録</h1>
-        <div className="flex space-x-2">
-          <Button variant="outline" onClick={() => handleSaveAndReturn()}>
-            保存して戻る
-          </Button>
-        </div>
-      </div>
-
-      {/* 運用画面ナビゲーション */}
+    <div className="container mx-auto p-4">
       <OperationsNav currentPage="operational-plan" />
 
       <Card>
@@ -312,10 +276,10 @@ export default function OperationalPlanPage() {
                     <FormItem className="col-span-1 md:col-span-2">
                       <FormLabel>備考（任意）</FormLabel>
                       <FormControl>
-                        <Textarea 
-                          {...field} 
-                          placeholder="備考事項があれば入力してください" 
-                          className="resize-none" 
+                        <Textarea
+                          {...field}
+                          placeholder="備考事項があれば入力してください"
+                          className="resize-none"
                           rows={4}
                         />
                       </FormControl>

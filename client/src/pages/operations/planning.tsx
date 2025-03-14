@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { useLocation } from 'wouter';
+import { ExitButton } from '@/components/layout/exit-button';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -73,9 +74,11 @@ export default function PlanningPage() {
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">作業計画</h1>
-        <Button variant="outline" onClick={() => navigate("/operations")}>
-          戻る
-        </Button>
+        <ExitButton
+          hasChanges={hasChanges}
+          onSave={handleSave}
+          redirectTo="/operations"
+        />
       </div>
 
       <OperationsNav currentPage="planning" />

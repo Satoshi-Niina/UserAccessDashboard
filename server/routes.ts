@@ -75,6 +75,20 @@ export function registerRoutes(app: Express): Server {
   });
 
   // 点検項目データを取得するエンドポイント
+  // 最新の仕業点検マスタファイルを取得する関数
+  async function getLatestInspectionMasterFile() {
+    const inspectionDir = path.join(process.cwd(), 'attached_assets/inspection');
+    const files = await fs.promises.readdir(inspectionDir);
+    const masterFiles = files.filter(file => file.includes('仕業点検マスタ') && file.endsWith('.csv'));
+
+    if (masterFiles.length > 0) {
+      // ファイル名でソートして最新のものを取得
+      masterFiles.sort();
+      return masterFiles[masterFiles.length - 1];
+    }
+    return null;
+  }
+
   app.get('/api/inspection-items', async (req, res) => {
     try {
       // パラメータからファイル名を取得
@@ -92,14 +106,9 @@ export function registerRoutes(app: Express): Server {
           return res.status(404).json({ error: '指定されたファイルが見つかりません' });
         }
       } else {
-        // デフォルトファイルを検索
-        const files = await fs.promises.readdir(inspectionDir);
-        const csvFiles = files.filter(file => file.endsWith('.csv'));
-
-        if (csvFiles.length > 0) {
-          // 最新のファイルを使用
-          csvFiles.sort();
-          const latestFile = csvFiles[csvFiles.length - 1];
+        // 最新の仕業点検マスタファイルを使用
+        const latestFile = await getLatestInspectionMasterFile();
+        if (latestFile) {
           csvFilePath = path.join(inspectionDir, latestFile);
           console.log('使用するCSVファイル:', csvFilePath);
         } else {

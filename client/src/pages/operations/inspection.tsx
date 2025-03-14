@@ -105,11 +105,11 @@ const fetchMeasurementStandards = async () => {
     if (!response.ok) {
       throw new Error('測定基準値の取得に失敗しました');
     }
-    
+
     const csvText = await response.text();
     const lines = csvText.split('\n');
     const headers = lines[0].split(',');
-    
+
     const manufacturerIndex = headers.findIndex(h => h === '製造メーカー' || h === 'manufacturer');
     const modelIndex = headers.findIndex(h => h === '機種' || h === 'model');
     const engineTypeIndex = headers.findIndex(h => h === 'エンジン型式' || h === 'engineType');
@@ -118,18 +118,18 @@ const fetchMeasurementStandards = async () => {
     const itemIndex = headers.findIndex(h => h === '確認箇所' || h === 'item');
     const minValueIndex = headers.findIndex(h => h === 'minValue');
     const maxValueIndex = headers.findIndex(h => h === 'maxValue');
-    
+
     const standards = [];
-    
+
     for (let i = 1; i < lines.length; i++) {
       if (!lines[i].trim()) continue;
-      
+
       const values = lines[i].split(',');
-      
+
       if (values.length < Math.max(manufacturerIndex, modelIndex, categoryIndex, equipmentIndex, itemIndex, minValueIndex, maxValueIndex) + 1) {
         continue;
       }
-      
+
       standards.push({
         manufacturer: values[manufacturerIndex],
         model: values[modelIndex],
@@ -141,7 +141,7 @@ const fetchMeasurementStandards = async () => {
         maxValue: parseFloat(values[maxValueIndex])
       });
     }
-    
+
     return standards;
   } catch (error) {
     console.error('測定基準値取得エラー:', error);
@@ -519,7 +519,7 @@ export default function InspectionPage() {
                     <th className="p-2 text-center whitespace-nowrap text-xs">
                       測定等記録
                       <div className="text-xs text-gray-500">
-                        (基準値: {item.minValue || '-'} ～ {item.maxValue || '-'})
+                        (測定値を記録)
                       </div>
                     </th>
                     <th className="p-2 text-center whitespace-nowrap w-[30ch] text-xs">図形記録</th>

@@ -107,8 +107,40 @@ export function registerRoutes(app: Express): Server {
         }
       }
 
-      const data = await readCsvFile(csvFilePath);
-      res.json(data);
+      const fileContent = await fs.promises.readFile(csvFilePath, 'utf8');
+      const results = Papa.parse(fileContent, {
+        header: true,
+        skipEmptyLines: true
+      });
+
+      console.log('点検項目データ取得:', results.data.length, '件');
+
+      const items = [];
+      const headerMapping = {
+        '製造メーカー': 'manufacturer',
+        '機種': 'model',
+        'エンジン型式': 'engineType',
+        '部位': 'category',
+        '装置': 'equipment',
+        '確認箇所': 'item',
+        '判断基準': 'criteria',
+        '確認要領': 'method',
+        '測定等記録': 'measurementRecord',
+        '図形記録': 'diagramRecord',
+        '備考': 'remark'
+      };
+
+      results.data.forEach((row, index) => {
+        if (Object.keys(row).length === 0) return;
+
+        const item = { id: index + 1 };
+        Object.entries(row).forEach(([key, value]) => {
+          const mappedKey = headerMapping[key] || key;
+          item[mappedKey] = value || '';
+        });
+        items.push(item);
+      });
+      res.json(items);
     } catch (error) {
       console.error('Error loading inspection items:', error);
       if (error.code === 'ENOENT') {

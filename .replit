@@ -26,7 +26,7 @@ localPort = 5003
 externalPort = 3002
 
 [workflows]
-runButton = "Start Clean"
+runButton = "Start Dev"
 
 [[workflows.workflow]]
 name = "Project"
@@ -59,3 +59,12 @@ author = 39467490
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "pkill -f node || true && npm run dev"
+
+[[workflows.workflow]]
+name = "Start Dev"
+author = 39467490
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"

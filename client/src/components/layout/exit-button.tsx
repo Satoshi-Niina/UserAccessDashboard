@@ -2,7 +2,7 @@ import { XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface ExitButtonProps {
   // 変更があるかどうかを示すフラグ

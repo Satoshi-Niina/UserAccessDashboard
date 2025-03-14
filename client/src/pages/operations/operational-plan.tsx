@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocation } from "wouter";
 import OperationsNav from "@/components/OperationsNav";
@@ -117,7 +116,7 @@ export default function OperationalPlanPage() {
 
       {/* 運用画面ナビゲーション */}
       <OperationsNav currentPage="operational-plan" />
-      
+
       <Card>
         <CardHeader>
           <CardTitle>運用計画フォーム</CardTitle>

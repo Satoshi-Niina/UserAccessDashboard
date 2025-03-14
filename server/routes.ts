@@ -126,12 +126,15 @@ export function registerRoutes(app: Express): Server {
 
       const results = Papa.parse(cleanedContent, {
         header: true,
-        skipEmptyLines: 'greedy',
+        skipEmptyLines: true,
         transformHeader: (header) => header.trim(),
         transform: (value) => value?.trim() || '',
         delimiter: ',',
         quoteChar: '"',
-        escapeChar: '"'
+        escapeChar: '"',
+        error: (error) => {
+          console.warn('CSVパースエラー:', error);
+        }
       });
 
       console.log('点検項目データ取得:', results.data.length, '件');

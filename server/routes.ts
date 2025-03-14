@@ -280,9 +280,9 @@ export function registerRoutes(app: Express): Server {
       if (!fs.existsSync(measurementDir)) {
         fs.mkdirSync(measurementDir, { recursive: true });
       }
-      const csvFilePath = path.join(measurementDir, outputFileName);
 
       let originalHeaders = [];
+      const sourceFilePath = path.join(assetsDir, sourceFileName || '仕業点検マスタ.csv');
       if (sourceFileName && fs.existsSync(sourceFilePath)) {
         try {
           const sourceContent = fs.readFileSync(sourceFilePath, 'utf8');
@@ -380,9 +380,9 @@ export function registerRoutes(app: Express): Server {
       if (!fs.existsSync(measurementDir)) {
         fs.mkdirSync(measurementDir, { recursive: true });
       }
-      const csvFilePath = path.join(measurementDir, outputFileName);
 
-      fs.writeFileSync(csvFilePath, csvContent, 'utf8');
+      const outputFilePath = path.join(measurementDir, outputFileName);
+      fs.writeFileSync(outputFilePath, csvContent, 'utf8');
 
       const inspectionRecordData = inspectionRecord || {};
       const inspectionRecordPath = path.join(measurementDir, `${outputFileName.replace('.csv', '')}_record.json`);

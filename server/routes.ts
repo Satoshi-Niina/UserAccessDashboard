@@ -451,7 +451,7 @@ export function registerRoutes(app: Express): Server {
         res.status(404).json({ error: "CSVファイルが見つかりません" });
       });
   });
-  
+
   // 技術支援データ処理API
   app.post('/api/tech-support/upload', (req, res) => {
     if (!req.isAuthenticated()) {
@@ -477,7 +477,7 @@ export function registerRoutes(app: Express): Server {
       try {
         const dataDir = path.join(process.cwd(), 'attached_assets/data');
         const imagesDir = path.join(process.cwd(), 'attached_assets/images');
-        
+
         // ディレクトリの存在確認と作成
         if (!fs.existsSync(dataDir)) {
           fs.mkdirSync(dataDir, { recursive: true });
@@ -489,7 +489,7 @@ export function registerRoutes(app: Express): Server {
         const originalFilename = req.file.originalname;
         const timestamp = Date.now();
         const fileExtension = path.extname(originalFilename).toLowerCase();
-        
+
         // ファイル形式の確認
         if (fileExtension !== '.pptx' && fileExtension !== '.xlsx' && fileExtension !== '.xls') {
           return res.status(400).json({ error: '対応していないファイル形式です。PPTX、XLSXまたはXLSファイルをアップロードしてください。' });
@@ -514,7 +514,7 @@ export function registerRoutes(app: Express): Server {
         // JSONデータの保存
         const jsonFilePath = path.join(dataDir, `data_${timestamp}.json`);
         fs.writeFileSync(jsonFilePath, JSON.stringify(extractionResult.textData, null, 2));
-        
+
         // 一時ファイルの削除
         fs.unlinkSync(tempFilePath);
 
@@ -539,10 +539,10 @@ export function registerRoutes(app: Express): Server {
       if (!fs.existsSync(dataDir)) {
         return res.json({ files: [] });
       }
-      
+
       const files = await fs.promises.readdir(dataDir);
       const jsonFiles = files.filter(file => file.endsWith('.json'));
-      
+
       const fileStats = await Promise.all(
         jsonFiles.map(async (file) => {
           const filePath = path.join(dataDir, file);
@@ -569,11 +569,11 @@ export function registerRoutes(app: Express): Server {
     try {
       const fileName = req.params.fileName;
       const filePath = path.join(process.cwd(), 'attached_assets/data', fileName);
-      
+
       if (!fs.existsSync(filePath)) {
         return res.status(404).json({ error: 'ファイルが見つかりません' });
       }
-      
+
       const data = await fs.promises.readFile(filePath, 'utf8');
       res.json(JSON.parse(data));
     } catch (error) {
@@ -587,11 +587,11 @@ export function registerRoutes(app: Express): Server {
     try {
       const fileName = req.params.fileName;
       const filePath = path.join(process.cwd(), 'attached_assets/images', fileName);
-      
+
       if (!fs.existsSync(filePath)) {
         return res.status(404).json({ error: '画像が見つかりません' });
       }
-      
+
       res.sendFile(filePath);
     } catch (error) {
       console.error('画像取得エラー:', error);
@@ -660,6 +660,18 @@ export function registerRoutes(app: Express): Server {
 
     return [headers, ...dataRows].join('\n');
   }
+
+  // 測定記録を取得するエンドポイント
+  app.get('/api/measurement-records', async (req, res) => {
+    try {
+      const measurementFilePath = path.join(process.cwd(), 'attached_assets/測定基準値_20250313_record.json');
+      const data = await fs.promises.readFile(measurementFilePath, 'utf-8');
+      res.json(JSON.parse(data));
+    } catch (error) {
+      console.error('測定記録の読み込みエラー:', error);
+      res.status(500).json({ error: '測定記録の読み込みに失敗しました' });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

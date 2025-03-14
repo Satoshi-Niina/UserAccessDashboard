@@ -174,11 +174,26 @@ export default function InspectionPage() {
   const [resultFilter, setResultFilter] = useState<string>("all");
   const [manufacturerFilter, setManufacturerFilter] = useState<string>("all");
   const [modelFilter, setModelFilter] = useState<string>("all");
+  const [measurementRecords, setMeasurementRecords] = useState<Record<number, string>>({});
+
+  // 測定記録の読み込み
+  const loadMeasurementRecords = async () => {
+    try {
+      const response = await fetch('/api/measurement-records');
+      if (response.ok) {
+        const data = await response.json();
+        setMeasurementRecords(data);
+      }
+    } catch (error) {
+      console.error('測定記録の読み込みエラー:', error);
+    }
+  };
 
   useEffect(() => {
     const fetchInspectionItems = async () => {
       setLoading(true);
       try {
+        await loadMeasurementRecords();
         const response = await fetch('/api/inspection-items?useLatest=true');
         const data = await response.json();
 
@@ -501,7 +516,12 @@ export default function InspectionPage() {
                     <th className="p-2 text-center whitespace-nowrap text-xs">確認箇所</th>
                     <th className="p-2 text-center whitespace-nowrap text-xs">判断基準</th>
                     <th className="p-2 text-center whitespace-nowrap text-xs">確認要領</th>
-                    <th className="p-2 text-center whitespace-nowrap text-xs">測定等記録</th>
+                    <th className="p-2 text-center whitespace-nowrap text-xs">
+                      測定等記録
+                      <div className="text-xs text-gray-500">
+                        (基準値: {item.minValue || '-'} ～ {item.maxValue || '-'})
+                      </div>
+                    </th>
                     <th className="p-2 text-center whitespace-nowrap w-[30ch] text-xs">図形記録</th>
                     <th className="p-2 text-center whitespace-nowrap w-[15ch] text-xs">判定</th>
                     <th className="p-2 text-center whitespace-nowrap w-[50ch] text-xs">記事</th>

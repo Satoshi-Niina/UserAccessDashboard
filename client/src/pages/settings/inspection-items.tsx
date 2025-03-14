@@ -913,7 +913,7 @@ export default function InspectionItems() {
 ];
 
     // すでに使用されていないプリセットを探す
-    const unusedPreset = presets.find(preset => 
+    const unusedPreset= presets.find(preset => 
       !dynamicFields.some(field => field.key === preset.key)
     );
 

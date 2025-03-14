@@ -88,14 +88,15 @@ export function registerRoutes(app: Express): Server {
         csvFilePath = path.join(process.cwd(), 'attached_assets', fileName);
       } else if (useLatest) {
         const assetsDir = path.join(process.cwd(), 'attached_assets');
-        const files = await fs.promises.readdir(assetsDir);
-        // CSVファイルだけをフィルタリング
-        const csvFiles = files.filter(file => file.endsWith('.csv') && file.includes('仕業点検マスタ'));
+        const inspectionDir = path.join(assetsDir, 'inspection');
+        const files = await fs.promises.readdir(inspectionDir);
+        // inspectionフォルダ内のCSVファイルをフィルタリング
+        const csvFiles = files.filter(file => file.endsWith('.csv'));
 
         if (csvFiles.length > 0) {
           // ファイル名でソートして最新を取得
           csvFiles.sort();
-          csvFilePath = path.join(assetsDir, csvFiles[csvFiles.length - 1]);
+          csvFilePath = path.join(inspectionDir, csvFiles[csvFiles.length - 1]);
           console.log('CSVヘッダー:', csvFilePath);
         } else {
           // CSVファイルが見つからない場合はデフォルトを使用
@@ -311,11 +312,12 @@ export function registerRoutes(app: Express): Server {
   app.get('/api/inspection-files', async (req, res) => {
     try {
       const assetsDir = path.join(process.cwd(), 'attached_assets');
-      const files = await fs.promises.readdir(assetsDir);
+      const inspectionDir = path.join(assetsDir, 'inspection'); // Added to specify inspection folder
+      const files = await fs.promises.readdir(inspectionDir); // Read from inspection folder
 
       const fileStats = await Promise.all(
         files.map(async (file) => {
-          const filePath = path.join(assetsDir, file);
+          const filePath = path.join(inspectionDir, file); // Use inspectionDir
           const stats = await fs.promises.stat(filePath);
           return {
             name: file,

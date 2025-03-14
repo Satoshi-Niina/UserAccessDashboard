@@ -117,7 +117,7 @@ export function registerRoutes(app: Express): Server {
       }
 
       const fileContent = await fs.promises.readFile(csvFilePath, 'utf8');
-      
+
       // ファイル形式の判定
       const isJSON = fileContent.trim().startsWith('{') || fileContent.trim().startsWith('[');
 
@@ -143,13 +143,19 @@ export function registerRoutes(app: Express): Server {
         transform: (value) => value?.trim() || '',
         delimiter: ',',
         encoding: 'UTF-8',
-        error: (error) => {
-          console.error('CSVパースエラー:', error);
-        },
+        quoteChar: '"',
+        escapeChar: '"',
+        keepEmptyRows: false,
         complete: (results) => {
           console.log('CSVパース完了:', results.data.length, '件');
+        },
+        error: (error) => {
+          console.error('CSVパースエラー:', error);
         }
       });
+
+      // 空のデータを除外
+      results.data = results.data.filter(row => Object.values(row).some(value => value));
 
       console.log('点検項目データ取得:', results.data.length, '件');
 
@@ -395,7 +401,7 @@ export function registerRoutes(app: Express): Server {
   app.get('/api/inspection-files', async (req, res) => {
     try {
       const inspectionDir = path.join(process.cwd(), 'attached_assets/inspection');
-      
+
       // ディレクトリが存在しない場合は作成
       if (!fs.existsSync(inspectionDir)) {
         fs.mkdirSync(inspectionDir, { recursive: true });

@@ -118,8 +118,11 @@ export function registerRoutes(app: Express): Server {
 
       const fileContent = await fs.promises.readFile(csvFilePath, 'utf8');
       
-      // ファイルがJSONの場合
-      if (csvFilePath.endsWith('_20250307.csv')) {
+      // ファイル形式の判定
+      const isCSV = fileContent.trim().startsWith('製造メーカー') || 
+                    fileContent.trim().startsWith('メーカー');
+
+      if (!isCSV) {
         try {
           const jsonData = JSON.parse(fileContent);
           return res.json(jsonData);
@@ -140,8 +143,7 @@ export function registerRoutes(app: Express): Server {
         transformHeader: (header) => header.trim(),
         transform: (value) => value?.trim() || '',
         delimiter: ',',
-        dynamicTyping: true,
-        comments: '#',
+        encoding: 'UTF-8',
       });
 
       console.log('点検項目データ取得:', results.data.length, '件');

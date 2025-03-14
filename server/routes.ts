@@ -118,6 +118,16 @@ export function registerRoutes(app: Express): Server {
 
       const fileContent = await fs.promises.readFile(csvFilePath, 'utf8');
       
+      // ファイルがJSONの場合
+      if (csvFilePath.endsWith('_20250307.csv')) {
+        try {
+          const jsonData = JSON.parse(fileContent);
+          return res.json(jsonData);
+        } catch (error) {
+          console.error('JSONパースエラー:', error);
+        }
+      }
+
       // 不要な文字を削除
       const cleanedContent = fileContent
         .replace(/\uFEFF/g, '') // BOMを削除
@@ -130,11 +140,8 @@ export function registerRoutes(app: Express): Server {
         transformHeader: (header) => header.trim(),
         transform: (value) => value?.trim() || '',
         delimiter: ',',
-        quoteChar: '"',
-        escapeChar: '"',
-        error: (error) => {
-          console.warn('CSVパースエラー:', error);
-        }
+        dynamicTyping: true,
+        comments: '#',
       });
 
       console.log('点検項目データ取得:', results.data.length, '件');

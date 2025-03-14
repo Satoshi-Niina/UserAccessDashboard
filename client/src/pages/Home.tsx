@@ -1,31 +1,34 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 
-// Placeholder:  The rest of the file is missing and needs to be added here to make this code functional.  The error likely lies within the missing portion.  A `useEffect` hook is likely duplicated within the missing code.  To fix this, identify and remove the duplicate `useEffect` hook.  Example of a duplicate:
-//
-// useEffect(() => { ... }, []);
-// useEffect(() => { ... }, []);   <-- Duplicate
-
-
-//  This is a minimal example, the real solution depends on the rest of the missing code.
-function MyComponent() {
+export default function Home() {
   const [value, setValue] = useState('');
-  const location = useLocation();
+  const [location, setLocation] = useLocation();
 
-  // Example of a useEffect, likely needs to be updated or checked for duplicates in the missing code
   useEffect(() => {
     console.log('Location changed:', location);
   }, [location]);
 
-
   return (
-    <div>
-      <Input type="text" value={value} onChange={e => setValue(e.target.value)} />
-      <Button>Submit</Button>
+    <div className="container mx-auto p-4">
+      <Card className="p-6">
+        <h1 className="text-2xl font-bold mb-4">ホーム</h1>
+        <div className="space-y-4">
+          <Input 
+            type="text" 
+            value={value} 
+            onChange={e => setValue(e.target.value)}
+            placeholder="検索..."
+          />
+          <Button onClick={() => setLocation('/operations')}>
+            運用管理へ
+          </Button>
+        </div>
+      </Card>
     </div>
   );
 }
-
-export default MyComponent;

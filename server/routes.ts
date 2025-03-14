@@ -87,7 +87,11 @@ export function registerRoutes(app: Express): Server {
 
       if (fileName) {
         // 指定されたファイル名を使用
-        csvFilePath = path.join(inspectionDir, fileName);
+        csvFilePath = path.join(assetsDir, fileName);
+        // ファイルが存在しない場合はinspectionディレクトリを確認
+        if (!fs.existsSync(csvFilePath)) {
+          csvFilePath = path.join(inspectionDir, fileName);
+        }
       } else {
         // デフォルトファイルを検索
         const files = await fs.promises.readdir(inspectionDir);

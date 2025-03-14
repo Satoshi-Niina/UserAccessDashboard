@@ -96,7 +96,7 @@ export function registerRoutes(app: Express): Server {
         // デフォルトファイルを検索
         const files = await fs.promises.readdir(inspectionDir);
         const csvFiles = files.filter(file => file.endsWith('.csv'));
-        
+
         if (csvFiles.length > 0) {
           // 最新のファイルを使用
           csvFiles.sort();
@@ -112,7 +112,11 @@ export function registerRoutes(app: Express): Server {
       res.json(data);
     } catch (error) {
       console.error('Error loading inspection items:', error);
-      res.status(500).json({ error: 'データの読み込みに失敗しました' });
+      if (error.code === 'ENOENT') {
+        res.status(404).json({ error: 'ファイルが見つかりません' });
+      } else {
+        res.status(500).json({ error: 'データの読み込みに失敗しました' });
+      }
     }
   });
 

@@ -184,11 +184,16 @@ export default function UserManagement() {
                     <Label htmlFor="isAdmin">管理者権限を付与</Label>
                   </div>
                   <div className="flex gap-2">
-                    <Button type="submit">
-                      {selectedUser ? "更新" : "登録"}
-                    </Button>
                     <Button type="button" variant="outline" onClick={handleCancel}>
                       キャンセル
+                    </Button>
+                    <div className="ml-8">
+                      <Button type="submit">
+                        {selectedUser ? "更新" : "登録"}
+                      </Button>
+                    </div>
+                    <Button type="button" variant="secondary" onClick={() => setLocation("/settings")}>
+                      終了
                     </Button>
                     {selectedUser && (
                       <>

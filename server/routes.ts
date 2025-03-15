@@ -98,23 +98,24 @@ export function registerRoutes(app: Express): Server {
       const inspectionDir = path.join(process.cwd(), 'attached_assets/inspection');
       let csvFilePath;
 
-      if (fileName) {
-        // 指定されたファイル名を使用
-        csvFilePath = path.join(inspectionDir, fileName);
-        // ファイルが存在するか確認
-        if (!fs.existsSync(csvFilePath)) {
-          return res.status(404).json({ error: '指定されたファイルが見つかりません' });
-        }
-      } else {
-        // 最新の仕業点検マスタファイルを使用
-        const latestFile = await getLatestInspectionMasterFile();
-        if (latestFile) {
-          csvFilePath = path.join(inspectionDir, latestFile);
-          console.log('使用するCSVファイル:', csvFilePath);
-        } else {
-          return res.status(404).json({ error: '点検項目マスタファイルが見つかりません' });
-        }
+      // 指定されたディレクトリ内のすべてのCSVファイルを取得
+      const files = await fs.promises.readdir(inspectionDir);
+      const csvFiles = files.filter(file => file.endsWith('.csv'));
+
+      if (csvFiles.length === 0) {
+        return res.status(404).json({ error: '点検項目マスタファイルが見つかりません' });
       }
+
+      // ファイルを更新日時でソート
+      const sortedFiles = await Promise.all(csvFiles.map(async file => {
+        const filePath = path.join(inspectionDir, file);
+        const stats = await fs.promises.stat(filePath);
+        return { name: file, path: filePath, mtime: stats.mtime };
+      }));
+
+      sortedFiles.sort((a, b) => b.mtime.getTime() - a.mtime.getTime());
+      csvFilePath = sortedFiles[0].path;
+      console.log('使用するCSVファイル:', csvFilePath);
 
       const fileContent = await fs.promises.readFile(csvFilePath, 'utf8');
       const cleanContent = fileContent.replace(/^\uFEFF/, ''); // BOM除去

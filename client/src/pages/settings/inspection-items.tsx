@@ -391,11 +391,42 @@ export default function InspectionItems() {
       return;
     }
 
-    setIsSaveDialogOpen(true);
-    const now = new Date();
-    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-    const baseName = currentFileName.replace(/\.csv$/i, '') || '点検項目マスタ';
-    setSaveFileName(`${baseName}_${dateStr}.csv`);
+    try {
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+      const baseName = currentFileName.replace(/\.csv$/i, '') || '点検項目マスタ';
+      const fileName = `${baseName}_${dateStr}.csv`;
+
+      const response = await fetch('/api/save-inspection-items', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fileName,
+          items: inspectionItems,
+          saveDirectory: 'attached_assets/inspection'
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('保存に失敗しました');
+      }
+
+      toast({
+        title: "保存完了",
+        description: "点検項目を保存しました",
+      });
+      
+      navigate('/settings');
+    } catch (error) {
+      console.error('保存エラー:', error);
+      toast({
+        title: "エラー",
+        description: "保存に失敗しました",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleAddNewItem = async (item: InspectionItem) => {

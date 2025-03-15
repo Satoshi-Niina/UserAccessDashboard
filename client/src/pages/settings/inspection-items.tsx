@@ -132,70 +132,33 @@ export default function InspectionItems() {
     }
   }, [inspectionItems, initialItems]);
 
-  // 最新のファイル情報を取得
+  // CSVファイル情報を取得
   useEffect(() => {
-    const fetchLatestFile = async () => {
+    const fetchFileInfo = async () => {
       try {
         const response = await fetch('/api/inspection-files');
         const data = await response.json();
         if (data.length > 0) {
-          setLatestFile(data[0]); // data[0]が最新のファイル
-          setCurrentFileName(data[0].name); // 最新のファイル名をセット
-        } else {
-          setLatestFile(null);
-          setCurrentFileName("");
-        }
-      } catch (err) {
-        console.error("ファイル取得エラー:", err);
-        toast({
-          title: "エラー",
-          description: "ファイル情報の取得に失敗しました",
-          variant: "destructive",
-        });
-      }
-    };
-
-    fetchLatestFile();
-  }, [toast]);
-
-
-  // 選択されたファイルから点検項目を読み込む
-  useEffect(() => {
-    const fetchInspectionData = async () => {
-      if (!latestFile) return; //最新のファイルがない場合は処理しない
-
-      setLoading(true);
-      try {
-        const response = await fetch(`/api/inspection-items?file=${latestFile.name}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const items = await response.json();
-        if (!Array.isArray(items)) {
-          throw new Error('Invalid data format');
-        }
-
-        if (Array.isArray(items)) {
+          setLatestFile(data[0]);
+          setCurrentFileName(data[0].name);
+          // ファイルが見つかったら直接データを読み込む
+          const itemsResponse = await fetch(`/api/inspection-items?file=${data[0].name}`);
+          if (!itemsResponse.ok) throw new Error('データの取得に失敗しました');
+          const items = await itemsResponse.json();
           setInspectionItems(items);
-          toast({
-            title: "データ読み込み完了",
-            description: `${items.length}件の点検項目を読み込みました`,
-          });
         }
       } catch (err) {
-        console.error("データ読み込みエラー:", err);
+        console.error("データ取得エラー:", err);
         toast({
           title: "エラー",
-          description: "点検項目の読み込みに失敗しました",
+          description: "データの取得に失敗しました",
           variant: "destructive",
         });
-      } finally {
-        setLoading(false);
       }
     };
 
-    fetchInspectionData();
-  }, [latestFile]);
+    fetchFileInfo();
+  }, [toast]);
 
 
   // CSVデータ読み込み
@@ -944,7 +907,7 @@ export default function InspectionItems() {
 
     Object.entries(item).forEach(([key, value]) => {
       if (!baseFields.includes(key) && key !== 'engineType') {
-        // キーをラベルに変換（camelCase -> 日本語など）
+        // キーをラベルに変換（camelCase ->> 日本語など）
         let label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
         if (key === 'season') label = '時期';
         if (key === 'remarks') label = '備考';

@@ -1,10 +1,10 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import OperationsNav from "@/components/OperationsNav";
 
@@ -23,7 +23,18 @@ export default function OperationalPlan() {
     operator: '',
     remarks: ''
   });
-  const [isSaved, setIsSaved] = useState(false); // Added state to track saved status
+  const [isSaved, setIsSaved] = useState(false);
+  const [recordId, setRecordId] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Load last saved record from localStorage
+    const savedData = localStorage.getItem('operationalPlanData');
+    if (savedData) {
+      const data = JSON.parse(savedData);
+      setFormData(data.formData);
+      setRecordId(data.recordId);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,18 +46,26 @@ export default function OperationalPlan() {
         },
         body: JSON.stringify({
           data: [formData],
-          fileName: `運用計画_${formData.date}.csv`
+          fileName: `運用計画_${formData.date}.csv`,
+          recordId: recordId // Send existing recordId if updating
         }),
       });
 
       if (!response.ok) throw new Error('保存に失敗しました');
 
+      const result = await response.json();
+      
+      // Save form data and record ID to localStorage
+      localStorage.setItem('operationalPlanData', JSON.stringify({
+        formData,
+        recordId: result.recordId
+      }));
+
       toast({
         title: "保存完了",
         description: "運用計画を保存しました",
       });
-      setIsSaved(true); // Set saved state to true on successful save
-      navigate('/operations');
+      setIsSaved(true);
     } catch (error) {
       toast({
         title: "エラー",
@@ -59,9 +78,9 @@ export default function OperationalPlan() {
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-4">
-        <div className="text-sm">仕業点検</div>
+        <Button variant="ghost" onClick={() => navigate("/operations/inspection")}>仕業点検</Button>
         <div className="text-center font-bold">運用計画</div>
-        <div className="text-sm">戻る</div>
+        <Button variant="ghost" onClick={() => navigate("/operations")}>戻る</Button>
       </div>
 
       <Card className="mt-4">
@@ -90,7 +109,7 @@ export default function OperationalPlan() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="vehicleType">車両形式</Label>
+                <Label htmlFor="vehicleType">車種</Label>
                 <Input
                   id="vehicleType"
                   value={formData.vehicleType}
@@ -99,17 +118,16 @@ export default function OperationalPlan() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="operationSection">運用区間</Label>
+                <Label htmlFor="operationSection">運転区間</Label>
                 <Input
                   id="operationSection"
-                  placeholder="例: 東京駅～新宿駅"
                   value={formData.operationSection}
                   onChange={(e) => setFormData({...formData, operationSection: e.target.value})}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="startTime">予定出発時刻</Label>
+                <Label htmlFor="startTime">開始時刻</Label>
                 <Input
                   type="time"
                   id="startTime"
@@ -119,7 +137,7 @@ export default function OperationalPlan() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="endTime">予定終了時刻</Label>
+                <Label htmlFor="endTime">終了時刻</Label>
                 <Input
                   type="time"
                   id="endTime"
@@ -127,18 +145,16 @@ export default function OperationalPlan() {
                   onChange={(e) => setFormData({...formData, endTime: e.target.value})}
                 />
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="purpose">作業目的</Label>
-              <Input
-                id="purpose"
-                value={formData.purpose}
-                onChange={(e) => setFormData({...formData, purpose: e.target.value})}
-              />
-            </div>
+              <div className="col-span-2 space-y-2">
+                <Label htmlFor="purpose">作業目的</Label>
+                <Input
+                  id="purpose"
+                  value={formData.purpose}
+                  onChange={(e) => setFormData({...formData, purpose: e.target.value})}
+                />
+              </div>
 
-            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="responsible">責任者</Label>
                 <Input
@@ -149,34 +165,29 @@ export default function OperationalPlan() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="operator">運転者</Label>
+                <Label htmlFor="operator">運転士</Label>
                 <Input
                   id="operator"
                   value={formData.operator}
                   onChange={(e) => setFormData({...formData, operator: e.target.value})}
                 />
               </div>
+
+              <div className="col-span-2 space-y-2">
+                <Label htmlFor="remarks">備考</Label>
+                <Input
+                  id="remarks"
+                  value={formData.remarks}
+                  onChange={(e) => setFormData({...formData, remarks: e.target.value})}
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="remarks">備考（任意）</Label>
-              <Input
-                id="remarks"
-                placeholder="備考事項があれば入力してください"
-                value={formData.remarks}
-                onChange={(e) => setFormData({...formData, remarks: e.target.value})}
-              />
-            </div>
-
-            <div className="flex justify-end gap-2 mt-6">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => navigate('/operations')}
-              >
+            <div className="flex justify-end space-x-4">
+              <Button variant="outline" onClick={() => navigate("/operations")}>
                 キャンセル
               </Button>
-              <Button type="submit" disabled={isSaved}> {/* Disable button after save */}
+              <Button type="submit" disabled={isSaved}>
                 登録
               </Button>
             </div>

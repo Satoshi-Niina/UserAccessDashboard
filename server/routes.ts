@@ -313,15 +313,27 @@ export function registerRoutes(app: Express): Server {
 
       if (req.body.isUpdate) {
         // 上書き保存の場合
-        const recordIndex = records.findIndex(record => record.savedAt === req.body.recordId);
+        const recordIndex = records.findIndex(record => 
+          record.savedAt === req.body.recordId && 
+          record.userId === req.body.userId
+        );
         if (recordIndex !== -1) {
-          records[recordIndex] = newRecord;
+          records[recordIndex] = {
+            ...newRecord,
+            userId: req.body.userId
+          };
         } else {
-          records.push(newRecord);
+          records.push({
+            ...newRecord,
+            userId: req.body.userId
+          });
         }
       } else {
         // 新規保存の場合
-        records.push(newRecord);
+        records.push({
+          ...newRecord,
+          userId: req.body.userId
+        });
       }
       fs.writeFileSync(recordFilePath, JSON.stringify(records, null, 2));
 

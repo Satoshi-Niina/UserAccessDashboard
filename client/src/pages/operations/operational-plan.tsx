@@ -47,8 +47,9 @@ export default function OperationalPlan() {
         body: JSON.stringify({
           data: [formData],
           fileName: `運用計画_${formData.date}.csv`,
-          recordId: recordId || new Date().toISOString(), // 新規の場合は現在時刻をIDとして使用
-          isUpdate: !!recordId // recordIdが存在する場合のみ上書き
+          recordId: recordId || `${user?.id}_${new Date().toISOString()}`, // ユーザーIDと時刻を組み合わせてユニークなIDを生成
+          isUpdate: !!recordId, // recordIdが存在する場合のみ上書き
+          userId: user?.id // ユーザーIDを追加
         }),
       });
 

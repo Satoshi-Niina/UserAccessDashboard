@@ -261,10 +261,10 @@ export function registerRoutes(app: Express): Server {
 
       // CSVデータの準備
       let csvContent = '';
-      let csvContent = '';
+      let headerContent = '';
       if (inspectionRecord) {
         const record = inspectionRecord;
-        const headerComments = [
+        headerContent = [
           `#点検年月日: ${record.点検年月日 || ''}`,
           `#開始時刻: ${record.開始時刻 || ''}`,
           `#終了時刻: ${record.終了時刻 || ''}`,
@@ -274,7 +274,7 @@ export function registerRoutes(app: Express): Server {
           `#引継ぎ: ${record.引継ぎ || ''}`,
           ''
         ].join('\n');
-        csvContent = headerComments + '\n';
+        csvContent = headerContent + '\n';
       }
 
       // データをCSV形式に変換
@@ -375,7 +375,7 @@ export function registerRoutes(app: Express): Server {
         ].join('\n') + '\n';
       }
 
-      let csvContent = '';
+      let csvContent2 = '';
       if (originalHeaders.length > 0) {
         console.log('元のヘッダーを使用します:', originalHeaders);
 
@@ -396,7 +396,7 @@ export function registerRoutes(app: Express): Server {
           }
         });
 
-        csvContent = Papa.unparse({
+        csvContent2 = Papa.unparse({
           fields: originalHeaders,
           data: processedData
         }, {
@@ -405,7 +405,7 @@ export function registerRoutes(app: Express): Server {
           quoteChar: '"'
         });
       } else {
-        csvContent = Papa.unparse(processedData, {
+        csvContent2 = Papa.unparse(processedData, {
           header: true,
           delimiter: ',',
           quoteChar: '"'
@@ -413,7 +413,7 @@ export function registerRoutes(app: Express): Server {
       }
 
       if (headerComments) {
-        csvContent = headerComments + csvContent;
+        csvContent2 = headerComments + csvContent2;
       }
 
 

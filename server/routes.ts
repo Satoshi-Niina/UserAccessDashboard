@@ -152,49 +152,17 @@ export function registerRoutes(app: Express): Server {
         diagramRecord: row['図形記録'] || row.diagramRecord || ''
       }));
 
-      console.log('点検項目データ取得:', validData.length, '件');
-      res.json(validData);
+      // 必須フィールドの存在確認
+      const finalData = validData.filter(item => 
+        item.manufacturer && 
+        item.model && 
+        item.category && 
+        item.equipment && 
+        item.item
+      );
 
-      // 空のデータを除外
-      results.data = results.data.filter(row => Object.values(row).some(value => value));
-
-      console.log('点検項目データ取得:', results.data.length, '件');
-
-      const items = [];
-      const headerMapping = {
-        '製造メーカー': 'manufacturer',
-        '機種': 'model',
-        'エンジン型式': 'engineType',
-        '部位': 'category',
-        '装置': 'equipment',
-        '確認箇所': 'item',
-        '判断基準': 'criteria',
-        '確認要領': 'method',
-        '測定等記録': 'measurementRecord',
-        '図形記録': 'diagramRecord',
-        '備考': 'remark'
-      };
-
-      results.data.forEach((row, index) => {
-        if (!row || Object.keys(row).length === 0) return;
-
-        const item: any = { id: index + 1 };
-        Object.entries(row).forEach(([key, value]) => {
-          if (!key) return;
-          const mappedKey = headerMapping[key] || key;
-          if (value && typeof value === 'string') {
-            item[mappedKey] = value.trim();
-          } else {
-            item[mappedKey] = value || '';
-          }
-        });
-
-        // 必須フィールドが存在する場合のみ追加
-        if (item.manufacturer && item.model && item.category && item.equipment && item.item) {
-          items.push(item);
-        }
-      });
-      res.json(items);
+      console.log('点検項目データ取得:', finalData.length, '件');
+      return res.json(finalData);
     } catch (error) {
       console.error('Error loading inspection items:', error);
       if (error.code === 'ENOENT') {

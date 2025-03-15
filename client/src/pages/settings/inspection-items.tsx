@@ -644,34 +644,23 @@ export default function InspectionItems() {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         try {
           const text = e.target?.result as string;
-          // CSVデータを解析
-          const results = Papa.parse(text, {
-            header: true,
-            skipEmptyLines: true,
-            // エラーを許容する
-            error: (error) => {
-              console.error("CSV解析エラー:", error);
-            }
-          });
+          const results = await parseCSVData(text); // Use the new function
 
           if (results.errors && results.errors.length > 0) {
-            console.log("CSVパースエラー:", results.errors);
-            // エラーを表示するが、処理は続行する
+            console.error("CSVパースエラー:", results.errors);
             toast({
               title: "CSVパース警告",
-              description: "一部のデータが正しく読み込めない可能性があります",
+              description: "一部のデータが正しく読み込めない可能性があります。",
               variant: "warning",
             });
           }
-
           // ヘッダーの確認とマッピング
           const headers = results.meta.fields || [];
           console.log("CSVヘッダー:", headers);
           console.log("予想されるヘッダー数:", headers.length);
-
 
           // ヘッダーマッピングを動的に構築
           const headerMapping: Record<string, string> = {
@@ -732,7 +721,7 @@ export default function InspectionItems() {
                 // 必須フィールドが存在しない場合は空文字を設定
                 item[field] = '';
               }
-            });場合は空文字で初期化
+            });
             const requiredFields = ['manufacturer', 'model', 'category', 'equipment', 'item', 'criteria', 'method', 'measurementRecord', 'diagramRecord'];
             requiredFields.forEach(field => {
               if (item[field] === undefined) {
@@ -1700,3 +1689,15 @@ export default function InspectionItems() {
     </DndProvider>
   );
 }
+
+// Added function to parse CSV data asynchronously
+const parseCSVData = async (csvText: string) => {
+  return new Promise<{ data: any[]; meta: any; errors: any[] }>((resolve, reject) => {
+    Papa.parse(csvText, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => resolve(results),
+      error: (error) => reject(error)
+    });
+  });
+};

@@ -453,6 +453,14 @@ export default function InspectionItems() {
     setPendingAction(null);
   };
 
+  const handleSaveConfirm = async () => {
+    await saveToFile();
+    setIsSaveDialogOpen(false);
+    if (pendingAction === 'back') {
+      navigate('/settings');
+    }
+  };
+
   const fetchInspectionFiles = async () => {
     try {
       const response = await fetch('/api/inspection-files');
@@ -475,9 +483,26 @@ export default function InspectionItems() {
   };
 
   // 変更を保存する
-  const saveChanges = async (newFileName?: string) => {
+  const saveChanges = async () => {
     try {
-      // 保存するフィールドを決定（動的に変更可能）
+      setIsSaveDialogOpen(true);
+      const today = new Date();
+      const defaultFileName = `inspection_items_${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}.csv`;
+      setSaveFileName(defaultFileName);
+      return;
+    } catch (error) {
+      console.error('保存エラー:', error);
+      toast({
+        title: "エラー",
+        description: "保存に失敗しました",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // ファイルに保存する
+  const saveToFile = async () => {
+    try {
       // 基本フィールドを定義
       const baseFields = [
         { header: '製造メーカー', key: 'manufacturer' },

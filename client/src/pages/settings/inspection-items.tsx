@@ -428,14 +428,6 @@ export default function InspectionItems() {
         variant: "destructive",
       });
     }
-    } catch (error) {
-      console.error('保存エラー:', error);
-      toast({
-        title: "エラー",
-        description: "保存に失敗しました",
-        variant: "destructive",
-      });
-    }
   };
 
   const handleAddNewItem = async (item: InspectionItem) => {
@@ -934,8 +926,7 @@ export default function InspectionItems() {
 
     if (unusedPreset) {
       setDynamicFields([...dynamicFields, { ...unusedPreset, value: '' }]);
-    } else {
-      // すべてのプリセットが使用済みの場合はカスタムフィールド
+    } else {      // すべてのプリセットが使用済みの場合はカスタムフィールド
       const customField = { 
         key: `customField${dynamicFields.length + 1}`, 
         label: `カスタムフィールド${dynamicFields.length + 1}`, 

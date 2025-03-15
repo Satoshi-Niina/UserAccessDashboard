@@ -97,8 +97,10 @@ export function registerRoutes(app: Express): Server {
       // CSVファイルのパスを決定
       const inspectionDir = path.join(process.cwd(), 'attached_assets/inspection');
 
-      try {
-        // 指定されたディレクトリ内のCSVファイルを取得
+      if (!fs.existsSync(inspectionDir)) {
+          fs.mkdirSync(inspectionDir, { recursive: true });
+        }
+
         const files = await fs.promises.readdir(inspectionDir);
         const csvFiles = files.filter(file => file.endsWith('.csv'));
 
@@ -111,9 +113,9 @@ export function registerRoutes(app: Express): Server {
           const latest = await latestPromise;
           const currentPath = path.join(inspectionDir, current);
           const currentStat = await fs.promises.stat(currentPath);
-          
+
           if (!latest) return { name: current, path: currentPath, mtime: currentStat.mtime };
-          
+
           return currentStat.mtime > latest.mtime ? 
             { name: current, path: currentPath, mtime: currentStat.mtime } : latest;
         }, Promise.resolve(null));
@@ -313,7 +315,7 @@ export function registerRoutes(app: Express): Server {
       if (fs.existsSync(recordFilePath)) {
         records = JSON.parse(fs.readFileSync(recordFilePath, 'utf8'));
       }
-      
+
       const newRecord = {
         ...inspectionRecordData,
         savedAt: req.body.recordId
@@ -831,7 +833,7 @@ export function registerRoutes(app: Express): Server {
       ['クボタ', 'KT450', 'クボタV3300', 'エンジン', '冷却系統', '', 'ラジエター', '水漏れ、汚れ', '漏れ・汚れ無し', '', ''].join(','),
       ['クボタ', 'KT450', 'クボタV3300', 'エンジン', '油圧系統', '', 'ホース・配管', '油漏れ、亀裂', '亀裂・油漏れ無し', '', ''].join(','),
       ['クボタ', 'KT580', 'クボタV3800', '走行装置', 'ブレーキ', '', 'ブレーキペダル', '踏み代、効き', '規定の踏み代で確実に効く', '', ''].join(','),
-      ['クボタ', 'KT580', 'クボタV3800', '走行装置', 'クラッチ', '', 'クラッチペダル', '遊び、切れ', '規定の遊びがあり確実に切れる', '', ''].join(','),
+      ['クボタ', 'KT580', 'クボタV3800', '走行装置', 'クラッチ', '', 'クラッチペダル', '遊び、切れ', '規定の遊びがあり確実に切れる', '', ''].join'),
       ['ヤンマー', 'YT220', 'ヤンマー4TNV', '走行装置', 'ブレーキ', '', 'ブレーキペダル', '踏み代、効き', '規定の踏み代で確実に効く', '', ''].join(','),
       ['ヤンマー', 'YT220', 'ヤンマー4TNV', '走行装置', 'クラッチ', '', 'クラッチペダル', '遊び、切れ', '規定の遊びがあり確実に切れる', '', ''].join(','),
       ['ヤンマー', 'YT330', 'ヤンマー4TNV', '電装品', 'バッテリー', '', '端子', '緩み、腐食', '緩み・腐食無し', '', ''].join(','),
@@ -848,7 +850,7 @@ export function registerRoutes(app: Express): Server {
       const inspectionDir = path.join(process.cwd(), 'attached_assets/inspection');
       const files = await fs.promises.readdir(inspectionDir);
       const masterFiles = files.filter(file => file.includes('仕業点検マスタ') && file.endsWith('.csv'));
-      
+
       if (masterFiles.length === 0) {
         return res.status(404).json({ error: '点検マスタファイルが見つかりません' });
       }
@@ -857,7 +859,7 @@ export function registerRoutes(app: Express): Server {
       masterFiles.sort();
       const latestFile = masterFiles[masterFiles.length - 1];
       const filePath = path.join(inspectionDir, latestFile);
-      
+
       const fileContent = await fs.promises.readFile(filePath, 'utf8');
       const results = Papa.parse(fileContent, {
         header: true,

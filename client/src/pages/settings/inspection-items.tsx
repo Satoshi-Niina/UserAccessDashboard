@@ -101,7 +101,8 @@ export default function InspectionItems() {
   // CSVデータ読み込み用の状態
   const [csvData, setCsvData] = useState<InspectionItem[]>([]);
   const [availableFiles, setAvailableFiles] = useState<{name: string, modified: string}[]>([]);
-  const [currentFileName, setCurrentFileName] = useState("測定基準値_20250313.csv");
+  const [latestFile, setLatestFile] = useState<{name: string, modified: string} | null>(null); // 最新のファイル情報
+  const [currentFileName, setCurrentFileName] = useState(""); //初期値を空文字に
 
   // 変更追跡と確認ダイアログ用の状態
   const [hasChanges, setHasChanges] = useState(false);
@@ -131,37 +132,41 @@ export default function InspectionItems() {
     }
   }, [inspectionItems, initialItems]);
 
-  // 利用可能なCSVファイル一覧を取得
+  // 最新のファイル情報を取得
   useEffect(() => {
-    const fetchAvailableFiles = async () => {
+    const fetchLatestFile = async () => {
       try {
         const response = await fetch('/api/inspection-files');
         const data = await response.json();
-        setAvailableFiles(data);
         if (data.length > 0) {
-          setCurrentFileName(data[0].name);
+          setLatestFile(data[0]); // data[0]が最新のファイル
+          setCurrentFileName(data[0].name); // 最新のファイル名をセット
+        } else {
+          setLatestFile(null);
+          setCurrentFileName("");
         }
       } catch (err) {
-        console.error("ファイル一覧取得エラー:", err);
+        console.error("ファイル取得エラー:", err);
         toast({
           title: "エラー",
-          description: "ファイル一覧の取得に失敗しました",
+          description: "ファイル情報の取得に失敗しました",
           variant: "destructive",
         });
       }
     };
 
-    fetchAvailableFiles();
+    fetchLatestFile();
   }, [toast]);
+
 
   // 選択されたファイルから点検項目を読み込む
   useEffect(() => {
     const fetchInspectionData = async () => {
-      if (!currentFileName) return;
+      if (!latestFile) return; //最新のファイルがない場合は処理しない
 
       setLoading(true);
       try {
-        const response = await fetch(`/api/inspection-items?file=${currentFileName}`);
+        const response = await fetch(`/api/inspection-items?file=${latestFile.name}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -184,40 +189,14 @@ export default function InspectionItems() {
           description: "点検項目の読み込みに失敗しました",
           variant: "destructive",
         });
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchInspectionData();
-  }, [currentFileName]);
+  }, [latestFile]);
 
-  // 利用可能なファイル一覧を取得
-  useEffect(() => {
-    const fetchAvailableFiles = async () => {
-      try {
-        const response = await fetch('/api/inspection-files');
-        const data = await response.json();
-        const fileList = Array.isArray(data) ? data.map(file => ({
-          name: file.name,
-          modified: new Date(file.modified).toLocaleString()
-        })) : [];
-        setAvailableFiles(fileList);
-
-        // 最新のファイルを設定
-        if (fileList.length > 0) {
-          setCurrentFileName(fileList[0].name);
-        }
-      } catch (err) {
-        console.error("ファイル一覧取得エラー:", err);
-        toast({
-          title: "エラー",
-          description: "ファイル一覧の取得に失敗しました",
-          variant: "destructive",
-        });
-      }
-    };
-
-    fetchAvailableFiles();
-  }, []);
 
   // CSVデータ読み込み
   useEffect(() => {
@@ -225,7 +204,7 @@ export default function InspectionItems() {
       // 変更があればリセット
       setInitialItems([]);
       try {
-        const response = await fetch(`/api/inspection-items?file=${currentFileName}&t=${new Date().getTime()}`);
+        const response = await fetch(`/api/inspection-items?file=${latestFile?.name}&t=${new Date().getTime()}`);
 
         if (!response.ok) {
           throw new Error(`サーバーエラー: ${response.status} ${response.statusText}`);
@@ -323,7 +302,7 @@ export default function InspectionItems() {
     };
 
     fetchInspectionData();
-  }, [currentFileName, toast]);
+  }, [latestFile, toast]);
 
   // 検索状態を保持する
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -1064,7 +1043,7 @@ export default function InspectionItems() {
         body: JSON.stringify({
           data: inspectionItems,
           fileName: saveFileName,
-          sourceFileName: currentFileName  // 元のファイル名を追加
+          sourceFileName: latestFile?.name  // 元のファイル名を追加
           , deletedRecords // 削除されたレコードIDを送信
         }),
       });
@@ -1105,7 +1084,7 @@ export default function InspectionItems() {
       // デフォルトのファイル名設定（現在のファイル名に日付を追加）
       const now = new Date();
       const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-      const baseName = currentFileName.replace(/\.csv$/i, '');
+      const baseName = latestFile?.name.replace(/\.csv$/i, '') || '点検項目マスタ'; // 最新ファイル名を使用
       setSaveFileName(`${baseName}_${dateStr}.csv`);
     } else {
       navigate('/settings');
@@ -1138,7 +1117,8 @@ export default function InspectionItems() {
             {/* 保存済みCSVファイル選択 */}
             <div className="flex-1 min-w-[200px]">
               <Label htmlFor="saved-csv-file" className="mb-2 block">保存済みCSVファイル</Label>
-              <Select
+              {/* ファイル選択を削除 */}
+              {/* <Select
                 value={currentFileName}
                 onValueChange={setCurrentFileName}
               >
@@ -1152,7 +1132,8 @@ export default function InspectionItems() {
                     </SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
+              </Select> */}
+              {latestFile && <p>最新のファイル: {latestFile.name} ({latestFile.modified})</p>}
             </div>
 
             {/* 新規CSVファイル選択とインポートボタン */}
@@ -1545,7 +1526,7 @@ export default function InspectionItems() {
               // デフォルトのファイル名設定
               const now = new Date();
               const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-              const baseName = currentFileName.replace(/\.csv$/i, '');
+              const baseName = latestFile?.name.replace(/\.csv$/i, ''); // 最新ファイル名を使用
               setSaveFileName(`${baseName}_${dateStr}.csv`);
             }}>
               保存する

@@ -917,7 +917,8 @@ export default function InspectionItems() {
       { key: 'remarks', label: '備考' },
       { key: 'notes', label: 'メモ' },
       { key: 'frequency', label: '頻度' },
-      { key: 'priority', label: '優先度' }`];
+      { key: 'priority', label: '優先度' }
+    ];
 
     // すでに使用されていないプリセットを探す
     const unusedPreset= presets.find(preset => 
@@ -928,9 +929,9 @@ export default function InspectionItems() {
       setDynamicFields([...dynamicFields, { ...unusedPreset, value: '' }]);
     } else {
       const customField = {
-        key: `customField${dynamicFields.length + 1}`,
-        label: `カスタムフィールド${dynamicFields.length + 1}`,
-        value: ''
+        key: "customField" + (dynamicFields.length + 1),
+        label: "カスタムフィールド" + (dynamicFields.length + 1),
+        value: ""
       };
       setDynamicFields([...dynamicFields, customField]);
     }
@@ -958,19 +959,6 @@ export default function InspectionItems() {
     toast({
       title: "更新完了",
       description: "点検項目を更新しました",
-    });ap(item=>
-      item.id === updatedEditItem.id ? updatedEditItem : item
-    );
-
-    setInspectionItems(updatedItems);
-    setIsEditDialogOpen(false);
-    // コメントがある場合は表示、なければ基本メッセージ
-    const description = editComment 
-      ? `点検項目を更新しました: ${editComment}`
-      : "点検項目を更新しました";
-    toast({
-      title: "更新完了",
-      description: description,
     });
   };
 

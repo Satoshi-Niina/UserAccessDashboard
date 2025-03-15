@@ -575,7 +575,7 @@ export default function InspectionItems() {
           } catch (jsonError) {
             // JSONとして解析できない場合はCSVとして解析
             const results = await parseCSVData(text); // Use the async parseCSVData function
-            
+
             // ヘッダーの確認とマッピング
             const headers = results.meta.fields || [];
             console.log("CSVヘッダー:", headers);
@@ -919,8 +919,7 @@ export default function InspectionItems() {
     }
 
     try {
-      setLoading(true);
-      const response = await fetch('/api/save-inspection-data', {
+      setLoading(true);      const response = await fetch('/api/save-inspection-data', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1266,6 +1265,7 @@ export default function InspectionItems() {
               {isEditMode ? "点検項目を編集" : "点検項目を追加"}
             </DialogTitle>
           </DialogHeader>
+          <form onSubmit={addInspectionItem}> {/* form要素を追加 */}
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="category">部位</Label>
@@ -1344,19 +1344,31 @@ export default function InspectionItems() {
                 placeholder="図形に関する記録"
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="remarks">備考</Label>
+<Input
+                id="remarks"
+                value={newItem.remarks || ''}
+                onChange={(e) =>
+                  setNewItem({ ...newItem, remarks: e.target.value })
+                }
+                placeholder="備考を入力"
+              />
+            </div>
+            <div className="flex justify-end gap-4 mt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsDialogOpen(false)}
+              >
+                キャンセル
+              </Button>
+              <Button type="submit">
+                {isEditMode ? '保存' : '追加'}
+              </Button>
+            </div>
           </div>
-          <DialogFooter className="flex justify-between">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => setIsDialogOpen(false)}
-            >
-              {isEditMode ? "編集完了" : "キャンセル"}
-            </Button>
-            <Button type="button" onClick={addInspectionItem}>
-              {isEditMode ? "更新" : "追加"}
-            </Button>
-          </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 

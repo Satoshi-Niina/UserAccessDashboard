@@ -50,7 +50,7 @@ export default function UserManagement() {
 
   useEffect(() => {
     loadUsers();
-  }, []);
+  }, [loadUsers, toast]);
 
   const handleUserSelect = (user: User) => {
     setSelectedUser(user);

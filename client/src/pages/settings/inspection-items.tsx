@@ -164,25 +164,40 @@ export default function InspectionItems() {
   // CSVデータ読み込み
   useEffect(() => {
     const fetchInspectionData = async () => {
-      // 変更があればリセット
-      setInitialItems([]);
+      if (!latestFile?.name) return;
+      
+      setLoading(true);
       try {
-        const response = await fetch(`/api/inspection-items?file=${latestFile?.name}&t=${new Date().getTime()}`);
-
+        const response = await fetch(`/api/inspection-items?file=${latestFile.name}`);
+        
         if (!response.ok) {
           throw new Error(`サーバーエラー: ${response.status} ${response.statusText}`);
         }
 
-        const csvText = await response.text();
-
-        if (!csvText || csvText.trim() === '') {
-          throw new Error('データが空です');
+        const data = await response.json();
+        
+        if (!Array.isArray(data)) {
+          throw new Error('無効なデータ形式です');
         }
 
-        // CSVパース処理 - 柔軟に対応するため、ヘッダーマッピングを動的に行う
-        const results = Papa.parse(csvText, {
-          header: true,
-          skipEmptyLines: true,
+        setInspectionItems(data);
+        setInitialItems(data);
+        
+      } catch (err) {
+        console.error("データ取得エラー:", err);
+        toast({
+          title: "エラー",
+          description: err instanceof Error ? err.message : "データの取得に失敗しました",
+          variant: "destructive",
+        });
+        setInspectionItems([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInspectionData();
+  }, [latestFile, toast]);kipEmptyLines: true,
           // エラーを許容する
           error: (error) => {
             console.error("CSV解析エラー:", error);

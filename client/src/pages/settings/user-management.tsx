@@ -10,6 +10,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom"; // Added import statement
+
 
 type User = {
   id: number;
@@ -23,7 +25,8 @@ export default function UserManagement() {
   const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [isMenuExpanded, setIsMenuExpanded] = useState(true); // Initialize as expanded
+  const [isMenuExpanded, setIsMenuExpanded] = useState(true);
+  const navigate = useNavigate(); // Added useNavigate hook
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -118,6 +121,8 @@ export default function UserManagement() {
 
   const handleCancel = () => {
     clearForm();
+    setIsMenuExpanded(true); // Expand sidebar
+    navigate("/settings"); // Navigate to settings page
   };
 
   if (!user?.isAdmin) {

@@ -117,11 +117,12 @@ export function registerRoutes(app: Express): Server {
       }
 
       const fileContent = await fs.promises.readFile(csvFilePath, 'utf8');
+      const cleanContent = fileContent.replace(/^\uFEFF/, ''); // BOM除去
 
       // CSVパース処理
-      const results = Papa.parse(fileContent, {
+      const results = Papa.parse(cleanContent, {
         header: true,
-        skipEmptyLines: true,
+        skipEmptyLines: 'greedy',
         transformHeader: (header) => header.trim(),
         transform: (value) => value?.trim() || '',
         delimiter: ',',
@@ -134,6 +135,11 @@ export function registerRoutes(app: Express): Server {
       if (!results.data || results.data.length === 0) {
         return res.status(500).json({ error: 'データが見つかりません' });
       }
+
+      // 空のデータを除外
+      results.data = results.data.filter(row => 
+        Object.values(row).some(value => value && value.toString().trim())
+      );
 
       // データの検証と正規化
       const validData = results.data.filter(row => {

@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom"; // Added import statement
+import { useLocation } from "wouter";
 
 
 type User = {
@@ -26,7 +26,7 @@ export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isMenuExpanded, setIsMenuExpanded] = useState(true);
-  const navigate = useNavigate(); // Added useNavigate hook
+  const [, setLocation] = useLocation();
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -122,7 +122,7 @@ export default function UserManagement() {
   const handleCancel = () => {
     clearForm();
     setIsMenuExpanded(true); // Expand sidebar
-    navigate("/settings"); // Navigate to settings page
+    setLocation("/settings"); // Navigate to settings page
   };
 
   if (!user?.isAdmin) {

@@ -834,6 +834,41 @@ export function registerRoutes(app: Express): Server {
   }
 
   // 測定記録を取得するエンドポイント
+  // 車種一覧を取得するエンドポイント
+  app.get('/api/vehicle-models', async (req, res) => {
+    try {
+      const inspectionDir = path.join(process.cwd(), 'attached_assets/inspection');
+      const files = await fs.promises.readdir(inspectionDir);
+      const masterFiles = files.filter(file => file.includes('仕業点検マスタ') && file.endsWith('.csv'));
+      
+      if (masterFiles.length === 0) {
+        return res.status(404).json({ error: '点検マスタファイルが見つかりません' });
+      }
+
+      // 最新のファイルを取得
+      masterFiles.sort();
+      const latestFile = masterFiles[masterFiles.length - 1];
+      const filePath = path.join(inspectionDir, latestFile);
+      
+      const fileContent = await fs.promises.readFile(filePath, 'utf8');
+      const results = Papa.parse(fileContent, {
+        header: true,
+        skipEmptyLines: true
+      });
+
+      // 車種の一覧を抽出（重複を除去）
+      const models = [...new Set(results.data
+        .map((row: any) => row['機種'] || row.model)
+        .filter(Boolean)
+      )].sort();
+
+      res.json(models);
+    } catch (error) {
+      console.error('車種一覧取得エラー:', error);
+      res.status(500).json({ error: '車種一覧の取得に失敗しました' });
+    }
+  });
+
   app.get('/api/measurement-records', async (req, res) => {
     try {
       const measurementFilePath = path.join(process.cwd(), 'attached_assets/Measurement Standard Value/measurement_standards_record.json');

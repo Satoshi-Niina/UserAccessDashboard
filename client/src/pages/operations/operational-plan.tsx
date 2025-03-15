@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@radix-ui/react-select' // Assuming this component is available
 import { useToast } from "@/hooks/use-toast";
 import OperationsNav from "@/components/OperationsNav";
 
@@ -14,7 +14,7 @@ export default function OperationalPlan() {
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     vehicleNumber: '',
-    vehicleType: '',
+    vehicleType: '', //This will be replaced by a dropdown
     operationSection: '',
     startTime: '',
     endTime: '',
@@ -23,6 +23,7 @@ export default function OperationalPlan() {
     operator: '',
     remarks: ''
   });
+  const [vehicleModels, setVehicleModels] = useState<string[]>([]);
   const [isSaved, setIsSaved] = useState(false);
   const [recordId, setRecordId] = useState<string | null>(null);
 
@@ -34,6 +35,22 @@ export default function OperationalPlan() {
       setFormData(data.formData);
       setRecordId(data.recordId);
     }
+
+    // Fetch vehicle models
+    const fetchVehicleModels = async () => {
+      try {
+        const response = await fetch('/api/vehicle-models'); //Potentially needs adjustment based on file location
+        if (response.ok) {
+          const models = await response.json();
+          setVehicleModels(models);
+        } else {
+          console.error("Error fetching vehicle models:", response.status);
+        }
+      } catch (error) {
+        console.error('車種一覧の取得に失敗しました:', error);
+      }
+    };
+    fetchVehicleModels();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -47,17 +64,16 @@ export default function OperationalPlan() {
         body: JSON.stringify({
           data: [formData],
           fileName: `運用計画_${formData.date}.csv`,
-          recordId: recordId || `${user?.id}_${new Date().toISOString()}`, // ユーザーIDと時刻を組み合わせてユニークなIDを生成
-          isUpdate: !!recordId, // recordIdが存在する場合のみ上書き
-          userId: user?.id // ユーザーIDを追加
+          recordId: recordId || `${user?.id}_${new Date().toISOString()}`,
+          isUpdate: !!recordId,
+          userId: user?.id
         }),
       });
 
       if (!response.ok) throw new Error('保存に失敗しました');
 
       const result = await response.json();
-      
-      // Save form data and record ID to localStorage
+
       localStorage.setItem('operationalPlanData', JSON.stringify({
         formData,
         recordId: result.recordId
@@ -76,6 +92,11 @@ export default function OperationalPlan() {
       });
     }
   };
+
+  const handleInputChange = (field: string, value: any) => {
+    setFormData({ ...formData, [field]: value });
+  };
+
 
   return (
     <div className="container mx-auto p-4">
@@ -97,7 +118,7 @@ export default function OperationalPlan() {
                   type="date"
                   id="date"
                   value={formData.date}
-                  onChange={(e) => setFormData({...formData, date: e.target.value})}
+                  onChange={(e) => handleInputChange('date', e.target.value)}
                 />
               </div>
 
@@ -106,17 +127,27 @@ export default function OperationalPlan() {
                 <Input
                   id="vehicleNumber"
                   value={formData.vehicleNumber}
-                  onChange={(e) => setFormData({...formData, vehicleNumber: e.target.value})}
+                  onChange={(e) => handleInputChange('vehicleNumber', e.target.value)}
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="vehicleType">車種</Label>
-                <Input
-                  id="vehicleType"
+                <Select
                   value={formData.vehicleType}
-                  onChange={(e) => setFormData({...formData, vehicleType: e.target.value})}
-                />
+                  onValueChange={(value) => handleInputChange('vehicleType', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="車種を選択" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vehicleModels.map((model) => (
+                      <SelectItem key={model} value={model}>
+                        {model}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
@@ -124,7 +155,7 @@ export default function OperationalPlan() {
                 <Input
                   id="operationSection"
                   value={formData.operationSection}
-                  onChange={(e) => setFormData({...formData, operationSection: e.target.value})}
+                  onChange={(e) => handleInputChange('operationSection', e.target.value)}
                 />
               </div>
 
@@ -134,7 +165,7 @@ export default function OperationalPlan() {
                   type="time"
                   id="startTime"
                   value={formData.startTime}
-                  onChange={(e) => setFormData({...formData, startTime: e.target.value})}
+                  onChange={(e) => handleInputChange('startTime', e.target.value)}
                 />
               </div>
 
@@ -144,7 +175,7 @@ export default function OperationalPlan() {
                   type="time"
                   id="endTime"
                   value={formData.endTime}
-                  onChange={(e) => setFormData({...formData, endTime: e.target.value})}
+                  onChange={(e) => handleInputChange('endTime', e.target.value)}
                 />
               </div>
 
@@ -153,7 +184,7 @@ export default function OperationalPlan() {
                 <Input
                   id="purpose"
                   value={formData.purpose}
-                  onChange={(e) => setFormData({...formData, purpose: e.target.value})}
+                  onChange={(e) => handleInputChange('purpose', e.target.value)}
                 />
               </div>
 
@@ -162,7 +193,7 @@ export default function OperationalPlan() {
                 <Input
                   id="responsible"
                   value={formData.responsible}
-                  onChange={(e) => setFormData({...formData, responsible: e.target.value})}
+                  onChange={(e) => handleInputChange('responsible', e.target.value)}
                 />
               </div>
 
@@ -171,7 +202,7 @@ export default function OperationalPlan() {
                 <Input
                   id="operator"
                   value={formData.operator}
-                  onChange={(e) => setFormData({...formData, operator: e.target.value})}
+                  onChange={(e) => handleInputChange('operator', e.target.value)}
                 />
               </div>
 
@@ -180,7 +211,7 @@ export default function OperationalPlan() {
                 <Input
                   id="remarks"
                   value={formData.remarks}
-                  onChange={(e) => setFormData({...formData, remarks: e.target.value})}
+                  onChange={(e) => handleInputChange('remarks', e.target.value)}
                 />
               </div>
             </div>

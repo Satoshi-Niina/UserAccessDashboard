@@ -417,7 +417,7 @@ export default function InspectionItems() {
         title: "保存完了",
         description: "点検項目を保存しました",
       });
-      
+
       navigate('/settings');
     } catch (error) {
       console.error('保存エラー:', error);

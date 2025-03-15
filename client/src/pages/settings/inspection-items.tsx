@@ -165,30 +165,31 @@ export default function InspectionItems() {
   useEffect(() => {
     const fetchInspectionData = async () => {
       if (!latestFile?.name) return;
-      
+
       setLoading(true);
       try {
         const response = await fetch(`/api/inspection-items?file=${latestFile.name}`);
-        
+
         if (!response.ok) {
           throw new Error(`サーバーエラー: ${response.status} ${response.statusText}`);
         }
 
         const data = await response.json();
-        
+
         if (!Array.isArray(data)) {
           throw new Error('無効なデータ形式です');
         }
 
         setInspectionItems(data);
         setInitialItems(data);
-        
+
       } catch (err) {
-        console.error("データ取得エラー:", err);
+        console.error("データ読み込みエラー:", err);
         toast({
           title: "エラー",
           description: err instanceof Error ? err.message : "データの取得に失敗しました",
           variant: "destructive",
+          duration: 3000,
         });
         setInspectionItems([]);
       } finally {

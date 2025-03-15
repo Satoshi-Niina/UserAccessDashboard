@@ -122,8 +122,6 @@ export function registerRoutes(app: Express): Server {
 
         const fileContent = await fs.promises.readFile(csvFilePath, 'utf8');
         const cleanContent = fileContent.replace(/^\uFEFF/, ''); // BOM除去
-
-      try {
         // CSVパース処理
         const results = Papa.parse(cleanContent, {
           header: true,

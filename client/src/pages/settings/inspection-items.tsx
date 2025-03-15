@@ -925,8 +925,7 @@ export default function InspectionItems() {
       { key: 'remarks', label: '備考' },
       { key: 'notes', label: 'メモ' },
       { key: 'frequency', label: '頻度' },
-      { key: 'priority', label: '優先度' }
-    ];
+      { key: 'priority', label: '優先度' }`];
 
     // すでに使用されていないプリセットを探す
     const unusedPreset= presets.find(preset => 

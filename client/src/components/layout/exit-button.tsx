@@ -1,7 +1,7 @@
 import { XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast.ts";
 import { useState, useEffect } from "react";
 
 interface ExitButtonProps {

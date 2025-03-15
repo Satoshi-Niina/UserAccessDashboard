@@ -107,7 +107,8 @@ export function registerRoutes(app: Express): Server {
         }
 
         // 最新のファイルを取得
-        const latestFile = await Promise.reduce(csvFiles, async (latest, current) => {
+        const latestFile = await csvFiles.reduce(async (latestPromise, current) => {
+          const latest = await latestPromise;
           const currentPath = path.join(inspectionDir, current);
           const currentStat = await fs.promises.stat(currentPath);
           
@@ -115,14 +116,13 @@ export function registerRoutes(app: Express): Server {
           
           return currentStat.mtime > latest.mtime ? 
             { name: current, path: currentPath, mtime: currentStat.mtime } : latest;
-        }, null);
+        }, Promise.resolve(null));
 
         const csvFilePath = latestFile.path;
         console.log('使用するCSVファイル:', latestFile.name);
 
         const fileContent = await fs.promises.readFile(csvFilePath, 'utf8');
         const cleanContent = fileContent.replace(/^\uFEFF/, ''); // BOM除去
-        // CSVパース処理
         const results = Papa.parse(cleanContent, {
           header: true,
           skipEmptyLines: true,

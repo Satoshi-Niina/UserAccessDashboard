@@ -30,7 +30,7 @@ export default function UserManagement() {
     isAdmin: false,
   });
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       const response = await fetch("/api/users");
       if (!response.ok) {
@@ -46,11 +46,11 @@ export default function UserManagement() {
         variant: "destructive",
       });
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     loadUsers();
-  }, [loadUsers, toast]);
+  }, [loadUsers]);
 
   const handleUserSelect = (user: User) => {
     setSelectedUser(user);

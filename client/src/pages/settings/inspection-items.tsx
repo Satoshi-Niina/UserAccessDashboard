@@ -386,39 +386,48 @@ export default function InspectionItems() {
 
   // 変更を保存して戻る
   const handleSaveAndNavigate = async () => {
-    if (!isNewItemRegistered && !hasChanges) {
-      navigate('/settings');
-      return;
-    }
-
     try {
+      setIsSaveDialogOpen(true);
       const now = new Date();
       const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-      const baseName = currentFileName.replace(/\.csv$/i, '') || '点検項目マスタ';
-      const fileName = `${baseName}_${dateStr}.csv`;
+      const defaultFileName = `点検項目マスタ_${dateStr}.csv`;
+      setSaveFileName(defaultFileName);
 
-      const response = await fetch('/api/save-inspection-items', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fileName,
-          items: inspectionItems,
-          saveDirectory: 'attached_assets/inspection'
-        }),
-      });
+      const saveFile = async () => {
+        const response = await fetch('/api/save-inspection-items', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            fileName: saveFileName,
+            items: inspectionItems,
+            saveDirectory: 'attached_assets/inspection'
+          }),
+        });
 
-      if (!response.ok) {
-        throw new Error('保存に失敗しました');
-      }
+        if (!response.ok) {
+          throw new Error('保存に失敗しました');
+        }
 
+        toast({
+          title: "保存完了",
+          description: "点検項目を保存しました",
+        });
+
+        setIsSaveDialogOpen(false);
+        navigate('/settings');
+      };
+
+      await saveFile();
+    } catch (error) {
+      console.error('保存エラー:', error);
       toast({
-        title: "保存完了",
-        description: "点検項目を保存しました",
+        title: "エラー",
+        description: "保存に失敗しました",
+        variant: "destructive",
       });
-
-      navigate('/settings');
+    }
     } catch (error) {
       console.error('保存エラー:', error);
       toast({

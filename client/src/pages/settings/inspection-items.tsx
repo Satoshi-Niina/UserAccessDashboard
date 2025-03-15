@@ -274,7 +274,7 @@ export default function InspectionItems() {
   };
 
   // 点検項目を追加または更新する
-  const addInspectionItem = () => {
+  const addInspectionItem = async () => {
     if (
       (!isEditMode && (!manufacturer || !model)) ||
       !newItem.category ||
@@ -307,10 +307,35 @@ export default function InspectionItems() {
           : item
       );
       setInspectionItems(updatedItems);
-      toast({
-        title: "更新完了",
-        description: "点検項目を更新しました",
-      });
+      // APIを呼び出してデータを保存
+      try {
+        const response = await fetch('/api/inspection-items', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(updatedItems),
+        });
+
+        if (!response.ok) {
+          throw new Error('データの保存に失敗しました');
+        }
+
+        toast({
+          title: "更新完了",
+          description: "点検項目が更新されました",
+          duration: 3000,
+        });
+      } catch (error) {
+        console.error('保存エラー:', error);
+        toast({
+          title: "エラー",
+          description: "データの保存に失敗しました",
+          variant: "destructive",
+          duration: 3000,
+        });
+      }
+      setIsDialogOpen(false);
     } else {
       // 新規項目の追加
       const newId =

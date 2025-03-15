@@ -197,12 +197,9 @@ export default function InspectionItems() {
     };
 
     fetchInspectionData();
-  }, [latestFile, toast]);kipEmptyLines: true,
-          // エラーを許容する
-          error: (error) => {
-            console.error("CSV解析エラー:", error);
-          }
-        });
+  }, [latestFile, toast]);
+
+  // CSVデータ読み込み
 
         if (results.errors && results.errors.length > 0) {
           console.log("CSVパースエラー:", results.errors);

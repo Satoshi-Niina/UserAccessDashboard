@@ -200,86 +200,6 @@ export default function InspectionItems() {
     fetchInspectionData();
   }, [latestFile, toast]);
 
-  // CSVデータ読み込み
-
-        if (results.errors && results.errors.length > 0) {
-          console.log("CSVパースエラー:", results.errors);
-          // エラーを表示するが、処理は続行する
-          toast({
-            title: "CSVパース警告",
-            description: "一部のデータが正しく読み込めない可能性があります",
-            variant: "warning",
-          });
-        }
-
-        // ヘッダーの確認とマッピング
-        const headers = results.meta.fields || [];
-        console.log("CSVヘッダー:", headers);
-        console.log("予想されるヘッダー数:", headers.length);
-
-        // ヘッダーマッピングを動的に構築
-        const headerMapping: Record<string, string> = {
-          // 日本語ヘッダー -> アプリケーションのプロパティ名
-          '製造メーカー': 'manufacturer',
-          '機種': 'model',
-          'エンジン型式': 'engineType',
-          '部位': 'category',
-          '装置': 'equipment',
-          '確認箇所': 'item',
-          '判断基準': 'criteria',
-          '確認要領': 'method',
-          '測定等記録': 'measurementRecord',
-          '図形記録': 'diagramRecord',
-          // 追加可能なフィールド
-          '時期': 'season',
-          '備考': 'remarks',
-          'メモ': 'notes'
-        };
-
-        // データをアプリケーションの形式に変換（柔軟なマッピング）
-        const items = results.data.map((row: any, index: number) => {
-          const item: Record<string, any> = { id: index + 1 };
-
-          // すべてのヘッダーに対して処理
-          Object.keys(row).forEach(header => {
-            // マッピングされたプロパティ名があればそれを使用、なければヘッダー名をそのまま使用
-            const propName = headerMapping[header] || header;
-            item[propName] = row[header] || '';
-          });
-
-          // 必須フィールドが存在しない場合は空文字で初期化
-          const requiredFields = ['manufacturer', 'model', 'category', 'equipment', 'item', 'criteria', 'method', 'measurementRecord', 'diagramRecord'];
-          requiredFields.forEach(field => {
-            if (item[field] === undefined) {
-              item[field] = '';
-            }
-          });
-
-          return item as InspectionItem;
-        });
-
-        setInspectionItems(items);
-
-        toast({
-          title: "データ読み込み完了",
-          description: `${items.length}件の点検項目を読み込みました`,
-          duration: 3000,
-        });
-      } catch (err) {
-        console.error("データ読み込みエラー:", err);
-        toast({
-          title: "エラー",
-          description: `データの読み込みに失敗しました: ${err instanceof Error ? err.message : '不明なエラー'}`,
-          variant: "destructive",
-        });
-        // エラー時は空の配列を表示
-        setInspectionItems([]);
-      }
-    };
-
-    fetchInspectionData();
-  }, [latestFile, toast]);
-
   // 検索状態を保持する
   const [searchQuery, setSearchQuery] = useState<string>("");
 
@@ -654,21 +574,8 @@ export default function InspectionItems() {
             setInitialItems(Array.isArray(jsonData) ? jsonData : []);
           } catch (jsonError) {
             // JSONとして解析できない場合はCSVとして解析
-            const results = Papa.parse(text, {
-              header: true,
-              skipEmptyLines: true,
-              encoding: 'UTF-8',
-              transformHeader: (header) => header.trim(),
-              transform: (value) => value.trim(),
-              error: (error) => {
-                console.error("CSV解析エラー:", error);
-                toast({
-                  title: "CSV解析エラー",
-                  description: "ファイルの形式が正しくありません",
-                  variant: "destructive",
-                });
-              }
-            });
+            const results = await parseCSVData(text); // Use the async parseCSVData function
+            
             // ヘッダーの確認とマッピング
             const headers = results.meta.fields || [];
             console.log("CSVヘッダー:", headers);
@@ -954,7 +861,7 @@ export default function InspectionItems() {
       { key: 'notes', label: 'メモ' },
       { key: 'frequency', label: '頻度' },
       { key: 'priority', label: '優先度' }
-];
+    ];
 
     // すでに使用されていないプリセットを探す
     const unusedPreset= presets.find(preset => 
@@ -1001,7 +908,7 @@ export default function InspectionItems() {
   };
 
   // 保存処理を実行
-  const saveData = async () => {
+  const saveData = async ()=> {
     if (!saveFileName.trim()) {
       toast({
         title: "エラー",

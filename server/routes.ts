@@ -96,29 +96,32 @@ export function registerRoutes(app: Express): Server {
 
       // CSVファイルのパスを決定
       const inspectionDir = path.join(process.cwd(), 'attached_assets/inspection');
-      let csvFilePath;
 
-      // 指定されたディレクトリ内のすべてのCSVファイルを取得
-      const files = await fs.promises.readdir(inspectionDir);
-      const csvFiles = files.filter(file => file.endsWith('.csv'));
+      try {
+        // 指定されたディレクトリ内のCSVファイルを取得
+        const files = await fs.promises.readdir(inspectionDir);
+        const csvFiles = files.filter(file => file.endsWith('.csv'));
 
-      if (csvFiles.length === 0) {
-        return res.status(404).json({ error: '点検項目マスタファイルが見つかりません' });
-      }
+        if (csvFiles.length === 0) {
+          return res.status(404).json({ error: '点検項目マスタファイルが見つかりません' });
+        }
 
-      // ファイルを更新日時でソート
-      const sortedFiles = await Promise.all(csvFiles.map(async file => {
-        const filePath = path.join(inspectionDir, file);
-        const stats = await fs.promises.stat(filePath);
-        return { name: file, path: filePath, mtime: stats.mtime };
-      }));
+        // 最新のファイルを取得
+        const latestFile = await Promise.reduce(csvFiles, async (latest, current) => {
+          const currentPath = path.join(inspectionDir, current);
+          const currentStat = await fs.promises.stat(currentPath);
+          
+          if (!latest) return { name: current, path: currentPath, mtime: currentStat.mtime };
+          
+          return currentStat.mtime > latest.mtime ? 
+            { name: current, path: currentPath, mtime: currentStat.mtime } : latest;
+        }, null);
 
-      sortedFiles.sort((a, b) => b.mtime.getTime() - a.mtime.getTime());
-      csvFilePath = sortedFiles[0].path;
-      console.log('使用するCSVファイル:', csvFilePath);
+        const csvFilePath = latestFile.path;
+        console.log('使用するCSVファイル:', latestFile.name);
 
-      const fileContent = await fs.promises.readFile(csvFilePath, 'utf8');
-      const cleanContent = fileContent.replace(/^\uFEFF/, ''); // BOM除去
+        const fileContent = await fs.promises.readFile(csvFilePath, 'utf8');
+        const cleanContent = fileContent.replace(/^\uFEFF/, ''); // BOM除去
 
       try {
         // CSVパース処理

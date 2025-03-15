@@ -23,7 +23,7 @@ export default function UserManagement() {
   const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [isMenuExpanded, setIsMenuExpanded] = useState(false);
+  const [isMenuExpanded, setIsMenuExpanded] = useState(true); // Initialize as expanded
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -56,9 +56,10 @@ export default function UserManagement() {
     setSelectedUser(user);
     setFormData({
       username: user.username,
-      password: "", 
+      password: "",
       isAdmin: user.isAdmin,
     });
+    setIsMenuExpanded(false); // Minimize sidebar on user select
   };
 
   const clearForm = () => {
@@ -68,6 +69,7 @@ export default function UserManagement() {
       password: "",
       isAdmin: false,
     });
+    setIsMenuExpanded(true); // Expand sidebar on cancel
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -112,6 +114,10 @@ export default function UserManagement() {
         variant: "destructive",
       });
     }
+  };
+
+  const handleCancel = () => {
+    clearForm();
   };
 
   if (!user?.isAdmin) {
@@ -173,17 +179,17 @@ export default function UserManagement() {
                     <Label htmlFor="isAdmin">管理者権限を付与</Label>
                   </div>
                   <div className="flex gap-2">
-                    <Button type="submit" className="flex-1">
+                    <Button type="submit">
                       {selectedUser ? "更新" : "登録"}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={handleCancel}>
+                      キャンセル
                     </Button>
                     {selectedUser && (
                       <>
-                        <Button type="button" variant="outline" onClick={clearForm}>
-                          キャンセル
-                        </Button>
                         {selectedUser.id !== user?.id && (
-                          <Button 
-                            type="button" 
+                          <Button
+                            type="button"
                             variant="destructive"
                             onClick={async () => {
                               if (!confirm("このユーザーを削除しますか？")) {

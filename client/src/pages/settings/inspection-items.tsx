@@ -915,7 +915,7 @@ export default function InspectionItems() {
     dynamicFields.forEach(field => {      updatedEditItem[field.key] = field.value;
     });
 
-    const updatedItems = inspectionItems.map(item => 
+    const updatedItems = inspectionItems.map(item=>
       item.id === updatedEditItem.id ? updatedEditItem : item
     );
 
@@ -997,6 +997,11 @@ export default function InspectionItems() {
     } else {
       navigate('/settings');
     }
+  };
+
+  const handleSaveDialog = () => {
+    setIsSaveDialogOpen(true);
+    setSaveFileName(`inspection_items_${new Date().toISOString().split('T')[0]}.csv`);
   };
 
 

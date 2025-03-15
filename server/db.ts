@@ -1,6 +1,5 @@
 
 import sqlite3 from 'sqlite3';
-import { open } from 'sqlite3';
 
 // SQLiteデータベースの接続設定
 const db = new sqlite3.Database('./database.sqlite', (err) => {
@@ -11,18 +10,43 @@ const db = new sqlite3.Database('./database.sqlite', (err) => {
   console.log('Connected to SQLite database');
 });
 
-// ユーザーテーブルの作成
-// - id: 主キー（自動増分）
-// - username: ユーザー名（一意）
-// - password: ハッシュ化されたパスワード
-// - is_admin: 管理者フラグ
-db.run(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    is_admin BOOLEAN NOT NULL DEFAULT 0
-  )
-`);
+// テーブルの作成
+db.serialize(() => {
+  // 製造メーカーテーブル
+  db.run(`
+    CREATE TABLE IF NOT EXISTS manufacturers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT UNIQUE NOT NULL
+    )
+  `);
+
+  // 車種テーブル
+  db.run(`
+    CREATE TABLE IF NOT EXISTS models (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      manufacturer_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      FOREIGN KEY (manufacturer_id) REFERENCES manufacturers(id)
+    )
+  `);
+
+  // カテゴリーテーブル
+  db.run(`
+    CREATE TABLE IF NOT EXISTS categories (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT UNIQUE NOT NULL
+    )
+  `);
+
+  // 装置テーブル
+  db.run(`
+    CREATE TABLE IF NOT EXISTS equipment (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      category_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      FOREIGN KEY (category_id) REFERENCES categories(id)
+    )
+  `);
+});
 
 export { db };

@@ -261,6 +261,7 @@ export function registerRoutes(app: Express): Server {
 
       // CSVデータの準備
       let csvContent = '';
+      let csvContent = '';
       if (inspectionRecord) {
         const record = inspectionRecord;
         const headerComments = [

@@ -1,40 +1,185 @@
+
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/components/ui/use-toast";
 import OperationsNav from "@/components/OperationsNav";
 
 export default function OperationalPlan() {
-  const [location] = useLocation();
+  const [_, navigate] = useLocation();
+  const { toast } = useToast();
+  const [formData, setFormData] = useState({
+    date: new Date().toISOString().split('T')[0],
+    vehicleNumber: '',
+    vehicleType: '',
+    operationSection: '',
+    startTime: '',
+    endTime: '',
+    purpose: '',
+    responsible: '',
+    operator: '',
+    remarks: ''
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/save-inspection-data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          data: [formData],
+          fileName: `運用計画_${formData.date}.csv`
+        }),
+      });
+
+      if (!response.ok) throw new Error('保存に失敗しました');
+
+      toast({
+        title: "保存完了",
+        description: "運用計画を保存しました",
+      });
+      
+      navigate('/operations');
+    } catch (error) {
+      toast({
+        title: "エラー",
+        description: "保存に失敗しました",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="container mx-auto p-4">
-      <OperationsNav currentPage="operational-plan" />
+      <div className="flex justify-between items-center mb-4">
+        <div className="text-sm">仕業点検</div>
+        <div className="text-center font-bold">運用計画</div>
+        <div className="text-sm">戻る</div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>運用計画フォーム</CardTitle>
-        </CardHeader>
+      <Card className="mt-4">
+        <CardContent className="pt-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="text-lg font-bold mb-4">運用計画フォーム</div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="date">運用日</Label>
+                <Input
+                  type="date"
+                  id="date"
+                  value={formData.date}
+                  onChange={(e) => setFormData({...formData, date: e.target.value})}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="vehicleNumber">車両番号</Label>
+                <Input
+                  id="vehicleNumber"
+                  value={formData.vehicleNumber}
+                  onChange={(e) => setFormData({...formData, vehicleNumber: e.target.value})}
+                />
+              </div>
 
-        <Tabs defaultValue="daily" className="w-full">
-          <TabsList>
-            <TabsTrigger value="daily">日次計画</TabsTrigger>
-            <TabsTrigger value="weekly">週次計画</TabsTrigger>
-            <TabsTrigger value="monthly">月次計画</TabsTrigger>
-          </TabsList>
+              <div className="space-y-2">
+                <Label htmlFor="vehicleType">車両形式</Label>
+                <Input
+                  id="vehicleType"
+                  value={formData.vehicleType}
+                  onChange={(e) => setFormData({...formData, vehicleType: e.target.value})}
+                />
+              </div>
 
-          <TabsContent value="daily">
-            {/* 日次計画のコンテンツ */}
-          </TabsContent>
+              <div className="space-y-2">
+                <Label htmlFor="operationSection">運用区間</Label>
+                <Input
+                  id="operationSection"
+                  placeholder="例: 東京駅～新宿駅"
+                  value={formData.operationSection}
+                  onChange={(e) => setFormData({...formData, operationSection: e.target.value})}
+                />
+              </div>
 
-          <TabsContent value="weekly">
-            {/* 週次計画のコンテンツ */}
-          </TabsContent>
+              <div className="space-y-2">
+                <Label htmlFor="startTime">予定出発時刻</Label>
+                <Input
+                  type="time"
+                  id="startTime"
+                  value={formData.startTime}
+                  onChange={(e) => setFormData({...formData, startTime: e.target.value})}
+                />
+              </div>
 
-          <TabsContent value="monthly">
-            {/* 月次計画のコンテンツ */}
-          </TabsContent>
-        </Tabs>
+              <div className="space-y-2">
+                <Label htmlFor="endTime">予定終了時刻</Label>
+                <Input
+                  type="time"
+                  id="endTime"
+                  value={formData.endTime}
+                  onChange={(e) => setFormData({...formData, endTime: e.target.value})}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="purpose">作業目的</Label>
+              <Input
+                id="purpose"
+                value={formData.purpose}
+                onChange={(e) => setFormData({...formData, purpose: e.target.value})}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="responsible">責任者</Label>
+                <Input
+                  id="responsible"
+                  value={formData.responsible}
+                  onChange={(e) => setFormData({...formData, responsible: e.target.value})}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="operator">運転者</Label>
+                <Input
+                  id="operator"
+                  value={formData.operator}
+                  onChange={(e) => setFormData({...formData, operator: e.target.value})}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="remarks">備考（任意）</Label>
+              <Input
+                id="remarks"
+                placeholder="備考事項があれば入力してください"
+                value={formData.remarks}
+                onChange={(e) => setFormData({...formData, remarks: e.target.value})}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => navigate('/operations')}
+              >
+                キャンセル
+              </Button>
+              <Button type="submit">登録</Button>
+            </div>
+          </form>
+        </CardContent>
       </Card>
     </div>
   );

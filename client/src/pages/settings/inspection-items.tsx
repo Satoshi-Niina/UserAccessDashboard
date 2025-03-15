@@ -912,8 +912,7 @@ export default function InspectionItems() {
 
     // 動的フィールドの値をeditItemに追加
     const updatedEditItem = { ...editItem };
-    dynamicFields.forEach(field => {
-      updatedEditItem[field.key] = field.value;
+    dynamicFields.forEach(field => {      updatedEditItem[field.key] = field.value;
     });
 
     const updatedItems = inspectionItems.map(item => 
@@ -1006,7 +1005,7 @@ export default function InspectionItems() {
       <Card className="w-full">
       <CardHeader>
         <div className="flex justify-between items-center">
-          <CardTitle className="text-2xl">点検項目マスタ</CardTitle>
+          <CardTitle className="text-2xl">点検項目編集</CardTitle>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => navigate("/settings")}>
               キャンセル

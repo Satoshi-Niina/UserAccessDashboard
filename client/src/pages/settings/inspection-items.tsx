@@ -647,96 +647,109 @@ export default function InspectionItems() {
       reader.onload = async (e) => {
         try {
           const text = e.target?.result as string;
-          const results = await parseCSVData(text); // Use the new function
+          // JSONデータとして解析を試みる
+          try {
+            const jsonData = JSON.parse(text);
+            setInspectionItems(Array.isArray(jsonData) ? jsonData : []);
+            setInitialItems(Array.isArray(jsonData) ? jsonData : []);
+          } catch (jsonError) {
+            // JSONとして解析できない場合はCSVとして解析
+            const results = Papa.parse(text, {
+              header: true,
+              skipEmptyLines: true,
+              encoding: 'UTF-8',
+              transformHeader: (header) => header.trim(),
+              transform: (value) => value.trim(),
+              error: (error) => {
+                console.error("CSV解析エラー:", error);
+                toast({
+                  title: "CSV解析エラー",
+                  description: "ファイルの形式が正しくありません",
+                  variant: "destructive",
+                });
+              }
+            });
+            // ヘッダーの確認とマッピング
+            const headers = results.meta.fields || [];
+            console.log("CSVヘッダー:", headers);
+            console.log("予想されるヘッダー数:", headers.length);
 
-          if (results.errors && results.errors.length > 0) {
-            console.error("CSVパースエラー:", results.errors);
+            // ヘッダーマッピングを動的に構築
+            const headerMapping: Record<string, string> = {
+              // 日本語ヘッダー -> アプリケーションのプロパティ名
+              '製造メーカー': 'manufacturer',
+              '機種': 'model',
+              'エンジン型式': 'engineType',
+              '部位': 'category',
+              '装置': 'equipment',
+              '確認箇所': 'item',
+              '判断基準': 'criteria',
+              '確認要領': 'method',
+              '測定等記録': 'measurementRecord',
+              '図形記録': 'diagramRecord',
+              // IDフィールドのマッピング
+              'id': 'id',
+              // 追加可能なフィールド
+              '時期': 'season',
+              '備考': 'remarks',
+              'メモ': 'notes'
+            };
+
+            // 逆マッピング（英語 -> 日本語）も作成
+            const reverseMapping: Record<string, string> = {};
+            Object.entries(headerMapping).forEach(([jpField, enField]) => {
+              reverseMapping[enField] = jpField;
+            });
+
+            // データをアプリケーションの形式に変換（柔軟なマッピング）
+            const items = results.data.map((row: any, index: number) => {
+              const item: Record<string, any> = {};
+
+              // ID設定（存在しない場合は自動採番）
+              if (row.id) {
+                item.id = Number(row.id);
+              } else if (row.ID) {
+                item.id = Number(row.ID);
+              } else {
+                item.id = index + 1;
+              }
+
+              // すべてのヘッダーに対して処理
+              Object.keys(row).forEach(header => {
+                // 1. そのまま英語のプロパティ名として存在する場合
+                if (Object.values(headerMapping).includes(header)) {
+                  item[header] = row[header] || '';
+                }
+                // 2. 日本語ヘッダーのマッピングを使用
+                else {
+                  const propName = headerMapping[header] || header;
+                  item[propName] = row[header] || '';
+                }
+              });
+
+              // 必要なフィールドの存在確認（データの補完）
+              ['manufacturer', 'model', 'category', 'equipment', 'item', 'criteria', 'method'].forEach(field => {
+                if (!item[field]) {
+                  // 必須フィールドが存在しない場合は空文字を設定
+                  item[field] = '';
+                }
+              });
+              const requiredFields = ['manufacturer', 'model', 'category', 'equipment', 'item', 'criteria', 'method', 'measurementRecord', 'diagramRecord'];
+              requiredFields.forEach(field => {
+                if (item[field] === undefined) {
+                  item[field] = '';
+                }
+              });
+
+              return item as InspectionItem;
+            });
+
+            setCsvData(items);
             toast({
-              title: "CSVパース警告",
-              description: "一部のデータが正しく読み込めない可能性があります。",
-              variant: "warning",
+              title: "CSV読み込み完了",
+              description: `${items.length}件のデータを読み込みました`,
             });
           }
-          // ヘッダーの確認とマッピング
-          const headers = results.meta.fields || [];
-          console.log("CSVヘッダー:", headers);
-          console.log("予想されるヘッダー数:", headers.length);
-
-          // ヘッダーマッピングを動的に構築
-          const headerMapping: Record<string, string> = {
-            // 日本語ヘッダー -> アプリケーションのプロパティ名
-            '製造メーカー': 'manufacturer',
-            '機種': 'model',
-            'エンジン型式': 'engineType',
-            '部位': 'category',
-            '装置': 'equipment',
-            '確認箇所': 'item',
-            '判断基準': 'criteria',
-            '確認要領': 'method',
-            '測定等記録': 'measurementRecord',
-            '図形記録': 'diagramRecord',
-            // IDフィールドのマッピング
-            'id': 'id',
-            // 追加可能なフィールド
-            '時期': 'season',
-            '備考': 'remarks',
-            'メモ': 'notes'
-          };
-
-          // 逆マッピング（英語 -> 日本語）も作成
-          const reverseMapping: Record<string, string> = {};
-          Object.entries(headerMapping).forEach(([jpField, enField]) => {
-            reverseMapping[enField] = jpField;
-          });
-
-          // データをアプリケーションの形式に変換（柔軟なマッピング）
-          const items = results.data.map((row: any, index: number) => {
-            const item: Record<string, any> = {};
-
-            // ID設定（存在しない場合は自動採番）
-            if (row.id) {
-              item.id = Number(row.id);
-            } else if (row.ID) {
-              item.id = Number(row.ID);
-            } else {
-              item.id = index + 1;
-            }
-
-            // すべてのヘッダーに対して処理
-            Object.keys(row).forEach(header => {
-              // 1. そのまま英語のプロパティ名として存在する場合
-              if (Object.values(headerMapping).includes(header)) {
-                item[header] = row[header] || '';
-              }
-              // 2. 日本語ヘッダーのマッピングを使用
-              else {
-                const propName = headerMapping[header] || header;
-                item[propName] = row[header] || '';
-              }
-            });
-
-            // 必要なフィールドの存在確認（データの補完）
-            ['manufacturer', 'model', 'category', 'equipment', 'item', 'criteria', 'method'].forEach(field => {
-              if (!item[field]) {
-                // 必須フィールドが存在しない場合は空文字を設定
-                item[field] = '';
-              }
-            });
-            const requiredFields = ['manufacturer', 'model', 'category', 'equipment', 'item', 'criteria', 'method', 'measurementRecord', 'diagramRecord'];
-            requiredFields.forEach(field => {
-              if (item[field] === undefined) {
-                item[field] = '';
-              }
-            });
-
-            return item as InspectionItem;
-          });
-
-          setCsvData(items);
-          toast({
-            title: "CSV読み込み完了",
-            description: `${items.length}件のデータを読み込みました`,
-          });
         } catch (error) {
           console.error("CSVの解析エラー:", error);
           toast({

@@ -912,10 +912,23 @@ export default function InspectionItems() {
 
     // 動的フィールドの値をeditItemに追加
     const updatedEditItem = { ...editItem };
-    dynamicFields.forEach(field => {      updatedEditItem[field.key] = field.value;
+    dynamicFields.forEach(field => {
+      updatedEditItem[field.key] = field.value;
     });
 
-    const updatedItems = inspectionItems.map(item=>
+    const updatedItems = inspectionItems.map(item => 
+      item.id === updatedEditItem.id ? updatedEditItem : item
+    );
+
+    setInspectionItems(updatedItems);
+    setEditItem(null);
+    setIsEditDialogOpen(false);
+    setHasChanges(true);
+
+    toast({
+      title: "更新完了",
+      description: "点検項目を更新しました",
+    });ap(item=>
       item.id === updatedEditItem.id ? updatedEditItem : item
     );
 

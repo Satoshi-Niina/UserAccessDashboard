@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -6,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import OperationsNav from "@/components/OperationsNav";
 
 export default function OperationalPlan() {
@@ -45,7 +44,7 @@ export default function OperationalPlan() {
         title: "保存完了",
         description: "運用計画を保存しました",
       });
-      
+
       navigate('/operations');
     } catch (error) {
       toast({
@@ -68,7 +67,7 @@ export default function OperationalPlan() {
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="text-lg font-bold mb-4">運用計画フォーム</div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="date">運用日</Label>
@@ -79,7 +78,7 @@ export default function OperationalPlan() {
                   onChange={(e) => setFormData({...formData, date: e.target.value})}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="vehicleNumber">車両番号</Label>
                 <Input

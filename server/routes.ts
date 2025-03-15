@@ -272,13 +272,15 @@ export function registerRoutes(app: Express): Server {
         }
       });
 
+      const operationalPlanDir = path.join(assetsDir, 'Operational Plan');
       const outputFileName = `${baseFileName}_${String(maxIndex + 1).padStart(2, '0')}.csv`;
+      
       if (!fs.existsSync(assetsDir)) {
         fs.mkdirSync(assetsDir, { recursive: true });
       }
 
-      if (!fs.existsSync(referenceDir)) {
-        fs.mkdirSync(referenceDir, { recursive: true });
+      if (!fs.existsSync(operationalPlanDir)) {
+        fs.mkdirSync(operationalPlanDir, { recursive: true });
       }
 
       let originalHeaders = [];
@@ -381,11 +383,11 @@ export function registerRoutes(app: Express): Server {
         fs.mkdirSync(referenceDir, { recursive: true });
       }
 
-      const outputFilePath = path.join(referenceDir, outputFileName);
+      const outputFilePath = path.join(operationalPlanDir, outputFileName);
       fs.writeFileSync(outputFilePath, csvContent, 'utf8');
 
       const inspectionRecordData = inspectionRecord || {};
-      const inspectionRecordPath = path.join(referenceDir, `${outputFileName.replace('.csv', '')}_record.json`);
+      const inspectionRecordPath = path.join(operationalPlanDir, `${outputFileName.replace('.csv', '')}_record.json`);
       fs.writeFileSync(inspectionRecordPath, JSON.stringify(inspectionRecordData, null, 2));
 
       console.log(`CSVデータを保存しました: ${outputFilePath}`);

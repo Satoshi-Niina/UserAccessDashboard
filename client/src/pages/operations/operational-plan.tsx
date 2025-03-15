@@ -23,6 +23,7 @@ export default function OperationalPlan() {
     operator: '',
     remarks: ''
   });
+  const [isSaved, setIsSaved] = useState(false); // Added state to track saved status
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +45,7 @@ export default function OperationalPlan() {
         title: "保存完了",
         description: "運用計画を保存しました",
       });
-
+      setIsSaved(true); // Set saved state to true on successful save
       navigate('/operations');
     } catch (error) {
       toast({
@@ -175,7 +176,9 @@ export default function OperationalPlan() {
               >
                 キャンセル
               </Button>
-              <Button type="submit">登録</Button>
+              <Button type="submit" disabled={isSaved}> {/* Disable button after save */}
+                登録
+              </Button>
             </div>
           </form>
         </CardContent>

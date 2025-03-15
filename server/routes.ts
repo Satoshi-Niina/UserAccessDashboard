@@ -134,14 +134,28 @@ export function registerRoutes(app: Express): Server {
           header: true,
           skipEmptyLines: true,
           transformHeader: (header) => {
+            if (!header) return '';
             const cleanHeader = header.trim();
-            return cleanHeader === '[object Object]' ? '' : cleanHeader;
+            // JSON文字列の場合はパースを試みる
+            try {
+              const parsed = JSON.parse(cleanHeader);
+              return parsed.toString();
+            } catch (e) {
+              return cleanHeader === '[object Object]' ? '' : cleanHeader;
+            }
           },
           transform: (value) => {
+            if (!value) return '';
             if (typeof value === 'string') {
-              return value.trim();
+              // JSON文字列の場合はパースを試みる
+              try {
+                const parsed = JSON.parse(value);
+                return parsed.toString();
+              } catch (e) {
+                return value.trim();
+              }
             }
-            return value || '';
+            return value.toString();
           },
           delimiter: ',',
           encoding: 'UTF-8'

@@ -305,10 +305,23 @@ export function registerRoutes(app: Express): Server {
       if (fs.existsSync(recordFilePath)) {
         records = JSON.parse(fs.readFileSync(recordFilePath, 'utf8'));
       }
-      records.push({
-        ...inspectionRecordData,
-        savedAt: new Date().toISOString()
-      });
+      
+      if (req.body.isUpdate && req.body.recordId) {
+        // 上書き保存の場合
+        const recordIndex = records.findIndex(record => record.savedAt === req.body.recordId);
+        if (recordIndex !== -1) {
+          records[recordIndex] = {
+            ...inspectionRecordData,
+            savedAt: req.body.recordId
+          };
+        }
+      } else {
+        // 新規保存の場合
+        records.push({
+          ...inspectionRecordData,
+          savedAt: new Date().toISOString()
+        });
+      }
       fs.writeFileSync(recordFilePath, JSON.stringify(records, null, 2));
 
 

@@ -47,7 +47,8 @@ export default function OperationalPlan() {
         body: JSON.stringify({
           data: [formData],
           fileName: `運用計画_${formData.date}.csv`,
-          recordId: recordId // Send existing recordId if updating
+          recordId: recordId,
+          isUpdate: true // 上書き保存フラグを追加
         }),
       });
 

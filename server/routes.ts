@@ -118,11 +118,16 @@ export function registerRoutes(app: Express): Server {
             { name: current, path: currentPath, mtime: currentStat.mtime } : latest;
         }, Promise.resolve(null));
 
+        if (!latestFile) {
+          throw new Error('最新のファイルが見つかりません');
+        }
+
         const csvFilePath = latestFile.path;
         console.log('使用するCSVファイル:', latestFile.name);
 
         const fileContent = await fs.promises.readFile(csvFilePath, 'utf8');
         const cleanContent = fileContent.replace(/^\uFEFF/, ''); // BOM除去
+
         const results = Papa.parse(cleanContent, {
           header: true,
           skipEmptyLines: true,

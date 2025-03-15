@@ -306,21 +306,22 @@ export function registerRoutes(app: Express): Server {
         records = JSON.parse(fs.readFileSync(recordFilePath, 'utf8'));
       }
       
-      if (req.body.isUpdate && req.body.recordId) {
+      const newRecord = {
+        ...inspectionRecordData,
+        savedAt: req.body.recordId
+      };
+
+      if (req.body.isUpdate) {
         // 上書き保存の場合
         const recordIndex = records.findIndex(record => record.savedAt === req.body.recordId);
         if (recordIndex !== -1) {
-          records[recordIndex] = {
-            ...inspectionRecordData,
-            savedAt: req.body.recordId
-          };
+          records[recordIndex] = newRecord;
+        } else {
+          records.push(newRecord);
         }
       } else {
         // 新規保存の場合
-        records.push({
-          ...inspectionRecordData,
-          savedAt: new Date().toISOString()
-        });
+        records.push(newRecord);
       }
       fs.writeFileSync(recordFilePath, JSON.stringify(records, null, 2));
 

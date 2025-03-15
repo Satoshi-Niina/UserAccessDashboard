@@ -47,8 +47,8 @@ export default function OperationalPlan() {
         body: JSON.stringify({
           data: [formData],
           fileName: `運用計画_${formData.date}.csv`,
-          recordId: recordId,
-          isUpdate: true // 上書き保存フラグを追加
+          recordId: recordId || new Date().toISOString(), // 新規の場合は現在時刻をIDとして使用
+          isUpdate: !!recordId // recordIdが存在する場合のみ上書き
         }),
       });
 

@@ -254,17 +254,43 @@ export function registerRoutes(app: Express): Server {
       }
 
       const today = new Date().toISOString().slice(0, 10);
-      const baseFileName = fileName || `測定基準値_${today}`;
       const assetsDir = path.join(process.cwd(), 'attached_assets');
       const operationalPlanDir = path.join(assetsDir, 'Operational Plan');
       const outputFileName = `operational_plan.csv`;
       const outputFilePath = path.join(operationalPlanDir, outputFileName);
 
+      // CSVデータの準備
+      let csvContent = '';
+      if (inspectionRecord) {
+        const record = inspectionRecord;
+        const headerComments = [
+          `#点検年月日: ${record.点検年月日 || ''}`,
+          `#開始時刻: ${record.開始時刻 || ''}`,
+          `#終了時刻: ${record.終了時刻 || ''}`,
+          `#実施箇所: ${record.実施箇所 || ''}`,
+          `#責任者: ${record.責任者 || ''}`,
+          `#点検者: ${record.点検者 || ''}`,
+          `#引継ぎ: ${record.引継ぎ || ''}`,
+          ''
+        ].join('\n');
+        csvContent = headerComments + '\n';
+      }
+
+      // データをCSV形式に変換
+      const csvData = Papa.unparse(data, {
+        header: true,
+        delimiter: ',',
+        quoteChar: '"'
+      });
+      csvContent += csvData;
+
       // ファイルが存在する場合は追記、存在しない場合は新規作成
+      if (!fs.existsSync(operationalPlanDir)) {
+        fs.mkdirSync(operationalPlanDir, { recursive: true });
+      }
+
       if (fs.existsSync(outputFilePath)) {
-        // ヘッダー行を除いたデータ部分のみを追記
-        const dataRows = csvContent.split('\n').slice(headerComments.split('\n').length + 1).join('\n');
-        fs.appendFileSync(outputFilePath, '\n' + dataRows, 'utf8');
+        fs.appendFileSync(outputFilePath, '\n' + csvData, 'utf8');
       } else {
         fs.writeFileSync(outputFilePath, csvContent, 'utf8');
       }

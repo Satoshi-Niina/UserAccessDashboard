@@ -926,11 +926,11 @@ export default function InspectionItems() {
 
     if (unusedPreset) {
       setDynamicFields([...dynamicFields, { ...unusedPreset, value: '' }]);
-    } else {      // すべてのプリセットが使用済みの場合はカスタムフィールド
-      const customField = { 
-        key: `customField${dynamicFields.length + 1}`, 
-        label: `カスタムフィールド${dynamicFields.length + 1}`, 
-        value: '' 
+    } else {
+      const customField = {
+        key: `customField${dynamicFields.length + 1}`,
+        label: `カスタムフィールド${dynamicFields.length + 1}`,
+        value: ''
       };
       setDynamicFields([...dynamicFields, customField]);
     }

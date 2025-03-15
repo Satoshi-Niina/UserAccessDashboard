@@ -135,6 +135,26 @@ export function registerRoutes(app: Express): Server {
         return res.status(500).json({ error: 'データが見つかりません' });
       }
 
+      // データの検証と正規化
+      const validData = results.data.filter(row => {
+        return row && typeof row === 'object' && Object.keys(row).length > 0;
+      }).map((row: any, index) => ({
+        id: index + 1,
+        manufacturer: row['製造メーカー'] || row.manufacturer || '',
+        model: row['機種'] || row.model || '',
+        engineType: row['エンジン型式'] || row.engineType || '',
+        category: row['部位'] || row.category || '',
+        equipment: row['装置'] || row.equipment || '',
+        item: row['確認箇所'] || row.item || '',
+        criteria: row['判断基準'] || row.criteria || '',
+        method: row['確認要領'] || row.method || '',
+        measurementRecord: row['測定等記録'] || row.measurementRecord || '',
+        diagramRecord: row['図形記録'] || row.diagramRecord || ''
+      }));
+
+      console.log('点検項目データ取得:', validData.length, '件');
+      res.json(validData);
+
       // 空のデータを除外
       results.data = results.data.filter(row => Object.values(row).some(value => value));
 

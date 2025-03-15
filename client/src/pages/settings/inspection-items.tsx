@@ -159,12 +159,16 @@ export default function InspectionItems() {
     const fetchInspectionData = async () => {
       if (!currentFileName) return;
 
+      setLoading(true);
       try {
         const response = await fetch(`/api/inspection-items?file=${currentFileName}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const items = await response.json();
+        if (!Array.isArray(items)) {
+          throw new Error('Invalid data format');
+        }
 
         if (Array.isArray(items)) {
           setInspectionItems(items);

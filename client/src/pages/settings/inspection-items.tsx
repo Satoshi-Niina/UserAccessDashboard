@@ -979,8 +979,8 @@ export default function InspectionItems() {
     }
   };
 
-  // 点検項目の編集を保存
-  const handleSaveEdit = () => {
+  // 点検項目の編集内容を更新
+  const handleUpdateEdit = () => {
     if (!editItem) return;
 
     // 動的フィールドの値をeditItemに追加

@@ -1048,8 +1048,8 @@ export default function InspectionItems() {
     }
   };
 
-  // 削除機能の追加
-  const handleDelete = async (itemId: number) => {
+  // 項目の削除処理
+  const handleItemDelete = async (itemId: number) => {
     if (!confirm('この項目を削除してもよろしいですか？')) {
       return;
     }

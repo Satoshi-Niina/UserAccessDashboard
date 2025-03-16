@@ -978,9 +978,11 @@ export default function InspectionItems() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [dynamicFields, setDynamicFields] = useState<Array<{ key: string, label: string, value: string }>>([]);
   const [editComment, setEditComment] = useState(""); // 追加：コメント状態
+  const [editingItem, setEditingItem] = useState<InspectionItem | null>(null); // 編集中のアイテム
 
   // 点検項目の編集
   const handleEditDialog = (item: InspectionItem) => {
+    setEditingItem(item); // 編集中のアイテムを設定
     setEditItem(item);
     setIsEditDialogOpen(true);
     // 基本フィールドの設定

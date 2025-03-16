@@ -912,13 +912,83 @@ export default function InspectionItems() {
   const handleSaveEdit = async () => {
     if (!editItem) return;
 
-    const updatedItems = inspectionItems.map(item =>
-      item.id === editItem.id ? { ...editItem, comment: editComment } : item
-    );
+    try {
+      const updatedItems = inspectionItems.map(item =>
+        item.id === editItem.id ? { ...editItem, comment: editComment } : item
+      );
 
-    setInspectionItems(updatedItems);
-    setIsEditDialogOpen(false);
-    setIsSaveDialogOpen(true); // 保存ダイアログを表示
+      // APIを呼び出してデータを保存
+      const response = await fetch('/api/inspection-items', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedItems),
+      });
+
+      if (!response.ok) {
+        throw new Error('データの保存に失敗しました');
+      }
+
+      setInspectionItems(updatedItems);
+      setIsEditDialogOpen(false);
+      
+      toast({
+        title: "更新完了",
+        description: "点検項目が更新されました",
+        duration: 3000,
+      });
+
+    } catch (error) {
+      console.error('保存エラー:', error);
+      toast({
+        title: "エラー",
+        description: "データの保存に失敗しました",
+        variant: "destructive",
+        duration: 3000,
+      });
+    }
+  };
+
+  // 削除機能の追加
+  const handleDelete = async (itemId: number) => {
+    if (!confirm('この項目を削除してもよろしいですか？')) {
+      return;
+    }
+
+    try {
+      const updatedItems = inspectionItems.filter(item => item.id !== itemId);
+
+      // APIを呼び出してデータを保存
+      const response = await fetch('/api/inspection-items', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedItems),
+      });
+
+      if (!response.ok) {
+        throw new Error('データの削除に失敗しました');
+      }
+
+      setInspectionItems(updatedItems);
+      
+      toast({
+        title: "削除完了",
+        description: "点検項目が削除されました",
+        duration: 3000,
+      });
+
+    } catch (error) {
+      console.error('削除エラー:', error);
+      toast({
+        title: "エラー",
+        description: "データの削除に失敗しました",
+        variant: "destructive",
+        duration: 3000,
+      });
+    }
   };
 
   // 動的フィールドの処理

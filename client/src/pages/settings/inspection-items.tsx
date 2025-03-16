@@ -517,7 +517,7 @@ export default function InspectionItems() {
         duration: 3000,
       });
     }
-  };;
+  };
 
   const handleAddNewItem = async (item: InspectionItem) => {
     try {
@@ -956,7 +956,7 @@ export default function InspectionItems() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => openEditDialog(item)}            >
+              onClick`={() => openEditDialog(item)}            >
               <Edit className="h-4 w-4" />
             </Button>
             <Button

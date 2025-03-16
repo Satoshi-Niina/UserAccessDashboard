@@ -68,7 +68,7 @@ const ExitButton = ({ hasChanges, onSave, redirectTo }: { hasChanges: boolean; o
 export default function InspectionItems() {
   const { toast } = useToast();
   const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
-  
+
   // レコード数を表示する
   useEffect(() => {
     if (inspectionItems.length > 0) {
@@ -145,7 +145,7 @@ export default function InspectionItems() {
       setInspectionItems(updatedItems);
       setHasChanges(true);
       setIsDialogOpen(false);
-      
+
       toast({
         title: "保存完了",
         description: "変更内容を保存しました"
@@ -155,27 +155,7 @@ export default function InspectionItems() {
       toast({
         title: "エラー",
         description: "保存に失敗しました",
-        variant: "destructive",
-      });
-    }y: JSON.stringify(updatedItems),
-      });
-
-      if (!response.ok) throw new Error('Failed to save changes');
-
-      setInspectionItems(updatedItems);
-      setIsDialogOpen(false);
-      setHasChanges(true);
-      toast({
-        title: "成功",
-        description: "変更が保存されました",
-        duration: 3000,
-      });
-    } catch (error) {
-      console.error('Error saving changes:', error);
-      toast({
-        title: "エラー",
-        description: "変更の保存に失敗しました",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };

@@ -225,6 +225,38 @@ export default function InspectionItems() {
         },
         body: JSON.stringify({
           data: inspectionItems,
+          fileName: saveFileName,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('保存に失敗しました');
+      }
+
+      setIsSaveDialogOpen(false);
+      toast({
+        title: "成功",
+        description: "ファイルが保存されました",
+      });
+    } catch (error) {
+      console.error('保存エラー:', error);
+      toast({
+        title: "エラー",
+        description: "保存に失敗しました",
+        variant: "destructive",
+      });
+    }
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/save-inspection-data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          data: inspectionItems,
           fileName: saveFileName
         })
       });

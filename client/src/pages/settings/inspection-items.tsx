@@ -477,6 +477,16 @@ export default function InspectionItems() {
 
   // 変更を保存する
   const saveChanges = async (newFileName?: string) => {
+    if (!inspectionItems.length) {
+      toast({
+        title: "エラー",
+        description: "保存するデータがありません",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const fileName = newFileName || `inspection_items_${new Date().toISOString().slice(0,10)}.csv`;
     try {
       // 保存するフィールドを決定（動的に変更可能）
       // 基本フィールドを定義
@@ -874,14 +884,44 @@ export default function InspectionItems() {
 
   // 編集用ダイアログの状態
   const [editItem, setEditItem] = useState<InspectionItem | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen]= useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
+  const [saveFileName, setSaveFileName] = useState('');
   const [dynamicFields, setDynamicFields] = useState<Array<{ key: string, label: string, value: string }>>([]);
   const [editComment, setEditComment] = useState(""); // 追加：コメント状態
 
   // 点検項目の編集
   const handleEditDialog = (item: InspectionItem) => {
-    // 基本フィールド以外の動的フィールドを検出
-    const baseFields = ['id', 'manufacturer', 'model', 'category', 'equipment', 'item', 'criteria', 'method', 'measurementRecord', 'diagramRecord'];
+    setEditItem(item);
+    setIsEditDialogOpen(true);
+    // 基本フィールドの設定
+    const baseFields = ['id', 'manufacturer', 'model', 'engineType', 'category', 'equipment', 'item', 'criteria', 'method', 'measurementRecord', 'diagramRecord'];
+    
+    // 動的フィールドの設定
+    const dynamicFieldsList = Object.entries(item)
+      .filter(([key]) => !baseFields.includes(key))
+      .map(([key, value]) => ({
+        key,
+        label: key,
+        value: value as string
+      }));
+    
+    setDynamicFields(dynamicFieldsList);
+    setEditComment(item.comment || '');
+  };
+
+  // 編集内容を保存
+  const handleSaveEdit = async () => {
+    if (!editItem) return;
+
+    const updatedItems = inspectionItems.map(item =>
+      item.id === editItem.id ? { ...editItem, comment: editComment } : item
+    );
+
+    setInspectionItems(updatedItems);
+    setIsEditDialogOpen(false);
+    setIsSaveDialogOpen(true); // 保存ダイアログを表示
+  }; 'category', 'equipment', 'item', 'criteria', 'method', 'measurementRecord', 'diagramRecord'];
     const extraFields: Array<{ key: string, label: string, value: string }> = [];
 
     Object.entries(item).forEach(([key, value]) => {

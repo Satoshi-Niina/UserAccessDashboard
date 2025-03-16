@@ -261,19 +261,12 @@ export default function InspectionPage() {
     ));
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     // チェック漏れの項目を確認
     const uncheckedItems = inspectionItems.filter(item => !item.result);
 
     if (uncheckedItems.length > 0) {
-      // チェック漏れがある場合
-      toast({
-        title: "チェック漏れがあります",
-        description: `${uncheckedItems.length}件の未チェック項目があります`,
-        variant: "destructive",
-      });
-
-      // チェック漏れの項目を表示
+      // チェック漏れがある場合、アラートを表示し、処理を中断
       const uncheckedDetails = uncheckedItems.map(item =>
         `${item.category} - ${item.equipment} - ${item.item}`
       ).join('\n');
@@ -283,7 +276,35 @@ export default function InspectionPage() {
     }
 
     // すべてチェック済みの場合、保存処理を実行
-    handleSave();
+    try {
+      const response = await fetch('/api/inspection-results', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ inspectionItems, date, startTime, endTime, locationInput, responsiblePerson, inspectorInput, vehicleId })
+      });
+
+      if (!response.ok) {
+        throw new Error(`保存失敗: ${response.status} ${response.statusText}`);
+      }
+
+      toast({
+        title: "点検完了",
+        description: "点検結果が保存されました",
+        variant: "success",
+      });
+      navigate('/operations'); //保存後に遷移
+
+
+    } catch (error) {
+      toast({
+        title: "エラー",
+        description: `点検結果の保存に失敗しました: ${error}`,
+        variant: "destructive",
+      });
+      console.error("保存エラー:", error);
+    }
   };
 
   const handleCancel = () => {
@@ -645,8 +666,8 @@ export default function InspectionPage() {
             </div>
           </CardContent>
           <div className="p-4">
-            <Button variant="outline">キャンセル</Button>
-            <Button>点検完了</Button>
+            <Button variant="outline" onClick={handleCancel}>キャンセル</Button>
+            <Button onClick={handleComplete}>点検完了</Button>
           </div>
         </Card>
       )}

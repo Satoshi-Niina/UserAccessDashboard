@@ -885,8 +885,6 @@ export default function InspectionItems() {
   // 編集用ダイアログの状態
   const [editItem, setEditItem] = useState<InspectionItem | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
-  const [saveFileName, setSaveFileName] = useState('');
   const [dynamicFields, setDynamicFields] = useState<Array<{ key: string, label: string, value: string }>>([]);
   const [editComment, setEditComment] = useState(""); // 追加：コメント状態
 

@@ -68,6 +68,16 @@ const ExitButton = ({ hasChanges, onSave, redirectTo }: { hasChanges: boolean; o
 export default function InspectionItems() {
   const { toast } = useToast();
   const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
+  
+  // レコード数を表示する
+  useEffect(() => {
+    if (inspectionItems.length > 0) {
+      toast({
+        title: "データ読み込み完了",
+        description: `${inspectionItems.length}件のデータを読み込みました`,
+      });
+    }
+  }, [inspectionItems]);
   const [editingItem, setEditingItem] = useState<InspectionItem | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [saveFileName, setSaveFileName] = useState("");
@@ -124,10 +134,22 @@ export default function InspectionItems() {
         item.id === editingItem.id ? editingItem : item
       );
 
-      const response = await fetch('/api/inspection-items', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedItems),
+      setInspectionItems(updatedItems);
+      setHasChanges(true);
+      setIsDialogOpen(false);
+      
+      toast({
+        title: "保存完了",
+        description: "変更内容を保存しました",
+      });
+    } catch (error) {
+      console.error('保存エラー:', error);
+      toast({
+        title: "エラー",
+        description: "保存に失敗しました",
+        variant: "destructive",
+      });
+    }y: JSON.stringify(updatedItems),
       });
 
       if (!response.ok) throw new Error('Failed to save changes');

@@ -259,6 +259,40 @@ export default function InspectionPage() {
     setInspectionItems(prevItems => prevItems.map(item =>
       item.id === id ? {...item, remark} : item
     ));
+};
+
+const handleComplete = () => {
+    // チェック漏れの項目を確認
+    const uncheckedItems = inspectionItems.filter(item => !item.result);
+    
+    if (uncheckedItems.length > 0) {
+        // チェック漏れがある場合
+        toast({
+            title: "チェック漏れがあります",
+            description: `${uncheckedItems.length}件の未チェック項目があります`,
+            variant: "destructive",
+        });
+
+        // チェック漏れの項目を表示
+        const uncheckedDetails = uncheckedItems.map(item => 
+            `${item.category} - ${item.equipment} - ${item.item}`
+        ).join('\n');
+        
+        alert("以下の項目がチェックされていません：\n\n" + uncheckedDetails);
+        return;
+    }
+
+    // すべてチェック済みの場合、保存処理を実行
+    handleSave();
+};
+
+const handleCancel = () => {
+    if (window.confirm("点検をキャンセルしますか？変更内容は破棄されます。")) {
+        window.location.href = '/';
+    }
+};ms => prevItems.map(item =>
+      item.id === id ? {...item, remark} : item
+    ));
   };
 
   const updateInspectionMeasurementRecord = (id: number, value: string) => {
@@ -395,6 +429,12 @@ export default function InspectionPage() {
               </CardDescription>
             </div>
             <div className="ml-auto flex space-x-2">
+              <Button variant="destructive" onClick={handleCancel}>
+                キャンセル
+              </Button>
+              <Button variant="default" onClick={handleComplete}>
+                点検完了
+              </Button>
             </div>
           </CardHeader>
           <CardContent>

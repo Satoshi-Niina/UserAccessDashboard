@@ -244,37 +244,6 @@ export default function InspectionItems() {
         variant: "destructive",
       });
     }
-  };eturn;
-    }
-
-    try {
-      const response = await fetch('/api/save-inspection-data', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          data: inspectionItems,
-          fileName: saveFileName,
-          deletedRecords
-        }),
-      });
-
-      if (!response.ok) throw new Error('Failed to save file');
-
-      setIsSaveDialogOpen(false);
-      setHasChanges(false);
-      toast({
-        title: "成功",
-        description: "ファイルが保存されました",
-        duration: 3000,
-      });
-    } catch (error) {
-      console.error('Error saving file:', error);
-      toast({
-        title: "エラー",
-        description: "ファイルの保存に失敗しました",
-        variant: "destructive",
-      });
-    }
   };
     // 画面を離れる前の確認
   const handleNavigateAway = () => {

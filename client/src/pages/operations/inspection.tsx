@@ -175,6 +175,8 @@ export default function InspectionPage() {
   const [manufacturerFilter, setManufacturerFilter] = useState<string>("all");
   const [modelFilter, setModelFilter] = useState<string>("all");
   const [measurementRecords, setMeasurementRecords] = useState<Record<number, string>>({});
+  const [fileName, setFileName] = useState(""); // Add filename state
+  const [uncheckedItemsDialog, setUncheckedItemsDialog] = useState<InspectionItem[]>([]); // Add state for unchecked items dialog
 
   // 測定記録の読み込み
   const loadMeasurementRecords = async () => {
@@ -264,18 +266,26 @@ export default function InspectionPage() {
   const handleComplete = async () => {
     // チェック漏れの項目を確認
     const uncheckedItems = inspectionItems.filter(item => !item.result);
+    setUncheckedItemsDialog(uncheckedItems); // Update state for unchecked items dialog
 
     if (uncheckedItems.length > 0) {
       // チェック漏れがある場合、アラートを表示し、処理を中断
-      const uncheckedDetails = uncheckedItems.map(item =>
-        `${item.category} - ${item.equipment} - ${item.item}`
-      ).join('\n');
-
-      alert("以下の項目がチェックされていません：\n\n" + uncheckedDetails);
+      // Alert is now handled by the dialog
       return;
     }
 
     // すべてチェック済みの場合、保存処理を実行
+    const saveData = { inspectionItems, date, startTime, endTime, locationInput, responsiblePerson, inspectorInput, vehicleId };
+
+    const blob = new Blob([JSON.stringify(saveData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName || 'inspection_results.json';
+    link.click();
+    URL.revokeObjectURL(url);
+
+
     try {
       const response = await fetch('/api/inspection-results', {
         method: 'POST',
@@ -433,6 +443,10 @@ export default function InspectionPage() {
               <Label htmlFor="vehicle-id">車両番号</Label>
               <Input id="vehicle-id" placeholder="車両番号を入力" value={vehicleId} onChange={e => setVehicleId(e.target.value)}/>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="file-name">ファイル名</Label>
+              <Input id="file-name" type="text" value={fileName} onChange={e => setFileName(e.target.value)}/>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -450,6 +464,18 @@ export default function InspectionPage() {
             </div>
           </CardHeader>
           <CardContent>
+        {uncheckedItemsDialog.length > 0 && (
+          <div className="mb-4 p-4 border-2 border-red-500 rounded-lg">
+            <h3 className="text-lg font-bold text-red-500 mb-2">チェック漏れの項目</h3>
+            <ul className="list-disc pl-5">
+              {uncheckedItemsDialog.map((item) => (
+                <li key={item.id} className="text-red-700">
+                  {item.category} - {item.equipment} - {item.item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
             <div className="mb-2 p-2 bg-muted/20 rounded-md">
               <div className="flex flex-wrap gap-2">
                 <div className="min-w-[150px]">

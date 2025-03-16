@@ -55,6 +55,7 @@ interface InspectionItem {
   method: string;
   measurementRecord: string;
   diagramRecord: string;
+  comment?: string; //コメントを追加
   [key: string]: any;  // 動的なプロパティに対応
 }
 
@@ -95,7 +96,8 @@ export default function InspectionItems() {
     method: "",
     criteria: "",
     measurementRecord: "",
-    diagramRecord: ""
+    diagramRecord: "",
+    remarks: "" // 備考を追加
   });
 
   // CSVデータ読み込み用の状態
@@ -500,7 +502,8 @@ export default function InspectionItems() {
         { header: '判断基準', key: 'criteria' },
         { header: '確認要領', key: 'method' },
         { header: '測定等記録', key: 'measurementRecord' },
-        { header: '図形記録', key: 'diagramRecord' }
+        { header: '図形記録', key: 'diagramRecord' },
+        { header: 'コメント', key: 'comment' } // コメントフィールドを追加
       ];
 
       // 追加フィールドがあれば動的に追加（例：サンプルデータから追加フィールドを検出）
@@ -894,7 +897,7 @@ export default function InspectionItems() {
     setIsEditDialogOpen(true);
     // 基本フィールドの設定
     const baseFields = ['id', 'manufacturer', 'model', 'engineType', 'category', 'equipment', 'item', 'criteria', 'method', 'measurementRecord', 'diagramRecord'];
-    
+
     // 動的フィールドの設定
     const dynamicFieldsList = Object.entries(item)
       .filter(([key]) => !baseFields.includes(key))
@@ -903,7 +906,7 @@ export default function InspectionItems() {
         label: key,
         value: value as string
       }));
-    
+
     setDynamicFields(dynamicFieldsList);
     setEditComment(item.comment || '');
   };
@@ -914,7 +917,7 @@ export default function InspectionItems() {
 
     try {
       const updatedItems = inspectionItems.map(item =>
-        item.id === editItem.id ? { ...editItem, comment: editComment } : item
+        item.id === editItem.id ? { ...item, comment: editComment } : item
       );
 
       // APIを呼び出してデータを保存
@@ -932,7 +935,7 @@ export default function InspectionItems() {
 
       setInspectionItems(updatedItems);
       setIsEditDialogOpen(false);
-      
+
       toast({
         title: "更新完了",
         description: "点検項目が更新されました",
@@ -973,7 +976,7 @@ export default function InspectionItems() {
       }
 
       setInspectionItems(updatedItems);
-      
+
       toast({
         title: "削除完了",
         description: "点検項目が削除されました",

@@ -426,12 +426,6 @@ export default function InspectionPage() {
               </CardDescription>
             </div>
             <div className="ml-auto flex space-x-2">
-              <Button variant="destructive" onClick={handleCancel}>
-                キャンセル
-              </Button>
-              <Button variant="default" onClick={handleComplete}>
-                点検完了
-              </Button>
             </div>
           </CardHeader>
           <CardContent>

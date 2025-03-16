@@ -279,9 +279,10 @@ export function registerRoutes(app: Express): Server {
 
       const today = new Date().toISOString().slice(0, 10);
       const assetsDir = path.join(process.cwd(), 'attached_assets');
-      const operationalPlanDir = path.join(assetsDir, 'Operational Plan');
-      const outputFileName = `operational_plan.csv`;
-      const outputFilePath = path.join(operationalPlanDir, outputFileName);
+      const inspectionResultsDir = path.join(assetsDir, 'Inspection results');
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const outputFileName = `inspection_${dateStr}_${fileName || 'result'}.csv`;
+      const outputFilePath = path.join(inspectionResultsDir, outputFileName);
 
       // CSVデータの準備
       let csvContent = '';

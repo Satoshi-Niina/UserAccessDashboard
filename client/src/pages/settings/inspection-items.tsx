@@ -394,34 +394,41 @@ export default function InspectionItems() {
       const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
       const defaultFileName = `点検項目マスタ_${dateStr}.csv`;
       setSaveFileName(defaultFileName);
+    } catch (error) {
+      console.error('保存ダイアログエラー:', error);
+      toast({
+        title: "エラー",
+        description: "保存ダイアログの表示に失敗しました",
+        variant: "destructive",
+      });
+    }
+  };
 
-      const saveFile = async () => {
-        const response = await fetch('/api/save-inspection-items', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            fileName: saveFileName,
-            items: inspectionItems,
-            saveDirectory: 'attached_assets/inspection'
-          }),
-        });
+  const handleSaveConfirm = async () => {
+    try {
+      const response = await fetch('/api/save-inspection-items', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fileName: saveFileName,
+          items: inspectionItems,
+          saveDirectory: 'attached_assets/inspection'
+        }),
+      });
 
-        if (!response.ok) {
-          throw new Error('保存に失敗しました');
-        }
+      if (!response.ok) {
+        throw new Error('保存に失敗しました');
+      }
 
-        toast({
-          title: "保存完了",
-          description: "点検項目を保存しました",
-        });
+      toast({
+        title: "保存完了",
+        description: "点検項目を保存しました",
+      });
 
-        setIsSaveDialogOpen(false);
-        navigate('/settings');
-      };
-
-      await saveFile();
+      setIsSaveDialogOpen(false);
+      navigate('/settings');
     } catch (error) {
       console.error('保存エラー:', error);
       toast({
@@ -431,6 +438,86 @@ export default function InspectionItems() {
       });
     }
   };
+
+  // 編集ダイアログで保存ボタンが押された時の処理
+  const handleEditSave = async () => {
+    if (!editItem) return;
+
+    try {
+      const updatedItems = inspectionItems.map(item =>
+        item.id === editItem.id ? editItem : item
+      );
+
+      // APIを呼び出してデータを保存
+      const response = await fetch('/api/inspection-items', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedItems),
+      });
+
+      if (!response.ok) {
+        throw new Error('データの保存に失敗しました');
+      }
+
+      setInspectionItems(updatedItems);
+      setIsEditDialogOpen(false);
+
+      toast({
+        title: "更新完了",
+        description: "点検項目が更新されました",
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error('保存エラー:', error);
+      toast({
+        title: "エラー",
+        description: "データの保存に失敗しました",
+        variant: "destructive",
+        duration: 3000,
+      });
+    }
+  };
+
+  // 削除機能の修正
+  const handleDelete = async (itemId: number) => {
+    if (!confirm('この項目を削除してもよろしいですか？')) {
+      return;
+    }
+
+    try {
+      const updatedItems = inspectionItems.filter(item => item.id !== itemId);
+      setInspectionItems(updatedItems);
+
+      // APIを呼び出してデータを保存
+      const response = await fetch('/api/inspection-items', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedItems),
+      });
+
+      if (!response.ok) {
+        throw new Error('データの削除に失敗しました');
+      }
+
+      toast({
+        title: "削除完了",
+        description: "点検項目が削除されました",
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error('削除エラー:', error);
+      toast({
+        title: "エラー",
+        description: "データの削除に失敗しました",
+        variant: "destructive",
+        duration: 3000,
+      });
+    }
+  };;
 
   const handleAddNewItem = async (item: InspectionItem) => {
     try {

@@ -246,36 +246,6 @@ export default function InspectionItems() {
         variant: "destructive",
       });
     }
-      return;
-    }
-
-    try {
-      const response = await fetch('/api/save-inspection-data', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          data: inspectionItems,
-          fileName: saveFileName
-        })
-      });
-
-      if (!response.ok) throw new Error('Failed to save file');
-
-      toast({
-        title: "成功",
-        description: "ファイルを保存しました",
-      });
-      setSaveFileName("");
-    } catch (error) {
-      console.error('保存エラー:', error);
-      toast({
-        title: "エラー",
-        description: "ファイルの保存に失敗しました",
-        variant: "destructive",
-      });
-    }
   };
     // 画面を離れる前の確認
   const handleNavigateAway = () => {

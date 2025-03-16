@@ -916,25 +916,32 @@ export default function InspectionItems() {
     if (!editItem) return;
 
     try {
-      const updatedItems = inspectionItems.map(item =>
-        item.id === editItem.id ? { ...item, comment: editComment } : item
-      );
+      // 編集項目を更新
+      const updatedItem = {
+        ...editItem,
+        comment: editComment
+      };
 
       // APIを呼び出してデータを保存
-      const response = await fetch('/api/inspection-items', {
+      const response = await fetch(`/api/inspection-items/${editItem.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(updatedItems),
+        body: JSON.stringify(updatedItem),
       });
 
       if (!response.ok) {
-        throw new Error('データの保存に失敗しました');
+        throw new Error('Failed to update inspection item');
       }
 
+      // ローカルの状態を更新
+      const updatedItems = inspectionItems.map(item =>
+        item.id === editItem.id ? updatedItem : item
+      );
       setInspectionItems(updatedItems);
       setIsEditDialogOpen(false);
+      setEditItem(updatedItem); //// 編集項目を更新
 
       toast({
         title: "更新完了",

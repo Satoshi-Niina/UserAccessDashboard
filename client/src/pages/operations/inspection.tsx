@@ -63,7 +63,7 @@ const standardValues: StandardValue[] = [
 ];
 
 const findStandardValue = (item: InspectionItem) => {
-  if (!standardValues || standardValues.length === 0) {
+  if (!standardValues?.measurementStandards || standardValues.measurementStandards.length === 0) {
     console.log('基準値データが存在しません');
     return null;
   }
@@ -101,7 +101,7 @@ const findStandardValue = (item: InspectionItem) => {
 // 測定基準値データを取得する関数
 const fetchMeasurementStandards = async () => {
   try {
-    const response = await fetch('/api/files/測定基準値_20250313.csv');
+    const response = await fetch('/api/measurement-records');
     if (!response.ok) {
       throw new Error('測定基準値の取得に失敗しました');
     }

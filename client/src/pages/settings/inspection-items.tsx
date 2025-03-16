@@ -134,13 +134,21 @@ export default function InspectionItems() {
         item.id === editingItem.id ? editingItem : item
       );
 
+      const response = await fetch('/api/inspection-items', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedItems)
+      });
+
+      if (!response.ok) throw new Error('Failed to save changes');
+
       setInspectionItems(updatedItems);
       setHasChanges(true);
       setIsDialogOpen(false);
       
       toast({
         title: "保存完了",
-        description: "変更内容を保存しました",
+        description: "変更内容を保存しました"
       });
     } catch (error) {
       console.error('保存エラー:', error);

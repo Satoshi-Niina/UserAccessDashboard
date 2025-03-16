@@ -896,7 +896,19 @@ export function registerRoutes(app: Express): Server {
 
   app.get('/api/measurement-records', async (req, res) => {
     try {
-      const measurementFilePath = path.join(process.cwd(), 'attached_assets/Measurement Standard Value/measurement_standards_record.json');
+      const measurementDir = path.join(process.cwd(), 'attached_assets/Measurement Standard Value');
+      const measurementFilePath = path.join(measurementDir, 'measurement_standards_record.json');
+
+      // ディレクトリが存在しない場合は作成
+      if (!fs.existsSync(measurementDir)) {
+        fs.mkdirSync(measurementDir, { recursive: true });
+      }
+
+      // ファイルが存在しない場合は空の配列で初期化
+      if (!fs.existsSync(measurementFilePath)) {
+        await fs.promises.writeFile(measurementFilePath, JSON.stringify({ measurementStandards: [] }), 'utf-8');
+      }
+
       const data = await fs.promises.readFile(measurementFilePath, 'utf-8');
       res.json(JSON.parse(data));
     } catch (error) {

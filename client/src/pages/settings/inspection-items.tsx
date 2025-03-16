@@ -81,6 +81,18 @@ export default function InspectionItems() {
   const [editingItem, setEditingItem] = useState<InspectionItem | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [saveFileName, setSaveFileName] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredItems = inspectionItems.filter(item => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      item.manufacturer?.toLowerCase().includes(searchLower) ||
+      item.model?.toLowerCase().includes(searchLower) ||
+      item.category?.toLowerCase().includes(searchLower) ||
+      item.equipment?.toLowerCase().includes(searchLower) ||
+      item.item?.toLowerCase().includes(searchLower)
+    );
+  });
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [_, navigate] = useLocation();
   const [hasChanges, setHasChanges] = useState(false);
@@ -203,6 +215,36 @@ export default function InspectionItems() {
         variant: "destructive",
       });
       return;
+    }
+
+    try {
+      const response = await fetch('/api/save-inspection-data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          data: inspectionItems,
+          fileName: saveFileName
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to save file');
+
+      toast({
+        title: "成功",
+        description: "ファイルを保存しました",
+      });
+      setSaveFileName("");
+    } catch (error) {
+      console.error('保存エラー:', error);
+      toast({
+        title: "エラー",
+        description: "ファイルの保存に失敗しました",
+        variant: "destructive",
+      });
+    }
+  };eturn;
     }
 
     try {

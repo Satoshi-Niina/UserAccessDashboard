@@ -919,7 +919,11 @@ export default function InspectionItems() {
     setInspectionItems(updatedItems);
     setIsEditDialogOpen(false);
     setIsSaveDialogOpen(true); // 保存ダイアログを表示
-  }; 'category', 'equipment', 'item', 'criteria', 'method', 'measurementRecord', 'diagramRecord'];
+  };
+
+  // 動的フィールドの処理
+  const handleDynamicFields = (item: InspectionItem) => {
+    const baseFields = ['id', 'manufacturer', 'model', 'category', 'equipment', 'item', 'criteria', 'method', 'measurementRecord', 'diagramRecord'];
     const extraFields: Array<{ key: string, label: string, value: string }> = [];
 
     Object.entries(item).forEach(([key, value]) => {

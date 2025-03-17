@@ -336,24 +336,6 @@ export default function InspectionItems() {
       });
     }
   };
-        }));
-        setAvailableFiles(fileList);
-        //Automatically select the latest file if available
-        if(fileList.length > 0){
-          setLatestFile(fileList[0]);
-          setSelectedFile(fileList[0].name);
-        }
-      }
-    } catch (error) {
-      console.error("ファイル一覧取得エラー:", error);
-      toast({
-        title: "エラー",
-        description: "ファイル一覧の取得に失敗しました",
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleSaveAndExit = async () => {
     if (hasChanges) {
         setIsSaveDialogOpen(true);

@@ -219,7 +219,9 @@ export default function InspectionItems() {
   };
 
   // ファイルに保存
-  const handleSaveToFile = async () => {
+  const handleSaveToFile = async (e: React.FormEvent) => {
+    e.preventDefault(); // デフォルトのフォーム送信を防ぐ
+
     if (!saveFileName) {
       toast({
         title: "エラー",
@@ -256,7 +258,7 @@ export default function InspectionItems() {
       console.error('保存エラー:', error);
       toast({
         title: "エラー",
-        description: "保存に失敗しました",
+        description: "ファイルの保存に失敗しました",
         variant: "destructive",
       });
     }

@@ -442,55 +442,6 @@ export default function InspectionItems() {
     });
   };
 
-  const handleConfirmSave = async () => {
-    if (!saveFileName) {
-      toast({
-        title: "エラー",
-        description: "ファイル名を入力してください",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const fileName = saveFileName.endsWith('.csv') ? saveFileName : `${saveFileName}.csv`;
-      const response = await fetch('/api/inspection-items/save', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          data: inspectionItems,
-          fileName: fileName,
-          path: 'attached_assets/inspection'
-        }),
-      });
-
-      if (response.ok) {
-        toast({
-          title: "保存完了",
-          description: `${fileName}に保存しました`,
-        });
-        setIsSaveDialogOpen(false);
-        setHasChanges(false);
-        await fetchInspectionFiles();
-        
-        if (pendingAction === 'back') {
-          navigate('/');
-        }
-      } else {
-        throw new Error('保存に失敗しました');
-      }
-    } catch (error) {
-      console.error('保存エラー:', error);
-      toast({
-        title: "保存エラー",
-        description: "点検項目の保存中にエラーが発生しました。",
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleDeleteConfirm = async (id: number) => {
     const result = await new Promise<boolean>((resolve) => {
       setDeleteConfirmState({

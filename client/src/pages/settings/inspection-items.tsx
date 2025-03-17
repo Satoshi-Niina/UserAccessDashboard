@@ -313,13 +313,17 @@ export default function InspectionItems() {
       if (!response.ok) {
         throw new Error('ファイル一覧の取得に失敗しました');
       }
-      const files = await response.json();
-      console.log('取得したファイル一覧:', files);
-      if (Array.isArray(files)) {
-        setAvailableFiles(files);
-        if (files.length > 0) {
-          setLatestFile(files[0]);
-          setSelectedFile(files[0].name);
+      const data = await response.json();
+      console.log('取得したファイル一覧:', data);
+      if (data.files && Array.isArray(data.files)) {
+        const fileList = data.files.map(file => ({
+          name: file.name,
+          modified: new Date(file.modified).toLocaleString()
+        }));
+        setAvailableFiles(fileList);
+        if (fileList.length > 0) {
+          setLatestFile(fileList[0]);
+          setSelectedFile(fileList[0].name);
           fetchInspectionItems();
         }
       }
@@ -331,10 +335,7 @@ export default function InspectionItems() {
         variant: "destructive",
       });
     }
-  }; && Array.isArray(data.files)) {
-        const fileList = data.files.map(file => ({
-          name: file.name,
-          modified: new Date(file.modified).toLocaleString()
+  };
         }));
         setAvailableFiles(fileList);
         //Automatically select the latest file if available

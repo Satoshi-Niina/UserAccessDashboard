@@ -219,7 +219,11 @@ export default function InspectionItems() {
   };
 
   // ファイルに保存
-  const handleSaveToFile = async () => {
+  const handleSaveToFile = async (e: React.FormEvent<HTMLFormElement> | undefined = undefined) => {
+    if (e) {
+      e.preventDefault(); // デフォルトのファイル保存動作をキャンセル
+    }
+
     if (!saveFileName) {
       toast({
         title: "エラー",
@@ -237,13 +241,18 @@ export default function InspectionItems() {
         },
         body: JSON.stringify({
           data: inspectionItems,
-          fileName: saveFileName
+          fileName: `${saveFileName}.csv`
         }),
       });
 
       if (!response.ok) {
         throw new Error('保存に失敗しました');
       }
+
+      toast({
+        title: "成功",
+        description: "ファイルを保存しました",
+      });
 
       setIsSaveDialogOpen(false);
       setHasChanges(false);

@@ -222,16 +222,16 @@ export default function InspectionItems() {
   // ファイルに保存
   const handleSaveToFile = async (e: React.FormEvent<HTMLFormElement> | undefined = undefined) => {
     if (e) {
-      e.preventDefault(); // ブラウザのデフォルトの動作を防止
-      e.stopPropagation(); // イベントの伝播を停止
+      e.preventDefault();
+      e.stopPropagation();
     }
 
+    // デフォルトのファイル名を設定
     const now = new Date();
     const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
     const defaultFileName = `点検項目マスタ_${dateStr}.csv`;
     setSaveFileName(defaultFileName);
     setIsSaveDialogOpen(true);
-    return;
 
     if (!saveFileName) {
       toast({
@@ -457,7 +457,15 @@ export default function InspectionItems() {
   };
 
   const handleConfirmSave = async () => {
-    if (!saveFileName) return;
+    if (!saveFileName) {
+      toast({
+        title: "エラー",
+        description: "ファイル名を入力してください",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const fileName = saveFileName.endsWith('.csv') ? saveFileName : `${saveFileName}.csv`;
       const response = await fetch('/api/inspection-items/save', {
@@ -479,7 +487,7 @@ export default function InspectionItems() {
         });
         setIsSaveDialogOpen(false);
         setHasChanges(false);
-        await fetchInspectionFiles(); // ファイル一覧を更新
+        await fetchInspectionFiles();
         
         if (pendingAction === 'back') {
           navigate('/');

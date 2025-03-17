@@ -280,12 +280,16 @@ export function registerRoutes(app: Express): Server {
       const today = new Date().toISOString().slice(0, 10);
       const assetsDir = path.join(process.cwd(), 'attached_assets');
       const inspectionResultsDir = path.join(assetsDir, 'Inspection results');
-      const inspectionRecordsDir = path.join(assetsDir, 'Inspection record'); //New directory for inspection records
+      const inspectionRecordsDir = path.join(assetsDir, 'Inspection record');
       const dateStr = new Date().toISOString().slice(0, 10);
-      const outputFileName = `inspection_${dateStr}_${fileName || 'result'}.csv`;
-      const outputFilePath = path.join(inspectionResultsDir, outputFileName);
-      const inspectionRecordFileName = `inspection_record_${dateStr}_${fileName || 'record'}.csv`; //New file name for inspection records
-      const inspectionRecordFilePath = path.join(inspectionRecordsDir, inspectionRecordFileName); //New file path for inspection records
+      
+      // 基本情報のファイル名（info付き）
+      const basicInfoFileName = `inspection_info_${dateStr}_${fileName || 'result'}.csv`;
+      const basicInfoFilePath = path.join(inspectionResultsDir, basicInfoFileName);
+      
+      // 仕業点検表のファイル名
+      const inspectionRecordFileName = `inspection_${dateStr}_${fileName || 'record'}.csv`;
+      const inspectionRecordFilePath = path.join(inspectionRecordsDir, inspectionRecordFileName);
 
 
       // Create directories if they don't exist
@@ -325,9 +329,10 @@ export function registerRoutes(app: Express): Server {
       // ファイルが存在する場合は追記、存在しない場合は新規作成
       // Removed unnecessary directory creation and file existence checks.
 
-      fs.writeFileSync(outputFilePath, csvContent, 'utf8');
+      // 基本情報を保存
+      fs.writeFileSync(basicInfoFilePath, csvContent, 'utf8');
 
-      // Save inspection record to separate file
+      // 仕業点検表を保存
       const inspectionRecordCsvData = Papa.unparse(inspectionRecord, {
         header: true,
         delimiter: ',',
@@ -335,11 +340,10 @@ export function registerRoutes(app: Express): Server {
       });
       fs.writeFileSync(inspectionRecordFilePath, inspectionRecordCsvData, 'utf8');
 
-
       res.status(200).json({
         message: 'データが正常に保存されました',
-        fileName: outputFileName,
-        inspectionRecordFileName: inspectionRecordFileName // Return the name of the saved inspection record file
+        basicInfoFileName: basicInfoFileName,
+        inspectionRecordFileName: inspectionRecordFileName
       });
 
     } catch (error) {

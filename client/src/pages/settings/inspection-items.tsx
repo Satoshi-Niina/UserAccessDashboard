@@ -107,6 +107,9 @@ export default function InspectionItems() {
   const [currentFileName, setCurrentFileName] = useState("");
   const [selectedFile, setSelectedFile] = useState(""); // Add state for selected file
 
+  useEffect(() => {
+    fetchInspectionFiles();
+  }, []);
 
   // データの取得
   useEffect(() => {
@@ -307,8 +310,28 @@ export default function InspectionItems() {
   const fetchInspectionFiles = async () => {
     try {
       const response = await fetch('/api/inspection-files');
-      const data = await response.json();
-      if (data.files && Array.isArray(data.files)) {
+      if (!response.ok) {
+        throw new Error('ファイル一覧の取得に失敗しました');
+      }
+      const files = await response.json();
+      console.log('取得したファイル一覧:', files);
+      if (Array.isArray(files)) {
+        setAvailableFiles(files);
+        if (files.length > 0) {
+          setLatestFile(files[0]);
+          setSelectedFile(files[0].name);
+          fetchInspectionItems();
+        }
+      }
+    } catch (error) {
+      console.error("ファイル一覧取得エラー:", error);
+      toast({
+        title: "エラー",
+        description: "ファイル一覧の取得に失敗しました",
+        variant: "destructive",
+      });
+    }
+  }; && Array.isArray(data.files)) {
         const fileList = data.files.map(file => ({
           name: file.name,
           modified: new Date(file.modified).toLocaleString()

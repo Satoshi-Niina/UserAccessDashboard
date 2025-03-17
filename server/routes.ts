@@ -271,64 +271,16 @@ export function registerRoutes(app: Express): Server {
     }
 
     try {
-      const { data, fileName, inspectionRecord, path } = req.body;
-
-      const assetsDir = process.cwd();
-      const resultsDir = path.join(assetsDir, 'attached_assets', path.basicInfo);
-      const recordsDir = path.join(assetsDir, 'attached_assets', path.inspectionRecord);
-
-      // ディレクトリが存在しない場合は作成
-      if (!fs.existsSync(resultsDir)) {
-        fs.mkdirSync(resultsDir, { recursive: true });
-      }
-      if (!fs.existsSync(recordsDir)) {
-        fs.mkdirSync(recordsDir, { recursive: true });
-      }
-
-      // 基本情報の保存
-      const basicInfoPath = path.join(resultsDir, fileName);
-      const basicInfoData = Papa.unparse(data);
-      await fs.promises.writeFile(basicInfoPath, basicInfoData, 'utf8');
-
-      // 点検記録の保存
-      const recordPath = path.join(recordsDir, fileName.replace('info_', ''));
-      const recordData = Papa.unparse([inspectionRecord]);
-      await fs.promises.writeFile(recordPath, recordData, 'utf8');
-
-      res.status(200).json({
-        message: 'データが正常に保存されました',
-        basicInfoFileName: fileName,
-        recordFileName: fileName.replace('info_', '')
-      });
-    } catch (error) {
-      console.error('データ保存エラー:', error);
-      res.status(500).json({ error: 'データの保存に失敗しました' });
-    }
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ error: "認証が必要です" });
-    }
-
-    try {
-      const { sourceFileName, data, fileName, inspectionRecord } = req.body;
+      const { data, fileName, inspectionRecord } = req.body;
 
       if (!data) {
         return res.status(400).json({ error: '保存するデータがありません' });
       }
 
-      const today = new Date().toISOString().slice(0, 10);
+      const dateStr = new Date().toISOString().slice(0, 10);
       const assetsDir = path.join(process.cwd(), 'attached_assets');
       const inspectionResultsDir = path.join(assetsDir, 'Inspection results');
       const inspectionRecordsDir = path.join(assetsDir, 'Inspection record');
-      const dateStr = new Date().toISOString().slice(0, 10);
-      
-      // 基本情報のファイル名（info付き）
-      const basicInfoFileName = `inspection_info_${dateStr}_${fileName || 'result'}.csv`;
-      const basicInfoFilePath = path.join(inspectionResultsDir, basicInfoFileName);
-      
-      // 仕業点検表のファイル名
-      const inspectionRecordFileName = `inspection_${dateStr}_${fileName || 'record'}.csv`;
-      const inspectionRecordFilePath = path.join(inspectionRecordsDir, inspectionRecordFileName);
-
 
       // Create directories if they don't exist
       if (!fs.existsSync(inspectionResultsDir)) {
@@ -338,50 +290,39 @@ export function registerRoutes(app: Express): Server {
         fs.mkdirSync(inspectionRecordsDir, { recursive: true });
       }
 
-      // CSVデータの準備
-      let csvContent = '';
-      let headerContent = '';
+      // Generate file names
+      const basicInfoFileName = `inspection_info_${dateStr}_${fileName || 'result'}.csv`;
+      const inspectionRecordFileName = `inspection_${dateStr}_${fileName || 'record'}.csv`;
+
+      const basicInfoFilePath = path.join(inspectionResultsDir, basicInfoFileName);
+      const inspectionRecordFilePath = path.join(inspectionRecordsDir, inspectionRecordFileName);
+
+      // Save basic information
+      const basicInfoData = Papa.unparse(data, {
+        header: true,
+        delimiter: ',',
+        quoteChar: '"'
+      });
+      await fs.promises.writeFile(basicInfoFilePath, basicInfoData, 'utf8');
+
+      // Save inspection record if provided
       if (inspectionRecord) {
-        const record = inspectionRecord;
-        headerContent = [
-          `#点検年月日: ${record.点検年月日 || ''}`,
-          `#開始時刻: ${record.開始時刻 || ''}`,
-          `#終了時刻: ${record.終了時刻 || ''}`,
-          `#実施箇所: ${record.実施箇所 || ''}`,
-          `#責任者: ${record.責任者 || ''}`,
-          `#点検者: ${record.点検者 || ''}`,
-          `#引継ぎ: ${record.引継ぎ || ''}`,
-          ''
-        ].join('\n');
-        csvContent = headerContent + '\n';
+        const inspectionRecordData = Papa.unparse({
+          data: [inspectionRecord],
+          fields: Object.keys(inspectionRecord)
+        });
+        await fs.promises.writeFile(inspectionRecordFilePath, inspectionRecordData, 'utf8');
       }
 
-      // データをCSV形式に変換
-      const csvData = Papa.unparse(data, {
-        header: true,
-        delimiter: ',',
-        quoteChar: '"'
+      console.log('ファイル保存完了:', {
+        basicInfo: basicInfoFileName,
+        record: inspectionRecordFileName
       });
-      csvContent += csvData;
-
-      // ファイルが存在する場合は追記、存在しない場合は新規作成
-      // Removed unnecessary directory creation and file existence checks.
-
-      // 基本情報を保存
-      fs.writeFileSync(basicInfoFilePath, csvContent, 'utf8');
-
-      // 仕業点検表を保存
-      const inspectionRecordCsvData = Papa.unparse(inspectionRecord, {
-        header: true,
-        delimiter: ',',
-        quoteChar: '"'
-      });
-      fs.writeFileSync(inspectionRecordFilePath, inspectionRecordCsvData, 'utf8');
 
       res.status(200).json({
         message: 'データが正常に保存されました',
-        basicInfoFileName: basicInfoFileName,
-        inspectionRecordFileName: inspectionRecordFileName
+        basicInfoFileName,
+        inspectionRecordFileName
       });
 
     } catch (error) {

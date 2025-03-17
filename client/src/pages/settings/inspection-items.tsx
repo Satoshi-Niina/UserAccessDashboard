@@ -266,11 +266,13 @@ export default function InspectionItems() {
         body: JSON.stringify({
           data: csvData,
           fileName: fileName,
-          path: 'inspection'
+          path: 'attached_assets/inspection'
         }),
       });
 
       if (response.ok) {
+        // ファイル一覧を再取得
+        await fetchInspectionFiles();
         toast({
           title: "保存完了",
           description: `${fileName}に保存しました`,

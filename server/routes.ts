@@ -265,7 +265,45 @@ export function registerRoutes(app: Express): Server {
     });
   });
 
-  app.post('/api/save-inspection-data', (req, res) => {
+  app.post('/api/save-inspection-data', async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "認証が必要です" });
+    }
+
+    try {
+      const { data, fileName, inspectionRecord, path } = req.body;
+
+      const assetsDir = process.cwd();
+      const resultsDir = path.join(assetsDir, 'attached_assets', path.basicInfo);
+      const recordsDir = path.join(assetsDir, 'attached_assets', path.inspectionRecord);
+
+      // ディレクトリが存在しない場合は作成
+      if (!fs.existsSync(resultsDir)) {
+        fs.mkdirSync(resultsDir, { recursive: true });
+      }
+      if (!fs.existsSync(recordsDir)) {
+        fs.mkdirSync(recordsDir, { recursive: true });
+      }
+
+      // 基本情報の保存
+      const basicInfoPath = path.join(resultsDir, fileName);
+      const basicInfoData = Papa.unparse(data);
+      await fs.promises.writeFile(basicInfoPath, basicInfoData, 'utf8');
+
+      // 点検記録の保存
+      const recordPath = path.join(recordsDir, fileName.replace('info_', ''));
+      const recordData = Papa.unparse([inspectionRecord]);
+      await fs.promises.writeFile(recordPath, recordData, 'utf8');
+
+      res.status(200).json({
+        message: 'データが正常に保存されました',
+        basicInfoFileName: fileName,
+        recordFileName: fileName.replace('info_', '')
+      });
+    } catch (error) {
+      console.error('データ保存エラー:', error);
+      res.status(500).json({ error: 'データの保存に失敗しました' });
+    }
     if (!req.isAuthenticated()) {
       return res.status(401).json({ error: "認証が必要です" });
     }

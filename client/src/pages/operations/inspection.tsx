@@ -266,33 +266,65 @@ export default function InspectionPage() {
   const handleComplete = async () => {
     // チェック漏れの項目を確認
     const uncheckedItems = inspectionItems.filter(item => !item.result);
-    setUncheckedItemsDialog(uncheckedItems); // Update state for unchecked items dialog
+    setUncheckedItemsDialog(uncheckedItems);
 
     if (uncheckedItems.length > 0) {
-      // チェック漏れがある場合、アラートを表示し、処理を中断
-      // Alert is now handled by the dialog
       return;
     }
 
-    // すべてチェック済みの場合、保存処理を実行
-    const saveData = { inspectionItems, date, startTime, endTime, locationInput, responsiblePerson, inspectorInput, vehicleId };
+    // 基本情報の準備
+    const basicInfo = {
+      点検年月日: date,
+      開始時刻: startTime,
+      終了時刻: endTime,
+      実施箇所: locationInput,
+      責任者: responsiblePerson,
+      点検者: inspectorInput,
+      引継ぎ: ""
+    };
 
-    const blob = new Blob([JSON.stringify(saveData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = fileName || 'inspection_results.json';
-    link.click();
-    URL.revokeObjectURL(url);
-
+    // ファイル名の準備
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const basicInfoFileName = `inspection_info_${dateStr}_${vehicleId}.csv`;
+    const inspectionRecordFileName = `inspection_${dateStr}_${vehicleId}.csv`;
 
     try {
-      const response = await fetch('/api/inspection-results', {
+      const response = await fetch('/api/save-inspection-data', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ inspectionItems, date, startTime, endTime, locationInput, responsiblePerson, inspectorInput, vehicleId })
+        body: JSON.stringify({
+          sourceFileName: "inspection_data",
+          data: inspectionItems,
+          fileName: basicInfoFileName,
+          inspectionRecord: basicInfo,
+          path: {
+            basicInfo: 'Inspection results',
+            inspectionRecord: 'Inspection record'
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('保存に失敗しました');
+      }
+
+      toast({
+        title: "保存完了",
+        description: "点検データが正常に保存されました",
+      });
+
+      // 保存成功後、ホーム画面に戻る
+      navigate('/');
+    } catch (error) {
+      console.error('保存エラー:', error);
+      toast({
+        title: "保存エラー",
+        description: "点検データの保存中にエラーが発生しました",
+        variant: "destructive",
+      });
+    }te, startTime, endTime, locationInput, responsiblePerson, inspectorInput, vehicleId })
       });
 
       if (!response.ok) {

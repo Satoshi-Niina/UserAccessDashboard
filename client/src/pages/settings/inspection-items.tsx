@@ -274,9 +274,7 @@ export default function InspectionItems() {
       const defaultFileName = `点検項目マスタ_${dateStr}.csv`;
       setSaveFileName(defaultFileName);
       // ダイアログを表示 (変更点)
-      setTimeout(() => {
-        setIsSaveDialogOpen(true);
-      }, 100);
+      setIsSaveDialogOpen(true);
     } catch (error) {
       console.error('保存ダイアログエラー:', error);
       toast({
@@ -348,9 +346,8 @@ export default function InspectionItems() {
         const baseName = latestFile?.name.replace(/\.csv$/i, '') || '点検項目マスタ'; // 最新ファイル名を使用
         setSaveFileName(`${baseName}_${dateStr}.csv`);
         // ダイアログを表示 (変更点)
-        setTimeout(() => {
-          setIsSaveDialogOpen(true);
-        }, 100);
+        setIsSaveDialogOpen(true);
+        return;
     } else {
       navigate('/settings');
     }
@@ -360,9 +357,7 @@ export default function InspectionItems() {
     // デフォルトのファイル名を設定
     setSaveFileName(`inspection_items_${new Date().toISOString().split('T')[0]}.csv`);
     // ダイアログを表示 (変更点)
-    setTimeout(() => {
-      setIsSaveDialogOpen(true);
-    }, 100);
+    setIsSaveDialogOpen(true);
   };
 
   // Added function to parse CSV data asynchronously

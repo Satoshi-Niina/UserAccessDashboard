@@ -219,7 +219,9 @@ export default function InspectionItems() {
   };
 
   // ファイルに保存
-  const handleSaveToFile = async () => {
+  const handleSaveToFile = async (e: React.FormEvent) => {
+    e.preventDefault();
+
     if (!saveFileName) {
       toast({
         title: "エラー",
@@ -230,37 +232,36 @@ export default function InspectionItems() {
     }
 
     try {
-      const response = await fetch('/api/save-inspection-data', {
+      const response = await fetch('/api/inspection-items', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          data: inspectionItems,
           fileName: saveFileName,
+          items: inspectionItems,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('保存に失敗しました');
+        const errorData = await response.json();
+        throw new Error(errorData.message || '保存に失敗しました');
       }
 
-      // ダイアログを閉じて状態を更新
       setIsSaveDialogOpen(false);
       setHasChanges(false);
-      setSaveFileName("");
-      await fetchInspectionFiles(); // ファイル一覧を更新
+      setSaveFileName('');
+      await fetchInspectionFiles();
 
       toast({
         title: "成功",
         description: "ファイルが保存されました",
-        variant: "default",
       });
     } catch (error) {
       console.error('保存エラー:', error);
       toast({
         title: "エラー",
-        description: "保存に失敗しました",
+        description: error instanceof Error ? error.message : "保存に失敗しました",
         variant: "destructive",
       });
     }
@@ -610,10 +611,7 @@ export default function InspectionItems() {
               保存するファイル名を入力してください
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            handleSaveToFile();
-          }}>
+          <form onSubmit={handleSaveToFile}>
             <div className="space-y-4 py-2">
               <div className="space-y-2">
                 <Label htmlFor="fileName">ファイル名</Label>

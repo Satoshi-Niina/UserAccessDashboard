@@ -135,11 +135,12 @@ export default function InspectionItems() {
     initializeData();
   }, []);
 
-  const fetchInspectionItems = async () => {
+  const fetchInspectionItems = async (filename?: string) => {
     try {
+      const fileToUse = filename || selectedFile;
       let url = '/api/inspection-items';
-      if (selectedFile) {
-        url = `/api/inspection-items?file=${selectedFile}`; // Adjust API endpoint as needed
+      if (fileToUse) {
+        url = `/api/inspection-items?file=${fileToUse}`;
       }
       const response = await fetch(url);
       if (!response.ok) throw new Error(`Failed to fetch inspection items: ${response.status} ${response.statusText}`);
@@ -515,8 +516,9 @@ export default function InspectionItems() {
                 className="border rounded p-2"
                 value={selectedFile}
                 onChange={(e) => {
-                  setSelectedFile(e.target.value);
-                  fetchInspectionItems();
+                  const newFile = e.target.value;
+                  setSelectedFile(newFile);
+                  fetchInspectionItems(newFile);
                 }}
               >
                 <option value="">ファイルを選択してください</option>

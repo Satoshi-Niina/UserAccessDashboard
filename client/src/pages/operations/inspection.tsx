@@ -158,7 +158,7 @@ export default function InspectionPage() {
   const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showBasicInfo, setShowBasicInfo] = useState(false);
+  const [showBasicInfo, setShowBasicInfo] = useState(true);
   const [locationInput, setLocationInput] = useState("");
   const [responsiblePerson, setResponsiblePerson] = useState("");
   const [inspectorInput, setInspectorInput] = useState("");
@@ -387,7 +387,7 @@ export default function InspectionPage() {
             戻る
           </Button>
           <Button onClick={() => setShowBasicInfo(!showBasicInfo)}>
-            {showBasicInfo ? "仕業点検表表示" : "点検基本情報表示"}
+            {showBasicInfo ? "仕業点検表表示" : "仕業点検表表示"}
           </Button>
         </div>
       </div>

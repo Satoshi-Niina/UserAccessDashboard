@@ -324,30 +324,6 @@ export default function InspectionPage() {
         description: "点検データの保存中にエラーが発生しました",
         variant: "destructive",
       });
-    } catch (error) {
-      console.error('保存エラー:', error);
-      toast({
-        title: "保存エラー",
-        description: "点検データの保存中にエラーが発生しました",
-        variant: "destructive",
-      });
-    }
-
-      toast({
-        title: "点検完了",
-        description: "点検結果が保存されました",
-        variant: "success",
-      });
-      navigate('/operations'); //保存後に遷移
-
-
-    } catch (error) {
-      toast({
-        title: "エラー",
-        description: `点検結果の保存に失敗しました: ${error}`,
-        variant: "destructive",
-      });
-      console.error("保存エラー:", error);
     }
   };
 

@@ -280,9 +280,21 @@ export function registerRoutes(app: Express): Server {
       const today = new Date().toISOString().slice(0, 10);
       const assetsDir = path.join(process.cwd(), 'attached_assets');
       const inspectionResultsDir = path.join(assetsDir, 'Inspection results');
+      const inspectionRecordsDir = path.join(assetsDir, 'Inspection record'); //New directory for inspection records
       const dateStr = new Date().toISOString().slice(0, 10);
       const outputFileName = `inspection_${dateStr}_${fileName || 'result'}.csv`;
       const outputFilePath = path.join(inspectionResultsDir, outputFileName);
+      const inspectionRecordFileName = `inspection_record_${dateStr}_${fileName || 'record'}.csv`; //New file name for inspection records
+      const inspectionRecordFilePath = path.join(inspectionRecordsDir, inspectionRecordFileName); //New file path for inspection records
+
+
+      // Create directories if they don't exist
+      if (!fs.existsSync(inspectionResultsDir)) {
+        fs.mkdirSync(inspectionResultsDir, { recursive: true });
+      }
+      if (!fs.existsSync(inspectionRecordsDir)) {
+        fs.mkdirSync(inspectionRecordsDir, { recursive: true });
+      }
 
       // CSVデータの準備
       let csvContent = '';
@@ -311,168 +323,23 @@ export function registerRoutes(app: Express): Server {
       csvContent += csvData;
 
       // ファイルが存在する場合は追記、存在しない場合は新規作成
-      if (!fs.existsSync(operationalPlanDir)) {
-        fs.mkdirSync(operationalPlanDir, { recursive: true });
-      }
+      // Removed unnecessary directory creation and file existence checks.
 
-      if (fs.existsSync(outputFilePath)) {
-        fs.appendFileSync(outputFilePath, '\n' + csvData, 'utf8');
-      } else {
-        fs.writeFileSync(outputFilePath, csvContent, 'utf8');
-      }
+      fs.writeFileSync(outputFilePath, csvContent, 'utf8');
 
-      const inspectionRecordData = inspectionRecord || {};
-      const recordFileName = `operational_plan_records.json`;
-      const recordFilePath = path.join(operationalPlanDir, recordFileName);
-
-      // 記録用JSONファイルの更新
-      let records = [];
-      if (fs.existsSync(recordFilePath)) {
-        records = JSON.parse(fs.readFileSync(recordFilePath, 'utf8'));
-      }
-
-      const newRecord = {
-        ...inspectionRecordData,
-        savedAt: req.body.recordId
-      };
-
-      if (req.body.isUpdate) {
-        // 上書き保存の場合
-        const recordIndex = records.findIndex(record => 
-          record.savedAt === req.body.recordId && 
-          record.userId === req.body.userId
-        );
-        if (recordIndex !== -1) {
-          records[recordIndex] = {
-            ...newRecord,
-            userId: req.body.userId
-          };
-        } else {
-          records.push({
-            ...newRecord,
-            userId: req.body.userId
-          });
-        }
-      } else {
-        // 新規保存の場合
-        records.push({
-          ...newRecord,
-          userId: req.body.userId
-        });
-      }
-      fs.writeFileSync(recordFilePath, JSON.stringify(records, null, 2));
-
-
-      if (!fs.existsSync(assetsDir)) {
-        fs.mkdirSync(assetsDir, { recursive: true });
-      }
-
-      if (!fs.existsSync(operationalPlanDir)) {
-        fs.mkdirSync(operationalPlanDir, { recursive: true });
-      }
-
-      let originalHeaders = [];
-      const sourceFilePath = path.join(assetsDir, sourceFileName || '仕業点検マスタ.csv');
-      if (sourceFileName && fs.existsSync(sourceFilePath)) {
-        try {
-          const sourceContent = fs.readFileSync(sourceFilePath, 'utf8');
-          const firstLine = sourceContent.split('\n')[0];
-          originalHeaders = firstLine.split(',').map(header => header.trim());
-        } catch (err) {
-          console.warn('元のCSVファイルからヘッダーを取得できませんでした:', err);
-        }
-      }
-
-      const fieldMapping = {
-        'manufacturer': '製造メーカー',
-        'model': '機種',
-        'engineType': 'エンジン型式',
-        'category': '部位',
-        'equipment': '装置',
-        'item': '確認箇所',
-        'criteria': '判断基準',
-        'method': '確認要領',
-        'measurementRecord': '測定等記録',
-        'diagramRecord': '図形記録',
-        'result': 'result',          // 点検結果を保存
-        'measuredValue': 'measuredValue', // 実測値を保存
-        'notes': 'notes'             // 備考を保存
-      };
-
-      const processedData = data.map(item => {
-        const newItem = { ...item };
-
-        Object.entries(fieldMapping).forEach(([engField, jpField]) => {
-          if (item[engField] !== undefined && item[engField] !== null) {
-            newItem[jpField] = item[engField];
-          }
-        });
-
-        return newItem;
+      // Save inspection record to separate file
+      const inspectionRecordCsvData = Papa.unparse(inspectionRecord, {
+        header: true,
+        delimiter: ',',
+        quoteChar: '"'
       });
+      fs.writeFileSync(inspectionRecordFilePath, inspectionRecordCsvData, 'utf8');
 
-      let headerComments = '';
-      if (inspectionRecord) {
-        const record = inspectionRecord;
-        headerComments = [
-          `#点検年月日: ${record.点検年月日 || ''}`,
-          `#開始時刻: ${record.開始時刻 || ''}`,
-          `#終了時刻: ${record.終了時刻 || ''}`,
-          `#実施箇所: ${record.実施箇所 || ''}`,
-          `#責任者: ${record.責任者 || ''}`,
-          `#点検者: ${record.点検者 || ''}`,
-          `#引継ぎ: ${record.引継ぎ || ''}`,
-          ''
-        ].join('\n') + '\n';
-      }
-
-      let csvContent2 = '';
-      if (originalHeaders.length > 0) {
-        console.log('元のヘッダーを使用します:', originalHeaders);
-
-        // 新しいフィールドを追加
-        const additionalFields = ['result', 'measuredValue', 'notes'];
-        additionalFields.forEach(field => {
-          if (!originalHeaders.includes(field)) {
-            originalHeaders.push(field);
-            console.log('新しいフィールドを追加しました:', field);
-          }
-        });
-
-        const newKeys = Object.keys(processedData[0] || {});
-        newKeys.forEach(key => {
-          if (!originalHeaders.includes(key)) {
-            originalHeaders.push(key);
-            console.log('新しいフィールドを追加しました:', key);
-          }
-        });
-
-        csvContent2 = Papa.unparse({
-          fields: originalHeaders,
-          data: processedData
-        }, {
-          header: true,
-          delimiter: ',',
-          quoteChar: '"'
-        });
-      } else {
-        csvContent2 = Papa.unparse(processedData, {
-          header: true,
-          delimiter: ',',
-          quoteChar: '"'
-        });
-      }
-
-      if (headerComments) {
-        csvContent2 = headerComments + csvContent2;
-      }
-
-
-      console.log(`CSVデータを保存しました: ${outputFilePath}`);
 
       res.status(200).json({
         message: 'データが正常に保存されました',
-        fileName: outputFileName
+        fileName: outputFileName,
+        inspectionRecordFileName: inspectionRecordFileName // Return the name of the saved inspection record file
       });
 
     } catch (error) {
@@ -484,19 +351,19 @@ export function registerRoutes(app: Express): Server {
   // 利用可能なCSVファイル一覧を取得するエンドポイント
   app.get('/api/inspection-files', async (req, res) => {
     try {
-      const inspectionDir = path.join(process.cwd(), 'attached_assets/inspection');
+      const searchDir = path.join(process.cwd(), 'attached_assets/Inspection results');
 
       // ディレクトリが存在しない場合は作成
-      if (!fs.existsSync(inspectionDir)) {
-        fs.mkdirSync(inspectionDir, { recursive: true });
+      if (!fs.existsSync(searchDir)) {
+        fs.mkdirSync(searchDir, { recursive: true });
       }
 
-      const files = await fs.promises.readdir(inspectionDir);
-      const csvFiles = files.filter(file => file.endsWith('.csv'));
+      const files = await fs.promises.readdir(searchDir);
+      const pastFiles = files.filter(file => file.endsWith('.csv'));
 
       const fileStats = await Promise.all(
-        csvFiles.map(async (file) => {
-          const filePath = path.join(inspectionDir, file);
+        pastFiles.map(async (file) => {
+          const filePath = path.join(searchDir, file);
           const stats = await fs.promises.stat(filePath);
           return {
             name: file,

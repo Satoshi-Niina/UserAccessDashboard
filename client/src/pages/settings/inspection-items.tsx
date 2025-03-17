@@ -219,9 +219,7 @@ export default function InspectionItems() {
   };
 
   // ファイルに保存
-  const handleSaveToFile = async (e: React.FormEvent<HTMLFormElement> | undefined = undefined) => {
-    if (e) e.preventDefault();
-
+  const handleSaveToFile = async () => {
     if (!saveFileName) {
       toast({
         title: "エラー",
@@ -232,20 +230,24 @@ export default function InspectionItems() {
     }
 
     try {
-      const response = await fetch('/api/save-inspection-data', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          data: inspectionItems,
-          fileName: saveFileName,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('保存に失敗しました');
-      }
+      // CSVデータの作成
+      const csvHeader = "id,manufacturer,model,category,subcategory,item_name,measurement,standard_value,upper_limit,lower_limit,unit,remarks\n";
+      const csvData = inspectionItems.map(item => 
+        `${item.id},"${item.manufacturer}","${item.model}","${item.category}","${item.subcategory}","${item.item_name}","${item.measurement}","${item.standard_value}","${item.upper_limit}","${item.lower_limit}","${item.unit}","${item.remarks}"`
+      ).join('\n');
+      
+      // Blobの作成
+      const blob = new Blob([csvHeader + csvData], { type: 'text/csv' });
+      
+      // ダウンロードリンクの作成と実行
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${saveFileName}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
 
       setIsSaveDialogOpen(false);
       setHasChanges(false);

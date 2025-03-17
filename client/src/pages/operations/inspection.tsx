@@ -637,11 +637,13 @@ export default function InspectionPage() {
                   ) : (
                     inspectionItems
                       .filter(item => {
+                        // チェック漏れ（判定未入力）の項目のみを表示
+                        if (item.result !== undefined) return false;
+
                         if (manufacturerFilter !== "all" && item.manufacturer !== manufacturerFilter) return false;
                         if (modelFilter !== "all" && item.model !== modelFilter) return false;
                         if (categoryFilter !== "all" && item.category !== categoryFilter) return false;
                         if (equipmentFilter !== "all" && item.equipment !== equipmentFilter) return false;
-                        if (resultFilter !== "all" && item.result !== resultFilter) return false;
                         if (searchQuery) {
                           const searchTermLower = searchQuery.toLowerCase();
                           const remarkText = item.remark || '';

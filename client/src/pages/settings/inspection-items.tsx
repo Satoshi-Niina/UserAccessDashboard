@@ -219,11 +219,7 @@ export default function InspectionItems() {
   };
 
   // ファイルに保存
-  const handleSaveToFile = async (e: React.FormEvent<HTMLFormElement> | undefined = undefined) => {
-    if (e) {
-      e.preventDefault(); // デフォルトのファイル保存動作をキャンセル
-    }
-
+  const handleSaveToFile = async () => {
     if (!saveFileName) {
       toast({
         title: "エラー",
@@ -234,35 +230,32 @@ export default function InspectionItems() {
     }
 
     try {
-      const response = await fetch('/api/save-inspection-data', {
+      // ファイル名に.csvを追加
+      const fileName = saveFileName.endsWith('.csv') ? saveFileName : `${saveFileName}.csv`;
+
+      const response = await fetch('/api/inspection-items/save', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          data: inspectionItems,
-          fileName: `${saveFileName}.csv`
+          fileName: fileName,
+          items: inspectionItems,
+          path: 'attached_assets/Inspection results'
         }),
       });
 
-      if (!response.ok) {
+      if (response.ok) {
+        toast({
+          title: "保存完了",
+          description: `${fileName}に保存しました`,
+        });
+        setIsSaveDialogOpen(false);
+        setHasChanges(false);
+        fetchInspectionFiles(); // ファイル一覧を更新
+      } else {
         throw new Error('保存に失敗しました');
       }
-
-      toast({
-        title: "成功",
-        description: "ファイルを保存しました",
-      });
-
-      setIsSaveDialogOpen(false);
-      setHasChanges(false);
-      setSaveFileName('');
-      await fetchInspectionFiles();
-
-      toast({
-        title: "成功",
-        description: "ファイルが保存されました",
-      });
     } catch (error) {
       console.error('保存エラー:', error);
       toast({

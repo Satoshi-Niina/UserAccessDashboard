@@ -222,6 +222,7 @@ export default function InspectionItems() {
   const handleSaveToFile = async (e: React.FormEvent<HTMLFormElement> | undefined = undefined) => {
     if (e) {
       e.preventDefault(); // ブラウザのデフォルトの動作を防止
+      e.stopPropagation(); // イベントの伝播を停止
     }
 
     if (!saveFileName) {
@@ -236,10 +237,12 @@ export default function InspectionItems() {
     try {
       const today = new Date();
       const dateStr = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
-      
+
       // 基本情報用のファイル名
       const infoFileName = `inspection_info_${dateStr}_${saveFileName}.csv`;
-      
+
+      const fileName = saveFileName.endsWith('.csv') ? saveFileName : `${saveFileName}.csv`;
+
       const response = await fetch('/api/save-inspection-data', {
         method: 'POST',
         headers: {
@@ -247,11 +250,8 @@ export default function InspectionItems() {
         },
         body: JSON.stringify({
           data: inspectionItems,
-          fileName: saveFileName,
-          path: {
-            info: 'attached_assets/Inspection results',
-            record: 'attached_assets/Inspection record'
-          }
+          fileName: fileName,
+          path: 'attached_assets/inspection'
         }),
       });
 
@@ -451,12 +451,17 @@ export default function InspectionItems() {
   const handleConfirmSave = async () => {
     if (!saveFileName) return;
     try {
-      const response = await fetch('/api/inspection-items/save', {
+      const fileName = saveFileName.endsWith('.csv') ? saveFileName : `${saveFileName}.csv`;
+      const response = await fetch('/api/save-inspection-data', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ fileName: saveFileName }),
+        body: JSON.stringify({
+          data: inspectionItems,
+          fileName: fileName,
+          path: 'attached_assets/inspection'
+        }),
       });
 
       if (response.ok) {

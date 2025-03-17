@@ -630,7 +630,7 @@ export default function InspectionItems() {
               }}>
                 キャンセル
               </Button>
-              <Button type="submit">保存</Button>
+              <Button type="button" onClick={handleSaveToFile}>保存</Button>
             </DialogFooter>
           </form>
         </DialogContent>

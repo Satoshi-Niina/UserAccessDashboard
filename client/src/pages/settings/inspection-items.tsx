@@ -246,6 +246,8 @@ export default function InspectionItems() {
       }
 
       setIsSaveDialogOpen(false);
+      setHasChanges(false);
+      fetchInspectionFiles(); // ファイル一覧を更新
       toast({
         title: "成功",
         description: "ファイルが保存されました",

@@ -395,73 +395,73 @@ export default function InspectionPage() {
       <OperationsNav currentPage="inspection" />
 
       {showBasicInfo && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>点検基本情報</CardTitle>
+            <CardDescription>仕業点検の基本情報を入力してください</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="inspection-date">点検日</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !date && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {date ? format(date, "yyyy年MM月dd日") : <span>日付を選択</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={date}
+                      onSelect={setDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="start-time">開始時刻</Label>
+                <Input id="start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="end-time">終了時刻</Label>
+                <Input id="end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="location">点検場所</Label>
+                <Input id="location" placeholder="点検場所を入力" value={locationInput} onChange={e => setLocationInput(e.target.value)}/>
+              </div>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>点検基本情報</CardTitle>
-          <CardDescription>仕業点検の基本情報を入力してください</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="inspection-date">点検日</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !date && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, "yyyy年MM月dd日") : <span>日付を選択</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={setDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="start-time">開始時刻</Label>
-              <Input id="start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="end-time">終了時刻</Label>
-              <Input id="end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="location">点検場所</Label>
-              <Input id="location" placeholder="点検場所を入力" value={locationInput} onChange={e => setLocationInput(e.target.value)}/>
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="responsible-person">責任者</Label>
+                <Input id="responsible-person" placeholder="責任者名を入力" value={responsiblePerson} onChange={e => setResponsiblePerson(e.target.value)}/>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="responsible-person">責任者</Label>
-              <Input id="responsible-person" placeholder="責任者名を入力" value={responsiblePerson} onChange={e => setResponsiblePerson(e.target.value)}/>
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="inspector">点検者</Label>
+                <Input id="inspector" placeholder="点検者名を入力" value={inspectorInput} onChange={e => setInspectorInput(e.target.value)}/>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="inspector">点検者</Label>
-              <Input id="inspector" placeholder="点検者名を入力" value={inspectorInput} onChange={e => setInspectorInput(e.target.value)}/>
+              <div className="space-y-2">
+                <Label htmlFor="vehicle-id">車両番号</Label>
+                <Input id="vehicle-id" placeholder="車両番号を入力" value={vehicleId} onChange={e => setVehicleId(e.target.value)}/>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="file-name">ファイル名</Label>
+                <Input id="file-name" type="text" value={fileName} onChange={e => setFileName(e.target.value)}/>
+              </div>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="vehicle-id">車両番号</Label>
-              <Input id="vehicle-id" placeholder="車両番号を入力" value={vehicleId} onChange={e => setVehicleId(e.target.value)}/>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="file-name">ファイル名</Label>
-              <Input id="file-name" type="text" value={fileName} onChange={e => setFileName(e.target.value)}/>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {!showBasicInfo && (
         <Card className="mb-6">
@@ -476,18 +476,18 @@ export default function InspectionPage() {
             </div>
           </CardHeader>
           <CardContent>
-        {uncheckedItemsDialog.length > 0 && (
-          <div className="mb-4 p-4 border-2 border-red-500 rounded-lg">
-            <h3 className="text-lg font-bold text-red-500 mb-2">チェック漏れの項目</h3>
-            <ul className="list-disc pl-5">
-              {uncheckedItemsDialog.map((item) => (
-                <li key={item.id} className="text-red-700">
-                  {item.category} - {item.equipment} - {item.item}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+            {uncheckedItemsDialog.length > 0 && (
+              <div className="mb-4 p-4 border-2 border-red-500 rounded-lg">
+                <h3 className="text-lg font-bold text-red-500 mb-2">チェック漏れの項目</h3>
+                <ul className="list-disc pl-5">
+                  {uncheckedItemsDialog.map((item) => (
+                    <li key={item.id} className="text-red-700">
+                      {item.category} - {item.equipment} - {item.item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <div className="mb-2 p-2 bg-muted/20 rounded-md">
               <div className="flex flex-wrap gap-2">
                 <div className="min-w-[150px]">

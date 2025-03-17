@@ -219,9 +219,7 @@ export default function InspectionItems() {
   };
 
   // ファイルに保存
-  const handleSaveToFile = async (e: React.FormEvent<HTMLFormElement> | undefined = undefined) => {
-    if (e) e.preventDefault(); // デフォルトのフォーム送信を防ぐ
-
+  const handleSaveToFile = async () => {
     if (!saveFileName) {
       toast({
         title: "エラー",
@@ -608,22 +606,21 @@ export default function InspectionItems() {
               保存するファイル名を入力してください
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={(e) => { e.preventDefault(); handleSaveToFile(); }}>
-            <div className="space-y-4 py-2">
-              <div className="space-y-2">
-                <Label htmlFor="fileName">ファイル名</Label>
-                <Input
-                  id="fileName"
-                  value={saveFileName}
-                  onChange={(e) => setSaveFileName(e.target.value)}
-                  placeholder="ファイル名を入力"
-                />
-              </div>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="fileName">ファイル名</Label>
+              <Input
+                id="fileName"
+                value={saveFileName}
+                onChange={(e) => setSaveFileName(e.target.value)}
+                placeholder="ファイル名を入力"
+              />
             </div>
-            <DialogFooter>
-              <Button type="submit">保存</Button>
-            </DialogFooter>
-          </form>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleSaveToFile}>保存</Button>
+            <Button variant="outline" onClick={() => setIsSaveDialogOpen(false)}>キャンセル</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

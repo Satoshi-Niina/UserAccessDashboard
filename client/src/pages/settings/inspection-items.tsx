@@ -266,7 +266,7 @@ export default function InspectionItems() {
         body: JSON.stringify({
           data: csvData,
           fileName: fileName,
-          path: 'attached_assets/inspection'
+          path: 'inspection'
         }),
       });
 

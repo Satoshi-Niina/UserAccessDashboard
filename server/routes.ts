@@ -279,50 +279,30 @@ export function registerRoutes(app: Express): Server {
 
       const dateStr = new Date().toISOString().slice(0, 10);
       const assetsDir = path.join(process.cwd(), 'attached_assets');
-      const inspectionResultsDir = path.join(assetsDir, 'Inspection results');
-      const inspectionRecordsDir = path.join(assetsDir, 'Inspection record');
+      const inspectionDir = path.join(assetsDir, 'inspection');
 
-      // Create directories if they don't exist
-      if (!fs.existsSync(inspectionResultsDir)) {
-        fs.mkdirSync(inspectionResultsDir, { recursive: true });
-      }
-      if (!fs.existsSync(inspectionRecordsDir)) {
-        fs.mkdirSync(inspectionRecordsDir, { recursive: true });
+      // Create directory if it doesn't exist
+      if (!fs.existsSync(inspectionDir)) {
+        fs.mkdirSync(inspectionDir, { recursive: true });
       }
 
-      // Generate file names
-      const basicInfoFileName = `inspection_info_${dateStr}_${fileName || 'result'}.csv`;
-      const inspectionRecordFileName = `inspection_${dateStr}_${fileName || 'record'}.csv`;
+      // Generate file name
+      const outputFileName = fileName || 'inspection_data.csv';
+      const outputFilePath = path.join(inspectionDir, outputFileName);
 
-      const basicInfoFilePath = path.join(inspectionResultsDir, basicInfoFileName);
-      const inspectionRecordFilePath = path.join(inspectionRecordsDir, inspectionRecordFileName);
-
-      // Save basic information
-      const basicInfoData = Papa.unparse(data, {
+      // Save data
+      const csvData = Papa.unparse(data, {
         header: true,
         delimiter: ',',
         quoteChar: '"'
       });
-      await fs.promises.writeFile(basicInfoFilePath, basicInfoData, 'utf8');
+      await fs.promises.writeFile(outputFilePath, csvData, 'utf8');
 
-      // Save inspection record if provided
-      if (inspectionRecord) {
-        const inspectionRecordData = Papa.unparse({
-          data: [inspectionRecord],
-          fields: Object.keys(inspectionRecord)
-        });
-        await fs.promises.writeFile(inspectionRecordFilePath, inspectionRecordData, 'utf8');
-      }
-
-      console.log('ファイル保存完了:', {
-        basicInfo: basicInfoFileName,
-        record: inspectionRecordFileName
-      });
+      console.log('ファイル保存完了:', outputFileName);
 
       res.status(200).json({
         message: 'データが正常に保存されました',
-        basicInfoFileName,
-        inspectionRecordFileName
+        fileName: outputFileName
       });
 
     } catch (error) {

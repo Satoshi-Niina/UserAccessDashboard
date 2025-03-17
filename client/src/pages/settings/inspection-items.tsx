@@ -106,14 +106,33 @@ export default function InspectionItems() {
   }>({ isOpen: false, itemId: null, onConfirm: null, onCancel: null });
   const [showCancelDialog, setShowCancelDialog] = useState(false); // Added state for cancel dialog
 
+  // 初期データの取得
   useEffect(() => {
-    fetchInspectionFiles();
-  }, []);
+    const initializeData = async () => {
+      try {
+        const response = await fetch('/api/inspection-files');
+        if (!response.ok) {
+          throw new Error('ファイル一覧の取得に失敗しました');
+        }
+        const data = await response.json();
+        if (data && Array.isArray(data) && data.length > 0) {
+          // 最新のファイルを選択
+          setSelectedFile(data[0].name);
+          setAvailableFiles(data);
+          // 選択したファイルのデータを取得
+          fetchInspectionItems(data[0].name);
+        }
+      } catch (error) {
+        console.error("初期データ取得エラー:", error);
+        toast({
+          title: "エラー",
+          description: "データの取得に失敗しました",
+          variant: "destructive",
+        });
+      }
+    };
 
-  // データの取得
-  useEffect(() => {
-    fetchInspectionItems();
-    fetchInspectionFiles();
+    initializeData();
   }, []);
 
   const fetchInspectionItems = async () => {

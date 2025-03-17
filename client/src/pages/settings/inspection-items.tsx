@@ -230,19 +230,19 @@ export default function InspectionItems() {
     }
 
     try {
-      const response = await fetch('/api/save-inspection-items', {
+      const response = await fetch('/api/save-inspection-data', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          fileName: saveFileName,
-          items: inspectionItems
+          data: inspectionItems,
+          fileName: saveFileName
         }),
       });
 
       if (!response.ok) {
-        throw new Error('ファイルの保存に失敗しました');
+        throw new Error('保存に失敗しました');
       }
 
       setIsSaveDialogOpen(false);

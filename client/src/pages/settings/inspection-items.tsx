@@ -48,18 +48,9 @@ interface InspectionItem {
   [key: string]: any; //Keep dynamic fields
 }
 
-const ExitButton = ({ hasChanges, onSave, redirectTo }: { hasChanges: boolean; onSave: () => Promise<void>; redirectTo: string }) => {
-  const handleClick = async () => {
-    if (hasChanges) {
-      if (window.confirm("変更を保存しますか？")) {
-        await onSave();
-      }
-    }
-    window.location.href = redirectTo;
-  };
-
+const ExitButton = ({ hasChanges, onSave }: { hasChanges: boolean; onSave: () => Promise<void> }) => {
   return (
-    <Button variant="default" onClick={handleClick}>
+    <Button variant="default" onClick={onSave}>
       <Save className="h-4 w-4" />
       保存して終了
     </Button>
@@ -220,19 +211,27 @@ export default function InspectionItems() {
   };
 
   // ファイルに保存
-  const handleSaveToFile = async (e: React.FormEvent<HTMLFormElement> | undefined = undefined) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-
-    // デフォルトのファイル名を設定
+  const handleSaveToFile = async () => {
     const now = new Date();
     const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
     const defaultFileName = `点検項目マスタ_${dateStr}.csv`;
     setSaveFileName(defaultFileName);
     setIsSaveDialogOpen(true);
+  };
 
+  const handleSaveAndExit = async () => {
+    if (hasChanges) {
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+      const defaultFileName = `点検項目マスタ_${dateStr}.csv`;
+      setSaveFileName(defaultFileName);
+      setIsSaveDialogOpen(true);
+    } else {
+      navigate('/settings');
+    }
+  };
+
+  const handleConfirmSave = async () => {
     if (!saveFileName) {
       toast({
         title: "エラー",

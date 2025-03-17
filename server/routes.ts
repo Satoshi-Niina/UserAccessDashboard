@@ -355,7 +355,7 @@ export function registerRoutes(app: Express): Server {
   // 利用可能なCSVファイル一覧を取得するエンドポイント
   app.get('/api/inspection-files', async (req, res) => {
     try {
-      const searchDir = path.join(process.cwd(), 'attached_assets/Inspection results');
+      const searchDir = path.join(process.cwd(), 'attached_assets/inspection');
 
       // ディレクトリが存在しない場合は作成
       if (!fs.existsSync(searchDir)) {

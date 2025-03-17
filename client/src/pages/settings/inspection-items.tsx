@@ -427,15 +427,19 @@ export default function InspectionItems() {
                 value={selectedFile}
                 onChange={(e) => {
                   setSelectedFile(e.target.value);
-                  fetchInspectionItems(); //Fetch data after selecting a file
+                  fetchInspectionItems();
                 }}
               >
-                <option value="">ファイルを選択</option> {/* Add a default option */}
-                {availableFiles.map((file) => (
-                  <option key={file.name} value={file.name}>
-                    {file.name} ({file.modified})
-                  </option>
-                ))}
+                <option value="">ファイルを選択してください</option>
+                {availableFiles.length > 0 ? (
+                  availableFiles.map((file) => (
+                    <option key={file.name} value={file.name}>
+                      {file.name} ({new Date(file.modified).toLocaleString('ja-JP')})
+                    </option>
+                  ))
+                ) : (
+                  <option value="" disabled>利用可能なファイルがありません</option>
+                )}
               </select>
               <Button variant="outline" onClick={() => navigate("/settings")}>
                 キャンセル

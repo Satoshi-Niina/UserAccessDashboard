@@ -324,12 +324,14 @@ export default function InspectionPage() {
         description: "点検データの保存中にエラーが発生しました",
         variant: "destructive",
       });
-    }te, startTime, endTime, locationInput, responsiblePerson, inspectorInput, vehicleId })
+    } catch (error) {
+      console.error('保存エラー:', error);
+      toast({
+        title: "保存エラー",
+        description: "点検データの保存中にエラーが発生しました",
+        variant: "destructive",
       });
-
-      if (!response.ok) {
-        throw new Error(`保存失敗: ${response.status} ${response.statusText}`);
-      }
+    }
 
       toast({
         title: "点検完了",

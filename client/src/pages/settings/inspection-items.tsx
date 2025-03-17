@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Save, Edit, Trash, Plus } from 'lucide-react';
@@ -27,6 +27,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  Label,
 } from '@/components/ui';
 import Papa from 'papaparse'; // Import PapaParse
 
@@ -106,6 +107,12 @@ export default function InspectionItems() {
   const [latestFile, setLatestFile] = useState<{name: string, modified: string} | null>(null);
   const [currentFileName, setCurrentFileName] = useState("");
   const [selectedFile, setSelectedFile] = useState(""); // Add state for selected file
+  const [deleteConfirmState, setDeleteConfirmState] = useState<{
+    isOpen: boolean;
+    itemId: number | null;
+    onConfirm: (() => void) | null;
+    onCancel: (() => void) | null;
+  }>({ isOpen: false, itemId: null, onConfirm: null, onCancel: null });
 
   useEffect(() => {
     fetchInspectionFiles();
@@ -182,9 +189,6 @@ export default function InspectionItems() {
 
   // 項目の削除
   const handleDelete = async (itemId: number) => {
-    if (!confirm('この項目を削除してもよろしいですか？')) {
-      return;
-    }
 
     try {
       const updatedItems = inspectionItems.filter(item => item.id !== itemId);
@@ -428,6 +432,54 @@ export default function InspectionItems() {
     });
   };
 
+  const handleConfirmSave = async () => {
+    if (!saveFileName) return;
+    try {
+      const response = await fetch('/api/inspection-items/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ fileName: saveFileName }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "保存完了",
+          description: "点検項目が正常に保存されました。",
+        });
+        setIsSaveDialogOpen(false);
+        setHasChanges(false);
+        fetchInspectionFiles(); // ファイル一覧を更新
+      } else {
+        throw new Error('保存に失敗しました');
+      }
+    } catch (error) {
+      console.error('保存エラー:', error);
+      toast({
+        title: "保存エラー",
+        description: "点検項目の保存中にエラーが発生しました。",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteConfirm = async (id: number) => {
+    const result = await new Promise<boolean>((resolve) => {
+      setDeleteConfirmState({
+        isOpen: true,
+        itemId: id,
+        onConfirm: () => resolve(true),
+        onCancel: () => resolve(false),
+      });
+    });
+
+    if (result) {
+      handleDelete(id);
+    }
+    setDeleteConfirmState({ isOpen: false, itemId: null, onConfirm: null, onCancel: null });
+  };
+
   return (
     <DndProvider backend={HTML5Backend}>
       <Card className="w-full">
@@ -529,7 +581,7 @@ export default function InspectionItems() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleDelete(item.id)}
+                            onClick={() => handleDeleteConfirm(item.id)}
                           >
                             <Trash className="h-4 w-4" />
                           </Button>
@@ -543,24 +595,32 @@ export default function InspectionItems() {
           </div>
         </CardContent>
       </Card>
+      {/* 保存ダイアログ */}
       <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>ファイルに保存</DialogTitle>
+            <DialogTitle>点検項目の保存</DialogTitle>
+            <DialogDescription>
+              保存するファイル名を入力してください
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                ファイル名
-              </label>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="fileName">ファイル名</Label>
               <Input
+                id="fileName"
                 value={saveFileName}
                 onChange={(e) => setSaveFileName(e.target.value)}
-                placeholder="例: inspection_items.csv"
+                placeholder="ファイル名を入力"
               />
             </div>
-            <Button onClick={handleSaveToFile}>保存</Button>
           </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsSaveDialogOpen(false)}>
+              キャンセル
+            </Button>
+            <Button onClick={handleConfirmSave}>保存</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -639,6 +699,21 @@ export default function InspectionItems() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+        {/* 削除確認ダイアログ */}
+      <AlertDialog open={deleteConfirmState.isOpen} onOpenChange={() => setDeleteConfirmState({...deleteConfirmState, isOpen: false})}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>項目の削除</AlertDialogTitle>
+            <AlertDialogDescription>
+              この項目を削除してもよろしいですか？この操作は取り消せません。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={deleteConfirmState.onCancel}>キャンセル</AlertDialogCancel>
+            <AlertDialogAction onClick={deleteConfirmState.onConfirm}>削除</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DndProvider>
   );
 }

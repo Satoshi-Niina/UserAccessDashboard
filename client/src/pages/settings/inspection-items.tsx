@@ -225,6 +225,10 @@ export default function InspectionItems() {
       e.stopPropagation(); // イベントの伝播を停止
     }
 
+    // 保存ダイアログを表示
+    setIsSaveDialogOpen(true);
+    return;
+
     if (!saveFileName) {
       toast({
         title: "エラー",

@@ -331,6 +331,16 @@ export default function InspectionPage() {
     );
   };
 
+  const handleSaveWithValidation = () => {
+    const uncheckedItems = inspectionItems.filter(item => !item.result);
+    if (uncheckedItems.length > 0) {
+      setUncheckedItemsDialog(uncheckedItems);
+      return;
+    }
+    handleComplete();
+  };
+
+
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
     if (!scrollContainer) return;
@@ -693,7 +703,7 @@ export default function InspectionPage() {
           </CardContent>
           <div className="p-4">
             <Button variant="outline" onClick={handleCancel}>キャンセル</Button>
-            <Button onClick={handleComplete}>点検完了</Button>
+            <Button onClick={handleSaveWithValidation}>点検完了</Button>
           </div>
         </Card>
       )}

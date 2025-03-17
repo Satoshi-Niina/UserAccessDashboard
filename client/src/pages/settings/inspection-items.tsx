@@ -219,8 +219,8 @@ export default function InspectionItems() {
   };
 
   // ファイルに保存
-  const handleSaveToFile = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveToFile = async (e: React.FormEvent<HTMLFormElement> | undefined = undefined) => {
+    if (e) e.preventDefault();
 
     if (!saveFileName) {
       toast({
@@ -232,20 +232,19 @@ export default function InspectionItems() {
     }
 
     try {
-      const response = await fetch('/api/inspection-items', {
+      const response = await fetch('/api/save-inspection-data', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          data: inspectionItems,
           fileName: saveFileName,
-          items: inspectionItems,
         }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || '保存に失敗しました');
+        throw new Error('保存に失敗しました');
       }
 
       setIsSaveDialogOpen(false);

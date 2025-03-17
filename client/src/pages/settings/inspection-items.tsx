@@ -610,7 +610,7 @@ export default function InspectionItems() {
               保存するファイル名を入力してください
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSaveToFile}>
+          <div> {/* Removed the form tag */}
             <div className="space-y-4 py-2">
               <div className="space-y-2">
                 <Label htmlFor="fileName">ファイル名</Label>
@@ -618,21 +618,29 @@ export default function InspectionItems() {
                   id="fileName"
                   value={saveFileName}
                   onChange={(e) => setSaveFileName(e.target.value)}
-                  placeholder="ファイル名を入力"
-                  autoFocus
+                  placeholder="保存するファイル名を入力"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                    }
+                  }}
                 />
               </div>
             </div>
-            <DialogFooter className="mt-4">
-              <Button type="button" variant="outline" onClick={() => {
+            <DialogFooter>
+              <Button variant="outline" type="button" onClick={() => {
                 setIsSaveDialogOpen(false);
                 setSaveFileName("");
               }}>
                 キャンセル
               </Button>
-              <Button type="button" onClick={handleSaveToFile}>保存</Button>
+              <Button type="button" onClick={() => {
+                handleSaveToFile();
+              }}>
+                保存
+              </Button>
             </DialogFooter>
-          </form>
+          </div> {/* Removed the form tag */}
         </DialogContent>
       </Dialog>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

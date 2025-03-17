@@ -105,6 +105,7 @@ export default function InspectionItems() {
   const [availableFiles, setAvailableFiles] = useState<{name: string, modified: string}[]>([]);
   const [latestFile, setLatestFile] = useState<{name: string, modified: string} | null>(null);
   const [currentFileName, setCurrentFileName] = useState("");
+  const [selectedFile, setSelectedFile] = useState(""); // Add state for selected file
 
 
   // データの取得
@@ -115,8 +116,12 @@ export default function InspectionItems() {
 
   const fetchInspectionItems = async () => {
     try {
-      const response = await fetch('/api/inspection-items');
-      if (!response.ok) throw new Error('Failed to fetch inspection items');
+      let url = '/api/inspection-items';
+      if (selectedFile) {
+        url = `/api/inspection-items?file=${selectedFile}`; // Adjust API endpoint as needed
+      }
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Failed to fetch inspection items: ${response.status} ${response.statusText}`);
       const data = await response.json();
       setInspectionItems(data);
       setInitialItems(data);
@@ -309,6 +314,11 @@ export default function InspectionItems() {
           modified: new Date(file.modified).toLocaleString()
         }));
         setAvailableFiles(fileList);
+        //Automatically select the latest file if available
+        if(fileList.length > 0){
+          setLatestFile(fileList[0]);
+          setSelectedFile(fileList[0].name);
+        }
       }
     } catch (error) {
       console.error("ファイル一覧取得エラー:", error);
@@ -412,6 +422,21 @@ export default function InspectionItems() {
           <div className="flex justify-between items-center">
             <CardTitle className="text-2xl">点検項目編集</CardTitle>
             <div className="flex gap-2">
+              <select
+                className="border rounded p-2"
+                value={selectedFile}
+                onChange={(e) => {
+                  setSelectedFile(e.target.value);
+                  fetchInspectionItems(); //Fetch data after selecting a file
+                }}
+              >
+                <option value="">ファイルを選択</option> {/* Add a default option */}
+                {availableFiles.map((file) => (
+                  <option key={file.name} value={file.name}>
+                    {file.name} ({file.modified})
+                  </option>
+                ))}
+              </select>
               <Button variant="outline" onClick={() => navigate("/settings")}>
                 キャンセル
               </Button>

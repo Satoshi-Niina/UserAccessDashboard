@@ -243,7 +243,7 @@ export default function InspectionItems() {
 
       const fileName = saveFileName.endsWith('.csv') ? saveFileName : `${saveFileName}.csv`;
 
-      const response = await fetch('/api/save-inspection-data', {
+      const response = await fetch('/api/inspection-items/save', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -452,7 +452,7 @@ export default function InspectionItems() {
     if (!saveFileName) return;
     try {
       const fileName = saveFileName.endsWith('.csv') ? saveFileName : `${saveFileName}.csv`;
-      const response = await fetch('/api/save-inspection-data', {
+      const response = await fetch('/api/inspection-items/save', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

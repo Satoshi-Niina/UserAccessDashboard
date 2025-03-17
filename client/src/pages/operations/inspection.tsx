@@ -387,7 +387,7 @@ export default function InspectionPage() {
             戻る
           </Button>
           <Button onClick={() => setShowBasicInfo(!showBasicInfo)}>
-            {showBasicInfo ? "仕業点検表表示" : "仕業点検表表示"}
+            仕業点検表表示
           </Button>
         </div>
       </div>

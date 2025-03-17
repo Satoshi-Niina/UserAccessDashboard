@@ -113,6 +113,7 @@ export default function InspectionItems() {
     onConfirm: (() => void) | null;
     onCancel: (() => void) | null;
   }>({ isOpen: false, itemId: null, onConfirm: null, onCancel: null });
+  const [showCancelDialog, setShowCancelDialog] = useState(false); // Added state for cancel dialog
 
   useEffect(() => {
     fetchInspectionFiles();
@@ -505,6 +506,19 @@ export default function InspectionItems() {
     setDeleteConfirmState({ isOpen: false, itemId: null, onConfirm: null, onCancel: null });
   };
 
+  const handleCancel = () => {
+    setShowCancelDialog(true);
+  };
+
+  const handleCancelConfirm = () => {
+    setShowCancelDialog(false);
+    window.location.href = '/';
+  };
+
+  const handleCancelCancel = () => {
+    setShowCancelDialog(false);
+  };
+
   return (
     <DndProvider backend={HTML5Backend}>
       <Card className="w-full">
@@ -531,7 +545,7 @@ export default function InspectionItems() {
                   <option value="" disabled>利用可能なファイルがありません</option>
                 )}
               </select>
-              <Button variant="outline" onClick={() => navigate("/settings")}>
+              <Button variant="outline" onClick={handleCancel}>
                 キャンセル
               </Button>
               <ExitButton
@@ -750,6 +764,21 @@ export default function InspectionItems() {
           <AlertDialogFooter>
             <AlertDialogCancel onClick={deleteConfirmState.onCancel}>キャンセル</AlertDialogCancel>
             <AlertDialogAction onClick={deleteConfirmState.onConfirm}>削除</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      {/* キャンセル確認ダイアログ */}
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>点検キャンセル</AlertDialogTitle>
+            <AlertDialogDescription>
+              点検をキャンセルしますか？変更内容は破棄されます。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelCancel}>キャンセル</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancelConfirm}>キャンセルする</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

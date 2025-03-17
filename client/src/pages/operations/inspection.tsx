@@ -392,9 +392,9 @@ export default function InspectionPage() {
         </div>
       </div>
 
-      {showBasicInfo ? (
-
       <OperationsNav currentPage="inspection" />
+
+      {showBasicInfo && (
 
       <Card className="mb-6">
         <CardHeader>

@@ -242,21 +242,29 @@ export default function InspectionItems() {
     }
 
     try {
-      const today = new Date();
-      const dateStr = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
-
-      // 基本情報用のファイル名
-      const infoFileName = `inspection_info_${dateStr}_${saveFileName}.csv`;
-
       const fileName = saveFileName.endsWith('.csv') ? saveFileName : `${saveFileName}.csv`;
 
-      const response = await fetch('/api/inspection-items/save', {
+      // CSVデータの準備
+      const csvData = inspectionItems.map(item => ({
+        製造メーカー: item.manufacturer || '',
+        機種: item.model || '',
+        エンジン型式: item.engineType || '',
+        部位: item.category || '',
+        装置: item.equipment || '',
+        確認箇所: item.item || '',
+        判断基準: item.criteria || '',
+        確認要領: item.method || '',
+        測定等記録: item.measurementRecord || '',
+        図形記録: item.diagramRecord || ''
+      }));
+
+      const response = await fetch('/api/save-inspection-data', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          data: inspectionItems,
+          data: csvData,
           fileName: fileName,
           path: 'attached_assets/inspection'
         }),
@@ -265,19 +273,23 @@ export default function InspectionItems() {
       if (response.ok) {
         toast({
           title: "保存完了",
-          description: `${infoFileName}に保存しました`,
+          description: `${fileName}に保存しました`,
         });
         setIsSaveDialogOpen(false);
         setHasChanges(false);
-        fetchInspectionFiles();
+        await fetchInspectionFiles();
+
+        if (pendingAction === 'back') {
+          navigate('/settings');
+        }
       } else {
         throw new Error('保存に失敗しました');
       }
     } catch (error) {
       console.error('保存エラー:', error);
       toast({
-        title: "エラー",
-        description: error instanceof Error ? error.message : "保存に失敗しました",
+        title: "保存エラー",
+        description: "点検項目の保存中にエラーが発生しました。",
         variant: "destructive",
       });
     }
@@ -365,7 +377,7 @@ export default function InspectionItems() {
       });
     }
   };
-  
+
 
   const handleSaveDialog = () => {
     // デフォルトのファイル名を設定
@@ -619,9 +631,7 @@ export default function InspectionItems() {
               }}>
                 キャンセル
               </Button>
-              <Button type="button" onClick={() => {
-                handleSaveToFile();
-              }}>
+              <Button type="button" onClick={handleConfirmSave}>
                 保存
               </Button>
             </DialogFooter>

@@ -219,7 +219,11 @@ export default function InspectionItems() {
   };
 
   // ファイルに保存
-  const handleSaveToFile = async () => {
+  const handleSaveToFile = async (e: React.FormEvent<HTMLFormElement> | undefined = undefined) => {
+    if (e) {
+      e.preventDefault(); // ブラウザのデフォルトの動作を防止
+    }
+
     if (!saveFileName) {
       toast({
         title: "エラー",
@@ -230,29 +234,35 @@ export default function InspectionItems() {
     }
 
     try {
-      // ファイル名に.csvを追加
-      const fileName = saveFileName.endsWith('.csv') ? saveFileName : `${saveFileName}.csv`;
-
-      const response = await fetch('/api/inspection-items/save', {
+      const today = new Date();
+      const dateStr = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
+      
+      // 基本情報用のファイル名
+      const infoFileName = `inspection_info_${dateStr}_${saveFileName}.csv`;
+      
+      const response = await fetch('/api/save-inspection-data', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          fileName: fileName,
-          items: inspectionItems,
-          path: 'attached_assets/Inspection results'
+          data: inspectionItems,
+          fileName: saveFileName,
+          path: {
+            info: 'attached_assets/Inspection results',
+            record: 'attached_assets/Inspection record'
+          }
         }),
       });
 
       if (response.ok) {
         toast({
           title: "保存完了",
-          description: `${fileName}に保存しました`,
+          description: `${infoFileName}に保存しました`,
         });
         setIsSaveDialogOpen(false);
         setHasChanges(false);
-        fetchInspectionFiles(); // ファイル一覧を更新
+        fetchInspectionFiles();
       } else {
         throw new Error('保存に失敗しました');
       }

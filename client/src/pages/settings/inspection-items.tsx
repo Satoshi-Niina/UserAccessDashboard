@@ -365,20 +365,7 @@ export default function InspectionItems() {
       });
     }
   };
-  const handleSaveAndExit = async () => {
-    if (hasChanges) {
-        // デフォルトのファイル名を設定
-        const now = new Date();
-        const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-        const baseName = latestFile?.name.replace(/\.csv$/i, '') || '点検項目マスタ'; // 最新ファイル名を使用
-        setSaveFileName(`${baseName}_${dateStr}.csv`);
-        // ダイアログを表示 (変更点)
-        setIsSaveDialogOpen(true);
-        return;
-    } else {
-      navigate('/settings');
-    }
-  };
+  
 
   const handleSaveDialog = () => {
     // デフォルトのファイル名を設定

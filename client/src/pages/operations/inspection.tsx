@@ -587,14 +587,21 @@ export default function InspectionPage() {
                 </div>
               </div>
 
-              <div className="mt-4">
-                <Input
-                  type="text"
-                  placeholder="記事を検索..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full"
-                />
+              <div className="mt-4 flex gap-4 mb-4">
+                <div className="w-2/3">
+                  <Input
+                    type="text"
+                    placeholder="記事を検索..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                <div className="w-1/3 flex items-center justify-end">
+                  <div className="text-sm font-medium">
+                    残項目: {inspectionItems.filter(item => !item.result).length}件
+                  </div>
+                </div>
               </div>
             </div>
             <div className="border rounded-md">

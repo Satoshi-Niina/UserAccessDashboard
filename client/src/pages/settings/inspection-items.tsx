@@ -226,7 +226,10 @@ export default function InspectionItems() {
       e.stopPropagation(); // イベントの伝播を停止
     }
 
-    // 保存ダイアログを表示
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+    const defaultFileName = `点検項目マスタ_${dateStr}.csv`;
+    setSaveFileName(defaultFileName);
     setIsSaveDialogOpen(true);
     return;
 
@@ -472,11 +475,15 @@ export default function InspectionItems() {
       if (response.ok) {
         toast({
           title: "保存完了",
-          description: "点検項目が正常に保存されました。",
+          description: `${fileName}に保存しました`,
         });
         setIsSaveDialogOpen(false);
         setHasChanges(false);
-        fetchInspectionFiles(); // ファイル一覧を更新
+        await fetchInspectionFiles(); // ファイル一覧を更新
+        
+        if (pendingAction === 'back') {
+          navigate('/');
+        }
       } else {
         throw new Error('保存に失敗しました');
       }

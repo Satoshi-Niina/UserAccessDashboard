@@ -245,18 +245,22 @@ export default function InspectionItems() {
         throw new Error('保存に失敗しました');
       }
 
+      // ダイアログを閉じて状態を更新
       setIsSaveDialogOpen(false);
       setHasChanges(false);
-      fetchInspectionFiles(); // ファイル一覧を更新
+      setSaveFileName("");
+      await fetchInspectionFiles(); // ファイル一覧を更新
+
       toast({
         title: "成功",
         description: "ファイルが保存されました",
+        variant: "default",
       });
     } catch (error) {
       console.error('保存エラー:', error);
       toast({
         title: "エラー",
-        description: "ファイルの保存に失敗しました",
+        description: "保存に失敗しました",
         variant: "destructive",
       });
     }
@@ -599,28 +603,39 @@ export default function InspectionItems() {
       </Card>
       {/* 保存ダイアログ */}
       <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
-        <DialogContent>
+        <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
           <DialogHeader>
-            <DialogTitle>点検項目の保存</DialogTitle>
+            <DialogTitle>ファイルに保存</DialogTitle>
             <DialogDescription>
               保存するファイル名を入力してください
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="fileName">ファイル名</Label>
-              <Input
-                id="fileName"
-                value={saveFileName}
-                onChange={(e) => setSaveFileName(e.target.value)}
-                placeholder="ファイル名を入力"
-              />
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            handleSaveToFile();
+          }}>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="fileName">ファイル名</Label>
+                <Input
+                  id="fileName"
+                  value={saveFileName}
+                  onChange={(e) => setSaveFileName(e.target.value)}
+                  placeholder="ファイル名を入力"
+                  autoFocus
+                />
+              </div>
             </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={handleSaveToFile}>保存</Button>
-            <Button variant="outline" onClick={() => setIsSaveDialogOpen(false)}>キャンセル</Button>
-          </DialogFooter>
+            <DialogFooter className="mt-4">
+              <Button type="button" variant="outline" onClick={() => {
+                setIsSaveDialogOpen(false);
+                setSaveFileName("");
+              }}>
+                キャンセル
+              </Button>
+              <Button type="submit">保存</Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

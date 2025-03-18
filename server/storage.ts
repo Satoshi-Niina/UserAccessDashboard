@@ -207,7 +207,7 @@ export class DatabaseStorage implements IStorage {
       
       // モデル情報を取得
       const model = await this.getModels().then(models => 
-        models.find(m => m.id === modelId.toString())
+        models.find(m => parseInt(m.id) === modelId)
       );
 
       if (!model) {

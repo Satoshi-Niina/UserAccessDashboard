@@ -162,7 +162,7 @@ export default function InspectionPage() {
   const [locationInput, setLocationInput] = useState("");
   const [responsiblePerson, setResponsiblePerson] = useState("");
   const [inspectorInput, setInspectorInput] = useState("");
-  const [vehicleId, setVehicleId] = useState("");
+  const [machineId, setMachineId] = useState("");
   const { toast } = useToast();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [scrollIndicatorWidth, setScrollIndicatorWidth] = useState(100);
@@ -285,8 +285,8 @@ export default function InspectionPage() {
 
     // ファイル名の準備
     const dateStr = new Date().toISOString().slice(0, 10);
-    const basicInfoFileName = `inspection_info_${dateStr}_${vehicleId}.csv`;
-    const inspectionRecordFileName = `inspection_${dateStr}_${vehicleId}.csv`;
+    const basicInfoFileName = `inspection_info_${dateStr}_${machineId}.csv`;
+    const inspectionRecordFileName = `inspection_${dateStr}_${machineId}.csv`;
 
     try {
       const response = await fetch('/api/save-inspection-data', {
@@ -461,8 +461,8 @@ export default function InspectionPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="vehicle-id">車両番号</Label>
-                <Input id="vehicle-id" placeholder="車両番号を入力" value={vehicleId} onChange={e => setVehicleId(e.target.value)}/>
+                <Label htmlFor="machine-id">機械番号</Label>
+                <Input id="machine-id" placeholder="機械番号を入力" value={machineId} onChange={e => setMachineId(e.target.value)}/>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="file-name">ファイル名</Label>

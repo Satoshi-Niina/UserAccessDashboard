@@ -667,7 +667,6 @@ export default function InspectionItems() {
                         {selectedTable === 'models' && (
                           <>
                             <TableCell>機種名</TableCell>
-                            <TableCell>製造メーカーID</TableCell>
                             <TableCell>メーカー</TableCell>
                             <TableCell>操作</TableCell>
                           </>
@@ -704,7 +703,6 @@ export default function InspectionItems() {
                           {selectedTable === 'models' && (
                             <>
                               <TableCell>{item.name}</TableCell>
-                              <TableCell>{item.externalId}</TableCell>
                               <TableCell>{item.manufacturer_name}</TableCell>
                               <TableCell>
                                 <div className="flex gap-2">
@@ -744,16 +742,6 @@ export default function InspectionItems() {
                   <h3 className="text-lg font-medium mb-4">新規追加</h3>
                   <div className="flex gap-4">
                     <Input
-                      placeholder="名称"
-                      value={newItem.name}
-                      onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-                    />
-                    <Input
-                      placeholder="コード"
-                      value={newItem.code}
-                      onChange={(e) => setNewItem({ ...newItem, code: e.target.value })}
-                    />
-                    <Input
                       placeholder="機械番号"
                       value={newItem.number}
                       onChange={(e) => setNewItem({ ...newItem, number: e.target.value })}
@@ -764,7 +752,7 @@ export default function InspectionItems() {
                       </SelectTrigger>
                       <SelectContent>
                         {models.map((model) => (
-                          <SelectItem key={model.id} value={model.name}>
+                          <SelectItem key={model.id} value={model}>
                             {model.name}
                           </SelectItem>
                         ))}

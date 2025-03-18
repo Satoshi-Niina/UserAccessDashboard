@@ -973,7 +973,7 @@ export default function InspectionItems() {
                             </Button>
                             <Button
                               variant="ghost"
-                              size="                              size="icon"
+                              size="icon"
                               onClick={() => handleDeleteConfirm(item.id)}
                             >
                               <Trash className="h-4 w-4" />

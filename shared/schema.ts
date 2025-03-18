@@ -12,15 +12,19 @@ export const users = mysqlTable("users", {
 
 export const manufacturers = mysqlTable("manufacturers", {
   id: int("id").primaryKey().autoincrement(),
-  name: varchar("name", { length: 100 }).notNull().unique(),
+  name: varchar("name", { length: 100 }).notNull(),
   code: varchar("code", { length: 20 }).notNull().unique(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const models = mysqlTable("models", {
   id: int("id").primaryKey().autoincrement(),
   manufacturerId: int("manufacturer_id").notNull(),
   name: varchar("name", { length: 100 }).notNull(),
-  code: varchar("code", { length: 20 }).notNull(),
+  code: varchar("code", { length: 20 }).notNull().unique(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const inspectionItems = mysqlTable("inspection_items", {
@@ -31,6 +35,8 @@ export const inspectionItems = mysqlTable("inspection_items", {
   itemName: varchar("item_name", { length: 255 }).notNull(),
   checkMethod: text("check_method"),
   judgmentCriteria: text("judgment_criteria"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const measurementRecords = mysqlTable("measurement_records", {
@@ -39,6 +45,8 @@ export const measurementRecords = mysqlTable("measurement_records", {
   minValue: decimal("min_value", { precision: 10, scale: 2 }),
   maxValue: decimal("max_value", { precision: 10, scale: 2 }),
   unit: varchar("unit", { length: 20 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const visualInspectionRecords = mysqlTable("visual_inspection_records", {
@@ -46,6 +54,8 @@ export const visualInspectionRecords = mysqlTable("visual_inspection_records", {
   inspectionItemId: int("inspection_item_id").notNull(),
   imageReference: varchar("image_reference", { length: 255 }),
   description: text("description"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const inspectionChecklists = mysqlTable("inspection_checklists", {
@@ -56,16 +66,9 @@ export const inspectionChecklists = mysqlTable("inspection_checklists", {
   inspector: varchar("inspector", { length: 100 }).notNull(),
   supervisor: varchar("supervisor", { length: 100 }).notNull(),
   status: varchar("status", { length: 20 }).notNull().default('pending'),
-});
-
-export const inspectionResults = mysqlTable("inspection_results", {
-  id: int("id").primaryKey().autoincrement(),
-  checklistId: int("checklist_id").notNull(),
-  inspectionItemId: int("inspection_item_id").notNull(),
-  result: varchar("result", { length: 50 }).notNull(),
-  measurementValue: decimal("measurement_value", { precision: 10, scale: 2 }),
-  remarks: text("remarks"),
-  inspectedAt: timestamp("inspected_at").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const insertUserSchema = createInsertSchema(users);

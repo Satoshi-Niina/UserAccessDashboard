@@ -8,10 +8,20 @@ async function migrateInspectionData() {
   try {
     const assetsDir = path.join(process.cwd(), 'attached_assets/inspection/table');
 
-    // Create directories if they don't exist
+    // テーブルデータ保存用のディレクトリを作成
     if (!fs.existsSync(assetsDir)) {
       fs.mkdirSync(assetsDir, { recursive: true });
+      console.log('テーブルデータ保存用のディレクトリを作成しました:', assetsDir);
     }
+
+    // 各テーブルのCSVファイルパスを設定
+    const tableFiles = {
+      manufacturers: path.join(assetsDir, 'manufacturers_master.csv'),
+      models: path.join(assetsDir, 'models_master.csv'),
+      inspectionItems: path.join(assetsDir, 'inspection_items_master.csv'),
+      measurementRecords: path.join(assetsDir, 'measurement_records.csv'),
+      visualInspectionRecords: path.join(assetsDir, 'visual_inspection_records.csv')
+    };
 
     // Manufacturers migration
     const manufacturersFile = path.join(assetsDir, 'manufacturers_master.csv');

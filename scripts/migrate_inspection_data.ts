@@ -6,7 +6,7 @@ import { db } from '../server/db';
 
 async function migrateInspectionData() {
   try {
-    const assetsDir = path.join(process.cwd(), 'attached_assets/inspection');
+    const assetsDir = path.join(process.cwd(), 'attached_assets/inspection/table');
 
     // Create directories if they don't exist
     if (!fs.existsSync(assetsDir)) {

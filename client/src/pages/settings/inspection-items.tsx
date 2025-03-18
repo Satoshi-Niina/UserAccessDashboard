@@ -23,6 +23,7 @@ interface TableItem {
   id?: number;
   name: string;
   code?: string;
+  number?: string; // Added number property
   manufacturerId?: number;
   modelId?: number;
 }
@@ -627,17 +628,25 @@ export default function InspectionItems() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {tableItems.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell>{item.name}</TableCell>
-                        <TableCell>{item.code}</TableCell>
-                        <TableCell>
-                          <Button variant="destructive" onClick={() => handleDeleteItem(item.id!)}>
-                            削除
-                          </Button>
+                    {tableItems && tableItems.length > 0 ? (
+                      tableItems.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell>{item.number}</TableCell>
+                          <TableCell>{item.code}</TableCell>
+                          <TableCell>
+                            <Button variant="destructive" onClick={() => handleDeleteItem(item.id!)}>
+                              削除
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center">
+                          データがありません
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </div>

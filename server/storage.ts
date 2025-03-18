@@ -29,6 +29,18 @@ export class DatabaseStorage implements IStorage {
     this.sessionStore = new SQLiteSessionStore({ 
       createDatabaseTable: true
     }, db);
+
+    // テーブルの作成
+    db.run(`
+      CREATE TABLE IF NOT EXISTS machine_numbers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        model_id INTEGER NOT NULL,
+        number VARCHAR(50) NOT NULL UNIQUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (model_id) REFERENCES models(id)
+      )
+    `);
   }
 
   async getUser(id: number): Promise<User | undefined> {

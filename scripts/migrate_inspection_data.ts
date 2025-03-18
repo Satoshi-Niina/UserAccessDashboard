@@ -43,9 +43,7 @@ async function migrateInspectionData() {
           equipment: row['装置'],
           checkPoint: row['確認箇所'],
           criteria: row['判断基準'] || '',
-          method: row['確認要領'] || '',
-          measurementRecord: row['測定等記録'] || '',
-          visualInspection: row['図形記録'] || ''
+          method: row['確認要領'] || ''
         });
       }
     });

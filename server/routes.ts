@@ -170,6 +170,34 @@ export function registerRoutes(app: Express): Server {
     try {
       const { number, modelId, manufacturerId } = req.body;
       const machineNumber = await storage.createMachineNumber({ number, modelId, manufacturerId });
+      
+      // CSVファイルの更新
+      const csvDir = path.join(process.cwd(), 'attached_assets/inspection/table');
+      if (!fs.existsSync(csvDir)) {
+        fs.mkdirSync(csvDir, { recursive: true });
+      }
+      
+      const csvPath = path.join(csvDir, 'machine_numbers.csv');
+      const model = await storage.getModel(modelId);
+      const manufacturer = await storage.getManufacturer(manufacturerId);
+      
+      const newRow = {
+        number,
+        model_name: model.name,
+        manufacturer_name: manufacturer.name
+      };
+      
+      // 既存のデータを読み込むか、新規作成
+      let rows = [];
+      if (fs.existsSync(csvPath)) {
+        const content = fs.readFileSync(csvPath, 'utf-8');
+        rows = Papa.parse(content, { header: true }).data;
+      }
+      
+      rows.push(newRow);
+      const csv = Papa.unparse(rows);
+      fs.writeFileSync(csvPath, csv);
+
       res.status(201).json(machineNumber);
     } catch (error) {
       console.error('Error creating machine number:', error);

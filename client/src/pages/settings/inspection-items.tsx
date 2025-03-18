@@ -540,6 +540,57 @@ export default function InspectionItems() {
     setShowCancelDialog(false);
   };
 
+  const handleAdd = async () => {
+    if (!newItem.number || !selectedModel?.id) {
+      toast({
+        title: "エラー",
+        description: "機械番号と機種を入力してください",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      await addItem({
+        number: newItem.number,
+        modelId: selectedModel.id,
+        manufacturerId: selectedModel.manufacturerId
+      });
+      setNewItem({ name: '', code: '', number: '' });
+      fetchTableData();
+      toast({
+        title: "成功",
+        description: "機械番号を追加しました"
+      });
+    } catch (error) {
+      console.error('Error adding item:', error);
+      toast({
+        title: "エラー",
+        description: "機械番号の追加に失敗しました",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const addItem = async (item: TableItem) => {
+    try {
+      const response = await fetch('/api/machineNumbers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(item)
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to add item: ${response.status} ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Error adding item:', error);
+      throw error;
+    }
+  };
+
+
   return (
     <DndProvider backend={HTML5Backend}>
       <Card className="w-full">
@@ -624,6 +675,8 @@ export default function InspectionItems() {
                         {selectedTable === 'machineNumbers' && (
                           <>
                             <TableCell>機械番号</TableCell>
+                            <TableCell>機種</TableCell>
+                            <TableCell>製造メーカー</TableCell>
                             <TableCell>操作</TableCell>
                           </>
                         )}
@@ -700,7 +753,24 @@ export default function InspectionItems() {
                       value={newItem.code}
                       onChange={(e) => setNewItem({ ...newItem, code: e.target.value })}
                     />
-                    <Button onClick={handleAddItem}>追加</Button>
+                    <Input
+                      placeholder="機械番号"
+                      value={newItem.number}
+                      onChange={(e) => setNewItem({ ...newItem, number: e.target.value })}
+                    />
+                    <Select value={selectedModel} onValueChange={setSelectedModel}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="機種を選択" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {models.map((model) => (
+                          <SelectItem key={model.id} value={model.name}>
+                            {model.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button onClick={handleAdd}>追加</Button>
                   </div>
                 </div>
 

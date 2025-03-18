@@ -180,7 +180,7 @@ export default function InspectionItems() {
   const handleAddItem = async () => {
     try {
       let postData = { ...newItem };
-      
+
       if (selectedTable === 'models') {
         const selectedManufacturer = manufacturers.find(m => m.name === newItem.name);
         if (selectedManufacturer) {
@@ -335,15 +335,15 @@ export default function InspectionItems() {
     setIsSaveDialogOpen(true);
   };
 
-  const handleSaveAndExit = async () => {
+  const handleSaveAndExit = async (table: TableType) => {
     if (hasChanges) {
-      handleSaveToFile();
+      await handleSaveToFile(table);
     } else {
       navigate('/settings');
     }
   };
 
-  const handleConfirmSave = async () => {
+  const handleConfirmSave = async (table: TableType) => {
     if (!saveFileName) {
       toast({
         title: "エラー",
@@ -355,19 +355,27 @@ export default function InspectionItems() {
 
     try {
       const fileName = saveFileName.endsWith('.csv') ? saveFileName : `${saveFileName}.csv`;
+      let dataToSave;
+      let path = 'inspection';
 
-      const csvData = inspectionItems.map(item => ({
-        製造メーカー: item.manufacturer || '',
-        機種: item.model || '',
-        エンジン型式: item.engineType || '',
-        部位: item.category || '',
-        装置: item.equipment || '',
-        確認箇所: item.item || '',
-        判断基準: item.criteria || '',
-        確認要領: item.method || '',
-        測定等記録: item.measurementRecord || '',
-        図形記録: item.diagramRecord || ''
-      }));
+      if (table === 'inspectionItems') {
+        dataToSave = inspectionItems.map(item => ({
+          製造メーカー: item.manufacturer || '',
+          機種: item.model || '',
+          エンジン型式: item.engineType || '',
+          部位: item.category || '',
+          装置: item.equipment || '',
+          確認箇所: item.item || '',
+          判断基準: item.criteria || '',
+          確認要領: item.method || '',
+          測定等記録: item.measurementRecord || '',
+          図形記録: item.diagramRecord || ''
+        }));
+      } else {
+        dataToSave = tableItems;
+        path = `inspection/table/${table}`;
+      }
+
 
       const response = await fetch('/api/save-inspection-data', {
         method: 'POST',
@@ -375,9 +383,9 @@ export default function InspectionItems() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          data: csvData,
+          data: dataToSave,
           fileName: fileName,
-          path: 'inspection'
+          path: path
         }),
       });
 
@@ -434,7 +442,7 @@ export default function InspectionItems() {
   };
 
   const handleSaveConfirm = async () => {
-    await handleSaveToFile();
+    await handleSaveToFile(selectedTable);
     setPendingAction(null);
     setShowConfirmDialog(false);
     navigate('/');
@@ -674,10 +682,7 @@ export default function InspectionItems() {
               <Button variant="outline" onClick={handleCancel}>
                 キャンセル
               </Button>
-              <ExitButton
-                hasChanges={hasChanges}
-                onSave={handleSaveAndExit}
-              />
+              <Button onClick={() => handleSaveAndExit(selectedTable)}>保存して終了</Button>
             </div>
           </div>
         </CardHeader>
@@ -968,7 +973,7 @@ export default function InspectionItems() {
                             </Button>
                             <Button
                               variant="ghost"
-                              size="icon"
+                              size="                              size="icon"
                               onClick={() => handleDeleteConfirm(item.id)}
                             >
                               <Trash className="h-4 w-4" />

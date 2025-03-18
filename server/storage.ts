@@ -128,6 +128,15 @@ export class DatabaseStorage implements IStorage {
       });
     });
   }
+
+  async getInspectionItems(): Promise<any[]> {
+    return new Promise((resolve, reject) => {
+      db.all('SELECT * FROM inspection_items ORDER BY id', [], (err, rows) => {
+        if (err) reject(err);
+        resolve(rows || []);
+      });
+    });
+  }
 }
 
 // 初期管理者ユーザーのセットアップ

@@ -622,16 +622,18 @@ export default function InspectionItems() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableCell>名称</TableCell>
-                      <TableCell>コード</TableCell>
-                      <TableCell>操作</TableCell>
+                      <TableCell>ID (システム管理用)</TableCell>
+                      <TableCell>名称 (表示名)</TableCell>
+                      <TableCell>コード (システム識別子)</TableCell>
+                      <TableCell>操作 (データ管理)</TableCell>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {tableItems && tableItems.length > 0 ? (
                       tableItems.map((item) => (
                         <TableRow key={item.id}>
-                          <TableCell>{item.number}</TableCell>
+                          <TableCell>{item.id}</TableCell>
+                          <TableCell>{item.name}</TableCell>
                           <TableCell>{item.code}</TableCell>
                           <TableCell>
                             <Button variant="destructive" onClick={() => handleDeleteItem(item.id!)}>
@@ -642,7 +644,7 @@ export default function InspectionItems() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={3} className="text-center">
+                        <TableCell colSpan={4} className="text-center">
                           データがありません
                         </TableCell>
                       </TableRow>

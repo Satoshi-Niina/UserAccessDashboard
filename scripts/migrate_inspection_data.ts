@@ -53,6 +53,17 @@ async function migrateInspectionData() {
     // 各テーブルのデータをCSVファイルとして保存
     const manufacturersData = Array.from(manufacturers).map(name => ({ name }));
     const modelsData = Array.from(models).map(name => ({ name }));
+    
+    // 点検項目データに判断基準と確認要領を含める
+    const inspectionItemsData = inspectionItems.map(item => ({
+      category: item.category,
+      equipment: item.equipment,
+      item: item.item,
+      criteria: item.criteria,
+      method: item.method,
+      measurementRecord: item.measurementRecord,
+      visualInspection: item.visualInspection
+    }));
 
     // ファイルに保存
     fs.writeFileSync(
@@ -67,6 +78,8 @@ async function migrateInspectionData() {
 
     fs.writeFileSync(
       path.join(targetDir, 'inspection_items.csv'),
+      Papa.unparse(inspectionItemsData)
+    );_items.csv'),
       Papa.unparse(inspectionItems)
     );
 

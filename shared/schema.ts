@@ -10,12 +10,13 @@ export const manufacturers = mysqlTable("manufacturers", {
 });
 
 export const manufacturersRelations = relations(manufacturers, ({ many }) => ({
-  models: many(models)
+  models: many(models),
+  machines: many(machines)
 }));
 
 // 機種テーブル
 export const models = mysqlTable("models", {
-  modelId: int("model_id").primaryKey().autoincrement(),
+  modelId: int("model_id").primaryKey(),
   modelName: varchar("model_name", { length: 100 }).notNull(),
   manufacturerId: int("manufacturer_id").notNull().references(() => manufacturers.manufacturerId),
 });
@@ -35,7 +36,7 @@ export const machines = mysqlTable("machines", {
   manufacturerId: int("manufacturer_id").notNull().references(() => manufacturers.manufacturerId),
 });
 
-export const machinesRelations = relations(machines, ({ one }) => ({
+export const machinesRelations = relations(machines, ({ one, many }) => ({
   manufacturer: one(manufacturers, {
     fields: [machines.manufacturerId],
     references: [manufacturers.manufacturerId],
@@ -43,6 +44,21 @@ export const machinesRelations = relations(machines, ({ one }) => ({
   model: one(models, {
     fields: [machines.modelId],
     references: [models.modelId],
+  }),
+  inspections: many(inspections)
+}));
+
+// 点検項目テーブル
+export const inspections = mysqlTable("inspections", {
+  inspectionId: int("inspection_id").primaryKey().autoincrement(),
+  machineId: varchar("machine_id", { length: 20 }).notNull().references(() => machines.machineId),
+  inspectionDetail: varchar("inspection_detail", { length: 255 }).notNull(),
+});
+
+export const inspectionsRelations = relations(inspections, ({ one }) => ({
+  machine: one(machines, {
+    fields: [inspections.machineId],
+    references: [machines.machineId],
   })
 }));
 
@@ -110,7 +126,7 @@ export const visualInspectionRecordsRelations = relations(visualInspectionRecord
 
 export const inspectionChecklists = mysqlTable("inspection_checklists", {
   id: int("id").primaryKey().autoincrement(),
-  machineId: int("machine_id").notNull().references(() => machines.machineId), 
+  machineId: varchar("machine_id", { length: 20 }).notNull().references(() => machines.machineId), 
   inspectionDate: timestamp("inspection_date").notNull(),
   inspector: varchar("inspector", { length: 100 }).notNull(),
   supervisor: varchar("supervisor", { length: 100 }).notNull(),

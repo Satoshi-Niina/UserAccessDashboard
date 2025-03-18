@@ -89,6 +89,105 @@ export function registerRoutes(app: Express): Server {
     return null;
   }
 
+  // Manufacturers endpoints
+  app.get('/api/manufacturers', async (req, res) => {
+    try {
+      const manufacturers = await storage.getManufacturers();
+      res.json(manufacturers);
+    } catch (error) {
+      console.error('Error fetching manufacturers:', error);
+      res.status(500).json({ error: 'メーカー一覧の取得に失敗しました' });
+    }
+  });
+
+  app.post('/api/manufacturers', async (req, res) => {
+    try {
+      const { name, code } = req.body;
+      const manufacturer = await storage.createManufacturer({ name, code });
+      res.status(201).json(manufacturer);
+    } catch (error) {
+      console.error('Error creating manufacturer:', error);
+      res.status(500).json({ error: 'メーカーの追加に失敗しました' });
+    }
+  });
+
+  app.delete('/api/manufacturers/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteManufacturer(id);
+      res.status(200).json({ message: 'メーカーを削除しました' });
+    } catch (error) {
+      console.error('Error deleting manufacturer:', error);
+      res.status(500).json({ error: 'メーカーの削除に失敗しました' });
+    }
+  });
+
+  // Models endpoints
+  app.get('/api/models', async (req, res) => {
+    try {
+      const models = await storage.getModels();
+      res.json(models);
+    } catch (error) {
+      console.error('Error fetching models:', error);
+      res.status(500).json({ error: '機種一覧の取得に失敗しました' });
+    }
+  });
+
+  app.post('/api/models', async (req, res) => {
+    try {
+      const { name, code, manufacturerId } = req.body;
+      const model = await storage.createModel({ name, code, manufacturerId });
+      res.status(201).json(model);
+    } catch (error) {
+      console.error('Error creating model:', error);
+      res.status(500).json({ error: '機種の追加に失敗しました' });
+    }
+  });
+
+  app.delete('/api/models/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteModel(id);
+      res.status(200).json({ message: '機種を削除しました' });
+    } catch (error) {
+      console.error('Error deleting model:', error);
+      res.status(500).json({ error: '機種の削除に失敗しました' });
+    }
+  });
+
+  // Machine numbers endpoints
+  app.get('/api/machineNumbers', async (req, res) => {
+    try {
+      const machineNumbers = await storage.getMachineNumbers();
+      res.json(machineNumbers);
+    } catch (error) {
+      console.error('Error fetching machine numbers:', error);
+      res.status(500).json({ error: '機械番号一覧の取得に失敗しました' });
+    }
+  });
+
+  app.post('/api/machineNumbers', async (req, res) => {
+    try {
+      const { number, modelId } = req.body;
+      const machineNumber = await storage.createMachineNumber({ number, modelId });
+      res.status(201).json(machineNumber);
+    } catch (error) {
+      console.error('Error creating machine number:', error);
+      res.status(500).json({ error: '機械番号の追加に失敗しました' });
+    }
+  });
+
+  app.delete('/api/machineNumbers/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteMachineNumber(id);
+      res.status(200).json({ message: '機械番号を削除しました' });
+    } catch (error) {
+      console.error('Error deleting machine number:', error);
+      res.status(500).json({ error: '機械番号の削除に失敗しました' });
+    }
+  });
+
   app.get('/api/inspection-items', async (req, res) => {
     try {
       // パラメータからファイル名を取得

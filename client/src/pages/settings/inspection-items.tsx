@@ -1,36 +1,30 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Save, Edit, Trash, Plus } from 'lucide-react';
-import { Link, useLocation } from 'wouter';
+import React, { useState, useEffect } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  Label,
-} from '@/components/ui';
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Table, TableHeader, TableRow, TableCell, TableBody } from "@/components/ui/table";
+import { useToast } from "@/components/ui/use-toast";
+import { Save } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import Papa from 'papaparse'; // Import PapaParse
+import { Link, useLocation } from 'wouter';
+import { Edit, Trash, Plus } from 'lucide-react';
+import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle} from '@/components/ui';
 
+
+type TableType = 'manufacturers' | 'models' | 'machineNumbers';
+
+interface TableItem {
+  id?: number;
+  name: string;
+  code?: string;
+  manufacturerId?: number;
+  modelId?: number;
+}
 
 interface InspectionItem {
   id: number;
@@ -59,54 +53,38 @@ const ExitButton = ({ hasChanges, onSave }: { hasChanges: boolean; onSave: () =>
 
 export default function InspectionItems() {
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("tables");
+  const [selectedTable, setSelectedTable] = useState<TableType>('manufacturers');
+  const [tableItems, setTableItems] = useState<TableItem[]>([]);
+  const [newItem, setNewItem] = useState<TableItem>({ name: '', code: '' });
+  const [manufacturers, setManufacturers] = useState<TableItem[]>([]);
+  const [models, setModels] = useState<TableItem[]>([]);
+  const [selectedManufacturer, setSelectedManufacturer] = useState<string>("");
+  const [selectedModel, setSelectedModel] = useState<string>("");
   const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
-
-  // レコード数を表示する
-  useEffect(() => {
-    if (inspectionItems.length > 0) {
-      toast({
-        title: "データ読み込み完了",
-        description: `${inspectionItems.length}件のデータを読み込みました`,
-      });
-    }
-  }, [inspectionItems]);
-  const [editingItem, setEditingItem] = useState<InspectionItem | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [saveFileName, setSaveFileName] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const filteredItems = inspectionItems.filter(item => {
-    const searchLower = searchQuery.toLowerCase();
-    return (
-      item.manufacturer?.toLowerCase().includes(searchLower) ||
-      item.model?.toLowerCase().includes(searchLower) ||
-      item.category?.toLowerCase().includes(searchLower) ||
-      item.equipment?.toLowerCase().includes(searchLower) ||
-      item.item?.toLowerCase().includes(searchLower)
-    );
-  });
-  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
+  const [filteredItems, setFilteredItems] = useState<InspectionItem[]>([]);
   const [_, navigate] = useLocation();
   const [hasChanges, setHasChanges] = useState(false);
   const [initialItems, setInitialItems] = useState<InspectionItem[]>([]);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingAction, setPendingAction] = useState<'back' | 'save' | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [deletedRecords, setDeletedRecords] = useState<number[]>([]);
-  const [csvData, setCsvData] = useState<InspectionItem[]>([]);
+  const [saveFileName, setSaveFileName] = useState("");
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [availableFiles, setAvailableFiles] = useState<{name: string, modified: string}[]>([]);
   const [latestFile, setLatestFile] = useState<{name: string, modified: string} | null>(null);
-  const [currentFileName, setCurrentFileName] = useState("");
-  const [selectedFile, setSelectedFile] = useState(""); // Add state for selected file
+  const [selectedFile, setSelectedFile] = useState("");
+  const [csvData, setCsvData] = useState<InspectionItem[]>([]);
+  const [editingItem, setEditingItem] = useState<InspectionItem | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deleteConfirmState, setDeleteConfirmState] = useState<{
     isOpen: boolean;
     itemId: number | null;
     onConfirm: (() => void) | null;
     onCancel: (() => void) | null;
   }>({ isOpen: false, itemId: null, onConfirm: null, onCancel: null });
-  const [showCancelDialog, setShowCancelDialog] = useState(false); // Added state for cancel dialog
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
-  // 初期データの取得
+
   useEffect(() => {
     const initializeData = async () => {
       try {
@@ -116,10 +94,8 @@ export default function InspectionItems() {
         }
         const data = await response.json();
         if (data && Array.isArray(data) && data.length > 0) {
-          // 最新のファイルを選択
           setSelectedFile(data[0].name);
           setAvailableFiles(data);
-          // 選択したファイルのデータを取得
           fetchInspectionItems(data[0].name);
         }
       } catch (error) {
@@ -148,6 +124,7 @@ export default function InspectionItems() {
       setInspectionItems(data);
       setInitialItems(data);
       setHasChanges(false);
+      setFilteredItems(data); // Initialize filteredItems
     } catch (error) {
       console.error('Error fetching inspection items:', error);
       toast({
@@ -158,13 +135,94 @@ export default function InspectionItems() {
     }
   };
 
-  // 編集ダイアログを開く
+  useEffect(() => {
+    fetchTableData();
+    fetchManufacturers();
+    fetchModels();
+  }, [selectedTable]);
+
+  const fetchTableData = async () => {
+    try {
+      const response = await fetch(`/api/${selectedTable}`);
+      const data = await response.json();
+      setTableItems(data);
+    } catch (error) {
+      console.error('Error fetching table data:', error);
+    }
+  };
+
+  const fetchManufacturers = async () => {
+    try {
+      const response = await fetch('/api/manufacturers');
+      const data = await response.json();
+      setManufacturers(data);
+    } catch (error) {
+      console.error('Error fetching manufacturers:', error);
+    }
+  };
+
+  const fetchModels = async () => {
+    try {
+      const response = await fetch('/api/models');
+      const data = await response.json();
+      setModels(data);
+    } catch (error) {
+      console.error('Error fetching models:', error);
+    }
+  };
+
+  const handleAddItem = async () => {
+    try {
+      const response = await fetch(`/api/${selectedTable}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newItem),
+      });
+
+      if (response.ok) {
+        fetchTableData();
+        setNewItem({ name: '', code: '' });
+        toast({
+          title: "追加完了",
+          description: "項目を追加しました",
+        });
+      }
+    } catch (error) {
+      console.error('Error adding item:', error);
+    }
+  };
+
+  const handleDeleteItem = async (id: number) => {
+    try {
+      const response = await fetch(`/api/${selectedTable}/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        fetchTableData();
+        toast({
+          title: "削除完了",
+          description: "項目を削除しました",
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting item:', error);
+    }
+  };
+
+  const handleSearch = () => {
+    const filtered = inspectionItems.filter((item: any) => {
+      return (!selectedManufacturer || item.manufacturer === selectedManufacturer) &&
+             (!selectedModel || item.model === selectedModel);
+    });
+    setFilteredItems(filtered);
+  };
+
   const openEditDialog = (item: InspectionItem) => {
     setEditingItem({ ...item });
     setIsDialogOpen(true);
   };
 
-  // 編集内容を保存
   const handleSave = async () => {
     if (!editingItem) return;
 
@@ -199,12 +257,25 @@ export default function InspectionItems() {
     }
   };
 
-  // 項目の削除
-  const handleDelete = async (itemId: number) => {
+  const handleDeleteConfirm = async (id: number) => {
+    const result = await new Promise<boolean>((resolve) => {
+      setDeleteConfirmState({
+        isOpen: true,
+        itemId: id,
+        onConfirm: () => resolve(true),
+        onCancel: () => resolve(false),
+      });
+    });
 
+    if (result) {
+      handleDelete(id);
+    }
+    setDeleteConfirmState({ isOpen: false, itemId: null, onConfirm: null, onCancel: null });
+  };
+
+  const handleDelete = async (itemId: number) => {
     try {
       const updatedItems = inspectionItems.filter(item => item.id !== itemId);
-      setDeletedRecords(prev => [...prev, itemId]);
       const response = await fetch('/api/inspection-items', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -230,7 +301,6 @@ export default function InspectionItems() {
     }
   };
 
-  // ファイルに保存
   const handleSaveToFile = async () => {
     const now = new Date();
     const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
@@ -241,11 +311,7 @@ export default function InspectionItems() {
 
   const handleSaveAndExit = async () => {
     if (hasChanges) {
-      const now = new Date();
-      const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-      const defaultFileName = `点検項目マスタ_${dateStr}.csv`;
-      setSaveFileName(defaultFileName);
-      setIsSaveDialogOpen(true);
+      handleSaveToFile();
     } else {
       navigate('/settings');
     }
@@ -264,7 +330,6 @@ export default function InspectionItems() {
     try {
       const fileName = saveFileName.endsWith('.csv') ? saveFileName : `${saveFileName}.csv`;
 
-      // CSVデータの準備
       const csvData = inspectionItems.map(item => ({
         製造メーカー: item.manufacturer || '',
         機種: item.model || '',
@@ -291,7 +356,6 @@ export default function InspectionItems() {
       });
 
       if (response.ok) {
-        // ファイル一覧を再取得
         await fetchInspectionFiles();
         toast({
           title: "保存完了",
@@ -316,7 +380,7 @@ export default function InspectionItems() {
       });
     }
   };
-    // 画面を離れる前の確認
+
   const handleNavigateAway = () => {
     if (hasChanges) {
       setShowConfirmDialog(true);
@@ -326,15 +390,12 @@ export default function InspectionItems() {
     }
   };
 
-  // 変更を保存して戻る
   const handleSaveAndNavigate = async () => {
     try {
-      // デフォルトのファイル名を設定
       const now = new Date();
       const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
       const defaultFileName = `点検項目マスタ_${dateStr}.csv`;
       setSaveFileName(defaultFileName);
-      // ダイアログを表示 (変更点)
       setIsSaveDialogOpen(true);
     } catch (error) {
       console.error('保存ダイアログエラー:', error);
@@ -347,15 +408,13 @@ export default function InspectionItems() {
   };
 
   const handleSaveConfirm = async () => {
-      await handleSaveToFile();
-      setPendingAction(null);
-      setShowConfirmDialog(false);
-      navigate('/');
-
+    await handleSaveToFile();
+    setPendingAction(null);
+    setShowConfirmDialog(false);
+    navigate('/');
   };
 
 
-  // 確認ダイアログの処理
   const handleConfirmAction = async () => {
     setShowConfirmDialog(false);
     if (pendingAction === 'back') {
@@ -369,7 +428,6 @@ export default function InspectionItems() {
     setPendingAction(null);
   };
 
-  // CSVファイル情報を取得
   const fetchInspectionFiles = async () => {
     try {
       const response = await fetch('/api/inspection-files');
@@ -377,7 +435,6 @@ export default function InspectionItems() {
         throw new Error('ファイル一覧の取得に失敗しました');
       }
       const data = await response.json();
-      console.log('取得したファイル一覧:', data);
       if (data.files && Array.isArray(data.files)) {
         const fileList = data.files.map(file => ({
           name: file.name,
@@ -400,15 +457,6 @@ export default function InspectionItems() {
     }
   };
 
-
-  const handleSaveDialog = () => {
-    // デフォルトのファイル名を設定
-    setSaveFileName(`inspection_items_${new Date().toISOString().split('T')[0]}.csv`);
-    // ダイアログを表示 (変更点)
-    setIsSaveDialogOpen(true);
-  };
-
-  // Added function to parse CSV data asynchronously
   const parseCSVData = async (csvText: string) => {
     return new Promise<{ data: any[]; meta: any; errors: any[] }>((resolve, reject) => {
       Papa.parse(csvText, {
@@ -420,8 +468,7 @@ export default function InspectionItems() {
     });
   };
 
-  const handleCSVUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-      //This part remains largely the same, but simplified for brevity.  Error handling and JSON parsing are maintained.
+  const handleCSVUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -432,11 +479,12 @@ export default function InspectionItems() {
             const jsonData = JSON.parse(text);
             setInspectionItems(Array.isArray(jsonData) ? jsonData : []);
             setInitialItems(Array.isArray(jsonData) ? jsonData : []);
+            setFilteredItems(Array.isArray(jsonData) ? jsonData : []);
           } catch (jsonError) {
             const results = await parseCSVData(text);
             const items = results.data.map((row: any, index: number) => ({
               ...row,
-              id: row.id || index + 1, //Assign ID if not present
+              id: row.id || index + 1,
             }));
             setCsvData(items);
             toast({
@@ -467,8 +515,8 @@ export default function InspectionItems() {
       return;
     }
 
-    // 既存データとマージ (Simplified - assumes no ID conflicts)
     setInspectionItems([...inspectionItems, ...csvData]);
+    setFilteredItems([...inspectionItems, ...csvData]);
     setCsvData([]);
     toast({
       title: "インポート完了",
@@ -476,21 +524,6 @@ export default function InspectionItems() {
     });
   };
 
-  const handleDeleteConfirm = async (id: number) => {
-    const result = await new Promise<boolean>((resolve) => {
-      setDeleteConfirmState({
-        isOpen: true,
-        itemId: id,
-        onConfirm: () => resolve(true),
-        onCancel: () => resolve(false),
-      });
-    });
-
-    if (result) {
-      handleDelete(id);
-    }
-    setDeleteConfirmState({ isOpen: false, itemId: null, onConfirm: null, onCancel: null });
-  };
 
   const handleCancel = () => {
     setShowCancelDialog(true);
@@ -510,7 +543,7 @@ export default function InspectionItems() {
       <Card className="w-full">
         <CardHeader>
           <div className="flex justify-between items-center">
-            <CardTitle className="text-2xl">点検項目編集</CardTitle>
+            <CardTitle className="text-2xl">点検項目管理</CardTitle>
             <div className="flex gap-2">
               <select
                 className="border rounded p-2"
@@ -538,90 +571,175 @@ export default function InspectionItems() {
               <ExitButton
                 hasChanges={hasChanges}
                 onSave={handleSaveAndExit}
-                redirectTo="/settings"
               />
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="border p-4 rounded-md space-y-4">
-            <div className="flex flex-wrap gap-4 items-end">
-              {latestFile && <p>最新のファイル: {latestFile.name} ({latestFile.modified})</p>}
-              <div className="flex-1 min-w-[300px]">
-                <label htmlFor="csv-file" className="mb-2 block">CSVファイルインポート</label>
-                <div className="flex gap-2">
-                  <Input
-                    id="csv-file"
-                    type="file"
-                    accept=".csv"
-                    onChange={handleCSVUpload}
-                  />
-                  <Button
-                    onClick={importCSVData}
-                  >
-                    インポート
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
+        <CardContent>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList>
+              <TabsTrigger value="tables">テーブル管理</TabsTrigger>
+              <TabsTrigger value="items">点検項目</TabsTrigger>
+            </TabsList>
 
-          <div className="border p-4 rounded-md space-y-4">
-            <div className="overflow-x-auto">
-              <Table className="min-w-[1500px] border-collapse"> {/*Reduced width for better responsiveness*/}
-                <TableHeader>
-                  <TableRow className="border-b border-gray-200">
-                    <TableHead className="w-[120px] py-2 border border-gray-200">製造メーカー</TableHead>
-                    <TableHead className="w-[120px] py-2 border border-gray-200">機種</TableHead>
-                    <TableHead className="w-[120px] py-2 border border-gray-200">部位</TableHead>
-                    <TableHead className="w-[20ch] py-2 border border-gray-200">装置</TableHead>
-                    <TableHead className="w-[200px] py-2 border border-gray-200">点検項目</TableHead>
-                    <TableHead className="w-[450px] py-2 border border-gray-200">点検方法</TableHead>
-                    <TableHead className="w-[300px] py-2 border border-gray-200">判定基準</TableHead>
-                    <TableHead className="w-[150px] py-2 border border-gray-200">測定等記録</TableHead>
-                    <TableHead className="w-[150px] py-2 border border-gray-200">図形記録</TableHead>
-                    <TableHead className="w-[80px] sticky right-0 bg-background py-2 border border-gray-200">操作</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {inspectionItems.map((item) => (
-                    <TableRow key={item.id} className="border-b border-gray-200">
-                      <TableCell className="whitespace-normal py-2 break-words border border-gray-200 text-sm">{item.manufacturer || ''}</TableCell>
-                      <TableCell className="whitespace-normal py-2 break-words border border-gray-200 text-sm">{item.model || ''}</TableCell>
-                      <TableCell className="whitespace-normal py-2 break-words border border-gray-200 text-sm">{item.category}</TableCell>
-                      <TableCell className="whitespace-normal py-2 break-words border border-gray-200 text-sm">{item.equipment}</TableCell>
-                      <TableCell className="whitespace-normal py-2 break-words border border-gray-200 text-sm">{item.item}</TableCell>
-                      <TableCell className="whitespace-normal py-2 break-words border border-gray-200 text-sm">{item.method}</TableCell>
-                      <TableCell className="whitespace-normal py-2 break-words border border-gray-200 text-sm">{item.criteria}</TableCell>
-                      <TableCell className="whitespace-normal py-2 break-words border border-gray-200 text-sm">{item.measurementRecord || ''}</TableCell>
-                      <TableCell className="whitespace-normal py-2 break-words border border-gray-200 text-sm">{item.diagramRecord || ''}</TableCell>
-                      <TableCell className="sticky right-0 bg-background py-2 border border-gray-200">
-                        <div className="flex space-x-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openEditDialog(item)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDeleteConfirm(item.id)}
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+            <TabsContent value="tables">
+              <div className="space-y-4">
+                <div className="flex gap-4 items-end">
+                  <div>
+                    <Label>テーブル選択</Label>
+                    <Select value={selectedTable} onValueChange={setSelectedTable}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="manufacturers">製造メーカー</SelectItem>
+                        <SelectItem value="models">機種</SelectItem>
+                        <SelectItem value="machineNumbers">機械番号</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="border p-4 rounded-md">
+                  <h3 className="text-lg font-medium mb-4">新規追加</h3>
+                  <div className="flex gap-4">
+                    <Input
+                      placeholder="名称"
+                      value={newItem.name}
+                      onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+                    />
+                    <Input
+                      placeholder="コード"
+                      value={newItem.code}
+                      onChange={(e) => setNewItem({ ...newItem, code: e.target.value })}
+                    />
+                    <Button onClick={handleAddItem}>追加</Button>
+                  </div>
+                </div>
+
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableCell>名称</TableCell>
+                      <TableCell>コード</TableCell>
+                      <TableCell>操作</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
+                  </TableHeader>
+                  <TableBody>
+                    {tableItems.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>{item.name}</TableCell>
+                        <TableCell>{item.code}</TableCell>
+                        <TableCell>
+                          <Button variant="destructive" onClick={() => handleDeleteItem(item.id!)}>
+                            削除
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="items">
+              <div className="space-y-4">
+                <div className="flex gap-4 items-end">
+                  <div>
+                    <Label>製造メーカー</Label>
+                    <Select value={selectedManufacturer} onValueChange={setSelectedManufacturer}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">すべて</SelectItem>
+                        {manufacturers.map((m) => (
+                          <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>機種</Label>
+                    <Select value={selectedModel} onValueChange={setSelectedModel}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">すべて</SelectItem>
+                        {models.map((m) => (
+                          <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button onClick={handleSearch}>検索</Button>
+                  <div className="flex-1 min-w-[300px]">
+                    <label htmlFor="csv-file" className="mb-2 block">CSVファイルインポート</label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="csv-file"
+                        type="file"
+                        accept=".csv"
+                        onChange={handleCSVUpload}
+                      />
+                      <Button
+                        onClick={importCSVData}
+                      >
+                        インポート
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableCell>部位</TableCell>
+                      <TableCell>装置</TableCell>
+                      <TableCell>確認箇所</TableCell>
+                      <TableCell>判断基準</TableCell>
+                      <TableCell>確認要領</TableCell>
+                      <TableCell>操作</TableCell>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredItems.map((item: any) => (
+                      <TableRow key={item.id}>
+                        <TableCell>{item.category}</TableCell>
+                        <TableCell>{item.equipment}</TableCell>
+                        <TableCell>{item.item}</TableCell>
+                        <TableCell>{item.criteria}</TableCell>
+                        <TableCell>{item.method}</TableCell>
+                        <TableCell>
+                          <div className="flex space-x-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openEditDialog(item)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteConfirm(item.id)}
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
-      {/* 保存ダイアログ */}
+
+
       <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
         <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
           <DialogHeader>
@@ -630,7 +748,7 @@ export default function InspectionItems() {
               保存するファイル名を入力してください
             </DialogDescription>
           </DialogHeader>
-          <div> {/* Removed the form tag */}
+          <div>
             <div className="space-y-4 py-2">
               <div className="space-y-2">
                 <Label htmlFor="fileName">ファイル名</Label>
@@ -658,7 +776,7 @@ export default function InspectionItems() {
                 保存
               </Button>
             </DialogFooter>
-          </div> {/* Removed the form tag */}
+          </div>
         </DialogContent>
       </Dialog>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -717,27 +835,22 @@ export default function InspectionItems() {
           )}
         </DialogContent>
       </Dialog>
-        {/* 変更確認ダイアログ */}
-        <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>変更が保存されていません</AlertDialogTitle>
-              <AlertDialogDescription>
-                変更内容を保存せずに移動しますか？
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={handleCancelAction}>キャンセル</AlertDialogCancel>
-              <AlertDialogAction onClick={handleConfirmAction}>
-                保存せずに移動
-              </AlertDialogAction>
-              <Button onClick={handleSaveAndNavigate}>
-                保存する
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-        {/* 削除確認ダイアログ */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>変更が保存されていません</AlertDialogTitle>
+            <AlertDialogDescription>
+              変更内容を保存せずに移動しますか？
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelAction}>キャンセル</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSaveAndNavigate}>
+              保存して移動
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <AlertDialog open={deleteConfirmState.isOpen} onOpenChange={() => setDeleteConfirmState({...deleteConfirmState, isOpen: false})}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -752,7 +865,6 @@ export default function InspectionItems() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      {/* キャンセル確認ダイアログ */}
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>

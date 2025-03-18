@@ -622,10 +622,10 @@ export default function InspectionItems() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableCell>ID (システム管理用)</TableCell>
-                      <TableCell>名称 (表示名)</TableCell>
-                      <TableCell>コード (システム識別子)</TableCell>
-                      <TableCell>操作 (データ管理)</TableCell>
+                      <TableCell>ID (システムID)</TableCell>
+                      <TableCell>名称 (製造メーカー名)</TableCell>
+                      <TableCell>コード (識別ID)</TableCell>
+                      <TableCell>操作 (データ編集)</TableCell>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

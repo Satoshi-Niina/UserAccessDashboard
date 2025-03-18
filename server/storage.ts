@@ -205,12 +205,22 @@ export class DatabaseStorage implements IStorage {
       const newId = machines.length > 0 ? 
         Math.max(...machines.map(m => parseInt(m.id || '0'))) + 1 : 1;
       
+      // モデル情報を取得
+      const model = await this.getModels().then(models => 
+        models.find(m => m.id === modelId.toString())
+      );
+
+      if (!model) {
+        throw new Error('指定された機種が見つかりません');
+      }
+
       // 新しい機械番号を追加
       const newMachine = { 
         id: newId, 
-        number, 
-        modelId, 
-        manufacturerId 
+        number,
+        model_id: modelId,
+        model_name: model.name,
+        manufacturer_id: manufacturerId
       };
       machines.push(newMachine);
 

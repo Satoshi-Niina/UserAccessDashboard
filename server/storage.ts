@@ -184,7 +184,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async createMachineNumber({ number, modelId, manufacturerId }: { number: string, modelId: number, manufacturerId: number }): Promise<any> {
+  async createMachineNumber({ number, modelId }: { number: string, modelId: number }): Promise<any> {
     try {
       const csvPath = path.join(process.cwd(), 'attached_assets/inspection/table/machine_numbers.csv');
       const dirPath = path.dirname(csvPath);
@@ -201,14 +201,9 @@ export class DatabaseStorage implements IStorage {
         machines = Papa.parse(content, { header: true }).data;
       }
 
-      // 新しいIDを生成
-      const newId = machines.length > 0 ? 
-        Math.max(...machines.map(m => parseInt(m.id || '0'))) + 1 : 1;
-      
       // モデル情報を取得
-      const model = await this.getModels().then(models => 
-        models.find(m => parseInt(m.id) === modelId)
-      );
+      const models = await this.getModels();
+      const model = models.find(m => m.id === modelId.toString());
 
       if (!model) {
         throw new Error('指定された機種が見つかりません');
@@ -216,11 +211,9 @@ export class DatabaseStorage implements IStorage {
 
       // 新しい機械番号を追加
       const newMachine = { 
-        id: newId, 
         number,
         model_id: modelId,
-        model_name: model.name,
-        manufacturer_id: manufacturerId
+        model_name: model.name
       };
       machines.push(newMachine);
 

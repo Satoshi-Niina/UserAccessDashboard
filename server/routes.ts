@@ -168,24 +168,9 @@ export function registerRoutes(app: Express): Server {
 
   app.post('/api/machineNumbers', async (req, res) => {
     try {
-      const { number, modelId, manufacturerId } = req.body;
-      const machineNumber = await storage.createMachineNumber({ number, modelId, manufacturerId });
-      
-      // CSVファイルの更新
-      const csvDir = path.join(process.cwd(), 'attached_assets/inspection/table');
-      if (!fs.existsSync(csvDir)) {
-        fs.mkdirSync(csvDir, { recursive: true });
-      }
-      
-      const csvPath = path.join(csvDir, 'machine_numbers.csv');
-      const model = await storage.getModel(modelId);
-      const manufacturer = await storage.getManufacturer(manufacturerId);
-      
-      const newRow = {
-        number,
-        model_name: model.name,
-        manufacturer_name: manufacturer.name
-      };
+      const { number, modelId } = req.body;
+      const machineNumber = await storage.createMachineNumber({ number, modelId });
+      res.status(201).json(machineNumber);
       
       // 既存のデータを読み込むか、新規作成
       let rows = [];

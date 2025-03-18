@@ -637,7 +637,9 @@ export default function InspectionItems() {
                       tableItems.map((item) => (
                         <TableRow key={item.id}>
                           <TableCell>{item.id}</TableCell>
-                          <TableCell>{item.name}</TableCell>
+                          <TableCell>
+                            {selectedTable === 'machineNumbers' ? item.number : item.name}
+                          </TableCell>
                           <TableCell>{item.code}</TableCell>
                           <TableCell>
                             <Button variant="destructive" onClick={() => handleDeleteItem(item.id!)}>

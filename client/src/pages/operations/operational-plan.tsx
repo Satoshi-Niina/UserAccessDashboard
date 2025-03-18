@@ -102,14 +102,14 @@ export default function OperationalPlan() {
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-4">
         <Button variant="ghost" onClick={() => navigate("/operations/inspection")}>仕業点検</Button>
-        <div className="text-center font-bold">運用計画情報入力</div> {/* Changed title here */}
+        <div className="text-center font-bold">運用計画情報入力</div> 
         <Button variant="ghost" onClick={() => navigate("/operations")}>戻る</Button>
       </div>
 
       <Card className="mt-4">
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="text-lg font-bold mb-4">運用計画情報入力フォーム</div> {/* Changed title here */}
+            <div className="text-lg font-bold mb-4">運用計画情報入力</div> 
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -132,15 +132,15 @@ export default function OperationalPlan() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="vehicleType">車種</Label>
+                <Label htmlFor="vehicle-type">機種</Label>
                 <Select
                   value={formData.vehicleType}
                   onValueChange={(value) => handleInputChange('vehicleType', value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="車種を選択" />
+                    <SelectValue placeholder="機種を選択" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent position="popper" className="z-50">
                     {vehicleModels.map((model) => (
                       <SelectItem key={model} value={model}>
                         {model}
@@ -198,7 +198,7 @@ export default function OperationalPlan() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="operator">運転者</Label> {/* Changed label here */}
+                <Label htmlFor="operator">運転者</Label> 
                 <Input
                   id="operator"
                   value={formData.operator}

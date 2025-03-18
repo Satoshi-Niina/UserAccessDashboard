@@ -26,6 +26,7 @@ interface TableItem {
   number?: string; // Added number property
   manufacturerId?: number;
   modelId?: number;
+  modelName?: string; //Added modelName
   externalId?: string; // Added externalId property
 }
 
@@ -59,9 +60,10 @@ export default function InspectionItems() {
   const [activeTab, setActiveTab] = useState("tables");
   const [selectedTable, setSelectedTable] = useState<TableType>('manufacturers');
   const [tableItems, setTableItems] = useState<TableItem[]>([]);
-  const [newItem, setNewItem] = useState<TableItem>({ name: '', code: '' });
+  const [newItem, setNewItem] = useState<TableItem>({ name: '', code: '', number: '' }); //Added number to newItem
   const [manufacturers, setManufacturers] = useState<TableItem[]>([]);
   const [models, setModels] = useState<TableItem[]>([]);
+  const [selectedModelId, setSelectedModelId] = useState<number | null>(null); // Added selectedModelId
   const [selectedManufacturer, setSelectedManufacturer] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
@@ -184,7 +186,7 @@ export default function InspectionItems() {
 
       if (response.ok) {
         fetchTableData();
-        setNewItem({ name: '', code: '' });
+        setNewItem({ name: '', code: '', number: '' }); // Reset newItem
         toast({
           title: "追加完了",
           description: "項目を追加しました",
@@ -541,28 +543,42 @@ export default function InspectionItems() {
     setShowCancelDialog(false);
   };
 
+  const handleModelSelect = (modelId: number) => {
+    setSelectedModelId(modelId);
+  };
+
   const handleAdd = async () => {
-    if (!newItem.number || !selectedModel?.id) {
+    if (!newItem.number || !selectedModelId) {
       toast({
         title: "エラー",
-        description: "機械番号と機種を入力してください",
+        description: "機械番号と機種を選択してください",
         variant: "destructive"
       });
       return;
     }
 
     try {
-      await addItem({
-        number: newItem.number,
-        modelId: selectedModel.id,
-        manufacturerId: selectedModel.manufacturerId
-      });
-      setNewItem({ name: '', code: '', number: '' });
-      fetchTableData();
-      toast({
-        title: "成功",
-        description: "機械番号を追加しました"
-      });
+      const model = models.find((m) => m.id === selectedModelId);
+      if(model){
+        await addItem({
+          number: newItem.number,
+          modelId: selectedModelId,
+          modelName: model.name, //Add modelName
+          manufacturerId: model.manufacturerId
+        });
+        setNewItem({ name: '', code: '', number: '' });
+        fetchTableData();
+        toast({
+          title: "成功",
+          description: "機械番号を追加しました"
+        });
+      } else {
+          toast({
+            title: "エラー",
+            description: "機種が見つかりません",
+            variant: "destructive"
+          });
+      }
     } catch (error) {
       console.error('Error adding item:', error);
       toast({
@@ -589,6 +605,12 @@ export default function InspectionItems() {
       console.error('Error adding item:', error);
       throw error;
     }
+  };
+
+  const handleEdit = (item: TableItem) => {
+    // Implement edit functionality here.  This is a placeholder.
+    console.log("Edit item:", item);
+    toast({title: "編集機能は未実装です。", description: "", variant: "warning"})
   };
 
 
@@ -676,14 +698,15 @@ export default function InspectionItems() {
                         {selectedTable === 'machineNumbers' && (
                           <>
                             <TableCell>機械番号</TableCell>
-                            <TableCell>機種</TableCell>
+                            <TableCell>機種ID</TableCell>
+                            <TableCell>機種名</TableCell>
                             <TableCell>操作</TableCell>
                           </>
                         )}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {Array.isArray(tableItems) && tableItems.map((item: any) => (
+                      {tableItems.map((item: any) => (
                         <TableRow key={item.id || item.number}>
                           {selectedTable === 'manufacturers' && (
                             <>
@@ -694,7 +717,7 @@ export default function InspectionItems() {
                                   <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
                                     <Edit className="h-4 w-4" />
                                   </Button>
-                                  <Button variant="ghost" size="icon" onClick={() => handleDelete(item)}>
+                                  <Button variant="ghost" size="icon" onClick={() => handleDeleteItem(item.id)}>
                                     <Trash className="h-4 w-4" />
                                   </Button>
                                 </div>
@@ -711,7 +734,7 @@ export default function InspectionItems() {
                                   <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
                                     <Edit className="h-4 w-4" />
                                   </Button>
-                                  <Button variant="ghost" size="icon" onClick={() => handleDelete(item)}>
+                                  <Button variant="ghost" size="icon" onClick={() => handleDeleteItem(item.id)}>
                                     <Trash className="h-4 w-4" />
                                   </Button>
                                 </div>
@@ -721,13 +744,14 @@ export default function InspectionItems() {
                           {selectedTable === 'machineNumbers' && (
                             <>
                               <TableCell>{item.number}</TableCell>
-                              <TableCell>{item.model_name}</TableCell>
+                              <TableCell>{item.modelId}</TableCell>
+                              <TableCell>{item.modelName}</TableCell>
                               <TableCell>
                                 <div className="flex gap-2">
                                   <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
                                     <Edit className="h-4 w-4" />
                                   </Button>
-                                  <Button variant="ghost" size="icon" onClick={() => handleDelete(item)}>
+                                  <Button variant="ghost" size="icon" onClick={() => handleDeleteItem(item.id)}>
                                     <Trash className="h-4 w-4" />
                                   </Button>
                                 </div>
@@ -741,22 +765,37 @@ export default function InspectionItems() {
                 </div>
                 <div className="border p-4 rounded-md">
                   <h3 className="text-lg font-medium mb-4">新規追加</h3>
-                  <div className="flex gap-4">
-                    <Input
-                      placeholder="機種名"
-                      value={newItem.name}
-                      onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-                    />
-                    <Input
-                      placeholder="機種ID"
-                      value={newItem.code}
-                      onChange={(e) => setNewItem({ ...newItem, code: e.target.value })}
-                    />
-                    <Button onClick={handleAddItem}>追加</Button>
+                  <div className="flex gap-4 items-end mb-4">
+                    <div>
+                      <Label>機械番号</Label>
+                      <Input
+                        placeholder="機械番号"
+                        value={newItem.number}
+                        onChange={(e) => setNewItem({ ...newItem, number: e.target.value })}
+                        className="w-[200px]"
+                      />
+                    </div>
+                    <div>
+                      <Label>機種</Label>
+                      <Select value={selectedModelId?.toString() || ''} onValueChange={(value) => handleModelSelect(parseInt(value, 10))}>
+                        <SelectTrigger className="w-[200px]">
+                          <SelectValue placeholder="機種を選択" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {models.map((model) => (
+                            <SelectItem key={model.id} value={model.id.toString()}>
+                              {model.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button onClick={handleAdd}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      追加
+                    </Button>
                   </div>
                 </div>
-
-
               </div>
             </TabsContent>
 
@@ -944,7 +983,7 @@ export default function InspectionItems() {
                 <Input
                   value={editingItem.criteria}
                   onChange={(e) =>
-                    setEditingItem({ ...item, criteria: e.target.value })
+                    setEditingItem({ ...editingItem, criteria: e.target.value })
                   }
                 />
               </div>

@@ -42,14 +42,18 @@ export const modelsRelations = relations(models, ({ one, many }) => ({
 }));
 
 export const machineNumbers = mysqlTable("machine_numbers", {
-  id: int("id").primaryKey().autoincrement(),
+  number: varchar("number", { length: 50 }).primaryKey(),
+  manufacturerId: int("manufacturer_id").notNull().references(() => manufacturers.id),
   modelId: int("model_id").notNull().references(() => models.id),
-  number: varchar("number", { length: 50 }).notNull().unique(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const machineNumbersRelations = relations(machineNumbers, ({ one }) => ({
+  manufacturer: one(manufacturers, {
+    fields: [machineNumbers.manufacturerId],
+    references: [manufacturers.id],
+  }),
   model: one(models, {
     fields: [machineNumbers.modelId],
     references: [models.id],

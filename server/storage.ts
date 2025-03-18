@@ -123,14 +123,14 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  async createMachineNumber({ number, modelId, manufacturerId }: {number: string, modelId: number, manufacturerId: number}): Promise<any> {
+  async createMachineNumber({ number, modelId }: {number: string, modelId: number}): Promise<any> {
     return new Promise((resolve, reject) => {
       db.run(
-        'INSERT INTO machine_numbers (number, model_id, manufacturer_id) VALUES (?, ?, ?)',
-        [number, modelId, manufacturerId],
+        'INSERT INTO machine_numbers (number, model_id) VALUES (?, ?)',
+        [number, modelId],
         function(err) {
           if (err) reject(err);
-          resolve({ number, modelId, manufacturerId });
+          resolve({ number, modelId });
         }
       );
     });
@@ -138,7 +138,15 @@ export class DatabaseStorage implements IStorage {
 
   async getMachineNumbers(): Promise<any[]> {
     return new Promise((resolve, reject) => {
-      db.all('SELECT machine_numbers.*, models.name as model_name, manufacturers.name as manufacturer_name FROM machine_numbers INNER JOIN models ON machine_numbers.model_id = models.id INNER JOIN manufacturers ON machine_numbers.manufacturer_id = manufacturers.id', [], (err, rows) => {
+      db.all(`
+        SELECT 
+          mn.number,
+          m.name as model_name,
+          mf.name as manufacturer_name
+        FROM machine_numbers mn
+        INNER JOIN models m ON mn.model_id = m.id
+        INNER JOIN manufacturers mf ON m.manufacturer_id = mf.id
+      `, [], (err, rows) => {
         if (err) reject(err);
         resolve(rows || []); // Handle potential null result
       });

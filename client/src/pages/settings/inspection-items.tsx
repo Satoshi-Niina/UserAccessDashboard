@@ -595,6 +595,100 @@ export default function InspectionItems() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="manufacturers">製造メーカー</SelectItem>
+                  <SelectItem value="models">機種</SelectItem>
+                  <SelectItem value="machineNumbers">機械番号</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          {/* テーブル表示 */}
+          <div className="mt-4">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  {selectedTable === 'manufacturers' && (
+                    <>
+                      <TableCell>メーカー名</TableCell>
+                      <TableCell>外部ID</TableCell>
+                      <TableCell>操作</TableCell>
+                    </>
+                  )}
+                  {selectedTable === 'models' && (
+                    <>
+                      <TableCell>機種名</TableCell>
+                      <TableCell>外部ID</TableCell>
+                      <TableCell>メーカー</TableCell>
+                      <TableCell>操作</TableCell>
+                    </>
+                  )}
+                  {selectedTable === 'machineNumbers' && (
+                    <>
+                      <TableCell>機械番号</TableCell>
+                      <TableCell>機種</TableCell>
+                      <TableCell>メーカー</TableCell>
+                      <TableCell>操作</TableCell>
+                    </>
+                  )}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {Array.isArray(tableItems) && tableItems.map((item: any) => (
+                  <TableRow key={item.id || item.number}>
+                    {selectedTable === 'manufacturers' && (
+                      <>
+                        <TableCell>{item.name}</TableCell>
+                        <TableCell>{item.externalId}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDelete(item)}>
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </>
+                    )}
+                    {selectedTable === 'models' && (
+                      <>
+                        <TableCell>{item.name}</TableCell>
+                        <TableCell>{item.externalId}</TableCell>
+                        <TableCell>{item.manufacturer_name}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDelete(item)}>
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </>
+                    )}
+                    {selectedTable === 'machineNumbers' && (
+                      <>
+                        <TableCell>{item.number}</TableCell>
+                        <TableCell>{item.model_name}</TableCell>
+                        <TableCell>{item.manufacturer_name}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDelete(item)}>
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </>
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
                         <SelectItem value="models">機種</SelectItem>
                         <SelectItem value="machineNumbers">機械番号</SelectItem>
                       </SelectContent>

@@ -981,7 +981,8 @@ export default function InspectionItems() {
                   value={saveFileName}
                   onChange={(e) => setSaveFileName(e.target.value)}
                   placeholder="保存するファイル名を入力"
-                  onKeyDown={(e) =>if (e.key === 'Enter') {
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
                       e.preventDefault();
                     }
                   }}

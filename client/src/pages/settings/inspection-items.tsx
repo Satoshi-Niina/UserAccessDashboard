@@ -57,7 +57,7 @@ const ExitButton = ({ hasChanges, onSave }: { hasChanges: boolean; onSave: () =>
 
 export default function InspectionItems() {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("tables");
+  const [activeTab, setActiveTab] = useState<"tables" | "items">("items"); // Initialize to "items"
   const [selectedTable, setSelectedTable] = useState<TableType>('manufacturers');
   const [tableItems, setTableItems] = useState<TableItem[]>([]);
   const [newItem, setNewItem] = useState<TableItem>({ name: '', code: '', number: '' }); //Added number to newItem
@@ -656,9 +656,9 @@ export default function InspectionItems() {
     <DndProvider backend={HTML5Backend}>
       <Card className="w-full">
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle className="text-2xl">点検項目管理</CardTitle>
-            <div className="flex gap-2">
+          <CardTitle className="text-2xl">点検項目管理</CardTitle>
+          <div className="flex gap-2">
+            {activeTab === "tables" ? null : (
               <select
                 className="border rounded p-2"
                 value={selectedFile}
@@ -679,11 +679,11 @@ export default function InspectionItems() {
                   <option value="" disabled>利用可能なファイルがありません</option>
                 )}
               </select>
-              <Button variant="outline" onClick={handleCancel}>
-                キャンセル
-              </Button>
-              <Button onClick={() => handleSaveAndExit(selectedTable)}>保存して終了</Button>
-            </div>
+            )}
+            <Button variant="outline" onClick={handleCancel}>
+              キャンセル
+            </Button>
+            <Button onClick={() => handleSaveAndExit(selectedTable)}>保存して終了</Button>
           </div>
         </CardHeader>
         <CardContent>

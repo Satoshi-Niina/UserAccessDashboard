@@ -7,7 +7,6 @@ import { randomBytes, scrypt } from "crypto";
 import { promisify } from "util";
 
 const scryptAsync = promisify(scrypt);
-import { eq } from "drizzle-orm";
 
 
 export interface IStorage {
@@ -18,6 +17,9 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   deleteUser(id: number): Promise<void>; // Added deleteUser method
   sessionStore: session.Store;
+  getModels():Promise<any[]>; //Added getModels method
+  getManufacturers():Promise<any[]>; //Added getManufacturers method
+
 }
 
 export class DatabaseStorage implements IStorage {
@@ -59,7 +61,7 @@ export class DatabaseStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     return new Promise((resolve, reject) => {
       db.run('INSERT INTO users (username, password, is_admin) VALUES (?, ?, ?)',
-        [insertUser.username, insertUser.password, insertUser.is_admin ? 1 : 0], // Corrected this line
+        [insertUser.username, insertUser.password, insertUser.is_admin ? 1 : 0], 
         function(err) {
           if (err) reject(err);
           resolve({ ...insertUser, id: this.lastID });
@@ -84,6 +86,24 @@ export class DatabaseStorage implements IStorage {
       db.run('DELETE FROM users WHERE id = ?', [id], (err) => {
         if (err) reject(err);
         resolve();
+      });
+    });
+  }
+
+  async getModels(): Promise<any[]> {
+    return new Promise((resolve, reject) => {
+      db.all('SELECT * FROM models', [], (err, rows) => {
+        if (err) reject(err);
+        resolve(rows || []); // Handle potential null result
+      });
+    });
+  }
+
+  async getManufacturers(): Promise<any[]> {
+    return new Promise((resolve, reject) => {
+      db.all('SELECT * FROM manufacturers', [], (err, rows) => {
+        if (err) reject(err);
+        resolve(rows || []); // Handle potential null result
       });
     });
   }

@@ -668,7 +668,7 @@ export default function InspectionItems() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="">すべて</SelectItem>
-                        {models.map((m) => (
+                        {models?.map((m) => (
                           <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>
                         ))}
                       </SelectContent>

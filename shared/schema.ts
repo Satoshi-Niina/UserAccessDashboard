@@ -1,4 +1,3 @@
-
 import { mysqlTable, varchar, int, boolean, decimal, timestamp, text } from "drizzle-orm/mysql-core";
 import { relations } from 'drizzle-orm';
 import { createInsertSchema } from "drizzle-zod";
@@ -14,7 +13,7 @@ export const users = mysqlTable("users", {
 export const manufacturers = mysqlTable("manufacturers", {
   id: int("id").primaryKey().autoincrement(),
   name: varchar("name", { length: 100 }).notNull(),
-  code: varchar("code", { length: 20 }).notNull().unique(),
+  externalId: varchar("externalId", { length: 20 }).notNull().unique(), // Changed column name
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -27,7 +26,7 @@ export const models = mysqlTable("models", {
   id: int("id").primaryKey().autoincrement(),
   manufacturerId: int("manufacturer_id").notNull().references(() => manufacturers.id),
   name: varchar("name", { length: 100 }).notNull(),
-  code: varchar("code", { length: 20 }).notNull().unique(),
+  externalId: varchar("externalId", { length: 20 }).notNull().unique(), // Changed column name
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -43,8 +42,8 @@ export const modelsRelations = relations(models, ({ one, many }) => ({
 
 export const machineNumbers = mysqlTable("machine_numbers", {
   number: varchar("number", { length: 50 }).primaryKey(),
-  manufacturerId: int("manufacturer_id").notNull().references(() => manufacturers.id),
   modelId: int("model_id").notNull().references(() => models.id),
+  manufacturerId: int("manufacturer_id").notNull().references(() => manufacturers.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -116,7 +115,7 @@ export const visualInspectionRecordsRelations = relations(visualInspectionRecord
 
 export const inspectionChecklists = mysqlTable("inspection_checklists", {
   id: int("id").primaryKey().autoincrement(),
-  machineNumberId: int("machine_number_id").notNull().references(() => machineNumbers.id),
+  machineNumberId: int("machine_number_id").notNull().references(() => machineNumbers.number), // Changed to reference number
   inspectionDate: timestamp("inspection_date").notNull(),
   inspector: varchar("inspector", { length: 100 }).notNull(),
   supervisor: varchar("supervisor", { length: 100 }).notNull(),

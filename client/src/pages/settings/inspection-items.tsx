@@ -628,7 +628,7 @@ export default function InspectionItems() {
                         {selectedTable === 'models' && '機種'}
                         {selectedTable === 'machineNumbers' && '機械番号'}
                       </TableCell>
-                      <TableCell>コード (識別ID)</TableCell>
+                      <TableCell>外部ID</TableCell>
                       <TableCell>操作 (データ編集)</TableCell>
                     </TableRow>
                   </TableHeader>

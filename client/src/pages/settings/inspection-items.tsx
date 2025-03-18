@@ -64,6 +64,7 @@ export default function InspectionItems() {
   const [manufacturers, setManufacturers] = useState<TableItem[]>([]);
   const [models, setModels] = useState<TableItem[]>([]);
   const [selectedModelId, setSelectedModelId] = useState<number | null>(null); // Added selectedModelId
+  const [selectedManufacturerId, setSelectedManufacturerId] = useState<number | null>(null); // Added selectedManufacturerId
   const [selectedManufacturer, setSelectedManufacturer] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
@@ -548,7 +549,7 @@ export default function InspectionItems() {
   };
 
   const handleAdd = async () => {
-    if (!newItem.number || !selectedModelId) {
+    if (selectedTable === 'machineNumbers' && (!newItem.number || !selectedModelId)) {
       toast({
         title: "エラー",
         description: "機械番号と機種を選択してください",
@@ -559,7 +560,7 @@ export default function InspectionItems() {
 
     try {
       const model = models.find((m) => m.id === selectedModelId);
-      if(model){
+      if(selectedTable === 'machineNumbers' && model){
         await addItem({
           number: newItem.number,
           modelId: selectedModelId,
@@ -572,7 +573,16 @@ export default function InspectionItems() {
           title: "成功",
           description: "機械番号を追加しました"
         });
-      } else {
+      } else if (selectedTable !== 'machineNumbers'){
+        await addItem(newItem);
+        setNewItem({ name: '', code: '', number: '' });
+        fetchTableData();
+        toast({
+          title: "成功",
+          description: "項目を追加しました"
+        });
+      }
+      else {
           toast({
             title: "エラー",
             description: "機種が見つかりません",
@@ -591,7 +601,7 @@ export default function InspectionItems() {
 
   const addItem = async (item: TableItem) => {
     try {
-      const response = await fetch('/api/machineNumbers', {
+      const response = await fetch(`/api/${selectedTable}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -763,38 +773,99 @@ export default function InspectionItems() {
                     </TableBody>
                   </Table>
                 </div>
-                <div className="border p-4 rounded-md">
-                  <h3 className="text-lg font-medium mb-4">新規追加</h3>
-                  <div className="flex gap-4 items-end mb-4">
-                    <div>
-                      <Label>機械番号</Label>
-                      <Input
-                        placeholder="機械番号"
-                        value={newItem.number}
-                        onChange={(e) => setNewItem({ ...newItem, number: e.target.value })}
-                        className="w-[200px]"
-                      />
+                <div>
+                  {selectedTable === 'manufacturers' && (
+                  <div className="border p-4 rounded-md">
+                    <h3 className="text-lg font-medium mb-4">新規追加</h3>
+                    <div className="flex gap-4 items-end mb-4">
+                      <div>
+                        <Label>製造メーカー名</Label>
+                        <Input
+                          placeholder="製造メーカー名"
+                          value={newItem.name}
+                          onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+                          className="w-[200px]"
+                        />
+                      </div>
+                      <Button onClick={handleAdd}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        追加
+                      </Button>
                     </div>
-                    <div>
-                      <Label>機種</Label>
-                      <Select value={selectedModelId?.toString() || ''} onValueChange={(value) => handleModelSelect(parseInt(value, 10))}>
-                        <SelectTrigger className="w-[200px]">
-                          <SelectValue placeholder="機種を選択" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {models.map((model) => (
-                            <SelectItem key={model.id} value={model.id.toString()}>
-                              {model.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <Button onClick={handleAdd}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      追加
-                    </Button>
                   </div>
+                )}
+
+                {selectedTable === 'models' && (
+                  <div className="border p-4 rounded-md">
+                    <h3 className="text-lg font-medium mb-4">新規追加</h3>
+                    <div className="flex gap-4 items-end mb-4">
+                      <div>
+                        <Label>機種名</Label>
+                        <Input
+                          placeholder="機種名"
+                          value={newItem.name}
+                          onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+                          className="w-[200px]"
+                        />
+                      </div>
+                      <div>
+                        <Label>製造メーカー</Label>
+                        <Select value={selectedManufacturerId?.toString() || ''} onValueChange={(value) => setSelectedManufacturerId(parseInt(value))}>
+                          <SelectTrigger className="w-[200px]">
+                            <SelectValue placeholder="製造メーカーを選択" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {manufacturers.map((manufacturer) => (
+                              <SelectItem key={manufacturer.id} value={manufacturer.id?.toString()}>
+                                {manufacturer.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Button onClick={handleAdd}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        追加
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {selectedTable === 'machineNumbers' && (
+                  <div className="border p-4 rounded-md">
+                    <h3 className="text-lg font-medium mb-4">新規追加</h3>
+                    <div className="flex gap-4 items-end mb-4">
+                      <div>
+                        <Label>機械番号</Label>
+                        <Input
+                          placeholder="機械番号"
+                          value={newItem.number || ''}
+                          onChange={(e) => setNewItem({ ...newItem, number: e.target.value })}
+                          className="w-[200px]"
+                        />
+                      </div>
+                      <div>
+                        <Label>機種</Label>
+                        <Select value={selectedModelId?.toString() || ''} onValueChange={(value) => handleModelSelect(parseInt(value, 10))}>
+                          <SelectTrigger className="w-[200px]">
+                            <SelectValue placeholder="機種を選択" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {models.map((model) => (
+                              <SelectItem key={model.id} value={model.id?.toString()}>
+                                {model.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Button onClick={handleAdd}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        追加
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 </div>
               </div>
             </TabsContent>

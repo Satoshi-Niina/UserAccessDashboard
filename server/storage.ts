@@ -107,6 +107,15 @@ export class DatabaseStorage implements IStorage {
       });
     });
   }
+
+  async getMachineNumbers(): Promise<any[]> {
+    return new Promise((resolve, reject) => {
+      db.all('SELECT machine_numbers.*, models.name as model_name FROM machine_numbers LEFT JOIN models ON machine_numbers.model_id = models.id', [], (err, rows) => {
+        if (err) reject(err);
+        resolve(rows || []); // Handle potential null result
+      });
+    });
+  }
 }
 
 // 初期管理者ユーザーのセットアップ

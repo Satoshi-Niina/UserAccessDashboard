@@ -653,7 +653,7 @@ export default function InspectionItems() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">すべて</SelectItem>
+                        <SelectItem value="all">すべて</SelectItem>
                         {manufacturers.map((m) => (
                           <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>
                         ))}
@@ -667,7 +667,7 @@ export default function InspectionItems() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">すべて</SelectItem>
+                        <SelectItem value="all">すべて</SelectItem>
                         {models?.map((m) => (
                           <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>
                         ))}

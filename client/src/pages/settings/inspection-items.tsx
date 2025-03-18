@@ -179,15 +179,35 @@ export default function InspectionItems() {
 
   const handleAddItem = async () => {
     try {
+      let postData = { ...newItem };
+      
+      if (selectedTable === 'models') {
+        const selectedManufacturer = manufacturers.find(m => m.name === newItem.name);
+        if (selectedManufacturer) {
+          postData = {
+            ...postData,
+            manufacturerId: selectedManufacturer.id
+          };
+        }
+      } else if (selectedTable === 'machineNumbers') {
+        const selectedModel = models.find(m => m.name === newItem.modelName);
+        if (selectedModel) {
+          postData = {
+            ...postData,
+            modelId: selectedModel.id
+          };
+        }
+      }
+
       const response = await fetch(`/api/${selectedTable}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newItem),
+        body: JSON.stringify(postData),
       });
 
       if (response.ok) {
         fetchTableData();
-        setNewItem({ name: '', code: '', number: '' }); // Reset newItem
+        setNewItem({ name: '', code: '', number: '', modelName: '' }); // Reset newItem
         toast({
           title: "追加完了",
           description: "項目を追加しました",
@@ -708,6 +728,7 @@ export default function InspectionItems() {
                         {selectedTable === 'machineNumbers' && (
                           <>
                             <TableCell>機械番号</TableCell>
+                            <TableCell>機種ID</TableCell>
                             <TableCell>操作</TableCell>
                           </>
                         )}
@@ -752,6 +773,7 @@ export default function InspectionItems() {
                           {selectedTable === 'machineNumbers' && (
                             <>
                               <TableCell>{item.number}</TableCell>
+                              <TableCell>{item.modelId}</TableCell>
                               <TableCell>
                                 <div className="flex gap-2">
                                   <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>

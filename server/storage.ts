@@ -5,6 +5,9 @@ import SQLiteStore from "connect-sqlite3";
 const SQLiteSessionStore = SQLiteStore(session);
 import { randomBytes, scrypt } from "crypto";
 import { promisify } from "util";
+import * as fs from 'fs';
+import * as path from 'path';
+import Papa from 'papaparse';
 
 const scryptAsync = promisify(scrypt);
 
@@ -123,17 +126,82 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  async createMachineNumber({ number, modelId }: {number: string, modelId: number}): Promise<any> {
-    return new Promise((resolve, reject) => {
-      db.run(
-        'INSERT INTO machine_numbers (number, model_id) VALUES (?, ?)',
-        [number, modelId],
-        function(err) {
-          if (err) reject(err);
-          resolve({ number, modelId });
-        }
-      );
-    });
+  async createManufacturer({ name, code }: { name: string, code?: string }): Promise<any> {
+    try {
+      const csvPath = path.join(process.cwd(), 'attached_assets/inspection/table/manufacturers.csv');
+      let manufacturers = [];
+      
+      if (fs.existsSync(csvPath)) {
+        const content = fs.readFileSync(csvPath, 'utf-8');
+        manufacturers = Papa.parse(content, { header: true }).data;
+      }
+
+      const newId = manufacturers.length > 0 ? Math.max(...manufacturers.map(m => parseInt(m.id))) + 1 : 1;
+      const newManufacturer = { id: newId, name, code };
+      manufacturers.push(newManufacturer);
+
+      if (!fs.existsSync(path.dirname(csvPath))) {
+        fs.mkdirSync(path.dirname(csvPath), { recursive: true });
+      }
+      fs.writeFileSync(csvPath, Papa.unparse(manufacturers));
+
+      return newManufacturer;
+    } catch (error) {
+      console.error('Error creating manufacturer:', error);
+      throw error;
+    }
+  }
+
+  async createModel({ name, code, manufacturerId }: { name: string, code?: string, manufacturerId: number }): Promise<any> {
+    try {
+      const csvPath = path.join(process.cwd(), 'attached_assets/inspection/table/models.csv');
+      let models = [];
+      
+      if (fs.existsSync(csvPath)) {
+        const content = fs.readFileSync(csvPath, 'utf-8');
+        models = Papa.parse(content, { header: true }).data;
+      }
+
+      const newId = models.length > 0 ? Math.max(...models.map(m => parseInt(m.id))) + 1 : 1;
+      const newModel = { id: newId, name, code, manufacturerId };
+      models.push(newModel);
+
+      if (!fs.existsSync(path.dirname(csvPath))) {
+        fs.mkdirSync(path.dirname(csvPath), { recursive: true });
+      }
+      fs.writeFileSync(csvPath, Papa.unparse(models));
+
+      return newModel;
+    } catch (error) {
+      console.error('Error creating model:', error);
+      throw error;
+    }
+  }
+
+  async createMachineNumber({ number, modelId, manufacturerId }: { number: string, modelId: number, manufacturerId: number }): Promise<any> {
+    try {
+      const csvPath = path.join(process.cwd(), 'attached_assets/inspection/table/machine_numbers.csv');
+      let machines = [];
+      
+      if (fs.existsSync(csvPath)) {
+        const content = fs.readFileSync(csvPath, 'utf-8');
+        machines = Papa.parse(content, { header: true }).data;
+      }
+
+      const newId = machines.length > 0 ? Math.max(...machines.map(m => parseInt(m.id))) + 1 : 1;
+      const newMachine = { id: newId, number, modelId, manufacturerId };
+      machines.push(newMachine);
+
+      if (!fs.existsSync(path.dirname(csvPath))) {
+        fs.mkdirSync(path.dirname(csvPath), { recursive: true });
+      }
+      fs.writeFileSync(csvPath, Papa.unparse(machines));
+
+      return newMachine;
+    } catch (error) {
+      console.error('Error creating machine number:', error);
+      throw error;
+    }
   }
 
   async getMachineNumbers(): Promise<any[]> {

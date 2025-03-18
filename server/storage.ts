@@ -187,26 +187,41 @@ export class DatabaseStorage implements IStorage {
   async createMachineNumber({ number, modelId, manufacturerId }: { number: string, modelId: number, manufacturerId: number }): Promise<any> {
     try {
       const csvPath = path.join(process.cwd(), 'attached_assets/inspection/table/machine_numbers.csv');
+      const dirPath = path.dirname(csvPath);
       let machines = [];
       
+      // ディレクトリが存在しない場合は作成
+      if (!fs.existsSync(dirPath)) {
+        fs.mkdirSync(dirPath, { recursive: true });
+      }
+
+      // ファイルが存在する場合は既存データを読み込む
       if (fs.existsSync(csvPath)) {
         const content = fs.readFileSync(csvPath, 'utf-8');
         machines = Papa.parse(content, { header: true }).data;
       }
 
-      const newId = machines.length > 0 ? Math.max(...machines.map(m => parseInt(m.id))) + 1 : 1;
-      const newMachine = { id: newId, number, modelId, manufacturerId };
+      // 新しいIDを生成
+      const newId = machines.length > 0 ? 
+        Math.max(...machines.map(m => parseInt(m.id || '0'))) + 1 : 1;
+      
+      // 新しい機械番号を追加
+      const newMachine = { 
+        id: newId, 
+        number, 
+        modelId, 
+        manufacturerId 
+      };
       machines.push(newMachine);
 
-      if (!fs.existsSync(path.dirname(csvPath))) {
-        fs.mkdirSync(path.dirname(csvPath), { recursive: true });
-      }
+      // CSVファイルに保存
       fs.writeFileSync(csvPath, Papa.unparse(machines));
+      console.log('Machine number saved:', newMachine);
 
       return newMachine;
     } catch (error) {
       console.error('Error creating machine number:', error);
-      throw error;
+      throw error;ror;
     }
   }
 

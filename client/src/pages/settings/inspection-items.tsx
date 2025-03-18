@@ -616,7 +616,7 @@ export default function InspectionItems() {
                         {selectedTable === 'models' && (
                           <>
                             <TableCell>機種名</TableCell>
-                            <TableCell>外部ID</TableCell>
+                            <TableCell>製造メーカーID</TableCell>
                             <TableCell>メーカー</TableCell>
                             <TableCell>操作</TableCell>
                           </>
@@ -624,6 +624,7 @@ export default function InspectionItems() {
                         {selectedTable === 'machineNumbers' && (
                           <>
                             <TableCell>機械番号</TableCell>
+                            <TableCell>機種ID</TableCell>
                             <TableCell>機種</TableCell>
                             <TableCell>メーカー</TableCell>
                             <TableCell>操作</TableCell>

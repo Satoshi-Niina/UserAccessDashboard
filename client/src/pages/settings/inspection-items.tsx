@@ -659,8 +659,8 @@ export default function InspectionItems() {
                       <TableRow>
                         {selectedTable === 'manufacturers' && (
                           <>
-                            <TableCell>メーカー名</TableCell>
-                            <TableCell>外部ID</TableCell>
+                            <TableCell>ID</TableCell>
+                            <TableCell>製造メーカー</TableCell>
                             <TableCell>操作</TableCell>
                           </>
                         )}
@@ -685,8 +685,8 @@ export default function InspectionItems() {
                         <TableRow key={item.id || item.number}>
                           {selectedTable === 'manufacturers' && (
                             <>
+                              <TableCell>{item.id}</TableCell>
                               <TableCell>{item.name}</TableCell>
-                              <TableCell>{item.externalId}</TableCell>
                               <TableCell>
                                 <div className="flex gap-2">
                                   <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
@@ -740,72 +740,19 @@ export default function InspectionItems() {
                   <h3 className="text-lg font-medium mb-4">新規追加</h3>
                   <div className="flex gap-4">
                     <Input
-                      placeholder="機械番号"
-                      value={newItem.number}
-                      onChange={(e) => setNewItem({ ...newItem, number: e.target.value })}
+                      placeholder="製造メーカー名"
+                      value={newItem.name}
+                      onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
                     />
-                    <Select value={selectedModel} onValueChange={(value) => {
-                      setSelectedModel(value);
-                      const model = models.find(m => m.name === value);
-                      if (model) {
-                        setNewItem({ 
-                          ...newItem, 
-                          modelId: model.id,
-                          manufacturerId: model.manufacturerId 
-                        });
-                      }
-                    }}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="機種を選択" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {models.map((model) => (
-                          <SelectItem key={model.id} value={model.name}>
-                            {model.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button onClick={handleAdd}>追加</Button>
+                    <Input
+                      placeholder="ID"
+                      value={newItem.code}
+                      onChange={(e) => setNewItem({ ...newItem, code: e.target.value })}
+                    />
                   </div>
                 </div>
 
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableCell>外部ID</TableCell>
-                      <TableCell>
-                        {selectedTable === 'manufacturers' && '製造メーカー'}
-                        {selectedTable === 'models' && '機種'}
-                        {selectedTable === 'machineNumbers' && '機械番号'}
-                      </TableCell>
-                      <TableCell>操作 (データ編集)</TableCell>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {tableItems && tableItems.length > 0 ? (
-                      tableItems.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell>{item.code}</TableCell>
-                          <TableCell>
-                            {selectedTable === 'machineNumbers' ? item.number : item.name}
-                          </TableCell>
-                          <TableCell>
-                            <Button variant="destructive" onClick={() => handleDeleteItem(item.id!)}>
-                              削除
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={3} className="text-center">
-                          データがありません
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+
               </div>
             </TabsContent>
 

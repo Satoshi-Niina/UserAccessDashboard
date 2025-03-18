@@ -26,6 +26,7 @@ interface TableItem {
   number?: string; // Added number property
   manufacturerId?: number;
   modelId?: number;
+  externalId?: string; // Added externalId property
 }
 
 interface InspectionItem {
@@ -666,8 +667,9 @@ export default function InspectionItems() {
                         )}
                         {selectedTable === 'models' && (
                           <>
+                            <TableCell>機種ID</TableCell>
                             <TableCell>機種名</TableCell>
-                            <TableCell>メーカー</TableCell>
+                            <TableCell>外部ID</TableCell>
                             <TableCell>操作</TableCell>
                           </>
                         )}
@@ -701,8 +703,9 @@ export default function InspectionItems() {
                           )}
                           {selectedTable === 'models' && (
                             <>
+                              <TableCell>{item.code}</TableCell>
                               <TableCell>{item.name}</TableCell>
-                              <TableCell>{item.manufacturer_name}</TableCell>
+                              <TableCell>{item.externalId}</TableCell>
                               <TableCell>
                                 <div className="flex gap-2">
                                   <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
@@ -740,15 +743,37 @@ export default function InspectionItems() {
                   <h3 className="text-lg font-medium mb-4">新規追加</h3>
                   <div className="flex gap-4">
                     <Input
-                      placeholder="製造メーカー名"
+                      placeholder="機種名"
                       value={newItem.name}
                       onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
                     />
                     <Input
-                      placeholder="ID"
+                      placeholder="機種ID"
                       value={newItem.code}
                       onChange={(e) => setNewItem({ ...newItem, code: e.target.value })}
                     />
+                    <Select 
+                      value={selectedManufacturer} 
+                      onValueChange={(value) => {
+                        setSelectedManufacturer(value);
+                        const manufacturer = manufacturers.find(m => m.name === value);
+                        if (manufacturer) {
+                          setNewItem({ ...newItem, externalId: manufacturer.id.toString() });
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="製造メーカーを選択" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {manufacturers.map((manufacturer) => (
+                          <SelectItem key={manufacturer.id} value={manufacturer.name}>
+                            {manufacturer.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button onClick={handleAddItem}>追加</Button>
                   </div>
                 </div>
 

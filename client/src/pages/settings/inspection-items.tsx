@@ -623,7 +623,11 @@ export default function InspectionItems() {
                   <TableHeader>
                     <TableRow>
                       <TableCell>ID (システムID)</TableCell>
-                      <TableCell>名称 (製造メーカー名)</TableCell>
+                      <TableCell>
+                        {selectedTable === 'manufacturers' && '名称 (製造メーカー名)'}
+                        {selectedTable === 'models' && '名称 (機種名)'}
+                        {selectedTable === 'machineNumbers' && '名称 (機械番号)'}
+                      </TableCell>
                       <TableCell>コード (識別ID)</TableCell>
                       <TableCell>操作 (データ編集)</TableCell>
                     </TableRow>

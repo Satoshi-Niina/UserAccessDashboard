@@ -708,8 +708,6 @@ export default function InspectionItems() {
                         {selectedTable === 'machineNumbers' && (
                           <>
                             <TableCell>機械番号</TableCell>
-                            <TableCell>機種ID</TableCell>
-                            <TableCell>機種名</TableCell>
                             <TableCell>操作</TableCell>
                           </>
                         )}
@@ -754,8 +752,6 @@ export default function InspectionItems() {
                           {selectedTable === 'machineNumbers' && (
                             <>
                               <TableCell>{item.number}</TableCell>
-                              <TableCell>{item.modelId}</TableCell>
-                              <TableCell>{item.modelName}</TableCell>
                               <TableCell>
                                 <div className="flex gap-2">
                                   <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
@@ -985,8 +981,7 @@ export default function InspectionItems() {
                   value={saveFileName}
                   onChange={(e) => setSaveFileName(e.target.value)}
                   placeholder="保存するファイル名を入力"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                  onKeyDown={(e) =>if (e.key === 'Enter') {
                       e.preventDefault();
                     }
                   }}

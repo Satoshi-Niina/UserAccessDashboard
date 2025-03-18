@@ -27,6 +27,14 @@ export const models = mysqlTable("models", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const machineNumbers = mysqlTable("machine_numbers", {
+  id: int("id").primaryKey().autoincrement(),
+  modelId: int("model_id").notNull(),
+  number: varchar("number", { length: 50 }).notNull().unique(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const inspectionItems = mysqlTable("inspection_items", {
   id: int("id").primaryKey().autoincrement(),
   modelId: int("model_id").notNull(),
@@ -60,8 +68,7 @@ export const visualInspectionRecords = mysqlTable("visual_inspection_records", {
 
 export const inspectionChecklists = mysqlTable("inspection_checklists", {
   id: int("id").primaryKey().autoincrement(),
-  vehicleNumber: varchar("vehicle_number", { length: 50 }).notNull(),
-  modelId: int("model_id").notNull(),
+  machineNumberId: int("machine_number_id").notNull(),
   inspectionDate: timestamp("inspection_date").notNull(),
   inspector: varchar("inspector", { length: 100 }).notNull(),
   supervisor: varchar("supervisor", { length: 100 }).notNull(),

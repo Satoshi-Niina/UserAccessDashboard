@@ -1,4 +1,3 @@
-
 import * as fs from 'fs';
 import * as path from 'path';
 import Papa from 'papaparse';
@@ -6,96 +5,76 @@ import { db } from '../server/db';
 
 async function migrateInspectionData() {
   try {
-    const assetsDir = path.join(process.cwd(), 'attached_assets/inspection/table');
+    const sourceDir = path.join(process.cwd(), 'attached_assets/inspection');
+    const targetDir = path.join(process.cwd(), 'attached_assets/inspection/table');
 
     // テーブルデータ保存用のディレクトリを作成
-    if (!fs.existsSync(assetsDir)) {
-      fs.mkdirSync(assetsDir, { recursive: true });
-      console.log('テーブルデータ保存用のディレクトリを作成しました:', assetsDir);
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+      console.log('テーブルデータ保存用のディレクトリを作成しました:', targetDir);
     }
 
-    // 各テーブルのCSVファイルパスを設定
-    const tableFiles = {
-      manufacturers: path.join(assetsDir, 'manufacturers_master.csv'),
-      models: path.join(assetsDir, 'models_master.csv'),
-      inspectionItems: path.join(assetsDir, 'inspection_items_master.csv'),
-      measurementRecords: path.join(assetsDir, 'measurement_records.csv'),
-      visualInspectionRecords: path.join(assetsDir, 'visual_inspection_records.csv')
-    };
+    // 仕業点検マスタファイルを読み込み
+    const sourceFile = path.join(sourceDir, '仕業点検マスタ.csv');
+    if (!fs.existsSync(sourceFile)) {
+      throw new Error('仕業点検マスタファイルが見つかりません');
+    }
 
-    // Manufacturers migration
-    const manufacturersFile = path.join(assetsDir, 'manufacturers_master.csv');
-    if (fs.existsSync(manufacturersFile)) {
-      const manufacturersData = fs.readFileSync(manufacturersFile, 'utf8');
-      const manufacturers = Papa.parse(manufacturersData, { header: true }).data;
+    const csvData = fs.readFileSync(sourceFile, 'utf8');
+    const results = Papa.parse(csvData, { header: true });
 
-      for (const manufacturer of manufacturers) {
-        await db.run(`
-          INSERT OR IGNORE INTO manufacturers (name, code)
-          VALUES (?, ?)
-        `, [manufacturer.name, manufacturer.code]);
+    // 各テーブル用のデータを格納する配列
+    const manufacturers = new Set();
+    const models = new Set();
+    const inspectionItems = [];
+
+    results.data.forEach((row: any) => {
+      if (row['製造メーカー']) {
+        manufacturers.add(row['製造メーカー']);
       }
-    }
-
-    // Models migration
-    const modelsFile = path.join(assetsDir, 'models_master.csv');
-    if (fs.existsSync(modelsFile)) {
-      const modelsData = fs.readFileSync(modelsFile, 'utf8');
-      const models = Papa.parse(modelsData, { header: true }).data;
-
-      for (const model of models) {
-        const manufacturer = await db.get(`
-          SELECT id FROM manufacturers WHERE code = ?
-        `, [model.manufacturer_code]);
-
-        if (manufacturer) {
-          await db.run(`
-            INSERT OR IGNORE INTO models (manufacturer_id, name, code)
-            VALUES (?, ?, ?)
-          `, [manufacturer.id, model.name, model.code]);
-        }
+      if (row['機種']) {
+        models.add(row['機種']);
       }
-    }
 
-    // Inspection items migration
-    const itemsFile = path.join(assetsDir, 'inspection_items_master.csv');
-    if (fs.existsSync(itemsFile)) {
-      const itemsData = fs.readFileSync(itemsFile, 'utf8');
-      const items = Papa.parse(itemsData, { header: true }).data;
-
-      for (const item of items) {
-        const model = await db.get(`
-          SELECT id FROM models WHERE code = ?
-        `, [item.model_code]);
-
-        if (model) {
-          const result = await db.run(`
-            INSERT INTO inspection_items 
-            (model_id, category, sub_category, item_name, check_method, judgment_criteria)
-            VALUES (?, ?, ?, ?, ?, ?)
-          `, [model.id, item.category, item.sub_category, item.item_name,
-              item.check_method, item.judgment_criteria]);
-
-          if (item.min_value || item.max_value) {
-            await db.run(`
-              INSERT INTO measurement_records 
-              (inspection_item_id, min_value, max_value, unit)
-              VALUES (?, ?, ?, ?)
-            `, [result.lastID, item.min_value, item.max_value, item.unit]);
-          }
-
-          if (item.image_reference) {
-            await db.run(`
-              INSERT INTO visual_inspection_records 
-              (inspection_item_id, image_reference, description)
-              VALUES (?, ?, ?)
-            `, [result.lastID, item.image_reference, item.description]);
-          }
-        }
+      // 点検項目データを作成
+      if (row['部位'] && row['装置'] && row['確認箇所']) {
+        inspectionItems.push({
+          category: row['部位'],
+          equipment: row['装置'],
+          item: row['確認箇所'],
+          criteria: row['判断基準'] || '',
+          method: row['確認要領'] || '',
+          measurementRecord: row['測定等記録'] || '',
+          visualInspection: row['図形記録'] || ''
+        });
       }
-    }
+    });
+
+    // 各テーブルのデータをCSVファイルとして保存
+    const manufacturersData = Array.from(manufacturers).map(name => ({ name }));
+    const modelsData = Array.from(models).map(name => ({ name }));
+
+    // ファイルに保存
+    fs.writeFileSync(
+      path.join(targetDir, 'manufacturers.csv'),
+      Papa.unparse(manufacturersData)
+    );
+
+    fs.writeFileSync(
+      path.join(targetDir, 'models.csv'),
+      Papa.unparse(modelsData)
+    );
+
+    fs.writeFileSync(
+      path.join(targetDir, 'inspection_items.csv'),
+      Papa.unparse(inspectionItems)
+    );
 
     console.log('データ移行が完了しました');
+    console.log(`製造メーカー: ${manufacturersData.length}件`);
+    console.log(`機種: ${modelsData.length}件`);
+    console.log(`点検項目: ${inspectionItems.length}件`);
+
   } catch (error) {
     console.error('データ移行エラー:', error);
     throw error;

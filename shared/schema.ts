@@ -1,7 +1,51 @@
-import { mysqlTable, varchar, int, boolean, decimal, timestamp, text } from "drizzle-orm/mysql-core";
+import { mysqlTable, varchar, int } from "drizzle-orm/mysql-core";
 import { relations } from 'drizzle-orm';
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// 製造メーカーテーブル
+export const manufacturers = mysqlTable("manufacturers", {
+  manufacturerId: int("manufacturer_id").primaryKey().autoincrement(),
+  manufacturerName: varchar("manufacturer_name", { length: 100 }).notNull(),
+});
+
+export const manufacturersRelations = relations(manufacturers, ({ many }) => ({
+  models: many(models)
+}));
+
+// 機種テーブル
+export const models = mysqlTable("models", {
+  modelId: int("model_id").primaryKey().autoincrement(),
+  modelName: varchar("model_name", { length: 100 }).notNull(),
+  manufacturerId: int("manufacturer_id").notNull().references(() => manufacturers.manufacturerId),
+});
+
+export const modelsRelations = relations(models, ({ one, many }) => ({
+  manufacturer: one(manufacturers, {
+    fields: [models.manufacturerId],
+    references: [manufacturers.manufacturerId],
+  }),
+  machines: many(machines)
+}));
+
+// 機械番号テーブル
+export const machines = mysqlTable("machines", {
+  machineId: varchar("machine_id", { length: 20 }).primaryKey(),
+  modelId: int("model_id").notNull().references(() => models.modelId),
+  manufacturerId: int("manufacturer_id").notNull().references(() => manufacturers.manufacturerId),
+});
+
+export const machinesRelations = relations(machines, ({ one }) => ({
+  manufacturer: one(manufacturers, {
+    fields: [machines.manufacturerId],
+    references: [manufacturers.manufacturerId],
+  }),
+  model: one(models, {
+    fields: [machines.modelId],
+    references: [models.modelId],
+  })
+}));
+
 
 export const users = mysqlTable("users", {
   id: int("id").primaryKey().autoincrement(),
@@ -10,58 +54,9 @@ export const users = mysqlTable("users", {
   isAdmin: boolean("is_admin").notNull().default(false),
 });
 
-export const manufacturers = mysqlTable("manufacturers", {
-  id: int("id").primaryKey().autoincrement(),
-  name: varchar("name", { length: 100 }).notNull(),
-  externalId: varchar("externalId", { length: 20 }).notNull().unique(), // Changed column name
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
-
-export const manufacturersRelations = relations(manufacturers, ({ many }) => ({
-  models: many(models)
-}));
-
-export const models = mysqlTable("models", {
-  id: int("id").primaryKey().autoincrement(),
-  manufacturerId: int("manufacturer_id").notNull().references(() => manufacturers.id),
-  name: varchar("name", { length: 100 }).notNull(),
-  externalId: varchar("externalId", { length: 20 }).notNull().unique(), // Changed column name
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
-
-export const modelsRelations = relations(models, ({ one, many }) => ({
-  manufacturer: one(manufacturers, {
-    fields: [models.manufacturerId],
-    references: [manufacturers.id],
-  }),
-  machineNumbers: many(machineNumbers),
-  inspectionItems: many(inspectionItems)
-}));
-
-export const machineNumbers = mysqlTable("machine_numbers", {
-  number: varchar("number", { length: 50 }).primaryKey(),
-  modelId: int("model_id").notNull().references(() => models.id),
-  manufacturerId: int("manufacturer_id").notNull().references(() => manufacturers.id),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
-
-export const machineNumbersRelations = relations(machineNumbers, ({ one }) => ({
-  manufacturer: one(manufacturers, {
-    fields: [machineNumbers.manufacturerId],
-    references: [manufacturers.id],
-  }),
-  model: one(models, {
-    fields: [machineNumbers.modelId],
-    references: [models.id],
-  })
-}));
-
 export const inspectionItems = mysqlTable("inspection_items", {
   id: int("id").primaryKey().autoincrement(),
-  modelId: int("model_id").notNull().references(() => models.id),
+  modelId: int("model_id").notNull().references(() => models.modelId),
   category: varchar("category", { length: 50 }).notNull(),
   subCategory: varchar("sub_category", { length: 50 }).notNull(),
   itemName: varchar("item_name", { length: 255 }).notNull(),
@@ -74,7 +69,7 @@ export const inspectionItems = mysqlTable("inspection_items", {
 export const inspectionItemsRelations = relations(inspectionItems, ({ one, many }) => ({
   model: one(models, {
     fields: [inspectionItems.modelId],
-    references: [models.id],
+    references: [models.modelId],
   }),
   measurementRecords: many(measurementRecords),
   visualInspectionRecords: many(visualInspectionRecords)
@@ -115,7 +110,7 @@ export const visualInspectionRecordsRelations = relations(visualInspectionRecord
 
 export const inspectionChecklists = mysqlTable("inspection_checklists", {
   id: int("id").primaryKey().autoincrement(),
-  machineNumberId: int("machine_number_id").notNull().references(() => machineNumbers.number), // Changed to reference number
+  machineId: int("machine_id").notNull().references(() => machines.machineId), 
   inspectionDate: timestamp("inspection_date").notNull(),
   inspector: varchar("inspector", { length: 100 }).notNull(),
   supervisor: varchar("supervisor", { length: 100 }).notNull(),
@@ -128,3 +123,4 @@ export const inspectionChecklists = mysqlTable("inspection_checklists", {
 export const insertUserSchema = createInsertSchema(users);
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+import { boolean, decimal, text, timestamp } from "drizzle-orm/mysql-core";

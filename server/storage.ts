@@ -109,12 +109,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getModels(): Promise<any[]> {
-    return new Promise((resolve, reject) => {
-      db.all('SELECT * FROM models', [], (err, rows) => {
-        if (err) reject(err);
-        resolve(rows || []); // Handle potential null result
-      });
-    });
+    try {
+      const csvPath = path.join(process.cwd(), 'attached_assets/inspection/table/models.csv');
+      if (!fs.existsSync(csvPath)) {
+        return [];
+      }
+      const content = fs.readFileSync(csvPath, 'utf-8');
+      const models = Papa.parse(content, { header: true }).data;
+      return models;
+    } catch (error) {
+      console.error('Error reading models:', error);
+      return [];
+    }
   }
 
   async getManufacturers(): Promise<any[]> {

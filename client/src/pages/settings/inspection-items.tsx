@@ -999,7 +999,7 @@ export default function InspectionItems() {
                 <Input
                   value={editingItem.criteria}
                   onChange={(e) =>
-                    setEditingItem({ ...editingItem, criteria: e.target.value })
+                    setEditingItem({ ...item, criteria: e.target.value })
                   }
                 />
               </div>

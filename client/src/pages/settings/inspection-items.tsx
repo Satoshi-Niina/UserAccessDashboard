@@ -667,6 +667,7 @@ export default function InspectionItems() {
                   setSelectedFile(newFile);
                   fetchInspectionItems(newFile);
                 }}
+                style={{ width: '200px' }}
               >
                 <option value="">ファイルを選択してください</option>
                 {availableFiles.length > 0 ? (
@@ -895,8 +896,8 @@ export default function InspectionItems() {
 
             <TabsContent value="items">
               <div className="space-y-4">
-                <div className="flex gap-4 items-end">
-                  <div>
+                <div className="flex gap-4 mb-4">
+                  <div className="w-64">
                     <Label>製造メーカー</Label>
                     <Select value={selectedManufacturer} onValueChange={setSelectedManufacturer}>
                       <SelectTrigger>
@@ -910,7 +911,7 @@ export default function InspectionItems() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div>
+                  <div className="w-64">
                     <Label>機種</Label>
                     <Select value={selectedModel} onValueChange={setSelectedModel}>
                       <SelectTrigger>
@@ -925,6 +926,23 @@ export default function InspectionItems() {
                     </Select>
                   </div>
                   <Button onClick={handleSearch}>検索</Button>
+                  <div className="w-64">
+                    <Label>検索</Label>
+                    <Input
+                      type="text"
+                      placeholder="検索キーワード"
+                      className="w-full"
+                      onChange={(e) => {
+                        const searchText = e.target.value.toLowerCase();
+                        const filtered = tableItems.filter(item =>
+                          item.name.toLowerCase().includes(searchText) ||
+                          item.code?.toLowerCase().includes(searchText) ||
+                          item.number?.toLowerCase().includes(searchText)
+                        );
+                        setTableItems(filtered);
+                      }}
+                    />
+                  </div>
                   <div className="flex-1 min-w-[300px]">
                     <label htmlFor="csv-file" className="mb-2 block">CSVファイルインポート</label>
                     <div className="flex gap-2">

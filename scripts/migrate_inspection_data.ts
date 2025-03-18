@@ -53,7 +53,7 @@ async function migrateInspectionData() {
     // 各テーブルのデータをCSVファイルとして保存
     const manufacturersData = Array.from(manufacturers).map(name => ({ name }));
     const modelsData = Array.from(models).map(name => ({ name }));
-    
+
     // 点検項目データに判断基準と確認要領を含める
     const inspectionItemsData = inspectionItems.map(item => ({
       category: item.category,

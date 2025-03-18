@@ -79,8 +79,6 @@ async function migrateInspectionData() {
     fs.writeFileSync(
       path.join(targetDir, 'inspection_items.csv'),
       Papa.unparse(inspectionItemsData)
-    );_items.csv'),
-      Papa.unparse(inspectionItems)
     );
 
     console.log('データ移行が完了しました');

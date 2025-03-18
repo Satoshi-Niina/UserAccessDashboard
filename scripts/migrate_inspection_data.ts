@@ -1,4 +1,3 @@
-
 import * as fs from 'fs';
 import * as path from 'path';
 import Papa from 'papaparse';
@@ -6,111 +5,81 @@ import { db } from '../server/db';
 
 async function migrateInspectionData() {
   try {
-    // 最新の仕業点検マスタファイルを取得
-    const inspectionDir = path.join(process.cwd(), 'attached_assets/inspection');
-    const files = fs.readdirSync(inspectionDir);
-    const masterFiles = files.filter(file => file.includes('仕業点検マスタ') && file.endsWith('.csv'));
-    
-    if (masterFiles.length === 0) {
-      console.error('仕業点検マスタファイルが見つかりません');
-      return;
+    const assetsDir = path.join(process.cwd(), 'attached_assets/inspection');
+
+    // Create directories if they don't exist
+    if (!fs.existsSync(assetsDir)) {
+      fs.mkdirSync(assetsDir, { recursive: true });
     }
 
-    // 最新のファイルを使用
-    masterFiles.sort();
-    const latestFile = masterFiles[masterFiles.length - 1];
-    const filePath = path.join(inspectionDir, latestFile);
-    
-    // CSVファイルを読み込み
-    const fileContent = fs.readFileSync(filePath, 'utf8');
-    const results = Papa.parse(fileContent, {
-      header: true,
-      skipEmptyLines: true
-    });
+    // Manufacturers migration
+    const manufacturersFile = path.join(assetsDir, 'manufacturers_master.csv');
+    if (fs.existsSync(manufacturersFile)) {
+      const manufacturersData = fs.readFileSync(manufacturersFile, 'utf8');
+      const manufacturers = Papa.parse(manufacturersData, { header: true }).data;
 
-    // 製造メーカーテーブルの作成と移行
-    await db.run(`
-      CREATE TABLE IF NOT EXISTS manufacturers (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT UNIQUE NOT NULL
-      )
-    `);
-
-    // 車種テーブルの作成と移行
-    await db.run(`
-      CREATE TABLE IF NOT EXISTS models (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        manufacturer_id INTEGER NOT NULL,
-        name TEXT NOT NULL,
-        FOREIGN KEY (manufacturer_id) REFERENCES manufacturers(id)
-      )
-    `);
-
-    // カテゴリーテーブルの作成と移行
-    await db.run(`
-      CREATE TABLE IF NOT EXISTS categories (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT UNIQUE NOT NULL
-      )
-    `);
-
-    // 装置テーブルの作成と移行
-    await db.run(`
-      CREATE TABLE IF NOT EXISTS equipment (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        category_id INTEGER NOT NULL,
-        name TEXT NOT NULL,
-        FOREIGN KEY (category_id) REFERENCES categories(id)
-      )
-    `);
-
-    // データの移行
-    for (const row of results.data) {
-      // 製造メーカーの追加
-      const manufacturer = row['製造メーカー'] || row.manufacturer;
-      if (manufacturer) {
-        await db.run(
-          'INSERT OR IGNORE INTO manufacturers (name) VALUES (?)',
-          [manufacturer]
-        );
+      for (const manufacturer of manufacturers) {
+        await db.run(`
+          INSERT OR IGNORE INTO manufacturers (name, code)
+          VALUES (?, ?)
+        `, [manufacturer.name, manufacturer.code]);
       }
+    }
 
-      // 車種の追加
-      const model = row['機種'] || row.model;
-      if (manufacturer && model) {
-        const manufacturerResult = await db.get(
-          'SELECT id FROM manufacturers WHERE name = ?',
-          [manufacturer]
-        );
-        if (manufacturerResult) {
-          await db.run(
-            'INSERT OR IGNORE INTO models (manufacturer_id, name) VALUES (?, ?)',
-            [manufacturerResult.id, model]
-          );
+    // Models migration
+    const modelsFile = path.join(assetsDir, 'models_master.csv');
+    if (fs.existsSync(modelsFile)) {
+      const modelsData = fs.readFileSync(modelsFile, 'utf8');
+      const models = Papa.parse(modelsData, { header: true }).data;
+
+      for (const model of models) {
+        const manufacturer = await db.get(`
+          SELECT id FROM manufacturers WHERE code = ?
+        `, [model.manufacturer_code]);
+
+        if (manufacturer) {
+          await db.run(`
+            INSERT OR IGNORE INTO models (manufacturer_id, name, code)
+            VALUES (?, ?, ?)
+          `, [manufacturer.id, model.name, model.code]);
         }
       }
+    }
 
-      // カテゴリーの追加
-      const category = row['部位'] || row.category;
-      if (category) {
-        await db.run(
-          'INSERT OR IGNORE INTO categories (name) VALUES (?)',
-          [category]
-        );
-      }
+    // Inspection items migration
+    const itemsFile = path.join(assetsDir, 'inspection_items_master.csv');
+    if (fs.existsSync(itemsFile)) {
+      const itemsData = fs.readFileSync(itemsFile, 'utf8');
+      const items = Papa.parse(itemsData, { header: true }).data;
 
-      // 装置の追加
-      const equipment = row['装置'] || row.equipment;
-      if (category && equipment) {
-        const categoryResult = await db.get(
-          'SELECT id FROM categories WHERE name = ?',
-          [category]
-        );
-        if (categoryResult) {
-          await db.run(
-            'INSERT OR IGNORE INTO equipment (category_id, name) VALUES (?, ?)',
-            [categoryResult.id, equipment]
-          );
+      for (const item of items) {
+        const model = await db.get(`
+          SELECT id FROM models WHERE code = ?
+        `, [item.model_code]);
+
+        if (model) {
+          const result = await db.run(`
+            INSERT INTO inspection_items 
+            (model_id, category, sub_category, item_name, check_method, judgment_criteria)
+            VALUES (?, ?, ?, ?, ?, ?)
+          `, [model.id, item.category, item.sub_category, item.item_name,
+              item.check_method, item.judgment_criteria]);
+
+          if (item.min_value || item.max_value) {
+            await db.run(`
+              INSERT INTO measurement_records 
+              (inspection_item_id, min_value, max_value, unit)
+              VALUES (?, ?, ?, ?)
+            `, [result.lastID, item.min_value, item.max_value, item.unit]);
+          }
+
+          if (item.image_reference) {
+            await db.run(`
+              INSERT INTO visual_inspection_records 
+              (inspection_item_id, image_reference, description)
+              VALUES (?, ?, ?)
+            `, [result.lastID, item.image_reference, item.description]);
+          }
         }
       }
     }
@@ -118,7 +87,8 @@ async function migrateInspectionData() {
     console.log('データ移行が完了しました');
   } catch (error) {
     console.error('データ移行エラー:', error);
+    throw error;
   }
 }
 
-migrateInspectionData();
+migrateInspectionData().catch(console.error);

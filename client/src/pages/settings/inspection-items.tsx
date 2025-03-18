@@ -675,7 +675,6 @@ export default function InspectionItems() {
                           <>
                             <TableCell>機械番号</TableCell>
                             <TableCell>機種</TableCell>
-                            <TableCell>製造メーカー</TableCell>
                             <TableCell>操作</TableCell>
                           </>
                         )}
@@ -720,7 +719,6 @@ export default function InspectionItems() {
                             <>
                               <TableCell>{item.number}</TableCell>
                               <TableCell>{item.model_name}</TableCell>
-                              <TableCell>{item.manufacturer_name}</TableCell>
                               <TableCell>
                                 <div className="flex gap-2">
                                   <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
@@ -746,13 +744,23 @@ export default function InspectionItems() {
                       value={newItem.number}
                       onChange={(e) => setNewItem({ ...newItem, number: e.target.value })}
                     />
-                    <Select value={selectedModel} onValueChange={setSelectedModel}>
+                    <Select value={selectedModel} onValueChange={(value) => {
+                      setSelectedModel(value);
+                      const model = models.find(m => m.name === value);
+                      if (model) {
+                        setNewItem({ 
+                          ...newItem, 
+                          modelId: model.id,
+                          manufacturerId: model.manufacturerId 
+                        });
+                      }
+                    }}>
                       <SelectTrigger>
                         <SelectValue placeholder="機種を選択" />
                       </SelectTrigger>
                       <SelectContent>
                         {models.map((model) => (
-                          <SelectItem key={model.id} value={model}>
+                          <SelectItem key={model.id} value={model.name}>
                             {model.name}
                           </SelectItem>
                         ))}
@@ -765,13 +773,12 @@ export default function InspectionItems() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableCell>ID (システムID)</TableCell>
+                      <TableCell>外部ID</TableCell>
                       <TableCell>
                         {selectedTable === 'manufacturers' && '製造メーカー'}
                         {selectedTable === 'models' && '機種'}
                         {selectedTable === 'machineNumbers' && '機械番号'}
                       </TableCell>
-                      <TableCell>外部ID</TableCell>
                       <TableCell>操作 (データ編集)</TableCell>
                     </TableRow>
                   </TableHeader>
@@ -779,11 +786,10 @@ export default function InspectionItems() {
                     {tableItems && tableItems.length > 0 ? (
                       tableItems.map((item) => (
                         <TableRow key={item.id}>
-                          <TableCell>{item.id}</TableCell>
+                          <TableCell>{item.code}</TableCell>
                           <TableCell>
                             {selectedTable === 'machineNumbers' ? item.number : item.name}
                           </TableCell>
-                          <TableCell>{item.code}</TableCell>
                           <TableCell>
                             <Button variant="destructive" onClick={() => handleDeleteItem(item.id!)}>
                               削除
@@ -793,7 +799,7 @@ export default function InspectionItems() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-center">
+                        <TableCell colSpan={3} className="text-center">
                           データがありません
                         </TableCell>
                       </TableRow>

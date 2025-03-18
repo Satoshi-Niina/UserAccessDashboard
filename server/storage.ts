@@ -19,6 +19,8 @@ export interface IStorage {
   sessionStore: session.Store;
   getModels():Promise<any[]>; //Added getModels method
   getManufacturers():Promise<any[]>; //Added getManufacturers method
+  createMachineNumber(data: {number: string, modelId: number, manufacturerId: number}): Promise<any>; // Added createMachineNumber
+  getMachineNumbers(): Promise<any[]>; // Added getMachineNumbers
 
 }
 
@@ -33,12 +35,13 @@ export class DatabaseStorage implements IStorage {
     // テーブルの作成
     db.run(`
       CREATE TABLE IF NOT EXISTS machine_numbers (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        number VARCHAR(50) PRIMARY KEY,
         model_id INTEGER NOT NULL,
-        number VARCHAR(50) NOT NULL UNIQUE,
+        manufacturer_id INTEGER NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (model_id) REFERENCES models(id)
+        FOREIGN KEY (model_id) REFERENCES models(id),
+        FOREIGN KEY (manufacturer_id) REFERENCES manufacturers(id)
       )
     `);
   }
@@ -120,9 +123,22 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
+  async createMachineNumber({ number, modelId, manufacturerId }: {number: string, modelId: number, manufacturerId: number}): Promise<any> {
+    return new Promise((resolve, reject) => {
+      db.run(
+        'INSERT INTO machine_numbers (number, model_id, manufacturer_id) VALUES (?, ?, ?)',
+        [number, modelId, manufacturerId],
+        function(err) {
+          if (err) reject(err);
+          resolve({ number, modelId, manufacturerId });
+        }
+      );
+    });
+  }
+
   async getMachineNumbers(): Promise<any[]> {
     return new Promise((resolve, reject) => {
-      db.all('SELECT machine_numbers.*, models.name as model_name FROM machine_numbers LEFT JOIN models ON machine_numbers.model_id = models.id', [], (err, rows) => {
+      db.all('SELECT machine_numbers.*, models.name as model_name, manufacturers.name as manufacturer_name FROM machine_numbers INNER JOIN models ON machine_numbers.model_id = models.id INNER JOIN manufacturers ON machine_numbers.manufacturer_id = manufacturers.id', [], (err, rows) => {
         if (err) reject(err);
         resolve(rows || []); // Handle potential null result
       });

@@ -168,8 +168,8 @@ export function registerRoutes(app: Express): Server {
 
   app.post('/api/machineNumbers', async (req, res) => {
     try {
-      const { number, modelId } = req.body;
-      const machineNumber = await storage.createMachineNumber({ number, modelId });
+      const { number, modelId, manufacturerId } = req.body;
+      const machineNumber = await storage.createMachineNumber({ number, modelId, manufacturerId });
       res.status(201).json(machineNumber);
     } catch (error) {
       console.error('Error creating machine number:', error);

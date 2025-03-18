@@ -109,8 +109,6 @@ export default function OperationalPlan() {
       <Card className="mt-4">
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="text-lg font-bold mb-4">運用計画情報入力</div> 
-
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="date">運用日</Label>
@@ -123,31 +121,12 @@ export default function OperationalPlan() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="vehicleNumber">車両番号</Label>
+                <Label htmlFor="vehicleNumber">機械番号</Label>
                 <Input
                   id="vehicleNumber"
                   value={formData.vehicleNumber}
                   onChange={(e) => handleInputChange('vehicleNumber', e.target.value)}
                 />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="vehicle-type">機種</Label>
-                <Select
-                  value={formData.vehicleType}
-                  onValueChange={(value) => handleInputChange('vehicleType', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="機種を選択" />
-                  </SelectTrigger>
-                  <SelectContent position="popper" className="z-50">
-                    {vehicleModels.map((model) => (
-                      <SelectItem key={model} value={model}>
-                        {model}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
 
               <div className="space-y-2">

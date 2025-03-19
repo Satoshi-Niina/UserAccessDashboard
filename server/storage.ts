@@ -143,11 +143,15 @@ export class DatabaseStorage implements IStorage {
         manufacturers = parsed.data.filter(m => m.id && m.name);
       }
 
-      const newId = manufacturers.length > 0 ? 
-        Math.max(...manufacturers.map(m => parseInt(m.id))) + 1 : 1;
+      const existingIds = manufacturers
+        .map(m => parseInt(m.id))
+        .filter(id => !isNaN(id));
+      
+      const newId = existingIds.length > 0 ? 
+        Math.max(...existingIds) + 1 : 1;
 
       const newManufacturer = { 
-        id: newId,
+        id: newId.toString(),
         name,
         code: code || ''
       };

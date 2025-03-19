@@ -34,6 +34,7 @@ interface InspectionItem {
   engineType?: string;
   result?: string;
   remark?: string;
+  isOutOfRange?: boolean; // Added isOutOfRange property
 }
 
 const resultOptions = [
@@ -644,7 +645,7 @@ export default function InspectionPage() {
                       })
                       .map((item, index) => {
                         const standard = findStandardValue(item);
-                  const standardRange = standard ? `${standard.minValue}～${standard.maxValue}` : '';
+                        const standardRange = standard ? `${standard.minValue}～${standard.maxValue}` : '';
                         return (
                           <tr key={item.id} className="border-t">
                             <td className="p-1 text-xs">{item.category}</td>
@@ -663,15 +664,15 @@ export default function InspectionPage() {
                                       onChange={(e) => {
                                         const value = e.target.value;
                                         const numValue = parseFloat(value);
-                                        
+
                                         let isOutOfRange = false;
                                         if (standard && (numValue < parseFloat(standard.minValue) || numValue > parseFloat(standard.maxValue))) {
                                           isOutOfRange = true;
                                         }
 
-                                        setInspectionItems(prev => prev.map(i => 
+                                        setInspectionItems(prev => prev.map(i =>
                                           i.id === item.id ? {
-                                            ...i, 
+                                            ...i,
                                             measurementRecord: value,
                                             isOutOfRange: isOutOfRange
                                           } : i
@@ -685,7 +686,6 @@ export default function InspectionPage() {
                                       </div>
                                     )}
                                   </div>
-                                  />
                                 </>
                               ) : null}
                               <InspectionValueStatus

@@ -136,7 +136,7 @@ export class DatabaseStorage implements IStorage {
     try {
       const csvPath = path.join(process.cwd(), 'attached_assets/inspection/table/manufacturers.csv');
       let manufacturers = [];
-      
+
       if (fs.existsSync(csvPath)) {
         const content = fs.readFileSync(csvPath, 'utf-8');
         manufacturers = Papa.parse(content, { header: true }).data;
@@ -162,7 +162,7 @@ export class DatabaseStorage implements IStorage {
     try {
       const csvPath = path.join(process.cwd(), 'attached_assets/inspection/table/models.csv');
       let models = [];
-      
+
       if (fs.existsSync(csvPath)) {
         const content = fs.readFileSync(csvPath, 'utf-8');
         models = Papa.parse(content, { header: true }).data;
@@ -184,12 +184,12 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async createMachineNumber({ number, modelId }: { number: string, modelId: number }): Promise<any> {
+  async createMachineNumber({ number, model_id, manufacturer_id }: { number: string, model_id: number, manufacturer_id: number }): Promise<any> {
     try {
       const csvPath = path.join(process.cwd(), 'attached_assets/inspection/table/machine_numbers.csv');
       const dirPath = path.dirname(csvPath);
       let machines = [];
-      
+
       // ディレクトリが存在しない場合は作成
       if (!fs.existsSync(dirPath)) {
         fs.mkdirSync(dirPath, { recursive: true });
@@ -203,19 +203,21 @@ export class DatabaseStorage implements IStorage {
 
       // モデル情報を取得
       const models = await this.getModels();
-      const model = models.find(m => String(m.id) === String(modelId));
+      const model = models.find(m => String(m.id) === String(model_id));
 
       if (!model) {
         console.log('利用可能なモデル:', models);
-        console.log('選択されたモデルID:', modelId);
+        console.log('選択されたモデルID:', model_id);
         throw new Error('指定された機種が見つかりません');
       }
 
       // 新しい機械番号を追加
       const newMachine = { 
         number,
-        model_id: modelId,
-        model_name: model.name
+        model_id: model_id,
+        manufacturer_id: manufacturer_id,
+        installation_date: new Date().toISOString().split('T')[0],
+        remarks: ''
       };
       machines.push(newMachine);
 
@@ -226,7 +228,7 @@ export class DatabaseStorage implements IStorage {
       return newMachine;
     } catch (error) {
       console.error('Error creating machine number:', error);
-      throw error;ror;
+      throw error;
     }
   }
 
@@ -236,10 +238,10 @@ export class DatabaseStorage implements IStorage {
       if (!fs.existsSync(csvPath)) {
         return null;
       }
-      
+
       const content = fs.readFileSync(csvPath, 'utf-8');
       const machines = Papa.parse(content, { header: true }).data;
-      
+
       const machine = machines.find((m: any) => m.number === number);
       if (!machine) {
         return null;
@@ -248,7 +250,7 @@ export class DatabaseStorage implements IStorage {
       // モデル情報を取得
       const models = await this.getModels();
       const model = models.find((m: any) => String(m.id) === String(machine.model_id));
-      
+
       if (!model) {
         return null;
       }

@@ -169,7 +169,14 @@ export function registerRoutes(app: Express): Server {
   app.post('/api/machineNumbers', async (req, res) => {
     try {
       const { number, modelId } = req.body;
-      const machineNumber = await storage.createMachineNumber({ number, modelId });
+      if (!number || !modelId) {
+        return res.status(400).json({ error: '機械番号と機種IDは必須です' });
+      }
+      const machineNumber = await storage.createMachineNumber({ 
+        number, 
+        model_id: modelId,
+        manufacturer_id: 1 // 製造メーカーIDはmodelsテーブルから取得するように修正可能
+      });
       res.status(201).json(machineNumber);
 
       // 既存のデータを読み込むか、新規作成
@@ -823,7 +830,7 @@ export function registerRoutes(app: Express): Server {
       ['堀川工機', 'MC300', 'ボルボ', 'エンジン', '本体', '', 'エンジンヘッドカバー、ターボ', 'オイル、燃料漏れ', 'オイル等滲み・垂れ跡が無', '', ''].join(','),
       ['堀川工機', 'MC300', 'ボルボ', 'エンジン', '本体', '', '排気及び吸気', '排気ガス色及びガス漏れ等の点検（マフラー等）', 'ほぼ透明の薄紫', '', ''].join(','),
       ['堀川工機', 'MC500', 'ボルボ', 'エンジン', '冷却系統', '', 'ラジエター', '水漏れ、汚れ', '漏れ・汚れ無し', '', ''].join(','),
-      ['堀川工機', 'MC500', 'ボルボ', 'エンジン', '油圧系統', '', 'ホース・配管', '油漏れ、亀裂', '亀裂・油漏れ無し', '', ''].join(','),
+      ['堀川工機', 'MC500', 'ボルボ', 'ボルボ', 'エンジン', '油圧系統', '', 'ホース・配管', '油漏れ、亀裂', '亀裂・油漏れ無し', '', ''].join(','),
       ['クボタ', 'KT450', 'クボタV3300', 'エンジン', '冷却系統', '', 'ラジエター', '水漏れ、汚れ', '漏れ・汚れ無し', '', ''].join(','),
       ['クボタ', 'KT450', 'クボタV3300', 'エンジン', '油圧系統', '', 'ホース・配管', '油漏れ、亀裂', '亀裂・油漏れ無し', '', ''].join(','),
       ['クボタ', 'KT580', 'クボタV3800', '走行装置', 'ブレーキ', '', 'ブレーキペダル', '踏み代、効き', '規定の踏み代で確実に効く', '', ''].join(','),

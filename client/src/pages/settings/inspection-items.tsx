@@ -28,6 +28,7 @@ interface TableItem {
   modelId?: number;
   modelName?: string; //Added modelName
   externalId?: string; // Added externalId property
+  model_id?: string; //added model_id
 }
 
 interface InspectionItem {
@@ -592,8 +593,9 @@ export default function InspectionItems() {
     try {
       const model = models.find((m) => m.id === selectedModelId);
       if(selectedTable === 'machineNumbers' && model){
-        await addItem({
+        await addMachineNumber({
           number: newItem.number,
+          model_id: selectedModelId.toString(), //Add modelName
           modelId: selectedModelId,
           modelName: model.name, //Add modelName
           manufacturerId: model.manufacturerId
@@ -683,6 +685,35 @@ export default function InspectionItems() {
         });
     }
   }, [activeTab]);
+
+
+  const addMachineNumber = async (machineNumber: TableItem) => {
+    try {
+      if (!machineNumber.model_id) {
+        throw new Error('機種を選択してください');
+      }
+      const response = await fetch('/api/machineNumbers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          number: machineNumber.number,
+          modelId: parseInt(machineNumber.model_id)
+        })
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to add machine number: ${response.status} ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Error adding machine number:', error);
+      toast({
+        title: "エラー",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
 
 
   return (

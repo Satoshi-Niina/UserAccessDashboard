@@ -168,14 +168,27 @@ export class DatabaseStorage implements IStorage {
         models = Papa.parse(content, { header: true }).data;
       }
 
-      const newId = models.length > 0 ? Math.max(...models.map(m => parseInt(m.id))) + 1 : 1;
-      const newModel = { id: newId, name, code, manufacturerId };
+      const newId = models.length > 0 ? 
+        Math.max(...models.map(m => parseInt(m.id || '0'))) + 1 : 1;
+      
+      const newModel = { 
+        id: newId.toString(),
+        name,
+        code,
+        manufacturer_id: manufacturerId.toString()
+      };
+      
       models.push(newModel);
 
-      if (!fs.existsSync(path.dirname(csvPath))) {
-        fs.mkdirSync(path.dirname(csvPath), { recursive: true });
-      }
-      fs.writeFileSync(csvPath, Papa.unparse(models));
+      const csv = Papa.unparse(models);
+      await fs.promises.writeFile(csvPath, csv);
+
+      return newModel;
+    } catch (error) {
+      console.error('Error creating model:', error);
+      throw error;
+    }
+  }arse(models));
 
       return newModel;
     } catch (error) {

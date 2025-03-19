@@ -400,348 +400,332 @@ export default function InspectionPage() {
           <Button onClick={() => loadInspectionItems(machineNumber)}>
             点検項目取得
           </Button>
-        </div> className="flex items-center gap-2"> {/* Added machine number input */}
-          <label htmlFor="machineNumber" className="font-medium">機械番号:</label>
-          <input
-            id="machineNumber"
-            type="text"
-            value={machineNumber}
-            onChange={(e) => setMachineNumber(e.target.value)}
-            className="border rounded px-2 py-1"
-            placeholder="機械番号を入力"
-          />
-        </div>
-        <div className="flex space-x-2">
-          <Button variant="outline" onClick={() => navigate("/operations")}>
-            戻る
-          </Button>
-          <Button onClick={() => setShowBasicInfo(!showBasicInfo)}>
-            {showBasicInfo ? "仕業点検表表示" : "点検基本情報表示"}
-          </Button>
         </div>
       </div>
 
-      <OperationsNav currentPage="inspection" />
+      <>
+        <OperationsNav currentPage="inspection" />
 
-      {showBasicInfo && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>点検基本情報</CardTitle>
-            <CardDescription>仕業点検の基本情報を入力してください</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="inspection-date">点検日</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !date && "text-muted-foreground"
-                      )}
+        {showBasicInfo && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>点検基本情報</CardTitle>
+              <CardDescription>仕業点検の基本情報を入力してください</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="inspection-date">点検日</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !date && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {date ? format(date, "yyyy年MM月dd日") : <span>日付を選択</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={date}
+                        onSelect={setDate}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="start-time">開始時刻</Label>
+                  <Input id="start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="end-time">終了時刻</Label>
+                  <Input id="end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="location">点検場所</Label>
+                  <Input id="location" placeholder="点検場所を入力" value={locationInput} onChange={e => setLocationInput(e.target.value)}/>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="responsible-person">責任者</Label>
+                  <Input id="responsible-person" placeholder="責任者名を入力" value={responsiblePerson} onChange={e => setResponsiblePerson(e.target.value)}/>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="inspector">点検者</Label>
+                  <Input id="inspector" placeholder="点検者名を入力" value={inspectorInput} onChange={e => setInspectorInput(e.target.value)}/>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="machine-id">機械番号</Label>
+                  <Input id="machine-id" placeholder="機械番号を入力" value={machineId} onChange={e => setMachineId(e.target.value)}/>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="file-name">ファイル名</Label>
+                  <Input id="file-name" type="text" value={fileName} onChange={e => setFileName(e.target.value)}/>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {!showBasicInfo && (
+          <Card className="mb-6">
+            <CardHeader className="flex flex-row items-center">
+              <div>
+                <CardTitle>仕業点検表</CardTitle>
+                <CardDescription>
+                  各項目を確認し、判定を入力してください
+                </CardDescription>
+              </div>
+              <div className="ml-auto flex space-x-2">
+              </div>
+            </CardHeader>
+            <CardContent>
+              {uncheckedItemsDialog.length > 0 && (
+                <div className="mb-4 p-4 border-2 border-red-500 rounded-lg">
+                  <h3 className="text-lg font-bold text-red-500 mb-2">チェック漏れの項目</h3>
+                  <ul className="list-disc pl-5">
+                    {uncheckedItemsDialog.map((item) => (
+                      <li key={item.id} className="text-red-700">
+                        {item.category} - {item.equipment} - {item.item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <div className="mb-2 p-2 bg-muted/20 rounded-md">
+                <div className="flex flex-wrap gap-2">
+                  <div className="min-w-[150px]">
+                    <Label htmlFor="categoryFilter" className="text-xs">部位</Label>
+                    <Select
+                      value={categoryFilter}
+                      onValueChange={setCategoryFilter}
                     >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {date ? format(date, "yyyy年MM月dd日") : <span>日付を選択</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={date}
-                      onSelect={setDate}
-                      initialFocus
+                      <SelectTrigger id="categoryFilter" className="h-8">
+                        <SelectValue placeholder="すべて" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">すべて</SelectItem>
+                        {[...new Set(inspectionItems.map(item => item.category))]
+                          .filter(Boolean)
+                          .sort()
+                          .map(category => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="min-w-[150px]">
+                    <Label htmlFor="equipmentFilter" className="text-xs">装置</Label>
+                    <Select
+                      value={equipmentFilter}
+                      onValueChange={setEquipmentFilter}
+                    >
+                      <SelectTrigger id="equipmentFilter" className="h-8">
+                        <SelectValue placeholder="すべて" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">すべて</SelectItem>
+                        {[...new Set(inspectionItems
+                          .filter(item => !categoryFilter || item.category === categoryFilter)
+                          .map(item => item.equipment))]
+                          .filter(Boolean)
+                          .sort()
+                          .map(equipment => (
+                            <SelectItem key={equipment} value={equipment}>
+                              {equipment}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="min-w-[150px]">
+                    <Label htmlFor="resultFilter" className="text-xs">判定</Label>
+                    <Select
+                      value={resultFilter}
+                      onValueChange={setResultFilter}
+                    >
+                      <SelectTrigger id="resultFilter" className="h-8">
+                        <SelectValue placeholder="すべて" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">すべて</SelectItem>
+                        {resultOptions.map(result => (
+                          <SelectItem key={result} value={result}>{result}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex gap-4 mb-4">
+                  <div className="w-2/3">
+                    <Input
+                      type="text"
+                      placeholder="記事を検索..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full"
                     />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="start-time">開始時刻</Label>
-                <Input id="start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="end-time">終了時刻</Label>
-                <Input id="end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="location">点検場所</Label>
-                <Input id="location" placeholder="点検場所を入力" value={locationInput} onChange={e => setLocationInput(e.target.value)}/>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="responsible-person">責任者</Label>
-                <Input id="responsible-person" placeholder="責任者名を入力" value={responsiblePerson} onChange={e => setResponsiblePerson(e.target.value)}/>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="inspector">点検者</Label>
-                <Input id="inspector" placeholder="点検者名を入力" value={inspectorInput} onChange={e => setInspectorInput(e.target.value)}/>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="machine-id">機械番号</Label>
-                <Input id="machine-id" placeholder="機械番号を入力" value={machineId} onChange={e => setMachineId(e.target.value)}/>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="file-name">ファイル名</Label>
-                <Input id="file-name" type="text" value={fileName} onChange={e => setFileName(e.target.value)}/>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {!showBasicInfo && (
-        <Card className="mb-6">
-          <CardHeader className="flex flex-row items-center">
-            <div>
-              <CardTitle>仕業点検表</CardTitle>
-              <CardDescription>
-                各項目を確認し、判定を入力してください
-              </CardDescription>
-            </div>
-            <div className="ml-auto flex space-x-2">
-            </div>
-          </CardHeader>
-          <CardContent>
-            {uncheckedItemsDialog.length > 0 && (
-              <div className="mb-4 p-4 border-2 border-red-500 rounded-lg">
-                <h3 className="text-lg font-bold text-red-500 mb-2">チェック漏れの項目</h3>
-                <ul className="list-disc pl-5">
-                  {uncheckedItemsDialog.map((item) => (
-                    <li key={item.id} className="text-red-700">
-                      {item.category} - {item.equipment} - {item.item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            <div className="mb-2 p-2 bg-muted/20 rounded-md">
-              <div className="flex flex-wrap gap-2">
-                <div className="min-w-[150px]">
-                  <Label htmlFor="categoryFilter" className="text-xs">部位</Label>
-                  <Select
-                    value={categoryFilter}
-                    onValueChange={setCategoryFilter}
-                  >
-                    <SelectTrigger id="categoryFilter" className="h-8">
-                      <SelectValue placeholder="すべて" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">すべて</SelectItem>
-                      {[...new Set(inspectionItems.map(item => item.category))]
-                        .filter(Boolean)
-                        .sort()
-                        .map(category => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="min-w-[150px]">
-                  <Label htmlFor="equipmentFilter" className="text-xs">装置</Label>
-                  <Select
-                    value={equipmentFilter}
-                    onValueChange={setEquipmentFilter}
-                  >
-                    <SelectTrigger id="equipmentFilter" className="h-8">
-                      <SelectValue placeholder="すべて" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">すべて</SelectItem>
-                      {[...new Set(inspectionItems
-                        .filter(item => !categoryFilter || item.category === categoryFilter)
-                        .map(item => item.equipment))]
-                        .filter(Boolean)
-                        .sort()
-                        .map(equipment => (
-                          <SelectItem key={equipment} value={equipment}>
-                            {equipment}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="min-w-[150px]">
-                  <Label htmlFor="resultFilter" className="text-xs">判定</Label>
-                  <Select
-                    value={resultFilter}
-                    onValueChange={setResultFilter}
-                  >
-                    <SelectTrigger id="resultFilter" className="h-8">
-                      <SelectValue placeholder="すべて" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">すべて</SelectItem>
-                      {resultOptions.map(result => (
-                        <SelectItem key={result} value={result}>{result}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="mt-4 flex gap-4 mb-4">
-                <div className="w-2/3">
-                  <Input
-                    type="text"
-                    placeholder="記事を検索..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full"
-                  />
-                </div>
-                <div className="w-1/3 flex items-center justify-end">
-                  <div className="text-sm font-medium">
-                    残項目: {inspectionItems.filter(item => !item.result).length}件
+                  </div>
+                  <div className="w-1/3 flex items-center justify-end">
+                    <div className="text-sm font-medium">
+                      残項目: {inspectionItems.filter(item => !item.result).length}件
+                    </div>
                   </div>
                 </div>
               </div>
+              <div className="border rounded-md">
+                <Table>
+                  <TableHeader>
+                    <tr>
+                      <th className="p-2 text-center whitespace-nowrap text-xs">部位</th>
+                      <th className="p-2 text-center whitespace-nowrap text-xs">装置</th>
+                      <th className="p-2 text-center whitespace-nowrap text-xs">確認箇所</th>
+                      <th className="p-2 text-center whitespace-nowrap text-xs">判断基準</th>
+                      <th className="p-2 text-center whitespace-nowrap text-xs">確認要領</th>
+                      <th className="p-2 text-center whitespace-nowrap text-xs">
+                        測定等記録
+                        <div className="text-xs text-gray-500">
+                          (測定値を記録)
+                        </div>
+                      </th>
+                      <th className="p-2 text-center whitespace-nowrap w-[30ch] text-xs">図形記録</th>
+                      <th className="p-2 text-center whitespace-nowrap w-[15ch] text-xs">判定</th>
+                      <th className="p-2 text-center whitespace-nowrap w-[50ch] text-xs">記事</th>
+                    </tr>
+                  </TableHeader>
+                  <TableBody>
+                    {loading ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center">
+                          データを読み込み中...
+                        </TableCell>
+                      </TableRow>
+                    ) : error ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center text-red-500">
+                          {error}
+                        </TableCell>
+                      </TableRow>
+                    ) : inspectionItems.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center">
+                          表示する点検項目がありません
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      inspectionItems
+                        .filter(item => {
+                          // チェック漏れ（判定未入力）の項目のみを表示
+                          if (item.result !== undefined) return false;
+
+                          if (categoryFilter !== "all" && item.category !== categoryFilter) return false;
+                          if (equipmentFilter !== "all" && item.equipment !== equipmentFilter) return false;
+                          if (searchQuery) {
+                            const searchTermLower = searchQuery.toLowerCase();
+                            const remarkText = item.remark || '';
+                            return remarkText.toLowerCase().includes(searchTermLower);
+                          }
+                          return true;
+                        })
+                        .map((item, index) => {
+                          const standard = findStandardValue(item);
+                          const standardRange = standard ? `${standard.minValue}～${standard.maxValue}` : '';
+                          return (
+                            <tr key={item.id} className="border-t">
+                              <td className="p-1 text-xs">{item.category}</td>
+                              <td className="p-1 text-xs">{item.equipment}</td>
+                              <td className="p-1 text-xs">{item.item}</td>
+                              <td className="p-1 text-xs">{item.criteria}</td>
+                              <td className="p-1 text-xs">{item.method}</td>
+                              <td className="p-1 text-xs">
+                                <Input
+                                  type="number"
+                                  value={item.measurementRecord || ''}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    const numValue = parseFloat(value);
+
+                                    let isOutOfRange = false;
+                                    if (standard && (numValue < parseFloat(standard.minValue) || numValue > parseFloat(standard.maxValue))) {
+                                      isOutOfRange = true;
+                                    }
+
+                                    setInspectionItems(prev => prev.map(i =>
+                                      i.id === item.id ? {
+                                        ...i,
+                                        measurementRecord: value,
+                                        isOutOfRange: isOutOfRange
+                                      } : i
+                                    ));
+                                  }}
+                                  className="w-full text-xs"
+                                />
+                                {item.isOutOfRange && (
+                                  <div className="absolute top-0 right-0 text-red-500 text-xs">
+                                    調整が必要です！
+                                  </div>
+                                )}
+                                <InspectionValueStatus
+                                  value={item.measurementRecord || ''}
+                                  minValue={standard?.minValue || ''}
+                                  maxValue={standard?.maxValue || ''}
+                                  onChange={(value) => updateInspectionMeasurementRecord(item.id, value)}
+                                />
+                              </td>
+                              <td className="p-1 text-xs">{item.diagramRecord}</td>
+                              <td className="p-1 text-xs">
+                                <Select
+                                  value={item.result}
+                                  onValueChange={(value) => updateInspectionResult(item.id, value)}
+                                >
+                                  <SelectTrigger className="w-full text-xs p-1">
+                                    <SelectValue placeholder="選択" />
+                                  </SelectTrigger>
+                                  <SelectContent className="text-xs">
+                                    {resultOptions.map((option) => (
+                                      <SelectItem key={option} value={option}>
+                                        {option}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </td>
+                              <td className="p-1 text-xs">
+                                <Textarea
+                                  value={item.remark || ""}
+                                  onChange={(e) => updateInspectionRemark(item.id, e.target.value)}
+                                  placeholder="備考"
+                                  className="h-20 w-full text-xs p-0.5"
+                                />
+                              </td>
+                            </tr>
+                          );
+                        })
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+            <div className="p-4">
+              <Button variant="outline" onClick={handleCancel}>キャンセル</Button>
+              <Button onClick={handleSaveWithValidation}>点検完了</Button>
             </div>
-            <div className="border rounded-md">
-              <Table>
-                <TableHeader>
-                  <tr>
-                    <th className="p-2 text-center whitespace-nowrap text-xs">部位</th>
-                    <th className="p-2 text-center whitespace-nowrap text-xs">装置</th>
-                    <th className="p-2 text-center whitespace-nowrap text-xs">確認箇所</th>
-                    <th className="p-2 text-center whitespace-nowrap text-xs">判断基準</th>
-                    <th className="p-2 text-center whitespace-nowrap text-xs">確認要領</th>
-                    <th className="p-2 text-center whitespace-nowrap text-xs">
-                      測定等記録
-                      <div className="text-xs text-gray-500">
-                        (測定値を記録)
-                      </div>
-                    </th>
-                    <th className="p-2 text-center whitespace-nowrap w-[30ch] text-xs">図形記録</th>
-                    <th className="p-2 text-center whitespace-nowrap w-[15ch] text-xs">判定</th>
-                    <th className="p-2 text-center whitespace-nowrap w-[50ch] text-xs">記事</th>
-                  </tr>
-                </TableHeader>
-                <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={9} className="text-center">
-                        データを読み込み中...
-                      </TableCell>
-                    </TableRow>
-                  ) : error ? (
-                    <TableRow>
-                      <TableCell colSpan={9} className="text-center text-red-500">
-                        {error}
-                      </TableCell>
-                    </TableRow>
-                  ) : inspectionItems.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={9} className="text-center">
-                        表示する点検項目がありません
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    inspectionItems
-                      .filter(item => {
-                        // チェック漏れ（判定未入力）の項目のみを表示
-                        if (item.result !== undefined) return false;
-
-                        if (categoryFilter !== "all" && item.category !== categoryFilter) return false;
-                        if (equipmentFilter !== "all" && item.equipment !== equipmentFilter) return false;
-                        if (searchQuery) {
-                          const searchTermLower = searchQuery.toLowerCase();
-                          const remarkText = item.remark || '';
-                          return remarkText.toLowerCase().includes(searchTermLower);
-                        }
-                        return true;
-                      })
-                      .map((item, index) => {
-                        const standard = findStandardValue(item);
-                        const standardRange = standard ? `${standard.minValue}～${standard.maxValue}` : '';
-                        return (
-                          <tr key={item.id} className="border-t">
-                            <td className="p-1 text-xs">{item.category}</td>
-                            <td className="p-1 text-xs">{item.equipment}</td>
-                            <td className="p-1 text-xs">{item.item}</td>
-                            <td className="p-1 text-xs">{item.criteria}</td>
-                            <td className="p-1 text-xs">{item.method}</td>
-                            <td className="p-1 text-xs">
-                              <Input
-                                type="number"
-                                value={item.measurementRecord || ''}
-                                onChange={(e) => {
-                                  const value = e.target.value;
-                                  const numValue = parseFloat(value);
-
-                                  let isOutOfRange = false;
-                                  if (standard && (numValue < parseFloat(standard.minValue) || numValue > parseFloat(standard.maxValue))) {
-                                    isOutOfRange = true;
-                                  }
-
-                                  setInspectionItems(prev => prev.map(i =>
-                                    i.id === item.id ? {
-                                      ...i,
-                                      measurementRecord: value,
-                                      isOutOfRange: isOutOfRange
-                                    } : i
-                                  ));
-                                }}
-                                className="w-full text-xs"
-                              />
-                              {item.isOutOfRange && (
-                                <div className="absolute top-0 right-0 text-red-500 text-xs">
-                                  調整が必要です！
-                                </div>
-                              )}
-                              <InspectionValueStatus
-                                value={item.measurementRecord || ''}
-                                minValue={standard?.minValue || ''}
-                                maxValue={standard?.maxValue || ''}
-                                onChange={(value) => updateInspectionMeasurementRecord(item.id, value)}
-                              />
-                            </td>
-                            <td className="p-1 text-xs">{item.diagramRecord}</td>
-                            <td className="p-1 text-xs">
-                              <Select
-                                value={item.result}
-                                onValueChange={(value) => updateInspectionResult(item.id, value)}
-                              >
-                                <SelectTrigger className="w-full text-xs p-1">
-                                  <SelectValue placeholder="選択" />
-                                </SelectTrigger>
-                                <SelectContent className="text-xs">
-                                  {resultOptions.map((option) => (
-                                    <SelectItem key={option} value={option}>
-                                      {option}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </td>
-                            <td className="p-1 text-xs">
-                              <Textarea
-                                value={item.remark || ""}
-                                onChange={(e) => updateInspectionRemark(item.id, e.target.value)}
-                                placeholder="備考"
-                                className="h-20 w-full text-xs p-0.5"
-                              />
-                            </td>
-                          </tr>
-                        );
-                      })
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-          <div className="p-4">
-            <Button variant="outline" onClick={handleCancel}>キャンセル</Button>
-            <Button onClick={handleSaveWithValidation}>点検完了</Button>
-          </div>
-        </Card>
-      )}
+          </Card>
+        )}
+      </>
     </div>
   );
 }

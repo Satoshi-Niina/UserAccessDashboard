@@ -164,12 +164,68 @@ export default function InspectionPage() {
     };
 
     loadStandards();
-    const fetchInspectionData = async () => {
-      if (!machineNumber) return; // Use machineNumber instead of machineId
+    const loadInspectionItems = async (machineNumber: string) => {
+    if (!machineNumber) {
+      toast({
+        title: "エラー",
+        description: "機械番号を入力してください",
+        variant: "destructive",
+      });
+      return;
+    }
 
-      setLoading(true);
-      try {
-        await loadMeasurementRecords();
+    setLoading(true);
+    try {
+      // 機械番号から製造メーカーと機種情報を取得
+      const machineResponse = await fetch(`/api/machineNumbers/${machineNumber}`);
+      if (!machineResponse.ok) {
+        throw new Error('機械情報の取得に失敗しました');
+      }
+      const machineData = await machineResponse.json();
+      
+      // 点検項目を取得
+      const response = await fetch(`/api/inspection-items?manufacturer=${machineData.manufacturer_name}&model=${machineData.model_name}`);
+      if (!response.ok) {
+        throw new Error('点検項目の取得に失敗しました');
+      }
+      const data = await response.json();
+
+      console.log('点検項目データ取得:', data.length, '件');
+      
+      if (!data || data.length === 0) {
+        throw new Error('点検項目が見つかりません');
+      }
+
+      const items = data.map(row => ({
+        id: row.id,
+        category: row.category || '',
+        equipment: row.equipment || '',
+        item: row.item || '',
+        criteria: row.criteria || '',
+        method: row.method || '',
+        measurementRecord: row.measurementRecord || '',
+        diagramRecord: row.diagramRecord || '',
+        remark: ''
+      }));
+
+      setInspectionItems(items);
+      setFilteredItems(items);
+      await loadMeasurementRecords();
+    } catch (error) {
+      console.error('点検項目取得エラー:', error);
+      toast({
+        title: "エラー",
+        description: error.message || "点検項目の取得に失敗しました",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchInspectionData = async () => {
+    if (!machineNumber) return;
+    await loadInspectionItems(machineNumber););
 
         // 機械番号から製造メーカーと機種情報を取得
         const machineResponse = await fetch(`/api/machineNumbers/${machineNumber}`);
@@ -365,7 +421,18 @@ export default function InspectionPage() {
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">仕業点検</h1>
-        <div className="flex items-center gap-2"> {/* Added machine number input */}
+        <div className="flex items-center gap-4">
+          <input
+            type="text"
+            placeholder="機械番号"
+            value={machineNumber || ''}
+            onChange={(e) => setMachineNumber(e.target.value)}
+            className="px-3 py-2 border rounded"
+          />
+          <Button onClick={() => loadInspectionItems(machineNumber)}>
+            点検項目取得
+          </Button>
+        </div> className="flex items-center gap-2"> {/* Added machine number input */}
           <label htmlFor="machineNumber" className="font-medium">機械番号:</label>
           <input
             id="machineNumber"

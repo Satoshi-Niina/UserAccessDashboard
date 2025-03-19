@@ -1,3 +1,3 @@
 manufacturer,model,engineType,category,equipment,item,criteria,measurementRecord,minValue,maxValue
 堀川工機,MC300,日産,制動装置,ブレーキシリンダー,ブレーキシリンダー,ストローク測定,mm,60,90
-堀川工機,MC300,日産,制動装置,制輪子,摩耗,厚さ測定,,20,50
+堀川工機,MC300,日産,制動装置,制輪子,摩耗,厚さ測定,,25,70

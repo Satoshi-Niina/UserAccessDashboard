@@ -1,7 +1,7 @@
 {
   "measurementStandards": [
     {
-      "id": 44,
+      "id": 1,
       "manufacturer": "堀川工機",
       "model": "MC300",
       "engineType": "日産",
@@ -9,14 +9,14 @@
       "equipment": "ブレーキシリンダー",
       "item": "ブレーキシリンダー",
       "criteria": "ストローク測定",
-      "method": "60～90mm（ブレーキ約200kpa時）",
+      "method": "",
       "measurementRecord": "mm",
       "diagramRecord": "",
       "minValue": "60",
       "maxValue": "90"
     },
     {
-      "id": 47,
+      "id": 2,
       "manufacturer": "堀川工機",
       "model": "MC300",
       "engineType": "日産",
@@ -24,11 +24,11 @@
       "equipment": "制輪子",
       "item": "摩耗",
       "criteria": "厚さ測定",
-      "method": "最低２0mm以上",
+      "method": "",
       "measurementRecord": "",
       "diagramRecord": "",
-      "minValue": "20",
-      "maxValue": "50"
+      "minValue": "25",
+      "maxValue": "70"
     }
   ]
 }

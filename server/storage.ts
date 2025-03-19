@@ -142,18 +142,47 @@ export class DatabaseStorage implements IStorage {
         manufacturers = Papa.parse(content, { header: true }).data;
       }
 
-      const newId = manufacturers.length > 0 ? Math.max(...manufacturers.map(m => parseInt(m.id))) + 1 : 1;
-      const newManufacturer = { id: newId, name, code };
+      const newId = manufacturers.length > 0 ? 
+        Math.max(...manufacturers.map(m => parseInt(m.id || '0'))) + 1 : 1;
+
+      const newManufacturer = { 
+        id: newId.toString(),
+        name,
+        code
+      };
+      
       manufacturers.push(newManufacturer);
 
       if (!fs.existsSync(path.dirname(csvPath))) {
         fs.mkdirSync(path.dirname(csvPath), { recursive: true });
       }
-      fs.writeFileSync(csvPath, Papa.unparse(manufacturers));
+      
+      const csv = Papa.unparse(manufacturers);
+      await fs.promises.writeFile(csvPath, csv);
 
       return newManufacturer;
     } catch (error) {
       console.error('Error creating manufacturer:', error);
+      throw error;
+    }
+  }
+
+  async deleteManufacturer(id: number): Promise<void> {
+    try {
+      const csvPath = path.join(process.cwd(), 'attached_assets/inspection/table/manufacturers.csv');
+      if (!fs.existsSync(csvPath)) {
+        throw new Error('Manufacturers file not found');
+      }
+
+      const content = await fs.promises.readFile(csvPath, 'utf-8');
+      const manufacturers = Papa.parse(content, { header: true }).data;
+      
+      const filteredManufacturers = manufacturers.filter(m => parseInt(m.id) !== id);
+      
+      const csv = Papa.unparse(filteredManufacturers);
+      await fs.promises.writeFile(csvPath, csv);
+    } catch (error) {
+      console.error('Error deleting manufacturer:', error);
       throw error;
     }
   }

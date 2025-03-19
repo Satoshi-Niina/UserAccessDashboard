@@ -654,9 +654,11 @@ export default function InspectionPage() {
                             <td className="p-1 text-xs">{item.criteria}</td>
                             <td className="p-1 text-xs">{item.method}</td>
                             <td className="p-1 text-xs">
-                              <div className="mb-2 text-xs">
-                                {item.minValue}～{item.maxValue}
-                              </div>
+                              {standard && (
+                                <div className="mb-2 text-xs">
+                                  {standard.minValue}～{standard.maxValue}
+                                </div>
+                              )}
                               <Input
                                 type="number"
                                 value={item.measurementRecord || ''}
@@ -665,7 +667,7 @@ export default function InspectionPage() {
                                   const numValue = parseFloat(value);
 
                                   let isOutOfRange = false;
-                                  if (item.minValue && item.maxValue && (numValue < parseFloat(item.minValue) || numValue > parseFloat(item.maxValue))) {
+                                  if (standard && (numValue < parseFloat(standard.minValue) || numValue > parseFloat(standard.maxValue))) {
                                     isOutOfRange = true;
                                   }
 

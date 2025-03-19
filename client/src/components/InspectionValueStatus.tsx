@@ -70,7 +70,7 @@ export const InspectionValueStatus: React.FC<InspectionValueStatusProps> = ({
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              <p>異常値です！</p>
+              <p>調整が必要です！</p>
               <p className="text-xs">基準値: {minValue || '-'} 〜 {maxValue || '-'}</p>
             </TooltipContent>
           </Tooltip>

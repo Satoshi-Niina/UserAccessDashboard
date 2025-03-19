@@ -644,6 +644,7 @@ export default function InspectionPage() {
                       })
                       .map((item, index) => {
                         const standard = findStandardValue(item);
+                  const standardRange = standard ? `${standard.minValue}～${standard.maxValue}` : '';
                         return (
                           <tr key={item.id} className="border-t">
                             <td className="p-1 text-xs">{item.category}</td>

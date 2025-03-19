@@ -161,7 +161,16 @@ export function registerRoutes(app: Express): Server {
   app.post('/api/models', async (req, res) => {
     try {
       const { name, code, manufacturerId } = req.body;
-      const model = await storage.createModel({ name, code, manufacturerId });
+      if (!name || !manufacturerId) {
+        return res.status(400).json({ error: '機種名と製造メーカーIDは必須です' });
+      }
+      
+      const model = await storage.createModel({ 
+        name, 
+        code: code || '', 
+        manufacturerId: parseInt(manufacturerId)
+      });
+      
       res.status(201).json(model);
     } catch (error) {
       console.error('Error creating model:', error);

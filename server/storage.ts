@@ -139,16 +139,17 @@ export class DatabaseStorage implements IStorage {
 
       if (fs.existsSync(csvPath)) {
         const content = fs.readFileSync(csvPath, 'utf-8');
-        manufacturers = Papa.parse(content, { header: true }).data;
+        const parsed = Papa.parse(content, { header: true });
+        manufacturers = parsed.data.filter(m => m.id && m.name);
       }
 
       const newId = manufacturers.length > 0 ? 
-        Math.max(...manufacturers.map(m => parseInt(m.id || '0'))) + 1 : 1;
+        Math.max(...manufacturers.map(m => parseInt(m.id))) + 1 : 1;
 
       const newManufacturer = { 
-        id: newId.toString(),
+        id: newId,
         name,
-        code
+        code: code || ''
       };
       
       manufacturers.push(newManufacturer);
@@ -251,6 +252,13 @@ export class DatabaseStorage implements IStorage {
       const dirPath = path.dirname(csvPath);
       let machines = [];
 
+      // 機種の存在確認
+      const models = await this.getModels();
+      const model = models.find(m => parseInt(m.id) === model_id);
+      if (!model) {
+        throw new Error('指定された機種が見つかりません');
+      }
+
       // ディレクトリが存在しない場合は作成
       if (!fs.existsSync(dirPath)) {
         fs.mkdirSync(dirPath, { recursive: true });
@@ -259,7 +267,8 @@ export class DatabaseStorage implements IStorage {
       // ファイルが存在する場合は既存データを読み込む
       if (fs.existsSync(csvPath)) {
         const content = fs.readFileSync(csvPath, 'utf-8');
-        machines = Papa.parse(content, { header: true }).data;
+        const parsed = Papa.parse(content, { header: true });
+        machines = parsed.data.filter(m => m.number && m.model_id);
       }
 
       // モデル情報を取得

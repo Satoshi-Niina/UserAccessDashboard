@@ -161,10 +161,9 @@ export class DatabaseStorage implements IStorage {
         fs.mkdirSync(path.dirname(csvPath), { recursive: true });
       }
       
-      // ヘッダー行を明示的に指定してCSVを生成
-      const csv = Papa.unparse(manufacturers, {
-        header: true,
-        columns: ['id', 'name']
+      const csv = Papa.unparse({
+        fields: ['id', 'name'],
+        data: manufacturers
       });
       await fs.promises.writeFile(csvPath, csv);
 

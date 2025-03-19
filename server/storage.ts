@@ -151,7 +151,7 @@ export class DatabaseStorage implements IStorage {
         Math.max(...existingIds) + 1 : 1;
 
       const newManufacturer = { 
-        id: newId.toString(),
+        id: newId,
         name,
         code: code || ''
       };

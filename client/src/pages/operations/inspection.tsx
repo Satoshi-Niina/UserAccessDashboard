@@ -176,17 +176,17 @@ export default function InspectionPage() {
 
         const items = [];
         for (const row of data) {
-          if (row.category && row.equipment && row.checkPoint) {
+          if (row.category && row.equipment && row.item) {
             items.push({
               id: row.id,
               category: row.category,
               equipment: row.equipment,
-              item: row.checkPoint,
+              item: row.item,
               criteria: row.criteria || '',
               method: row.method || '',
-              measurementRecord:'',
-              diagramRecord:'',
-              remark:''
+              measurementRecord: row.measurementRecord || '',
+              diagramRecord: row.diagramRecord || '',
+              remark: ''
             });
           }
         }

@@ -677,16 +677,14 @@ export default function InspectionPage() {
                                           } : i
                                         ));
                                       }}
+                                      className="w-full text-xs"
                                     />
                                     {item.isOutOfRange && (
                                       <div className="absolute top-0 right-0 text-red-500 text-xs">
                                         調整が必要です！
                                       </div>
                                     )}
-                                  </div>, result: resultValue} : i
-                                    ));
-                                  }}
-                                  className="w-full text-xs"
+                                  </div>
                                   />
                                 </>
                               ) : null}

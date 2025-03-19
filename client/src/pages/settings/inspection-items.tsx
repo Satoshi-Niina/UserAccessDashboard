@@ -595,8 +595,8 @@ export default function InspectionItems() {
       if(selectedTable === 'machineNumbers' && model){
         await addMachineNumber({
           number: newItem.number,
-          model_id: selectedModelId.toString(), //Add modelName
-          modelId: selectedModelId,
+          model_id: selectedModelId,
+          manufacturer_id: model.manufacturer_id,
           modelName: model.name, //Add modelName
           manufacturerId: model.manufacturerId
         });

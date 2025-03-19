@@ -118,6 +118,7 @@ export default function InspectionPage() {
   const [responsiblePerson, setResponsiblePerson] = useState("");
   const [inspectorInput, setInspectorInput] = useState("");
   const [machineId, setMachineId] = useState("");
+  const [machineNumber, setMachineNumber] = useState(''); // Added machineNumber state
   const { toast } = useToast();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [scrollIndicatorWidth, setScrollIndicatorWidth] = useState(100);
@@ -164,14 +165,14 @@ export default function InspectionPage() {
 
     loadStandards();
     const fetchInspectionData = async () => {
-      if (!machineId) return;
+      if (!machineNumber) return; // Use machineNumber instead of machineId
 
       setLoading(true);
       try {
         await loadMeasurementRecords();
 
         // 機械番号から製造メーカーと機種情報を取得
-        const machineResponse = await fetch(`/api/machineNumbers/${machineId}`);
+        const machineResponse = await fetch(`/api/machineNumbers/${machineNumber}`);
         if (!machineResponse.ok) {
           throw new Error('機械情報の取得に失敗しました');
         }
@@ -214,7 +215,7 @@ export default function InspectionPage() {
     };
 
     fetchInspectionData();
-  }, [machineId, toast]);
+  }, [machineNumber, toast]);
 
   const updateInspectionResult = (id: number, result: string) => {
     setInspectionItems(prevItems => prevItems.map(item =>
@@ -250,8 +251,8 @@ export default function InspectionPage() {
 
     // ファイル名の準備
     const dateStr = new Date().toISOString().slice(0, 10);
-    const basicInfoFileName = `inspection_info_${dateStr}_${machineId}.csv`;
-    const inspectionRecordFileName = `inspection_${dateStr}_${machineId}.csv`;
+    const basicInfoFileName = `inspection_info_${dateStr}_${machineNumber}.csv`; // Use machineNumber
+    const inspectionRecordFileName = `inspection_${dateStr}_${machineNumber}.csv`; // Use machineNumber
 
     try {
       const response = await fetch('/api/save-inspection-data', {
@@ -364,6 +365,17 @@ export default function InspectionPage() {
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">仕業点検</h1>
+        <div className="flex items-center gap-2"> {/* Added machine number input */}
+          <label htmlFor="machineNumber" className="font-medium">機械番号:</label>
+          <input
+            id="machineNumber"
+            type="text"
+            value={machineNumber}
+            onChange={(e) => setMachineNumber(e.target.value)}
+            className="border rounded px-2 py-1"
+            placeholder="機械番号を入力"
+          />
+        </div>
         <div className="flex space-x-2">
           <Button variant="outline" onClick={() => navigate("/operations")}>
             戻る

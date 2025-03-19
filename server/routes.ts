@@ -225,9 +225,9 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get('/api/machineNumbers/:id', async (req, res) => {
+  app.get('/api/machineNumbers/:number', async (req, res) => {
     try {
-      const machineNumber = await storage.getMachineNumberById(parseInt(req.params.id));
+      const machineNumber = await storage.getMachineNumberByNumber(req.params.number);
       if (!machineNumber) {
         return res.status(404).json({ error: '機械番号が見つかりません' });
       }

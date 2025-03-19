@@ -230,6 +230,40 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async getMachineNumberByNumber(number: string): Promise<any> {
+    try {
+      const csvPath = path.join(process.cwd(), 'attached_assets/inspection/table/machine_numbers.csv');
+      if (!fs.existsSync(csvPath)) {
+        return null;
+      }
+      
+      const content = fs.readFileSync(csvPath, 'utf-8');
+      const machines = Papa.parse(content, { header: true }).data;
+      
+      const machine = machines.find((m: any) => m.number === number);
+      if (!machine) {
+        return null;
+      }
+
+      // モデル情報を取得
+      const models = await this.getModels();
+      const model = models.find((m: any) => String(m.id) === String(machine.model_id));
+      
+      if (!model) {
+        return null;
+      }
+
+      return {
+        number: machine.number,
+        model_name: model.name,
+        manufacturer_name: model.manufacturer
+      };
+    } catch (error) {
+      console.error('Error getting machine number:', error);
+      return null;
+    }
+  }
+
   async getMachineNumberById(id: number): Promise<any> {
     return new Promise((resolve, reject) => {
       db.get(`

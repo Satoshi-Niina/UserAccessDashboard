@@ -1,6 +1,4 @@
-id,name
-1,MC300
-2,MCーK
+
 id,name,code,manufacturer_id
 1,MC300,MC3,1
 2,HC400,HC4,1

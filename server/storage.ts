@@ -188,7 +188,26 @@ export class DatabaseStorage implements IStorage {
       console.error('Error creating model:', error);
       throw error;
     }
-  }arse(models));
+  }
+
+  async createModel({ name, code, manufacturerId }: { name: string, code?: string, manufacturerId: number }): Promise<any> {
+    try {
+      const csvPath = path.join(process.cwd(), 'attached_assets/inspection/table/models.csv');
+      let models = [];
+
+      if (fs.existsSync(csvPath)) {
+        const content = fs.readFileSync(csvPath, 'utf-8');
+        models = Papa.parse(content, { header: true }).data;
+      }
+
+      const newId = models.length > 0 ? Math.max(...models.map(m => parseInt(m.id))) + 1 : 1;
+      const newModel = { id: newId, name, code, manufacturerId };
+      models.push(newModel);
+
+      if (!fs.existsSync(path.dirname(csvPath))) {
+        fs.mkdirSync(path.dirname(csvPath), { recursive: true });
+      }
+      fs.writeFileSync(csvPath, Papa.unparse(models));
 
       return newModel;
     } catch (error) {

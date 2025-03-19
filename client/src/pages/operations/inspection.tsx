@@ -654,11 +654,9 @@ export default function InspectionPage() {
                             <td className="p-1 text-xs">{item.criteria}</td>
                             <td className="p-1 text-xs">{item.method}</td>
                             <td className="p-1 text-xs">
-                              {standard && (
-                                <div className="mb-2 text-xs">
-                                  {standard.minValue}～{standard.maxValue}
-                                </div>
-                              )}
+                              <div className="mb-2 text-xs">
+                                {item.minValue || ''}～{item.maxValue || ''}
+                              </div>
                               <Input
                                 type="number"
                                 value={item.measurementRecord || ''}

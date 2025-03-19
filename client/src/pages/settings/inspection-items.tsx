@@ -985,8 +985,7 @@ export default function InspectionItems() {
                     <div className="flex gap-4 items-end mb-4">
                       <div>
                         <Label>機種名</Label>
-                        <Input                          placeholder="機種名"
-                          value={newItem.name}
+                        <Input                          placeholder="機種名"                          value={newItem.name}
                           onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
                           className="w-[200px]"
                         />
@@ -1293,20 +1292,27 @@ export default function InspectionItems() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>点検キャンセル</AlertDialogTitle>
-            <AlertDialogDescription>
-              点検をキャンセルしますか？変更内容は破棄されます。
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancelCancel}>キャンセル</AlertDialogCancel>
-            <AlertDialogAction onClick={handleCancelConfirm}>キャンセルする</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>確認</DialogTitle>
+            <DialogDescription>
+              編集を中止しますか？
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setShowCancelDialog(false)}>
+              現在のフォームに戻る
+            </Button>
+            <Button variant="destructive" onClick={() => {
+              navigate('/settings');
+              setShowCancelDialog(false);
+            }}>
+              終了してメニューに戻る
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DndProvider>
   );
 }

@@ -169,10 +169,17 @@ export default function InspectionPage() {
       setLoading(true);
       try {
         await loadMeasurementRecords();
-        const response = await fetch('/api/inspection-items?file=inspection_items.csv');
+        const response = await fetch('/api/inspection-items');
+        if (!response.ok) {
+          throw new Error('点検項目の取得に失敗しました');
+        }
         const data = await response.json();
 
         console.log('点検項目データ取得:', data.length, '件');
+
+        if (!Array.isArray(data)) {
+          throw new Error('不正なデータ形式です');
+        }
 
         const items = data.map(row => ({
           id: row.id,

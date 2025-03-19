@@ -93,16 +93,13 @@ const findStandardValue = async (item: InspectionItem) => {
   if (matchedStandard) {
     console.log(`基準値が見つかりました: 項目=${item.item}, 最小値=${matchedStandard.minValue}, 最大値=${matchedStandard.maxValue}`);
   } else {
-    console.log(`基準値が見つかりませんでした: 項目=${item.item}`);
+    console.log(`基準値が見つかりませんでした: 項目=${item.item}, カテゴリ=${item.category}, 装置=${item.equipment}`);
   }
   return matchedStandard;
   } catch (error) {
     console.error('基準値の取得に失敗しました:', error);
     return null;
-  }りません: 項目=${item.item}, カテゴリ=${item.category}, 装置=${item.equipment}`);
   }
-
-  return matchedStandard || null;
 };
 
 

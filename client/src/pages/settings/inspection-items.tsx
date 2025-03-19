@@ -958,7 +958,8 @@ export default function InspectionItems() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <Button onClick={handleSearch}>検索</Button                  <div className="w-64">
+                  <Button onClick={handleSearch}>検索</Button>
+                  <div className="w-64">
                     <Label>検索</Label>
                     <Input
                       type="text"

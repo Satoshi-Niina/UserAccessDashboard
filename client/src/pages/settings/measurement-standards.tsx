@@ -79,7 +79,7 @@ export default function MeasurementStandards() {
           file.name.endsWith('.csv') && file.name.includes('仕業点検マスタ')
         );
         setAvailableFiles(csvFiles);
-        
+
         // デフォルトの選択ファイルを設定（最新のファイル）
         if (csvFiles.length > 0) {
           setSelectedFile(csvFiles[0].name);
@@ -99,7 +99,7 @@ export default function MeasurementStandards() {
   useEffect(() => {
     if (selectedFile) {
       setLoading(true);
-      
+
       fetch(`/api/inspection-items?file=${selectedFile}`)
         .then(response => response.json())
         .then(data => {
@@ -119,7 +119,7 @@ export default function MeasurementStandards() {
             minValue: item.最小値 || item.minValue || "",
             maxValue: item.最大値 || item.maxValue || ""
           }));
-          
+
           setInspectionItems(items);
           setLoading(false);
         })
@@ -135,19 +135,23 @@ export default function MeasurementStandards() {
     }
   }, [selectedFile]);
 
-  // フィルタリングの適用
+  // フィルタリング処理を更新
   useEffect(() => {
-    let filtered = inspectionItems;
-    
-    // メーカー、機種、部位、装置でフィルタリング
-    filtered = filtered.filter(
-      (item) => 
-        (!selectedManufacturer || selectedManufacturer === "all" || item.manufacturer === selectedManufacturer) && 
-        (!selectedModel || selectedModel === "all" || item.model === selectedModel) &&
-        (!selectedCategory || selectedCategory === "all" || item.category === selectedCategory) &&
-        (!selectedEquipment || selectedEquipment === "all" || item.equipment === selectedEquipment)
-    );
-    
+    let filtered = [...inspectionItems];
+
+    if (selectedManufacturer !== "all") {
+      filtered = filtered.filter(item => item.manufacturer === selectedManufacturer);
+    }
+    if (selectedModel !== "all") {
+      filtered = filtered.filter(item => item.model === selectedModel);
+    }
+    if (selectedCategory !== "all") {
+      filtered = filtered.filter(item => item.category === selectedCategory);
+    }
+    if (selectedEquipment !== "all") {
+      filtered = filtered.filter(item => item.equipment === selectedEquipment);
+    }
+
     setFilteredItems(filtered);
   }, [inspectionItems, selectedManufacturer, selectedModel, selectedCategory, selectedEquipment]);
 
@@ -191,7 +195,7 @@ export default function MeasurementStandards() {
 
       setInspectionItems(updatedItems);
       setIsEditDialogOpen(false);
-      
+
       toast({
         title: "基準値を更新しました",
         description: "項目の基準値が更新されました",
@@ -281,6 +285,25 @@ export default function MeasurementStandards() {
   const uniqueModels = Array.from(new Set(inspectionItems.map(item => item.model))).filter(model => model && model.trim() !== '').sort();
   const uniqueCategories = Array.from(new Set(inspectionItems.map(item => item.category))).filter(category => category && category.trim() !== '').sort();
   const uniqueEquipments = Array.from(new Set(inspectionItems.map(item => item.equipment))).filter(equipment => equipment && equipment.trim() !== '').sort();
+
+  useEffect(() => {
+    const fetchStandards = async () => {
+      try {
+        const response = await fetch('/api/measurement-standards');
+        const data = await response.json();
+        if (data.standards) {
+          setInspectionItems(data.standards.map((item: any, index: number) => ({
+            ...item,
+            id: index + 1
+          })));
+        }
+      } catch (error) {
+        console.error('基準値データ取得エラー:', error);
+      }
+    };
+
+    fetchStandards();
+  }, []);
 
   return (
     <div className={isMenuExpanded ? "" : "sidebar-collapsed"}>

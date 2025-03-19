@@ -891,17 +891,61 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // 基準値テーブルを取得
   app.get('/api/measurement-standards', async (req, res) => {
     try {
-      const filePath = path.join(process.cwd(), 'attached_assets/Reference value/measurement_standards.json');
-      if (!fs.existsSync(filePath)) {
-        return res.json({ measurementStandards: [] });
+      const tablePath = path.join(process.cwd(), 'attached_assets/inspection/table/measurement_standards.csv');
+      if (!fs.existsSync(tablePath)) {
+        return res.json({ standards: [] });
       }
-      const content = await fs.promises.readFile(filePath, 'utf-8');
-      res.json(JSON.parse(content));
+      const fileContent = await fs.promises.readFile(tablePath, 'utf8');
+      const results = Papa.parse(fileContent, {
+        header: true,
+        skipEmptyLines: true
+      });
+      res.json({ standards: results.data });
     } catch (error) {
       console.error('基準値取得エラー:', error);
       res.status(500).json({ error: '基準値の取得に失敗しました' });
+    }
+  });
+
+  // 基準値を保存
+  app.post('/api/measurement-standards', async (req, res) => {
+    try {
+      const { standard } = req.body;
+      const tablePath = path.join(process.cwd(), 'attached_assets/inspection/table/measurement_standards.csv');
+      const refPath = path.join(process.cwd(), 'attached_assets/Reference value/measurement_standards.csv');
+      
+      // 既存のデータを読み込むか、新規作成
+      let standards = [];
+      if (fs.existsSync(tablePath)) {
+        const content = await fs.promises.readFile(tablePath, 'utf8');
+        standards = Papa.parse(content, { header: true }).data;
+      }
+
+      // 既存の項目を更新するか、新規追加
+      const existingIndex = standards.findIndex(s => 
+        s.category === standard.category && 
+        s.equipment === standard.equipment && 
+        s.item === standard.item
+      );
+
+      if (existingIndex >= 0) {
+        standards[existingIndex] = standard;
+      } else {
+        standards.push(standard);
+      }
+
+      // CSVとして保存
+      const csv = Papa.unparse(standards);
+      await fs.promises.writeFile(tablePath, csv);
+      await fs.promises.writeFile(refPath, csv); // Reference valueフォルダにも保存
+
+      res.json({ message: '基準値を保存しました' });
+    } catch (error) {
+      console.error('基準値保存エラー:', error);
+      res.status(500).json({ error: '基準値の保存に失敗しました' });
     }
   });
 

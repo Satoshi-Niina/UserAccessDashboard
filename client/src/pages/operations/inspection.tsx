@@ -64,10 +64,10 @@ const findStandardValue = async (item: InspectionItem) => {
     const data = await response.json();
     const standards = data.measurementStandards || [];
 
-  if (!standards || standards.length === 0) {
-    console.log('基準値データが存在しません');
-    return null;
-  }
+    if (!standards || standards.length === 0) {
+      console.log('基準値データが存在しません');
+      return null;
+    }
 
   const matchConditions = [
     { field: 'manufacturer', itemField: 'manufacturer' },
@@ -93,7 +93,13 @@ const findStandardValue = async (item: InspectionItem) => {
   if (matchedStandard) {
     console.log(`基準値が見つかりました: 項目=${item.item}, 最小値=${matchedStandard.minValue}, 最大値=${matchedStandard.maxValue}`);
   } else {
-    console.log(`基準値が見つかりません: 項目=${item.item}, カテゴリ=${item.category}, 装置=${item.equipment}`);
+    console.log(`基準値が見つかりませんでした: 項目=${item.item}`);
+  }
+  return matchedStandard;
+  } catch (error) {
+    console.error('基準値の取得に失敗しました:', error);
+    return null;
+  }りません: 項目=${item.item}, カテゴリ=${item.category}, 装置=${item.equipment}`);
   }
 
   return matchedStandard || null;

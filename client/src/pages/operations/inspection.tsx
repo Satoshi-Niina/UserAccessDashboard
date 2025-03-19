@@ -60,7 +60,7 @@ const standardValues: StandardValue[] = []; // Initialize as empty array
 
 const findStandardValue = (item: InspectionItem) => {
   const storedStandards = localStorage.getItem('measurementStandards');
-  const standards = storedStandards ? JSON.parse(storedStandards) : [];
+  const standards = storedStandards ? JSON.parse(storedStandards).measurementStandards : [];
 
   if (!standards || standards.length === 0) {
     console.log('基準値データが存在しません');
@@ -647,7 +647,7 @@ export default function InspectionPage() {
                             <td className="p-1 text-xs">{item.criteria}</td>
                             <td className="p-1 text-xs">{item.method}</td>
                             <td className="p-1 text-xs">
-                              {item.criteria.includes('測定') || item.method.includes('測定') ? (
+                              {standard ? (
                                 <Input 
                                   type="number" 
                                   value={item.measurementRecord || ''} 
@@ -667,7 +667,9 @@ export default function InspectionPage() {
                                   }}
                                   className="w-full text-xs"
                                 />
-                              ) : null}
+                              ) : (
+                                <span>-</span>
+                              )}
                               <InspectionValueStatus
                                 value={item.measurementRecord || ''}
                                 minValue={standard?.minValue || ''}

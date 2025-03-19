@@ -654,40 +654,36 @@ export default function InspectionPage() {
                             <td className="p-1 text-xs">{item.criteria}</td>
                             <td className="p-1 text-xs">{item.method}</td>
                             <td className="p-1 text-xs">
-                              {standard && (
-                                <div className="mb-2 text-xs">
-                                  {standard.minValue}～{standard.maxValue}
+                              <div className="mb-2 text-xs">
+                                {item.minValue}～{item.maxValue}
+                              </div>
+                              <Input
+                                type="number"
+                                value={item.measurementRecord || ''}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  const numValue = parseFloat(value);
+
+                                  let isOutOfRange = false;
+                                  if (item.minValue && item.maxValue && (numValue < parseFloat(item.minValue) || numValue > parseFloat(item.maxValue))) {
+                                    isOutOfRange = true;
+                                  }
+
+                                  setInspectionItems(prev => prev.map(i =>
+                                    i.id === item.id ? {
+                                      ...i,
+                                      measurementRecord: value,
+                                      isOutOfRange: isOutOfRange
+                                    } : i
+                                  ));
+                                }}
+                                className="w-full text-xs"
+                              />
+                              {item.isOutOfRange && (
+                                <div className="absolute top-0 right-0 text-red-500 text-xs">
+                                  調整が必要です！
                                 </div>
                               )}
-                              <div className="relative">
-                                <Input
-                                  type="number"
-                                  value={item.measurementRecord || ''}
-                                  onChange={(e) => {
-                                    const value = e.target.value;
-                                    const numValue = parseFloat(value);
-
-                                    let isOutOfRange = false;
-                                    if (standard && (numValue < parseFloat(standard.minValue) || numValue > parseFloat(standard.maxValue))) {
-                                      isOutOfRange = true;
-                                    }
-
-                                    setInspectionItems(prev => prev.map(i =>
-                                      i.id === item.id ? {
-                                        ...i,
-                                        measurementRecord: value,
-                                        isOutOfRange: isOutOfRange
-                                      } : i
-                                    ));
-                                  }}
-                                  className="w-full text-xs"
-                                />
-                                {item.isOutOfRange && (
-                                  <div className="absolute top-0 right-0 text-red-500 text-xs">
-                                    調整が必要です！
-                                  </div>
-                                )}
-                              </div>
                               <InspectionValueStatus
                                 value={item.measurementRecord || ''}
                                 minValue={standard?.minValue || ''}

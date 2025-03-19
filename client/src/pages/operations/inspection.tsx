@@ -652,7 +652,6 @@ export default function InspectionPage() {
                             <td className="p-1 text-xs">{item.equipment}</td>
                             <td className="p-1 text-xs">{item.item}</td>
                             <td className="p-1 text-xs">{item.criteria}</td>
-                            <td className="p-1 text-xs">{item.method}</td>
                             <td className="p-1 text-xs">
                               <div className="text-xs">
                                 {standard?.minValue || ''}～{standard?.maxValue || ''}

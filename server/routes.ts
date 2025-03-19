@@ -201,6 +201,30 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // 4つのテーブルのエンドポイント
+  app.get('/api/inspection/table/:tableName', async (req, res) => {
+    try {
+      const tableName = req.params.tableName;
+      const targetDir = path.join(process.cwd(), 'attached_assets/inspection/table');
+      const filePath = path.join(targetDir, `${tableName}.csv`);
+
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: `${tableName}テーブルが見つかりません` });
+      }
+
+      const fileContent = await fs.promises.readFile(filePath, 'utf8');
+      const results = Papa.parse(fileContent, {
+        header: true,
+        skipEmptyLines: true
+      });
+
+      res.json(results.data);
+    } catch (error) {
+      console.error(`テーブル読み込みエラー:`, error);
+      res.status(500).json({ error: 'テーブルの読み込みに失敗しました' });
+    }
+  });
+
   app.get('/api/inspection-items', async (req, res) => {
     try {
       // パラメータからファイル名を取得

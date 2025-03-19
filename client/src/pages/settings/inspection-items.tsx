@@ -89,6 +89,7 @@ export default function InspectionItems() {
     onCancel: (() => void) | null;
   }>({ isOpen: false, itemId: null, onConfirm: null, onCancel: null });
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [loading, setLoading] = useState(false); // Added loading state
 
 
   useEffect(() => {
@@ -131,6 +132,7 @@ export default function InspectionItems() {
       setInitialItems(data);
       setHasChanges(false);
       setFilteredItems(data); // Initialize filteredItems
+      setLoading(false); // Set loading to false after data is fetched
     } catch (error) {
       console.error('Error fetching inspection items:', error);
       toast({
@@ -138,6 +140,7 @@ export default function InspectionItems() {
         description: "データの取得に失敗しました",
         variant: "destructive",
       });
+      setLoading(false); // Set loading to false even if there's an error
     }
   };
 
@@ -652,6 +655,36 @@ export default function InspectionItems() {
   };
 
 
+  useEffect(() => {
+    if (activeTab === "items") {
+      setLoading(true);
+      // 4つのテーブルから読み込み
+      Promise.all([
+        fetch('/api/inspection/table/manufacturers').then(res => res.json()),
+        fetch('/api/inspection/table/models').then(res => res.json()),
+        fetch('/api/inspection/table/machine_numbers').then(res => res.json()),
+        fetch('/api/inspection/table/inspection_items').then(res => res.json())
+      ])
+        .then(([manufacturersData, modelsData, machineNumbersData, inspectionItemsData]) => {
+          setManufacturers(manufacturersData);
+          setModels(modelsData);
+          setInspectionItems(inspectionItemsData);
+          setFilteredItems(inspectionItemsData);
+          setLoading(false);
+        })
+        .catch(error => {
+          console.error('Error fetching data from tables:', error);
+          toast({
+            title: "エラー",
+            description: "データの取得に失敗しました",
+            variant: "destructive",
+          });
+          setLoading(false);
+        });
+    }
+  }, [activeTab]);
+
+
   return (
     <DndProvider backend={HTML5Backend}>
       <Card className="w-full">
@@ -925,8 +958,7 @@ export default function InspectionItems() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <Button onClick={handleSearch}>検索</Button>
-                  <div className="w-64">
+                  <Button onClick={handleSearch}>検索</Button                  <div className="w-64">
                     <Label>検索</Label>
                     <Input
                       type="text"

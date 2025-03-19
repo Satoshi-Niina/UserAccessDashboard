@@ -149,3 +149,6 @@ id,category,equipment,checkPoint,criteria,method
 148,除雪装置,連結部（MCR）,ラッセル（フランジャ板）,フランジャ取付状態,
 149,除雪装置,連結部（MCR）,連結機器,ブラケット取付フランジ収納,
 150,除雪装置,連結部（MCR）,連結機器,連結ブラケット収納状態,
+id,category,equipment,checkPoint,criteria,method
+1,制動装置,ブレーキシリンダー,ストローク測定,60-90mm,目視確認
+2,制動装置,制輪子,摩耗,25-70mm,ノギス測定

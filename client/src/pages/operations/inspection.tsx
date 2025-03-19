@@ -56,14 +56,13 @@ interface StandardValue {
   maxValue: number;
 }
 
-const standardValues: StandardValue[] = [
-  { category: "ブレーキ", equipment: "ブレーキシリンダー", item: "ブレーキストローク", minValue: 0.5, maxValue: 1.5 },
-  { category: "ブレーキ", equipment: "ブレーキシリンダー", item: "ブレーキパッド厚", minValue: 2, maxValue: 10 },
-  // ... 他の測定基準を追加
-];
+const standardValues: StandardValue[] = []; // Initialize as empty array
 
 const findStandardValue = (item: InspectionItem) => {
-  if (!standardValues?.measurementStandards || standardValues.measurementStandards.length === 0) {
+  const storedStandards = localStorage.getItem('measurementStandards');
+  const standards = storedStandards ? JSON.parse(storedStandards) : [];
+
+  if (!standards || standards.length === 0) {
     console.log('基準値データが存在しません');
     return null;
   }
@@ -76,7 +75,7 @@ const findStandardValue = (item: InspectionItem) => {
     { field: 'item', itemField: 'item' }
   ];
 
-  const matchedStandard = standardValues.find(standard => {
+  const matchedStandard = standards.find(standard => {
     const isMatch = matchConditions.every(condition => {
       const standardValue = standard[condition.field];
       const itemValue = item[condition.itemField];
@@ -98,56 +97,6 @@ const findStandardValue = (item: InspectionItem) => {
   return matchedStandard || null;
 };
 
-// 測定基準値データを取得する関数
-const fetchMeasurementStandards = async () => {
-  try {
-    const response = await fetch('/api/measurement-records');
-    if (!response.ok) {
-      throw new Error('測定基準値の取得に失敗しました');
-    }
-
-    const csvText = await response.text();
-    const lines = csvText.split('\n');
-    const headers = lines[0].split(',');
-
-    const manufacturerIndex = headers.findIndex(h => h === '製造メーカー' || h === 'manufacturer');
-    const modelIndex = headers.findIndex(h => h === '機種' || h === 'model');
-    const engineTypeIndex = headers.findIndex(h => h === 'エンジン型式' || h === 'engineType');
-    const categoryIndex = headers.findIndex(h => h === '部位' || h === 'category');
-    const equipmentIndex = headers.findIndex(h => h === '装置' || h === 'equipment');
-    const itemIndex = headers.findIndex(h => h === '確認箇所' || h === 'item');
-    const minValueIndex = headers.findIndex(h => h === 'minValue');
-    const maxValueIndex = headers.findIndex(h => h === 'maxValue');
-
-    const standards = [];
-
-    for (let i = 1; i < lines.length; i++) {
-      if (!lines[i].trim()) continue;
-
-      const values = lines[i].split(',');
-
-      if (values.length < Math.max(manufacturerIndex, modelIndex, categoryIndex, equipmentIndex, itemIndex, minValueIndex, maxValueIndex) + 1) {
-        continue;
-      }
-
-      standards.push({
-        manufacturer: values[manufacturerIndex],
-        model: values[modelIndex],
-        engineType: engineTypeIndex >= 0 ? values[engineTypeIndex] : undefined,
-        category: values[categoryIndex],
-        equipment: values[equipmentIndex],
-        item: values[itemIndex],
-        minValue: parseFloat(values[minValueIndex]),
-        maxValue: parseFloat(values[maxValueIndex])
-      });
-    }
-
-    return standards;
-  } catch (error) {
-    console.error('測定基準値取得エラー:', error);
-    return [];
-  }
-};
 
 export default function InspectionPage() {
   const [location, navigate] = useLocation();
@@ -192,6 +141,24 @@ export default function InspectionPage() {
   };
 
   useEffect(() => {
+    const loadStandards = async () => {
+      try {
+        const response = await fetch('/api/measurement-standards');
+        const data = await response.json();
+        if (data.measurementStandards) {
+          localStorage.setItem('measurementStandards', JSON.stringify(data.measurementStandards));
+        }
+      } catch (error) {
+        console.error('基準値データ取得エラー:', error);
+        toast({
+          title: "エラー",
+          description: "基準値データの取得に失敗しました",
+          variant: "destructive",
+        });
+      }
+    };
+
+    loadStandards();
     const fetchInspectionItems = async () => {
       setLoading(true);
       try {
@@ -680,7 +647,27 @@ export default function InspectionPage() {
                             <td className="p-1 text-xs">{item.criteria}</td>
                             <td className="p-1 text-xs">{item.method}</td>
                             <td className="p-1 text-xs">
-                              <Input type="number" value={item.measurementRecord || ''} onChange={e => updateInspectionMeasurementRecord(item.id, e.target.value)} className="w-24"/>
+                              {item.criteria.includes('測定') || item.method.includes('測定') ? (
+                                <Input 
+                                  type="number" 
+                                  value={item.measurementRecord || ''} 
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    const standard = findStandardValue(item);
+                                    const numValue = parseFloat(value);
+
+                                    let resultValue = "良好";
+                                    if (standard && (numValue < standard.minValue || numValue > standard.maxValue)) {
+                                      resultValue = "調整してください";
+                                    }
+
+                                    setInspectionItems(prev => prev.map(i => 
+                                      i.id === item.id ? {...i, measurementRecord: value, result: resultValue} : i
+                                    ));
+                                  }}
+                                  className="w-full text-xs"
+                                />
+                              ) : null}
                               <InspectionValueStatus
                                 value={item.measurementRecord || ''}
                                 minValue={standard?.minValue || ''}

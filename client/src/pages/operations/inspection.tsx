@@ -656,22 +656,34 @@ export default function InspectionPage() {
                               {standard ? (
                                 <>
                                   <div>{`${standard.minValue}～${standard.maxValue}`}</div>
-                                  <Input
-                                    type="number"
-                                    placeholder="数値を入力"
-                                    value={item.measurementRecord || ''}
-                                    onChange={(e) => {
-                                    const value = e.target.value;
-                                    const standard = findStandardValue(item);
-                                    const numValue = parseFloat(value);
+                                  <div className="relative">
+                                    <Input
+                                      type="number"
+                                      value={item.measurementRecord || ''}
+                                      onChange={(e) => {
+                                        const value = e.target.value;
+                                        const numValue = parseFloat(value);
+                                        
+                                        let isOutOfRange = false;
+                                        if (standard && (numValue < parseFloat(standard.minValue) || numValue > parseFloat(standard.maxValue))) {
+                                          isOutOfRange = true;
+                                        }
 
-                                    let resultValue = "良好";
-                                    if (standard && (numValue < standard.minValue || numValue > standard.maxValue)) {
-                                      resultValue = "調整してください";
-                                    }
-
-                                    setInspectionItems(prev => prev.map(i => 
-                                      i.id === item.id ? {...i, measurementRecord: value, result: resultValue} : i
+                                        setInspectionItems(prev => prev.map(i => 
+                                          i.id === item.id ? {
+                                            ...i, 
+                                            measurementRecord: value,
+                                            isOutOfRange: isOutOfRange
+                                          } : i
+                                        ));
+                                      }}
+                                    />
+                                    {item.isOutOfRange && (
+                                      <div className="absolute top-0 right-0 text-red-500 text-xs">
+                                        調整が必要です！
+                                      </div>
+                                    )}
+                                  </div>, result: resultValue} : i
                                     ));
                                   }}
                                   className="w-full text-xs"

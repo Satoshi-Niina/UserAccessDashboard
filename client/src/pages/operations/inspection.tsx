@@ -225,10 +225,7 @@ export default function InspectionPage() {
 
   const fetchInspectionData = async () => {
     if (!machineNumber) return;
-    await loadInspectionItems(machineNumber););
-
-        // 機械番号から製造メーカーと機種情報を取得
-        const machineResponse = await fetch(`/api/machineNumbers/${machineNumber}`);
+    await loadInspectionItems(machineNumber);
         if (!machineResponse.ok) {
           throw new Error('機械情報の取得に失敗しました');
         }

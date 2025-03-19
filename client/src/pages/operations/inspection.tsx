@@ -656,7 +656,7 @@ export default function InspectionPage() {
                             <td className="p-1 text-xs">
                               {standard && (
                                 <div className="mb-2 text-xs">
-                                  基準値: {standard.minValue}～{standard.maxValue}
+                                  {standard.minValue}～{standard.maxValue}
                                 </div>
                               )}
                               <div className="relative">

@@ -648,9 +648,10 @@ export default function InspectionPage() {
                             <td className="p-1 text-xs">{item.method}</td>
                             <td className="p-1 text-xs">
                               {standard ? (
-                                <Input 
-                                  type="number" 
-                                  value={item.measurementRecord || ''} 
+                                <Input
+                                  type="number"
+                                  placeholder="数値を入力"
+                                  value={item.measurementRecord || ''}
                                   onChange={(e) => {
                                     const value = e.target.value;
                                     const standard = findStandardValue(item);

@@ -164,7 +164,9 @@ export default function InspectionPage() {
     };
 
     loadStandards();
-    const loadInspectionItems = async (machineNumber: string) => {
+  }, [toast]);
+
+  const loadInspectionItems = async (machineNumber: string) => {
     if (!machineNumber) {
       toast({
         title: "エラー",

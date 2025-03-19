@@ -58,9 +58,11 @@ interface StandardValue {
 
 const standardValues: StandardValue[] = []; // Initialize as empty array
 
-const findStandardValue = (item: InspectionItem) => {
-  const storedStandards = localStorage.getItem('measurementStandards');
-  const standards = storedStandards ? JSON.parse(storedStandards).measurementStandards : [];
+const findStandardValue = async (item: InspectionItem) => {
+  try {
+    const response = await fetch('/api/measurement-standards');
+    const data = await response.json();
+    const standards = data.measurementStandards || [];
 
   if (!standards || standards.length === 0) {
     console.log('基準値データが存在しません');

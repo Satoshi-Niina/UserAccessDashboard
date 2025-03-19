@@ -169,41 +169,25 @@ export default function InspectionPage() {
       setLoading(true);
       try {
         await loadMeasurementRecords();
-        const response = await fetch('/api/inspection-items?useLatest=true');
+        const response = await fetch('/api/inspection-items?file=inspection_items.csv');
         const data = await response.json();
 
         console.log('点検項目データ取得:', data.length, '件');
 
         const items = [];
-        const headerMapping = {
-          '製造メーカー': 'manufacturer',
-          '機種': 'model',
-          'エンジン型式': 'engineType',
-          '部位': 'category',
-          '装置': 'equipment',
-          '確認箇所': 'item',
-          '判断基準': 'criteria',
-          '確認要領': 'method',
-          '測定等記録': 'measurementRecord',
-          '図形記録': 'diagramRecord',
-          '備考': 'remark'
-        };
-
-        for (let i = 0; i < data.length; i++) {
-          const row = data[i];
-          if (!row || Object.keys(row).length === 0) continue;
-
-          const item: any = { id: i + 1 };
-          Object.keys(row).forEach(header => {
-            const propName = headerMapping[header] || header;
-            item[propName] = row[header] || '';
-          });
-
-          const requiredProps = ['category', 'equipment', 'item', 'criteria'];
-          const hasRequiredProps = requiredProps.every(prop => item.hasOwnProperty(prop));
-
-          if (hasRequiredProps) {
-            items.push(item);
+        for (const row of data) {
+          if (row.category && row.equipment && row.checkPoint) {
+            items.push({
+              id: row.id,
+              category: row.category,
+              equipment: row.equipment,
+              item: row.checkPoint,
+              criteria: row.criteria || '',
+              method: row.method || '',
+              measurementRecord:'',
+              diagramRecord:'',
+              remark:''
+            });
           }
         }
 

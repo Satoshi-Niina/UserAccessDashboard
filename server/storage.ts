@@ -272,11 +272,11 @@ export class DatabaseStorage implements IStorage {
       }
 
       // モデル情報を取得
-      const models = await this.getModels();
-      const model = models.find(m => String(m.id) === String(model_id));
+      const availableModels = await this.getModels();
+      const selectedModel = availableModels.find(m => String(m.id) === String(model_id));
 
-      if (!model) {
-        console.log('利用可能なモデル:', models);
+      if (!selectedModel) {
+        console.log('利用可能なモデル:', availableModels);
         console.log('選択されたモデルID:', model_id);
         throw new Error('指定された機種が見つかりません');
       }

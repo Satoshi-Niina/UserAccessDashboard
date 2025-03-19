@@ -225,20 +225,21 @@ export default function InspectionPage() {
     }
   };
 
-  const fetchInspectionData = async () => {
-    if (!machineNumber) return;
-    try {
-      await loadInspectionItems(machineNumber);
-    } catch (err) {
-      console.error('点検項目取得エラー:', err);
-      toast({
-        title: "エラー",
-        description: "点検項目の取得に失敗しました",
-        variant: "destructive",
-      });
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    const fetchInspectionData = async () => {
+      if (!machineNumber) return;
+      try {
+        await loadInspectionItems(machineNumber);
+      } catch (err) {
+        console.error('点検項目取得エラー:', err);
+        toast({
+          title: "エラー",
+          description: "点検項目の取得に失敗しました",
+          variant: "destructive",
+        });
+        setLoading(false);
+      }
+    };
 
     fetchInspectionData();
   }, [machineNumber, toast]);

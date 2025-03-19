@@ -188,6 +188,7 @@ export default function InspectionPage() {
 
         console.log('変換後の点検項目:', items.length, '件');
         setInspectionItems(items);
+        setFilteredItems(items); // フィルター機能のリセット
         setLoading(false);
       } catch (err) {
         console.error('点検項目取得エラー:', err);
@@ -633,9 +634,6 @@ export default function InspectionPage() {
                             <td className="p-1 text-xs">{item.criteria}</td>
                             <td className="p-1 text-xs">{item.method}</td>
                             <td className="p-1 text-xs">
-                              <div className="text-xs">
-                                {standard?.minValue || ''}～{standard?.maxValue || ''}
-                              </div>
                               <Input
                                 type="number"
                                 value={item.measurementRecord || ''}

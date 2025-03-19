@@ -152,8 +152,7 @@ export class DatabaseStorage implements IStorage {
 
       const newManufacturer = { 
         id: newId,
-        name,
-        code: code || ''
+        name
       };
       
       manufacturers.push(newManufacturer);
@@ -162,7 +161,11 @@ export class DatabaseStorage implements IStorage {
         fs.mkdirSync(path.dirname(csvPath), { recursive: true });
       }
       
-      const csv = Papa.unparse(manufacturers);
+      // ヘッダー行を明示的に指定してCSVを生成
+      const csv = Papa.unparse(manufacturers, {
+        header: true,
+        columns: ['id', 'name']
+      });
       await fs.promises.writeFile(csvPath, csv);
 
       return newManufacturer;

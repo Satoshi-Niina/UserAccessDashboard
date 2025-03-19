@@ -654,8 +654,8 @@ export default function InspectionPage() {
                             <td className="p-1 text-xs">{item.criteria}</td>
                             <td className="p-1 text-xs">{item.method}</td>
                             <td className="p-1 text-xs">
-                              <div className="mb-2 text-xs">
-                                {item.minValue || ''}～{item.maxValue || ''}
+                              <div className="text-xs">
+                                {standard?.minValue || ''}～{standard?.maxValue || ''}
                               </div>
                               <Input
                                 type="number"

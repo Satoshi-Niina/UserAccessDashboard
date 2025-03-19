@@ -182,7 +182,7 @@ export default function InspectionPage() {
         throw new Error('機械情報の取得に失敗しました');
       }
       const machineData = await machineResponse.json();
-      
+
       // 点検項目を取得
       const response = await fetch(`/api/inspection-items?manufacturer=${machineData.manufacturer_name}&model=${machineData.model_name}`);
       if (!response.ok) {
@@ -191,7 +191,7 @@ export default function InspectionPage() {
       const data = await response.json();
 
       console.log('点検項目データ取得:', data.length, '件');
-      
+
       if (!data || data.length === 0) {
         throw new Error('点検項目が見つかりません');
       }
@@ -225,47 +225,18 @@ export default function InspectionPage() {
 
   const fetchInspectionData = async () => {
     if (!machineNumber) return;
-    await loadInspectionItems(machineNumber);
-        if (!machineResponse.ok) {
-          throw new Error('機械情報の取得に失敗しました');
-        }
-        const machineData = await machineResponse.json();
-
-        // 点検項目を取得
-        const response = await fetch(`/api/inspection-items?manufacturer=${machineData.manufacturer_name}&model=${machineData.model_name}`);
-        if (!response.ok) {
-          throw new Error('点検項目の取得に失敗しました');
-        }
-        const data = await response.json();
-
-        console.log('点検項目データ取得:', data.length, '件');
-
-        const items = data.map(row => ({
-          id: row.id,
-          category: row.category || '',
-          equipment: row.equipment || '',
-          item: row.item || '',
-          criteria: row.criteria || '',
-          method: row.method || '',
-          measurementRecord: row.measurementRecord || '',
-          diagramRecord: row.diagramRecord || '',
-          remark: ''
-        }));
-
-        console.log('変換後の点検項目:', items.length, '件');
-        setInspectionItems(items);
-        setFilteredItems(items); // フィルター機能のリセット
-        setLoading(false);
-      } catch (err) {
-        console.error('点検項目取得エラー:', err);
-        toast({
-          title: "エラー",
-          description: "点検項目の取得に失敗しました",
-          variant: "destructive",
-        });
-        setLoading(false);
-      }
-    };
+    try {
+      await loadInspectionItems(machineNumber);
+    } catch (err) {
+      console.error('点検項目取得エラー:', err);
+      toast({
+        title: "エラー",
+        description: "点検項目の取得に失敗しました",
+        variant: "destructive",
+      });
+      setLoading(false);
+    }
+  };
 
     fetchInspectionData();
   }, [machineNumber, toast]);

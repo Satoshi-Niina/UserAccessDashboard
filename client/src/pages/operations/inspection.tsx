@@ -174,22 +174,17 @@ export default function InspectionPage() {
 
         console.log('点検項目データ取得:', data.length, '件');
 
-        const items = [];
-        for (const row of data) {
-          if (row.category && row.equipment && row.item) {
-            items.push({
-              id: row.id,
-              category: row.category,
-              equipment: row.equipment,
-              item: row.item,
-              criteria: row.criteria || '',
-              method: row.method || '',
-              measurementRecord: row.measurementRecord || '',
-              diagramRecord: row.diagramRecord || '',
-              remark: ''
-            });
-          }
-        }
+        const items = data.map(row => ({
+          id: row.id,
+          category: row.category || '',
+          equipment: row.equipment || '',
+          item: row.item || '',
+          criteria: row.criteria || '',
+          method: row.method || '',
+          measurementRecord: row.measurementRecord || '',
+          diagramRecord: row.diagramRecord || '',
+          remark: ''
+        }));
 
         console.log('変換後の点検項目:', items.length, '件');
         setInspectionItems(items);

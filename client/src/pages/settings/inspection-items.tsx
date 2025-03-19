@@ -64,6 +64,7 @@ export default function InspectionItems() {
   const [newItem, setNewItem] = useState<TableItem>({ name: '', code: '', number: '' }); //Added number to newItem
   const [manufacturers, setManufacturers] = useState<TableItem[]>([]);
   const [models, setModels] = useState<TableItem[]>([]);
+  const [machineNumbers, setMachineNumbers] = useState<TableItem[]>([]); // Added state for machine numbers
   const [selectedModelId, setSelectedModelId] = useState<number | null>(null); // Added selectedModelId
   const [selectedManufacturerId, setSelectedManufacturerId] = useState<number | null>(null); // Added selectedManufacturerId
   const [selectedManufacturer, setSelectedManufacturer] = useState<string>("");
@@ -149,6 +150,7 @@ export default function InspectionItems() {
     fetchTableData();
     fetchManufacturers();
     fetchModels();
+    fetchMachineNumbers(); // Fetch machine numbers
   }, [selectedTable]);
 
   const fetchTableData = async () => {
@@ -178,6 +180,16 @@ export default function InspectionItems() {
       setModels(data);
     } catch (error) {
       console.error('Error fetching models:', error);
+    }
+  };
+
+  const fetchMachineNumbers = async () => {
+    try {
+      const response = await fetch('/api/machineNumbers');
+      const data = await response.json();
+      setMachineNumbers(data);
+    } catch (error) {
+      console.error('Error fetching machine numbers:', error);
     }
   };
 
@@ -593,27 +605,21 @@ export default function InspectionItems() {
     try {
       const model = models.find((m) => m.id === selectedModelId);
       if(selectedTable === 'machineNumbers' && model){
-        await addMachineNumber({
-          number: newItem.number,
-          model_id: selectedModelId,
-          manufacturer_id: model.manufacturer_id,
-          modelName: model.name, //Add modelName
-          manufacturerId: model.manufacturerId
-        });
+        await addMachineNumber(newItem.number, selectedModelId.toString());
         setNewItem({ name: '', code: '', number: '' });
         fetchTableData();
         toast({
           title: "成功",
           description: "機械番号を追加しました"
         });
-      } else if (selectedTable !== 'machineNumbers'){
-        await addItem(newItem);
+      } else if (selectedTable === 'manufacturers') {
+        await addManufacturer(newItem.name);
         setNewItem({ name: '', code: '', number: '' });
         fetchTableData();
-        toast({
-          title: "成功",
-          description: "項目を追加しました"
-        });
+      } else if (selectedTable === 'models' && selectedManufacturerId) {
+        await addModel(newItem.name, selectedManufacturerId.toString());
+        setNewItem({ name: '', code: '', number: '' });
+        fetchTableData();
       }
       else {
           toast({
@@ -670,6 +676,7 @@ export default function InspectionItems() {
         .then(([manufacturersData, modelsData, machineNumbersData, inspectionItemsData]) => {
           setManufacturers(manufacturersData);
           setModels(modelsData);
+          setMachineNumbers(machineNumbersData); // Set machine numbers data
           setInspectionItems(inspectionItemsData);
           setFilteredItems(inspectionItemsData);
           setLoading(false);
@@ -687,24 +694,113 @@ export default function InspectionItems() {
   }, [activeTab]);
 
 
-  const addMachineNumber = async (machineNumber: TableItem) => {
+  // 製造メーカー追加
+  const addManufacturer = async (name: string) => {
     try {
-      if (!machineNumber.model_id) {
-        throw new Error('機種を選択してください');
+      // 重複チェック
+      const existingManufacturer = manufacturers.find(m => m.name === name);
+      if (existingManufacturer) {
+        toast({
+          title: "注意",
+          description: "この製造メーカーは既に登録されています",
+          variant: "warning"
+        });
+        return;
       }
-      const response = await fetch('/api/machineNumbers', {
+
+      const response = await fetch('/api/manufacturers', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          number: machineNumber.number,
-          modelId: parseInt(machineNumber.model_id)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      });
+
+      if (!response.ok) throw new Error('製造メーカーの追加に失敗しました');
+      await fetchManufacturers();
+
+      toast({
+        title: "成功",
+        description: "製造メーカーを追加しました",
+      });
+    } catch (error) {
+      console.error('Error adding manufacturer:', error);
+      toast({
+        title: "エラー",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  // 機種追加
+  const addModel = async (name: string, manufacturerId: string) => {
+    try {
+      // 重複チェック
+      const existingModel = models.find(m => m.name === name);
+      if (existingModel) {
+        toast({
+          title: "注意",
+          description: "この機種は既に登録されています",
+          variant: "warning"
+        });
+        return;
+      }
+
+      const response = await fetch('/api/models', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          name,
+          manufacturerId: parseInt(manufacturerId)
         })
       });
-      if (!response.ok) {
-        throw new Error(`Failed to add machine number: ${response.status} ${response.statusText}`);
+
+      if (!response.ok) throw new Error('機種の追加に失敗しました');
+      await fetchModels();
+
+      toast({
+        title: "成功",
+        description: "機種を追加しました",
+      });
+    } catch (error) {
+      console.error('Error adding model:', error);
+      toast({
+        title: "エラー",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  // 機械番号追加
+  const addMachineNumber = async (number: string, modelId: string) => {
+    try {
+      // 重複チェック
+      const existingMachine = machineNumbers.find(m => m.number === number);
+      if (existingMachine) {
+        toast({
+          title: "注意",
+          description: "この機械番号は既に登録されています",
+          variant: "warning"
+        });
+        return;
       }
+
+      const response = await fetch('/api/machineNumbers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          number,
+          modelId: parseInt(modelId)
+        })
+      });
+
+      if (!response.ok) throw new Error('機械番号の追加に失敗しました');
+      await fetchMachineNumbers();
+
+      toast({
+        title: "成功",
+        description: "機械番号を追加しました",
+      });
     } catch (error) {
       console.error('Error adding machine number:', error);
       toast({
@@ -875,7 +971,7 @@ export default function InspectionItems() {
                           className="w-[200px]"
                         />
                       </div>
-                      <Button onClick={handleAdd}>
+                      <Button onClick={() => handleAdd()}>
                         <Plus className="h-4 w-4 mr-2" />
                         追加
                       </Button>
@@ -889,8 +985,7 @@ export default function InspectionItems() {
                     <div className="flex gap-4 items-end mb-4">
                       <div>
                         <Label>機種名</Label>
-                        <Input
-                          placeholder="機種名"
+                        <Input                          placeholder="機種名"
                           value={newItem.name}
                           onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
                           className="w-[200px]"
@@ -911,7 +1006,7 @@ export default function InspectionItems() {
                           </SelectContent>
                         </Select>
                       </div>
-                      <Button onClick={handleAdd}>
+                      <Button onClick={() => handleAdd()}>
                         <Plus className="h-4 w-4 mr-2" />
                         追加
                       </Button>
@@ -947,7 +1042,7 @@ export default function InspectionItems() {
                           </SelectContent>
                         </Select>
                       </div>
-                      <Button onClick={handleAdd}>
+                      <Button onClick={() => handleAdd()}>
                         <Plus className="h-4 w-4 mr-2" />
                         追加
                       </Button>

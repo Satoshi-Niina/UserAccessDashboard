@@ -102,9 +102,34 @@ export function registerRoutes(app: Express): Server {
 
   app.post('/api/manufacturers', async (req, res) => {
     try {
-      const { name, code } = req.body;
-      const manufacturer = await storage.createManufacturer({ name, code });
-      res.status(201).json(manufacturer);
+      const { name } = req.body;
+      
+      // CSVファイルからデータを読み込み
+      const filePath = path.join(process.cwd(), 'attached_assets/inspection/table/manufacturers.csv');
+      let manufacturers = [];
+      if (fs.existsSync(filePath)) {
+        const content = await fs.promises.readFile(filePath, 'utf8');
+        manufacturers = Papa.parse(content, { header: true }).data;
+      }
+
+      // 重複チェック
+      if (manufacturers.some(m => m.name === name)) {
+        return res.status(400).json({ error: '既に登録されている製造メーカーです' });
+      }
+
+      // 新しいIDを生成
+      const newId = manufacturers.length > 0 ? 
+        Math.max(...manufacturers.map(m => parseInt(m.id))) + 1 : 1;
+
+      // 新しいメーカーを追加
+      const newManufacturer = { id: newId.toString(), name };
+      manufacturers.push(newManufacturer);
+
+      // CSVファイルに保存
+      const csv = Papa.unparse(manufacturers);
+      await fs.promises.writeFile(filePath, csv);
+
+      res.status(201).json(newManufacturer);
     } catch (error) {
       console.error('Error creating manufacturer:', error);
       res.status(500).json({ error: 'メーカーの追加に失敗しました' });

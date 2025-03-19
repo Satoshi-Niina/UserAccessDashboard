@@ -654,6 +654,11 @@ export default function InspectionPage() {
                             <td className="p-1 text-xs">{item.criteria}</td>
                             <td className="p-1 text-xs">{item.method}</td>
                             <td className="p-1 text-xs">
+                              {standard && (
+                                <div className="mb-2 text-xs">
+                                  基準値: {standard.minValue}～{standard.maxValue}
+                                </div>
+                              )}
                               <div className="relative">
                                 <Input
                                   type="number"
@@ -676,7 +681,6 @@ export default function InspectionPage() {
                                     ));
                                   }}
                                   className="w-full text-xs"
-                                  placeholder={standard ? `基準値: ${standard.minValue}～${standard.maxValue}` : ''}
                                 />
                                 {item.isOutOfRange && (
                                   <div className="absolute top-0 right-0 text-red-500 text-xs">

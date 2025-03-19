@@ -127,8 +127,6 @@ export default function InspectionPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [equipmentFilter, setEquipmentFilter] = useState<string>("all");
   const [resultFilter, setResultFilter] = useState<string>("all");
-  const [manufacturerFilter, setManufacturerFilter] = useState<string>("all");
-  const [modelFilter, setModelFilter] = useState<string>("all");
   const [measurementRecords, setMeasurementRecords] = useState<Record<number, string>>({});
   const [fileName, setFileName] = useState(""); // Add filename state
   const [uncheckedItemsDialog, setUncheckedItemsDialog] = useState<InspectionItem[]>([]); // Add state for unchecked items dialog
@@ -165,21 +163,28 @@ export default function InspectionPage() {
     };
 
     loadStandards();
-    const fetchInspectionItems = async () => {
+    const fetchInspectionData = async () => {
+      if (!machineId) return;
+
       setLoading(true);
       try {
         await loadMeasurementRecords();
-        const response = await fetch('/api/inspection-items');
+
+        // 機械番号から製造メーカーと機種情報を取得
+        const machineResponse = await fetch(`/api/machineNumbers/${machineId}`);
+        if (!machineResponse.ok) {
+          throw new Error('機械情報の取得に失敗しました');
+        }
+        const machineData = await machineResponse.json();
+
+        // 点検項目を取得
+        const response = await fetch(`/api/inspection-items?manufacturer=${machineData.manufacturer_name}&model=${machineData.model_name}`);
         if (!response.ok) {
           throw new Error('点検項目の取得に失敗しました');
         }
         const data = await response.json();
 
         console.log('点検項目データ取得:', data.length, '件');
-
-        if (!Array.isArray(data)) {
-          throw new Error('不正なデータ形式です');
-        }
 
         const items = data.map(row => ({
           id: row.id,
@@ -208,8 +213,8 @@ export default function InspectionPage() {
       }
     };
 
-    fetchInspectionItems();
-  }, [toast]);
+    fetchInspectionData();
+  }, [machineId, toast]);
 
   const updateInspectionResult = (id: number, result: string) => {
     setInspectionItems(prevItems => prevItems.map(item =>
@@ -348,6 +353,13 @@ export default function InspectionPage() {
   const scrollLeft = () => {};
   const scrollRight = () => {};
 
+  const setFilteredItems = (items: InspectionItem[]) => {
+    //This function is a placeholder and needs to be implemented based on the filtering logic.
+    //For now, it simply sets the inspectionItems state.  A proper implementation would filter
+    //the items based on categoryFilter, equipmentFilter, and resultFilter.
+    setInspectionItems(items);
+  };
+
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
@@ -460,36 +472,6 @@ export default function InspectionPage() {
             )}
             <div className="mb-2 p-2 bg-muted/20 rounded-md">
               <div className="flex flex-wrap gap-2">
-                <div className="min-w-[150px]">
-                  <Label htmlFor="manufacturerFilter" className="text-xs">製造メーカー</Label>
-                  <Select value={manufacturerFilter} onValueChange={setManufacturerFilter}>
-                    <SelectTrigger id="manufacturerFilter" className="h-8">
-                      <SelectValue placeholder="すべて" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">すべて</SelectItem>
-                      {[...new Set(inspectionItems.map(item => item.manufacturer))].filter(Boolean).sort().map(manufacturer => (
-                        <SelectItem key={manufacturer} value={manufacturer}>{manufacturer}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="min-w-[150px]">
-                  <Label htmlFor="modelFilter" className="text-xs">機種</Label>
-                  <Select value={modelFilter} onValueChange={setModelFilter}>
-                    <SelectTrigger id="modelFilter" className="h-8">
-                      <SelectValue placeholder="すべて" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">すべて</SelectItem>
-                      {[...new Set(inspectionItems.map(item => item.model))].filter(Boolean).sort().map(model => (
-                        <SelectItem key={model} value={model}>{model}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
                 <div className="min-w-[150px]">
                   <Label htmlFor="categoryFilter" className="text-xs">部位</Label>
                   <Select
@@ -619,8 +601,6 @@ export default function InspectionPage() {
                         // チェック漏れ（判定未入力）の項目のみを表示
                         if (item.result !== undefined) return false;
 
-                        if (manufacturerFilter !== "all" && item.manufacturer !== manufacturerFilter) return false;
-                        if (modelFilter !== "all" && item.model !== modelFilter) return false;
                         if (categoryFilter !== "all" && item.category !== categoryFilter) return false;
                         if (equipmentFilter !== "all" && item.equipment !== equipmentFilter) return false;
                         if (searchQuery) {

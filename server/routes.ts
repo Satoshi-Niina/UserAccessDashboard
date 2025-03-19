@@ -225,10 +225,23 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  app.get('/api/machineNumbers/:id', async (req, res) => {
+    try {
+      const machineNumber = await storage.getMachineNumberById(parseInt(req.params.id));
+      if (!machineNumber) {
+        return res.status(404).json({ error: '機械番号が見つかりません' });
+      }
+      res.json(machineNumber);
+    } catch (error) {
+      console.error('Error fetching machine number:', error);
+      res.status(500).json({ error: '機械情報の取得に失敗しました' });
+    }
+  });
+
   app.get('/api/inspection-items', async (req, res) => {
     try {
-      // パラメータからファイル名を取得
-      const fileName = req.query.file as string | undefined;
+      const manufacturer = req.query.manufacturer as string;
+      const model = req.query.model as string;
 
       // CSVファイルのパスを決定
       const inspectionDir = path.join(process.cwd(), 'attached_assets/inspection');

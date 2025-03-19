@@ -230,6 +230,24 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async getMachineNumberById(id: number): Promise<any> {
+    return new Promise((resolve, reject) => {
+      db.get(`
+        SELECT 
+          mn.number,
+          m.name as model_name,
+          mf.name as manufacturer_name
+        FROM machine_numbers mn
+        INNER JOIN models m ON mn.model_id = m.id
+        INNER JOIN manufacturers mf ON m.manufacturer_id = mf.id
+        WHERE mn.id = ?
+      `, [id], (err, row) => {
+        if (err) reject(err);
+        resolve(row);
+      });
+    });
+  }
+
   async getMachineNumbers(): Promise<any[]> {
     return new Promise((resolve, reject) => {
       db.all(`

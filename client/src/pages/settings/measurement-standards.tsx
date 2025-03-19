@@ -160,7 +160,7 @@ export default function MeasurementStandards() {
   };
 
   // 基準値を保存する
-  const saveStandardValues = () => {
+  const saveStandardValues = async () => {
     if (editingItemId === null) return;
 
     const updatedItems = inspectionItems.map(item => {
@@ -174,13 +174,36 @@ export default function MeasurementStandards() {
       return item;
     });
 
-    setInspectionItems(updatedItems);
-    setIsEditDialogOpen(false);
-    
-    toast({
-      title: "基準値を更新しました",
-      description: "項目の基準値が更新されました",
-    });
+    try {
+      const response = await fetch('/api/measurement-standards', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          standard: updatedItems.find(item => item.id === editingItemId)
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('基準値の保存に失敗しました');
+      }
+
+      setInspectionItems(updatedItems);
+      setIsEditDialogOpen(false);
+      
+      toast({
+        title: "基準値を更新しました",
+        description: "項目の基準値が更新されました",
+      });
+    } catch (error) {
+      console.error('保存エラー:', error);
+      toast({
+        title: "エラー",
+        description: "基準値の保存に失敗しました",
+        variant: "destructive",
+      });
+    }
   };
 
   // 基準値テーブルに保存する

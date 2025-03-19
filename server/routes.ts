@@ -836,6 +836,51 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  app.post('/api/measurement-standards', async (req, res) => {
+    try {
+      const { standard } = req.body;
+      const filePath = path.join(process.cwd(), 'attached_assets/Reference value/measurement_standards.json');
+      
+      let standards = { measurementStandards: [] };
+      if (fs.existsSync(filePath)) {
+        const content = await fs.promises.readFile(filePath, 'utf-8');
+        standards = JSON.parse(content);
+      }
+
+      const existingIndex = standards.measurementStandards.findIndex(s => 
+        s.category === standard.category && 
+        s.equipment === standard.equipment && 
+        s.item === standard.item
+      );
+
+      if (existingIndex >= 0) {
+        standards.measurementStandards[existingIndex] = standard;
+      } else {
+        standards.measurementStandards.push(standard);
+      }
+
+      await fs.promises.writeFile(filePath, JSON.stringify(standards, null, 2));
+      res.json({ message: '基準値を保存しました' });
+    } catch (error) {
+      console.error('基準値保存エラー:', error);
+      res.status(500).json({ error: '基準値の保存に失敗しました' });
+    }
+  });
+
+  app.get('/api/measurement-standards', async (req, res) => {
+    try {
+      const filePath = path.join(process.cwd(), 'attached_assets/Reference value/measurement_standards.json');
+      if (!fs.existsSync(filePath)) {
+        return res.json({ measurementStandards: [] });
+      }
+      const content = await fs.promises.readFile(filePath, 'utf-8');
+      res.json(JSON.parse(content));
+    } catch (error) {
+      console.error('基準値取得エラー:', error);
+      res.status(500).json({ error: '基準値の取得に失敗しました' });
+    }
+  });
+
   app.get('/api/measurement-records', async (req, res) => {
     try {
       const measurementDir = path.join(process.cwd(), 'attached_assets/Measurement Standard Value');

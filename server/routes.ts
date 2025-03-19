@@ -171,14 +171,14 @@ export function registerRoutes(app: Express): Server {
       const { number, modelId } = req.body;
       const machineNumber = await storage.createMachineNumber({ number, modelId });
       res.status(201).json(machineNumber);
-      
+
       // 既存のデータを読み込むか、新規作成
       let rows = [];
       if (fs.existsSync(csvPath)) {
         const content = fs.readFileSync(csvPath, 'utf-8');
         rows = Papa.parse(content, { header: true }).data;
       }
-      
+
       rows.push(newRow);
       const csv = Papa.unparse(rows);
       fs.writeFileSync(csvPath, csv);
@@ -864,7 +864,7 @@ export function registerRoutes(app: Express): Server {
     try {
       const { standard } = req.body;
       const filePath = path.join(process.cwd(), 'attached_assets/Reference value/measurement_standards.json');
-      
+
       let standards = { measurementStandards: [] };
       if (fs.existsSync(filePath)) {
         const content = await fs.promises.readFile(filePath, 'utf-8');
@@ -916,7 +916,7 @@ export function registerRoutes(app: Express): Server {
       const { standard } = req.body;
       const tablePath = path.join(process.cwd(), 'attached_assets/inspection/table/measurement_standards.csv');
       const refPath = path.join(process.cwd(), 'attached_assets/Reference value/measurement_standards.csv');
-      
+
       // 既存のデータを読み込むか、新規作成
       let standards = [];
       if (fs.existsSync(tablePath)) {

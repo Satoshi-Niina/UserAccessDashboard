@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import Papa from 'papaparse'; // Import PapaParse
 import { Link, useLocation } from 'wouter';
 import { Edit, Trash, Plus } from 'lucide-react';
-import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle} from '@/components/ui';
+import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle, AlertDialogHeader} from '@/components/ui';
 
 
 type TableType = 'manufacturers' | 'models' | 'machineNumbers';
@@ -986,7 +986,7 @@ export default function InspectionItems() {
 
                   {selectedTable === 'models' && (
                     <div className="border p-4 rounded-md">
-                      <h3 className="text-lg font-medium mb-4">新規追加</h3>
+                      <h3 className="text-lg font-medium mb-4">新規追加h3>
                       <div className="flex gap-4 items-end mb-4">
                         <div>
                           <Label>機種名</Label>

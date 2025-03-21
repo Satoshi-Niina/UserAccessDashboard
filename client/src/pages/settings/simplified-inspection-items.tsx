@@ -14,6 +14,8 @@ interface SimplifiedInspectionItem {
   id: number;
   name: string;
   description: string;
+  manufacturer?: string;
+  model?: string;
 }
 
 const SimplifiedInspectionItems: React.FC = () => {
@@ -24,7 +26,7 @@ const SimplifiedInspectionItems: React.FC = () => {
     const fetchItems = async () => {
       try {
         const response = await fetch('/api/inspection-items/simplified');
-        if (!response.ok) throw new Error('Failed to fetch items');
+        if (!response.ok) throw new Error('データの取得に失敗しました');
         const data = await response.json();
         setItems(data);
       } catch (error) {
@@ -46,6 +48,8 @@ const SimplifiedInspectionItems: React.FC = () => {
           <TableRow>
             <TableHead>名前</TableHead>
             <TableHead>説明</TableHead>
+            <TableHead>製造メーカー</TableHead>
+            <TableHead>機種</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -53,6 +57,8 @@ const SimplifiedInspectionItems: React.FC = () => {
             <TableRow key={item.id}>
               <TableCell>{item.name}</TableCell>
               <TableCell>{item.description}</TableCell>
+              <TableCell>{item.manufacturer || '-'}</TableCell>
+              <TableCell>{item.model || '-'}</TableCell>
             </TableRow>
           ))}
         </TableBody>

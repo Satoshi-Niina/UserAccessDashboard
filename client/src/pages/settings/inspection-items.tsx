@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import Papa from 'papaparse'; // Import PapaParse
 import { Link, useLocation } from 'wouter';
 import { Edit, Trash, Plus } from 'lucide-react';
-import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle} from '@/components/ui';
+import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle} from '@/components/ui';
 
 
 type TableType = 'manufacturers' | 'models' | 'machineNumbers';
@@ -91,7 +91,7 @@ export default function InspectionItems() {
     onCancel: (() => void) | null;
   }>({ isOpen: false, itemId: null, onConfirm: null, onCancel: null });
   const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [loading, setLoading] = useState(false); // Added loading state
+  const [loading, setLoading] = useState(true); // Added loading state
 
 
   useEffect(() => {
@@ -622,11 +622,11 @@ export default function InspectionItems() {
         fetchTableData();
       }
       else {
-          toast({
-            title: "エラー",
-            description: "機種が見つかりません",
-            variant: "destructive"
-          });
+        toast({
+          title: "エラー",
+          description: "機種が見つかりません",
+          variant: "destructive"
+        });
       }
     } catch (error) {
       console.error('Error adding item:', error);
@@ -677,12 +677,13 @@ export default function InspectionItems() {
           setManufacturers(manufacturers);
           setModels(models);
           setMachineNumbers(machineNumbers);
-          
+
           // フィルタリングされた点検項目を設定
           const filtered = inspectionItems.filter(item => {
             const manufacturerMatch = !selectedManufacturer || item.manufacturer === selectedManufacturer;
             const modelMatch = !selectedModel || item.model === selectedModel;
             return manufacturerMatch && modelMatch;
+          });
           setInspectionItems(filtered);
           setFilteredItems(inspectionItems);
           setLoading(false);
@@ -697,7 +698,7 @@ export default function InspectionItems() {
           setLoading(false);
         });
     }
-  }, [activeTab]);
+  }, [activeTab, selectedManufacturer, selectedModel]);
 
 
   // 製造メーカー追加
@@ -816,7 +817,6 @@ export default function InspectionItems() {
       });
     }
   };
-
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -965,95 +965,94 @@ export default function InspectionItems() {
                 </div>
                 <div>
                   {selectedTable === 'manufacturers' && (
-                  <div className="border p-4 rounded-md">
-                    <h3 className="text-lg font-medium mb-4">新規追加</h3>
-                    <div className="flex gap-4 items-end mb-4">
-                      <div>
-                        <Label>製造メーカー名</Label>
-                        <Input
-                          placeholder="製造メーカー名"
-                          value={newItem.name}
-                          onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-                          className="w-[200px]"
-                        />
+                    <div className="border p-4 rounded-md">
+                      <h3 className="text-lg font-medium mb-4">新規追加</h3>
+                      <div className="flex gap-4 items-end mb-4">
+                        <div>
+                          <Label>製造メーカー名</Label>
+                          <Input
+                            placeholder="製造メーカー名"
+                            value={newItem.name}
+                            onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+                            className="w-[200px]"
+                          />
+                        </div>
+                        <Button onClick={() => handleAdd()}>
+                          <Plus className="h-4 w-4 mr-2" />                        追加
+                        </Button>
                       </div>
-                      <Button onClick={() => handleAdd()}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        追加
-                      </Button>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {selectedTable === 'models' && (
-                  <div className="border p-4 rounded-md">
-                    <h3 className="text-lg font-medium mb-4">新規追加</h3>
-                    <div className="flex gap-4 items-end mb-4">
-                      <div>
-                        <Label>機種名</Label>
-                        <Input                          placeholder="機種名"                          value={newItem.name}
-                          onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-                          className="w-[200px]"
-                        />
+                  {selectedTable === 'models' && (
+                    <div className="border p-4 rounded-md">
+                      <h3 className="text-lg font-medium mb-4">新規追加</h3>
+                      <div className="flex gap-4 items-end mb-4">
+                        <div>
+                          <Label>機種名</Label>
+                          <Input                          placeholder="機種名"                          value={newItem.name}
+                            onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+                            className="w-[200px]"
+                          />
+                        </div>
+                        <div>
+                          <Label>製造メーカー</Label>
+                          <Select value={selectedManufacturerId?.toString() || ''} onValueChange={(value) => setSelectedManufacturerId(parseInt(value))}>
+                            <SelectTrigger className="w-[200px]">
+                              <SelectValue placeholder="製造メーカーを選択" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {manufacturers.map((manufacturer) => (
+                                <SelectItem key={manufacturer.id} value={manufacturer.id?.toString()}>
+                                  {manufacturer.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <Button onClick={() => handleAdd()}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          追加
+                        </Button>
                       </div>
-                      <div>
-                        <Label>製造メーカー</Label>
-                        <Select value={selectedManufacturerId?.toString() || ''} onValueChange={(value) => setSelectedManufacturerId(parseInt(value))}>
-                          <SelectTrigger className="w-[200px]">
-                            <SelectValue placeholder="製造メーカーを選択" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {manufacturers.map((manufacturer) => (
-                              <SelectItem key={manufacturer.id} value={manufacturer.id?.toString()}>
-                                {manufacturer.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <Button onClick={() => handleAdd()}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        追加
-                      </Button>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {selectedTable === 'machineNumbers' && (
-                  <div className="border p-4 rounded-md">
-                    <h3 className="text-lg font-medium mb-4">新規追加</h3>
-                    <div className="flex gap-4 items-end mb-4">
-                      <div>
-                        <Label>機械番号</Label>
-                        <Input
-                          placeholder="機械番号"
-                          value={newItem.number || ''}
-                          onChange={(e) => setNewItem({ ...newItem, number: e.target.value })}
-                          className="w-[200px]"
-                        />
+                  {selectedTable === 'machineNumbers' && (
+                    <div className="border p-4 rounded-md">
+                      <h3 className="text-lg font-medium mb-4">新規追加</h3>
+                      <div className="flex gap-4 items-end mb-4">
+                        <div>
+                          <Label>機械番号</Label>
+                          <Input
+                            placeholder="機械番号"
+                            value={newItem.number || ''}
+                            onChange={(e) => setNewItem({ ...newItem, number: e.target.value })}
+                            className="w-[200px]"
+                          />
+                        </div>
+                        <div>
+                          <Label>機種</Label>
+                          <Select value={selectedModelId?.toString() || ''} onValueChange={(value) => handleModelSelect(parseInt(value, 10))}>
+                            <SelectTrigger className="w-[200px]">
+                              <SelectValue placeholder="機種を選択" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {models.map((model) => (
+                                <SelectItem key={model.id} value={model.id?.toString()}>
+                                  {model.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <Button onClick={() => handleAdd()}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          追加
+                        </Button>
                       </div>
-                      <div>
-                        <Label>機種</Label>
-                        <Select value={selectedModelId?.toString() || ''} onValueChange={(value) => handleModelSelect(parseInt(value, 10))}>
-                          <SelectTrigger className="w-[200px]">
-                            <SelectValue placeholder="機種を選択" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {models.map((model) => (
-                              <SelectItem key={model.id} value={model.id?.toString()}>
-                                {model.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <Button onClick={() => handleAdd()}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        追加
-                      </Button>
                     </div>
-                  </div>
-                )}
+                  )}
                 </div>
               </div>
             </TabsContent>

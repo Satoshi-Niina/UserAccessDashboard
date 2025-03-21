@@ -11,10 +11,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import Papa from 'papaparse'; // Import PapaParse
+import Papa from 'papaparse'; 
 import { Link, useLocation } from 'wouter';
 import { Edit, Trash, Plus } from 'lucide-react';
 import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle, AlertDialogHeader} from '@/components/ui';
+import SimplifiedInspectionItems from './simplified-inspection-items'; 
 
 
 type TableType = 'manufacturers' | 'models' | 'machineNumbers';
@@ -23,12 +24,12 @@ interface TableItem {
   id?: number;
   name: string;
   code?: string;
-  number?: string; // Added number property
+  number?: string; 
   manufacturerId?: number;
   modelId?: number;
-  modelName?: string; //Added modelName
-  externalId?: string; // Added externalId property
-  model_id?: string; //added model_id
+  modelName?: string; 
+  externalId?: string; 
+  model_id?: string; 
 }
 
 interface InspectionItem {
@@ -44,7 +45,7 @@ interface InspectionItem {
   model?: string;
   engineType?: string;
   comment?: string;
-  [key: string]: any; //Keep dynamic fields
+  [key: string]: any; 
 }
 
 const ExitButton = ({ hasChanges, onSave }: { hasChanges: boolean; onSave: () => Promise<void> }) => {
@@ -58,15 +59,15 @@ const ExitButton = ({ hasChanges, onSave }: { hasChanges: boolean; onSave: () =>
 
 export default function InspectionItems() {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<"tables" | "items">("items"); // Initialize to "items"
+  const [activeTab, setActiveTab] = useState<"tables" | "items" | "simplified">("items"); 
   const [selectedTable, setSelectedTable] = useState<TableType>('manufacturers');
   const [tableItems, setTableItems] = useState<TableItem[]>([]);
-  const [newItem, setNewItem] = useState<TableItem>({ name: '', code: '', number: '' }); //Added number to newItem
+  const [newItem, setNewItem] = useState<TableItem>({ name: '', code: '', number: '' }); 
   const [manufacturers, setManufacturers] = useState<TableItem[]>([]);
   const [models, setModels] = useState<TableItem[]>([]);
-  const [machineNumbers, setMachineNumbers] = useState<TableItem[]>([]); // Added state for machine numbers
-  const [selectedModelId, setSelectedModelId] = useState<number | null>(null); // Added selectedModelId
-  const [selectedManufacturerId, setSelectedManufacturerId] = useState<number | null>(null); // Added selectedManufacturerId
+  const [machineNumbers, setMachineNumbers] = useState<TableItem[]>([]); 
+  const [selectedModelId, setSelectedModelId] = useState<number | null>(null); 
+  const [selectedManufacturerId, setSelectedManufacturerId] = useState<number | null>(null); 
   const [selectedManufacturer, setSelectedManufacturer] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
@@ -91,8 +92,7 @@ export default function InspectionItems() {
     onCancel: (() => void) | null;
   }>({ isOpen: false, itemId: null, onConfirm: null, onCancel: null });
   const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [loading, setLoading] = useState(true); // Added loading state
-
+  const [loading, setLoading] = useState(true); 
 
   useEffect(() => {
     const initializeData = async () => {
@@ -133,8 +133,8 @@ export default function InspectionItems() {
       setInspectionItems(data);
       setInitialItems(data);
       setHasChanges(false);
-      setFilteredItems(data); // Initialize filteredItems
-      setLoading(false); // Set loading to false after data is fetched
+      setFilteredItems(data); 
+      setLoading(false); 
     } catch (error) {
       console.error('Error fetching inspection items:', error);
       toast({
@@ -142,7 +142,7 @@ export default function InspectionItems() {
         description: "データの取得に失敗しました",
         variant: "destructive",
       });
-      setLoading(false); // Set loading to false even if there's an error
+      setLoading(false); 
     }
   };
 
@@ -150,7 +150,7 @@ export default function InspectionItems() {
     fetchTableData();
     fetchManufacturers();
     fetchModels();
-    fetchMachineNumbers(); // Fetch machine numbers
+    fetchMachineNumbers(); 
   }, [selectedTable]);
 
   const fetchTableData = async () => {
@@ -223,7 +223,7 @@ export default function InspectionItems() {
 
       if (response.ok) {
         fetchTableData();
-        setNewItem({ name: '', code: '', number: '', modelName: '' }); // Reset newItem
+        setNewItem({ name: '', code: '', number: '', modelName: '' }); 
         toast({
           title: "追加完了",
           description: "項目を追加しました",
@@ -574,7 +574,6 @@ export default function InspectionItems() {
     });
   };
 
-
   const handleCancel = () => {
     setShowCancelDialog(true);
   };
@@ -657,16 +656,13 @@ export default function InspectionItems() {
   };
 
   const handleEdit = (item: TableItem) => {
-    // Implement edit functionality here.  This is a placeholder.
     console.log("Edit item:", item);
     toast({title: "編集機能は未実装です。", description: "", variant: "warning"})
   };
 
-
   useEffect(() => {
     if (activeTab === "items") {
       setLoading(true);
-      // メーカーと機種のデータを取得
       Promise.all([
         fetch('/api/inspection/table/manufacturers').then(res => res.json()),
         fetch('/api/inspection/table/models').then(res => res.json()),
@@ -676,7 +672,6 @@ export default function InspectionItems() {
           setManufacturers(manufacturers);
           setModels(models);
 
-          // フィルタリングされた点検項目を設定
           const filtered = inspectionItems.filter(item => {
             const manufacturerMatch = !selectedManufacturer || item.manufacturer === selectedManufacturer;
             const modelMatch = !selectedModel || item.model === selectedModel;
@@ -699,11 +694,8 @@ export default function InspectionItems() {
     }
   }, [activeTab, selectedManufacturer, selectedModel]);
 
-
-  // 製造メーカー追加
   const addManufacturer = async (name: string) => {
     try {
-      // 重複チェック
       const existingManufacturer = manufacturers.find(m => m.name === name);
       if (existingManufacturer) {
         toast({
@@ -737,10 +729,8 @@ export default function InspectionItems() {
     }
   };
 
-  // 機種追加
   const addModel = async (name: string, manufacturerId: string) => {
     try {
-      // 重複チェック
       const existingModel = models.find(m => m.name === name);
       if (existingModel) {
         toast({
@@ -777,10 +767,8 @@ export default function InspectionItems() {
     }
   };
 
-  // 機械番号追加
   const addMachineNumber = async (number: string, modelId: string) => {
     try {
-      // 重複チェック
       const existingMachine = machineNumbers.find(m => m.number === number);
       if (existingMachine) {
         toast({
@@ -857,6 +845,7 @@ export default function InspectionItems() {
             <TabsList>
               <TabsTrigger value="tables">テーブル管理</TabsTrigger>
               <TabsTrigger value="items">点検項目</TabsTrigger>
+              <TabsTrigger value="simplified">簡易表示</TabsTrigger> 
             </TabsList>
 
             <TabsContent value="tables">
@@ -876,7 +865,6 @@ export default function InspectionItems() {
                     </Select>
                   </div>
                 </div>
-                {/* テーブル表示 */}
                 <div className="mt-4">
                   <Table>
                     <TableHeader>
@@ -985,7 +973,7 @@ export default function InspectionItems() {
 
                   {selectedTable === 'models' && (
                     <div className="border p-4 rounded-md">
-                      <h3 className="text-lg font-medium mb-4">新規追加</h3>
+                      <h3 className="text-lg font-medium mb-4">新規追加h3>
                       <div className="flex gap-4 items-end mb-4">
                         <div>
                           <Label>機種名</Label>
@@ -1166,6 +1154,10 @@ export default function InspectionItems() {
                 </Table>
               </div>
             </TabsContent>
+
+            <TabsContent value="simplified">
+              <SimplifiedInspectionItems /> 
+            </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
@@ -1318,5 +1310,200 @@ export default function InspectionItems() {
         </DialogContent>
       </Dialog>
     </DndProvider>
+  );
+}
+
+
+// client/src/pages/settings/simplified-inspection-items.tsx (New file)
+import { useState, useEffect } from 'react';
+import { useToast } from '@/components/ui/use-toast';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+type Manufacturer = {
+  id: number;
+  name: string;
+};
+
+type Model = {
+  id: number;
+  name: string;
+  manufacturer_id: number;
+};
+
+type InspectionItem = {
+  id: number;
+  manufacturer: string;
+  model: string;
+  category: string;
+  equipment: string;
+  item: string;
+  criteria: string;
+  method: string;
+};
+
+export default function SimplifiedInspectionItems() {
+  const { toast } = useToast();
+  const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
+  const [models, setModels] = useState<Model[]>([]);
+  const [selectedManufacturer, setSelectedManufacturer] = useState<string>("");
+  const [selectedModel, setSelectedModel] = useState<string>("");
+  const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchManufacturers();
+  }, []);
+
+  useEffect(() => {
+    if (selectedManufacturer) {
+      fetchModels(selectedManufacturer);
+    } else {
+      setModels([]);
+      setSelectedModel("");
+    }
+  }, [selectedManufacturer]);
+
+  useEffect(() => {
+    if (selectedManufacturer && selectedModel) {
+      fetchInspectionItems();
+    }
+  }, [selectedManufacturer, selectedModel]);
+
+  const fetchManufacturers = async () => {
+    try {
+      const response = await fetch('/api/inspection/table/manufacturers');
+      const data = await response.json();
+      setManufacturers(data.map(m => ({ id: m.id, name: m.name })));
+    } catch (error) {
+      console.error('Error fetching manufacturers:', error);
+      toast({
+        title: "エラー",
+        description: "製造メーカーの取得に失敗しました",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const fetchModels = async (manufacturerName: string) => {
+    try {
+      const response = await fetch('/api/inspection/table/models');
+      const data = await response.json();
+      const filteredModels = data.filter(m => m.manufacturer_name === manufacturerName); 
+      setModels(filteredModels.map(m => ({
+        id: m.id,
+        name: m.name,
+        manufacturer_id: m.manufacturer_id
+      })));
+    } catch (error) {
+      console.error('Error fetching models:', error);
+      toast({
+        title: "エラー",
+        description: "機種の取得に失敗しました",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const fetchInspectionItems = async () => {
+    try {
+      const response = await fetch('/api/inspection/table/inspection_items');
+      const data = await response.json();
+      const filteredItems = data.filter(item =>
+        item.manufacturer === selectedManufacturer &&
+        item.model === selectedModel
+      );
+      setInspectionItems(filteredItems);
+    } catch (error) {
+      console.error('Error fetching inspection items:', error);
+      toast({
+        title: "エラー",
+        description: "点検項目の取得に失敗しました",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <div className="container mx-auto p-4">
+      <div className="flex gap-4 mb-6">
+        <div className="w-1/3">
+          <label className="block text-sm font-medium mb-1">製造メーカー</label>
+          <Select
+            value={selectedManufacturer}
+            onValueChange={setSelectedManufacturer}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="製造メーカーを選択" />
+            </SelectTrigger>
+            <SelectContent>
+              {manufacturers.map((manufacturer) => (
+                <SelectItem key={manufacturer.id} value={manufacturer.name}>
+                  {manufacturer.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="w-1/3">
+          <label className="block text-sm font-medium mb-1">機種</label>
+          <Select
+            value={selectedModel}
+            onValueChange={setSelectedModel}
+            disabled={!selectedManufacturer}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="機種を選択" />
+            </SelectTrigger>
+            <SelectContent>
+              {models.map((model) => (
+                <SelectItem key={model.id} value={model.name}>
+                  {model.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="border rounded-lg">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>部位</TableHead>
+              <TableHead>装置</TableHead>
+              <TableHead>確認箇所</TableHead>
+              <TableHead>判断基準</TableHead>
+              <TableHead>確認要領</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {inspectionItems.map((item) => (
+              <TableRow key={item.id}>
+                <TableCell>{item.category}</TableCell>
+                <TableCell>{item.equipment}</TableCell>
+                <TableCell>{item.item}</TableCell>
+                <TableCell>{item.criteria}</TableCell>
+                <TableCell>{item.method}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
   );
 }

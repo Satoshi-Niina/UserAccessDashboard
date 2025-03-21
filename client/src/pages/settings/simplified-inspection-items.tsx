@@ -29,12 +29,13 @@ const SimplifiedInspectionItems: React.FC = () => {
         setItems(data);
       } catch (error) {
         toast({
-          title: "Error",
-          description: "Failed to load inspection items",
+          title: "エラー",
+          description: "項目の読み込みに失敗しました",
           variant: "destructive"
         });
       }
     };
+    
     fetchItems();
   }, [toast]);
 

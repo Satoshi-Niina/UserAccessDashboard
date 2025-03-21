@@ -1,6 +1,4 @@
 
-import React from 'react';
-import { useToast } from '@/hooks/use-toast';
 import {
   Table,
   TableBody,
@@ -9,6 +7,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import React from 'react';
 
 interface SimplifiedInspectionItem {
   id: number;

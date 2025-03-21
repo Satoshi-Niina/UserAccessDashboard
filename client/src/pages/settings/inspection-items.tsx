@@ -1354,7 +1354,7 @@ interface EditableInspectionItem extends InspectionItem {
   method: string;
 };
 
-export default function InspectionItems() {
+export default function InspectionItemsPage() {
   const { toast } = useToast();
   const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
   const [models, setModels] = useState<Model[]>([]);

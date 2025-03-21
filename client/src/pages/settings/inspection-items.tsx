@@ -1338,10 +1338,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-type Manufacturer = {
+interface Manufacturer {
   id: number;
   name: string;
-};
+}
 
 type Model = {
   id: number;

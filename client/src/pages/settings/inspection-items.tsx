@@ -683,12 +683,9 @@ export default function InspectionItems() {
             const manufacturerMatch = !selectedManufacturer || item.manufacturer === selectedManufacturer;
             const modelMatch = !selectedModel || item.model === selectedModel;
             return manufacturerMatch && modelMatch;
-          });
-          
           setInspectionItems(filtered);
           setFilteredItems(inspectionItems);
           setLoading(false);
-        })
         })
         .catch(error => {
           console.error('Error fetching data from tables:', error);

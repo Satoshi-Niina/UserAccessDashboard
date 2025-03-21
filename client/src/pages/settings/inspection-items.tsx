@@ -1344,8 +1344,7 @@ type Model = {
   manufacturer_id: number;
 };
 
-type InspectionItem = {
-  id: number;
+interface EditableInspectionItem extends InspectionItem {
   manufacturer: string;
   model: string;
   category: string;

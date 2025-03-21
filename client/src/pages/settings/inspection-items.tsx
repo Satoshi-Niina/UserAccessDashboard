@@ -1,35 +1,28 @@
 import React, { useEffect, useState } from 'react';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
+import { useToast } from "@/components/ui/use-toast";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableRow, TableCell, TableBody } from "@/components/ui/table";
-import { useToast } from "@/hooks/use-toast";
-import { Save } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import Papa from 'papaparse'; 
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Link, useLocation } from 'wouter';
-import { Edit, Trash, Plus } from 'lucide-react';
-import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle, AlertDialogHeader} from '@/components/ui';
-import SimplifiedInspectionItems from './simplified-inspection-items'; 
+import { Edit, Trash, Plus, Save } from 'lucide-react';
+import SimplifiedInspectionItems from './simplified-inspection-items';
 
 
-type TableType = 'manufacturers' | 'models' | 'machineNumbers';
-
-interface TableItem {
-  id?: number;
+interface Manufacturer {
+  id: number;
   name: string;
-  code?: string;
-  number?: string; 
-  manufacturerId?: number;
-  modelId?: number;
-  modelName?: string; 
-  externalId?: string; 
-  model_id?: string; 
+}
+
+interface Model {
+  id: number;
+  name: string;
+  manufacturer_id: number;
 }
 
 interface InspectionItem {
@@ -39,14 +32,25 @@ interface InspectionItem {
   item: string;
   criteria: string;
   method: string;
-  measurementRecord?: string;
-  diagramRecord?: string;
-  manufacturer?: string;
-  model?: string;
-  engineType?: string;
-  comment?: string;
-  [key: string]: any; 
+  manufacturer_id: number;
+  model_id: number;
+  [key: string]: any;
 }
+
+interface TableItem {
+  id?: number;
+  name: string;
+  code?: string;
+  number?: string;
+  manufacturerId?: number;
+  modelId?: number;
+  modelName?: string;
+  externalId?: string;
+  model_id?: string;
+}
+
+type TableType = 'manufacturers' | 'models' | 'machineNumbers';
+
 
 const ExitButton = ({ hasChanges, onSave }: { hasChanges: boolean; onSave: () => Promise<void> }) => {
   return (
@@ -59,15 +63,15 @@ const ExitButton = ({ hasChanges, onSave }: { hasChanges: boolean; onSave: () =>
 
 export default function InspectionItems() {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<"tables" | "items" | "simplified">("items"); 
+  const [activeTab, setActiveTab] = useState<"tables" | "items" | "simplified">("items");
   const [selectedTable, setSelectedTable] = useState<TableType>('manufacturers');
   const [tableItems, setTableItems] = useState<TableItem[]>([]);
-  const [newItem, setNewItem] = useState<TableItem>({ name: '', code: '', number: '' }); 
-  const [manufacturers, setManufacturers] = useState<TableItem[]>([]);
-  const [models, setModels] = useState<TableItem[]>([]);
-  const [machineNumbers, setMachineNumbers] = useState<TableItem[]>([]); 
-  const [selectedModelId, setSelectedModelId] = useState<number | null>(null); 
-  const [selectedManufacturerId, setSelectedManufacturerId] = useState<number | null>(null); 
+  const [newItem, setNewItem] = useState<TableItem>({ name: '', code: '', number: '' });
+  const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
+  const [models, setModels] = useState<Model[]>([]);
+  const [machineNumbers, setMachineNumbers] = useState<TableItem[]>([]);
+  const [selectedModelId, setSelectedModelId] = useState<number | null>(null);
+  const [selectedManufacturerId, setSelectedManufacturerId] = useState<number | null>(null);
   const [selectedManufacturer, setSelectedManufacturer] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
@@ -79,8 +83,8 @@ export default function InspectionItems() {
   const [pendingAction, setPendingAction] = useState<'back' | 'save' | null>(null);
   const [saveFileName, setSaveFileName] = useState("");
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
-  const [availableFiles, setAvailableFiles] = useState<{name: string, modified: string}[]>([]);
-  const [latestFile, setLatestFile] = useState<{name: string, modified: string} | null>(null);
+  const [availableFiles, setAvailableFiles] = useState<{ name: string, modified: string }[]>([]);
+  const [latestFile, setLatestFile] = useState<{ name: string, modified: string } | null>(null);
   const [selectedFile, setSelectedFile] = useState("");
   const [csvData, setCsvData] = useState<InspectionItem[]>([]);
   const [editingItem, setEditingItem] = useState<InspectionItem | null>(null);
@@ -92,7 +96,7 @@ export default function InspectionItems() {
     onCancel: (() => void) | null;
   }>({ isOpen: false, itemId: null, onConfirm: null, onCancel: null });
   const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [loading, setLoading] = useState(true); 
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const initializeData = async () => {
@@ -133,8 +137,8 @@ export default function InspectionItems() {
       setInspectionItems(data);
       setInitialItems(data);
       setHasChanges(false);
-      setFilteredItems(data); 
-      setLoading(false); 
+      setFilteredItems(data);
+      setLoading(false);
     } catch (error) {
       console.error('Error fetching inspection items:', error);
       toast({
@@ -142,7 +146,7 @@ export default function InspectionItems() {
         description: "データの取得に失敗しました",
         variant: "destructive",
       });
-      setLoading(false); 
+      setLoading(false);
     }
   };
 
@@ -150,7 +154,7 @@ export default function InspectionItems() {
     fetchTableData();
     fetchManufacturers();
     fetchModels();
-    fetchMachineNumbers(); 
+    fetchMachineNumbers();
   }, [selectedTable]);
 
   const fetchTableData = async () => {
@@ -223,7 +227,7 @@ export default function InspectionItems() {
 
       if (response.ok) {
         fetchTableData();
-        setNewItem({ name: '', code: '', number: '', modelName: '' }); 
+        setNewItem({ name: '', code: '', number: '', modelName: '' });
         toast({
           title: "追加完了",
           description: "項目を追加しました",
@@ -255,7 +259,7 @@ export default function InspectionItems() {
   const handleSearch = () => {
     const filtered = inspectionItems.filter((item: any) => {
       return (!selectedManufacturer || item.manufacturer === selectedManufacturer) &&
-             (!selectedModel || item.model === selectedModel);
+        (!selectedModel || item.model === selectedModel);
     });
     setFilteredItems(filtered);
   };
@@ -603,7 +607,7 @@ export default function InspectionItems() {
 
     try {
       const model = models.find((m) => m.id === selectedModelId);
-      if(selectedTable === 'machineNumbers' && model){
+      if (selectedTable === 'machineNumbers' && model) {
         await addMachineNumber(newItem.number, selectedModelId.toString());
         setNewItem({ name: '', code: '', number: '' });
         fetchTableData();
@@ -657,7 +661,7 @@ export default function InspectionItems() {
 
   const handleEdit = (item: TableItem) => {
     console.log("Edit item:", item);
-    toast({title: "編集機能は未実装です。", description: "", variant: "warning"})
+    toast({ title: "編集機能は未実装です。", description: "", variant: "warning" })
   };
 
   useEffect(() => {
@@ -744,7 +748,7 @@ export default function InspectionItems() {
       const response = await fetch('/api/models', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           name,
           manufacturerId: parseInt(manufacturerId)
         })
@@ -845,7 +849,7 @@ export default function InspectionItems() {
             <TabsList>
               <TabsTrigger value="tables">テーブル管理</TabsTrigger>
               <TabsTrigger value="items">点検項目</TabsTrigger>
-              <TabsTrigger value="simplified">簡易表示</TabsTrigger> 
+              <TabsTrigger value="simplified">簡易表示</TabsTrigger>
             </TabsList>
 
             <TabsContent value="tables">
@@ -977,13 +981,15 @@ export default function InspectionItems() {
                       <div className="flex gap-4 items-end mb-4">
                         <div>
                           <Label>機種名</Label>
-                          <Input                          placeholder="機種名"                          value={newItem.name}
+                          <Input
+                            placeholder="機種名"
+                            value={newItem.name}
                             onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
                             className="w-[200px]"
                           />
                         </div>
                         <div>
-                          <Label>製造メーカー</Label>
+                          <Label>>製造メーカー</Label>
                           <Select value={selectedManufacturerId?.toString() || ''} onValueChange={(value) => setSelectedManufacturerId(parseInt(value))}>
                             <SelectTrigger className="w-[200px]">
                               <SelectValue placeholder="製造メーカーを選択" />
@@ -1156,7 +1162,7 @@ export default function InspectionItems() {
             </TabsContent>
 
             <TabsContent value="simplified">
-              <SimplifiedInspectionItems /> 
+              <SimplifiedInspectionItems />
             </TabsContent>
           </Tabs>
         </CardContent>
@@ -1274,7 +1280,7 @@ export default function InspectionItems() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <AlertDialog open={deleteConfirmState.isOpen} onOpenChange={() => setDeleteConfirmState({...deleteConfirmState, isOpen: false})}>
+      <AlertDialog open={deleteConfirmState.isOpen} onOpenChange={() => setDeleteConfirmState({ ...deleteConfirmState, isOpen: false })}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>項目の削除</AlertDialogTitle>
@@ -1312,7 +1318,6 @@ export default function InspectionItems() {
     </DndProvider>
   );
 }
-
 
 // client/src/pages/settings/simplified-inspection-items.tsx (New file)
 import { useState, useEffect } from 'react';
@@ -1401,7 +1406,7 @@ export default function InspectionItemsPage() {
     try {
       const response = await fetch('/api/inspection/table/models');
       const data = await response.json();
-      const filteredModels = data.filter(m => m.manufacturer_name === manufacturerName); 
+      const filteredModels = data.filter(m => m.manufacturer_name === manufacturerName);
       setModels(filteredModels.map(m => ({
         id: m.id,
         name: m.name,

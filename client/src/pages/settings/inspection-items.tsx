@@ -686,11 +686,9 @@ export default function InspectionItems() {
           });
           
           setInspectionItems(filtered);
+          setFilteredItems(inspectionItems);
           setLoading(false);
         })
-          setInspectionItems(inspectionItemsData);
-          setFilteredItems(inspectionItemsData);
-          setLoading(false);
         })
         .catch(error => {
           console.error('Error fetching data from tables:', error);

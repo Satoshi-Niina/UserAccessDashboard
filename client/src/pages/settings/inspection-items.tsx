@@ -973,7 +973,7 @@ export default function InspectionItems() {
 
                   {selectedTable === 'models' && (
                     <div className="border p-4 rounded-md">
-                      <h3 className="text-lg font-medium mb-4">新規追加h3>
+                      <h3 className="text-lg font-medium mb-4">新規追加</h3>
                       <div className="flex gap-4 items-end mb-4">
                         <div>
                           <Label>機種名</Label>

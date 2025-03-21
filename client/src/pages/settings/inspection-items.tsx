@@ -673,7 +673,21 @@ export default function InspectionItems() {
         fetch('/api/inspection/table/machine_numbers').then(res => res.json()),
         fetch('/api/inspection/table/inspection_items').then(res => res.json())
       ])
-        .then(([manufacturersData, modelsData, machineNumbersData, inspectionItemsData]) => {
+        .then(([manufacturers, models, machineNumbers, inspectionItems]) => {
+          setManufacturers(manufacturers);
+          setModels(models);
+          setMachineNumbers(machineNumbers);
+          
+          // フィルタリングされた点検項目を設定
+          const filtered = inspectionItems.filter(item => {
+            const manufacturerMatch = !selectedManufacturer || item.manufacturer === selectedManufacturer;
+            const modelMatch = !selectedModel || item.model === selectedModel;
+            return manufacturerMatch && modelMatch;
+          });
+          
+          setInspectionItems(filtered);
+          setLoading(false);
+        })acturersData, modelsData, machineNumbersData, inspectionItemsData]) => {
           setManufacturers(manufacturersData);
           setModels(modelsData);
           setMachineNumbers(machineNumbersData); // Set machine numbers data

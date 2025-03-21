@@ -1,5 +1,5 @@
 import React from 'react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1322,7 +1322,7 @@ export default function InspectionItems() {
 
 // client/src/pages/settings/simplified-inspection-items.tsx (New file)
 import { useState, useEffect } from 'react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import {
   Table,
   TableBody,

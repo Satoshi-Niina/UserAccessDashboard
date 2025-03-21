@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Link, useLocation } from 'wouter';
 import { Edit, Trash, Plus, Save } from 'lucide-react';
 import SimplifiedInspectionItems from './simplified-inspection-items';
@@ -1343,11 +1343,11 @@ interface Manufacturer {
   name: string;
 }
 
-type Model = {
+interface ModelType {
   id: number;
   name: string;
   manufacturer_id: number;
-};
+}
 
 interface EditableInspectionItem extends InspectionItem {
   manufacturer: string;
@@ -1362,7 +1362,7 @@ interface EditableInspectionItem extends InspectionItem {
 export default function InspectionItemsPage() {
   const { toast } = useToast();
   const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
-  const [models, setModels] = useState<Model[]>([]);
+  const [models, setModels] = useState<ModelType[]>([]);
   const [selectedManufacturer, setSelectedManufacturer] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);

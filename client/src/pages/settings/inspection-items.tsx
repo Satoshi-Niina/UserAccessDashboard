@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from "@/components/ui/button";
@@ -1130,8 +1130,8 @@ export default function InspectionItems() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredItems.map((item: any) => (
-                      <TableRow key={item.id}>
+                    {filteredItems.map((item: any, index: number) => (
+                      <TableRow key={`${item.id}-${index}`}>
                         <TableCell>{item.category}</TableCell>
                         <TableCell>{item.equipment}</TableCell>
                         <TableCell>{item.item}</TableCell>

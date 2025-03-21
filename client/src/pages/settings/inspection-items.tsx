@@ -666,17 +666,15 @@ export default function InspectionItems() {
   useEffect(() => {
     if (activeTab === "items") {
       setLoading(true);
-      // 4つのテーブルから読み込み
+      // メーカーと機種のデータを取得
       Promise.all([
         fetch('/api/inspection/table/manufacturers').then(res => res.json()),
         fetch('/api/inspection/table/models').then(res => res.json()),
-        fetch('/api/inspection/table/machine_numbers').then(res => res.json()),
         fetch('/api/inspection/table/inspection_items').then(res => res.json())
       ])
-        .then(([manufacturers, models, machineNumbers, inspectionItems]) => {
+        .then(([manufacturers, models, inspectionItems]) => {
           setManufacturers(manufacturers);
           setModels(models);
-          setMachineNumbers(machineNumbers);
 
           // フィルタリングされた点検項目を設定
           const filtered = inspectionItems.filter(item => {
@@ -685,6 +683,7 @@ export default function InspectionItems() {
             return manufacturerMatch && modelMatch;
           });
           setInspectionItems(filtered);
+          setFilteredItems(filtered);
           setFilteredItems(inspectionItems);
           setLoading(false);
         })

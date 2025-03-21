@@ -1,38 +1,43 @@
-import { useToast } from '@/components/ui/use-toast';
-import {   Table,  // ... other imports
-} from 'antd';
-import React from 'react'; // React is needed for the functional component
-import type { SimplifiedInspectionItem } from '@/types/simplified-inspection-item';
 
-interface Props {
-  items: SimplifiedInspectionItem[];
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+interface SimplifiedInspectionItem {
+  id: number;
+  name: string;
+  description: string;
 }
 
-
-const InspectionItems: React.FC<Props> = ({ items }) => {
-  const [expandedRows, setExpandedRows] = React.useState<number[]>([]); //useState is now used here without an import statement
-
-
-  const handleExpandChange = (expanded, record) => {
-    setExpandedRows(expanded);
-  };
-
+export default function SimplifiedInspectionItems() {
+  const [items, setItems] = useState<SimplifiedInspectionItem[]>([]);
+  const { toast } = useToast();
 
   return (
-    <Table
-      expandedRowRender={(record) => (
-        <p>This is the expanded row for {record.name}</p>
-      )}
-      onExpand={(expanded, record) => handleExpandChange(expanded, record)}
-      expandedRowKeys={expandedRows}
-      columns={[
-        { title: 'Name', dataIndex: 'name', key: 'name' },
-        { title: 'Description', dataIndex: 'description', key: 'description' },
-        // ... more columns
-      ]}
-      dataSource={items}
-    />
+    <div className="container mx-auto py-6">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>名前</TableHead>
+            <TableHead>説明</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {items.map((item) => (
+            <TableRow key={item.id}>
+              <TableCell>{item.name}</TableCell>
+              <TableCell>{item.description}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
-};
-
-export default InspectionItems;
+}

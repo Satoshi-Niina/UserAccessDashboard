@@ -687,10 +687,7 @@ export default function InspectionItems() {
           
           setInspectionItems(filtered);
           setLoading(false);
-        })acturersData, modelsData, machineNumbersData, inspectionItemsData]) => {
-          setManufacturers(manufacturersData);
-          setModels(modelsData);
-          setMachineNumbers(machineNumbersData); // Set machine numbers data
+        })
           setInspectionItems(inspectionItemsData);
           setFilteredItems(inspectionItemsData);
           setLoading(false);

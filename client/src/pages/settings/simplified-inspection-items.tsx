@@ -16,17 +16,27 @@ interface SimplifiedInspectionItem {
   description: string;
 }
 
-export default function SimplifiedInspectionItems() {
+const SimplifiedInspectionItems: React.FC = () => {
   const [items, setItems] = React.useState<SimplifiedInspectionItem[]>([]);
   const { toast } = useToast();
 
   React.useEffect(() => {
-    const sampleData = [
-      { id: 1, name: 'Item 1', description: 'Description 1' },
-      { id: 2, name: 'Item 2', description: 'Description 2' },
-    ];
-    setItems(sampleData);
-  }, []);
+    const fetchItems = async () => {
+      try {
+        const response = await fetch('/api/inspection-items/simplified');
+        if (!response.ok) throw new Error('Failed to fetch items');
+        const data = await response.json();
+        setItems(data);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load inspection items",
+          variant: "destructive"
+        });
+      }
+    };
+    fetchItems();
+  }, [toast]);
 
   return (
     <div className="container mx-auto py-6">
@@ -48,4 +58,6 @@ export default function SimplifiedInspectionItems() {
       </Table>
     </div>
   );
-}
+};
+
+export default SimplifiedInspectionItems;

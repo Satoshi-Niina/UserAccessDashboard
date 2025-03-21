@@ -136,7 +136,9 @@ function dispatch(action: Action) {
   })
 }
 
-function toast(props: Omit<ToasterToast, "id">) {
+type Toast = Omit<ToasterToast, "id">
+
+function toast({ ...props }: Toast) {
   const id = genId()
 
   const update = (props: ToasterToast) =>
@@ -165,7 +167,7 @@ function toast(props: Omit<ToasterToast, "id">) {
   }
 }
 
-function useToast() {
+export function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
 
   React.useEffect(() => {
@@ -176,7 +178,7 @@ function useToast() {
         listeners.splice(index, 1)
       }
     }
-  }, [state])
+  }, [])
 
   return {
     ...state,
@@ -185,4 +187,4 @@ function useToast() {
   }
 }
 
-export { useToast, toast }
+export { toast }

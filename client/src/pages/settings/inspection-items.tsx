@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useToast } from "@/components/ui/use-toast";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { useToast } from '@/components/ui/use-toast';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableRow, TableCell, TableBody } from "@/components/ui/table";
@@ -8,10 +8,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle, AlertDialogHeader } from "@/components/ui/alert-dialog";
 import { Link, useLocation } from 'wouter';
 import { Edit, Trash, Plus, Save } from 'lucide-react';
 import SimplifiedInspectionItems from './simplified-inspection-items';
+import { ExitButton } from "@/components/layout/exit-button";
 
 
 interface Manufacturer {
@@ -52,7 +53,7 @@ interface TableItem {
 type TableType = 'manufacturers' | 'models' | 'machineNumbers';
 
 
-const ExitButton = ({ hasChanges, onSave }: { hasChanges: boolean; onSave: () => Promise<void> }) => {
+const ExitButtonComponent = ({ hasChanges, onSave }: { hasChanges: boolean; onSave: () => Promise<void> }) => {
   return (
     <Button variant="default" onClick={onSave}>
       <Save className="h-4 w-4" />
@@ -841,7 +842,7 @@ export default function InspectionItems() {
             <Button variant="outline" onClick={handleCancel}>
               キャンセル
             </Button>
-            <Button onClick={() => handleSaveAndExit(selectedTable)}>保存して終了</Button>
+            <ExitButtonComponent hasChanges={hasChanges} onSave={handleSaveAndExit} />
           </div>
         </CardHeader>
         <CardContent>
@@ -982,7 +983,7 @@ export default function InspectionItems() {
                         <div>
                           <Label>機種名</Label>
                           <Input
-                            placeholder="機種名"
+                                                        placeholder="機種名"
                             value={newItem.name}
                             onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
                             className="w-[200px]"

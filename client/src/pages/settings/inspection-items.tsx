@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { 
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -22,7 +22,6 @@ import { Link, useLocation } from 'wouter';
 import { Edit, Trash, Plus, Save } from 'lucide-react';
 import SimplifiedInspectionItems from './simplified-inspection-items';
 import { ExitButton } from "@/components/layout/exit-button";
-
 
 interface Manufacturer {
   id: number;

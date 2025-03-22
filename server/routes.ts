@@ -844,7 +844,7 @@ export function registerRoutes(app: Express): Server {
   app.get('/api/tech-support/images/:fileName', async (req, res) => {
     try {
       const fileName = req.params.fileName;
-      const filePath = path.join(process.cwd(), 'attached_assets/images, fileName);
+      const filePath = path.join(process.cwd(), 'attached_assets/images', fileName);
 
       if (!fs.existsSync(filePath)) {
         return res.status(404).json({ error: '画像が見つかりません' });

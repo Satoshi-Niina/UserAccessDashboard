@@ -1,8 +1,8 @@
 
-import React from 'react';
+import { type FC } from 'react';
 import { SimplifiedInspectionTable } from '@/components/simplified-inspection-table';
 
-const SimplifiedInspectionItems: React.FC = () => {
+const SimplifiedInspectionItems: FC = () => {
   return (
     <div className="container mx-auto py-10">
       <SimplifiedInspectionTable />

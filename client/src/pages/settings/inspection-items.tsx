@@ -47,14 +47,33 @@ export default function InspectionItems() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedManufacturer, setSelectedManufacturer] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
+  const [tableData, setTableData] = useState<any[]>([]);
   const { toast } = useToast();
+
+  const tableOptions = [
+    { value: "manufacturers", label: "製造メーカー" },
+    { value: "models", label: "機種" },
+    { value: "inspection_items", label: "点検項目" },
+    { value: "machine_numbers", label: "機械番号" }
+  ];
 
   useEffect(() => {
     fetchManufacturers();
     fetchModels();
     fetchItems();
     fetchMachineNumbers();
-  }, []);
+    const fetchTableData = async () => {
+      try {
+        const response = await fetch(`/api/inspection/table/${selectedTable}`);
+        if (!response.ok) throw new Error('データの取得に失敗しました');
+        const data = await response.json();
+        setTableData(data);
+      } catch (error) {
+        console.error('テーブルデータの取得エラー:', error);
+      }
+    };
+    fetchTableData();
+  }, [selectedTable]);
 
   const fetchManufacturers = async () => {
     try {
@@ -153,10 +172,10 @@ export default function InspectionItems() {
         case "models":
           data = models;
           break;
-        case "items":
+        case "inspection_items":
           data = items;
           break;
-        case "machineNumbers":
+        case "machine_numbers":
           data = machineNumbers;
           break;
         default:
@@ -305,17 +324,109 @@ export default function InspectionItems() {
         <TabsContent value="tables">
           <div className="space-y-4">
             <Select value={selectedTable} onValueChange={setSelectedTable}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger>
                 <SelectValue placeholder="テーブルを選択" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="manufacturers">製造メーカー</SelectItem>
-                <SelectItem value="models">機種</SelectItem>
-                <SelectItem value="machine_numbers">機械番号</SelectItem>
+                {tableOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
-            {/* テーブル編集用のコンポーネントをここに実装 */}
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  {selectedTable === 'manufacturers' && (
+                    <>
+                      <TableHead>ID</TableHead>
+                      <TableHead>名前</TableHead>
+                    </>
+                  )}
+                  {selectedTable === 'models' && (
+                    <>
+                      <TableHead>ID</TableHead>
+                      <TableHead>名前</TableHead>
+                      <TableHead>製造メーカーID</TableHead>
+                    </>
+                  )}
+                  {selectedTable === 'inspection_items' && (
+                    <>
+                      <TableHead>ID</TableHead>
+                      <TableHead>部位</TableHead>
+                      <TableHead>装置</TableHead>
+                      <TableHead>確認箇所</TableHead>
+                      <TableHead>判断基準</TableHead>
+                      <TableHead>確認要領</TableHead>
+                    </>
+                  )}
+                  {selectedTable === 'machine_numbers' && (
+                    <>
+                      <TableHead>ID</TableHead>
+                      <TableHead>番号</TableHead>
+                      <TableHead>機種ID</TableHead>
+                    </>
+                  )}
+                  <TableHead className="w-[100px]">操作</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tableData.map((item, index) => (
+                  <TableRow key={item.id || index}>
+                    {selectedTable === 'manufacturers' && (
+                      <>
+                        <TableCell>{item.id}</TableCell>
+                        <TableCell>{item.name}</TableCell>
+                      </>
+                    )}
+                    {selectedTable === 'models' && (
+                      <>
+                        <TableCell>{item.id}</TableCell>
+                        <TableCell>{item.name}</TableCell>
+                        <TableCell>{item.manufacturer_id}</TableCell>
+                      </>
+                    )}
+                    {selectedTable === 'inspection_items' && (
+                      <>
+                        <TableCell>{item.id}</TableCell>
+                        <TableCell>{item.category}</TableCell>
+                        <TableCell>{item.equipment}</TableCell>
+                        <TableCell>{item.item}</TableCell>
+                        <TableCell>{item.criteria}</TableCell>
+                        <TableCell>{item.method}</TableCell>
+                      </>
+                    )}
+                    {selectedTable === 'machine_numbers' && (
+                      <>
+                        <TableCell>{item.id}</TableCell>
+                        <TableCell>{item.number}</TableCell>
+                        <TableCell>{item.model_id}</TableCell>
+                      </>
+                    )}
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(item)}
+                        >
+                          <PencilIcon className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(item.id)}
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         </TabsContent>
       </Tabs>
@@ -326,7 +437,7 @@ export default function InspectionItems() {
           </DialogHeader>
           {editItem && (
             <div className="space-y-4">
-              {editItem.number ? ( 
+              {editItem.number ? (
                 <>
                   <div>
                     <label>機械番号</label>
@@ -383,12 +494,12 @@ export default function InspectionItems() {
               キャンセル
             </Button>
             <Button onClick={() => {
-              if (editItem.number) { 
+              if (editItem.number) {
                 const newMachineNumbers = editItem.id
                   ? machineNumbers.map(machine => machine.id === editItem.id ? editItem : machine)
                   : [...machineNumbers, { ...editItem, id: (machineNumbers.length + 1).toString() }];
                 setMachineNumbers(newMachineNumbers);
-              } else { 
+              } else {
                 const newItems = items.map(item =>
                   item.id === editItem.id ? editItem : item
                 );

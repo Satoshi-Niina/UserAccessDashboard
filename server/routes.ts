@@ -6,9 +6,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 import Papa from 'papaparse';
 import { promisify } from 'util';
+import express from 'express';
 
 const INSPECTION_FILES_DIR = path.join(process.cwd(), 'attached_assets');
-const inspectionItemsDir = INSPECTION_FILES_DIR; // Added for clarity
+const inspectionItemsDir = INSPECTION_FILES_DIR;
 
 async function readCsvFile(filePath: string) {
   const fileContent = await fs.promises.readFile(filePath, 'utf8');
@@ -17,6 +18,50 @@ async function readCsvFile(filePath: string) {
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
+  const router = express.Router();
+
+  // CSVファイルを読み込む関数
+  function readCsvFileSync(filePath: string): any[] {
+    const data = fs.readFileSync(filePath, 'utf-8');
+    return Papa.parse(data, { header: true }).data;
+  }
+
+  // 製造メーカー一覧を取得
+  router.get('/inspection/table/manufacturers', async (req, res) => {
+    try {
+      const filePath = path.join(process.cwd(), 'attached_assets/inspection/table/manufacturers.csv');
+      const data = await readCsvFile(filePath);
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to read manufacturers data' });
+    }
+  });
+
+  // 機種一覧を取得
+  router.get('/inspection/table/models', async (req, res) => {
+    try {
+      const filePath = path.join(process.cwd(), 'attached_assets/inspection/table/models.csv');
+      const data = await readCsvFile(filePath);
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to read models data' });
+    }
+  });
+
+  // 点検項目一覧を取得
+  router.get('/inspection/table/inspection_items', async (req, res) => {
+    try {
+      const filePath = path.join(process.cwd(), 'attached_assets/inspection/table/inspection_items.csv');
+      const data = await readCsvFile(filePath);
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to read inspection items data' });
+    }
+  });
+
+
+  app.use('/api', router);
+
 
   app.get("/api/users", async (req, res) => {
     if (!req.isAuthenticated()) {
@@ -213,21 +258,8 @@ export function registerRoutes(app: Express): Server {
       const machineNumber = await storage.createMachineNumber({ 
         number, 
         model_id: modelId,
-        manufacturer_id: 1 // 製造メーカーIDはmodelsテーブルから取得するように修正可能
+        manufacturer_id: 1 
       });
-      res.status(201).json(machineNumber);
-
-      // 既存のデータを読み込むか、新規作成
-      let rows = [];
-      if (fs.existsSync(csvPath)) {
-        const content = fs.readFileSync(csvPath, 'utf-8');
-        rows = Papa.parse(content, { header: true }).data;
-      }
-
-      rows.push(newRow);
-      const csv = Papa.unparse(rows);
-      fs.writeFileSync(csvPath, csv);
-
       res.status(201).json(machineNumber);
     } catch (error) {
       console.error('Error creating machine number:', error);
@@ -322,7 +354,7 @@ export function registerRoutes(app: Express): Server {
         console.log('使用するCSVファイル:', latestFile.name);
 
         const fileContent = await fs.promises.readFile(csvFilePath, 'utf8');
-        const cleanContent = fileContent.replace(/^\uFEFF/, ''); // BOM除去
+        const cleanContent = fileContent.replace(/^\uFEFF/, ''); 
 
         const results = Papa.parse(cleanContent, {
           header: true,
@@ -682,7 +714,7 @@ export function registerRoutes(app: Express): Server {
     const multer = require('multer');
     const upload = multer({ 
       storage: multer.memoryStorage(),
-      limits: { fileSize: 50 * 1024 * 1024 } // 50MB制限
+      limits: { fileSize: 50 * 1024 * 1024 } 
     }).single('file');
 
     upload(req, res, async function(err) {
@@ -724,11 +756,11 @@ export function registerRoutes(app: Express): Server {
         let extractionResult;
         if (fileExtension === '.pptx') {
           // PPTXファイルの処理
-          const { extractPptxContent } = require('../server/file-utils'); // 後で実装
+          const { extractPptxContent } = require('../server/file-utils'); 
           extractionResult = await extractPptxContent(tempFilePath, imagesDir, timestamp);
         } else {
           // Excelファイルの処理
-          const { extractExcelContent } = require('../server/file-utils'); // 後で実装
+          const { extractExcelContent } = require('../server/file-utils'); 
           extractionResult = await extractExcelContent(tempFilePath, imagesDir, timestamp);
         }
 
@@ -998,7 +1030,7 @@ export function registerRoutes(app: Express): Server {
       // CSVとして保存
       const csv = Papa.unparse(standards);
       await fs.promises.writeFile(tablePath, csv);
-      await fs.promises.writeFile(refPath, csv); // Reference valueフォルダにも保存
+      await fs.promises.writeFile(refPath, csv); 
 
       res.json({ message: '基準値を保存しました' });
     } catch (error) {

@@ -16,12 +16,14 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogTitle,
-  AlertDialogHeader 
+  AlertDialogHeader
 } from "@/components/ui/alert-dialog";
 import { Link, useLocation } from 'wouter';
 import { Edit, Trash, Plus, Save } from 'lucide-react';
 import SimplifiedInspectionItems from './simplified-inspection-items';
-import { ExitButton } from "@/components/layout/exit-button";
+import { ExitButton as ExitButtonComponent } from "@/components/layout/exit-button";
+import { DndProvider, HTML5Backend } from 'react-dnd-html5-backend';
+
 
 interface Manufacturer {
   id: number;
@@ -61,7 +63,8 @@ interface TableItem {
 type TableType = 'manufacturers' | 'models' | 'machineNumbers';
 
 
-// カスタムのExitButtonComponentを削除し、共通コンポーネントを使用
+// Custom ExitButtonComponent removed, using common component
+
 
 export default function InspectionItems() {
   const { toast } = useToast();
@@ -99,6 +102,10 @@ export default function InspectionItems() {
   }>({ isOpen: false, itemId: null, onConfirm: null, onCancel: null });
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedManufacturerIdString, setSelectedManufacturerIdString] = useState<string>("");
+  const [selectedModelIdString, setSelectedModelIdString] = useState<string>("");
+  const [filteredModels, setFilteredModels] = useState<Model[]>([]);
+
 
   useEffect(() => {
     const initializeData = async () => {
@@ -811,35 +818,54 @@ export default function InspectionItems() {
     }
   };
 
+  useEffect(() => {
+    if (selectedManufacturerIdString) {
+      const filtered = models.filter(
+        model => model.manufacturer_id === parseInt(selectedManufacturerIdString)
+      );
+      setFilteredModels(filtered);
+    } else {
+      setFilteredModels([]);
+    }
+  }, [selectedManufacturerIdString, models]);
+
+  useEffect(() => {
+    const filtered = inspectionItems.filter(item => {
+      const manufacturerMatch = !selectedManufacturerIdString || item.manufacturer_id === parseInt(selectedManufacturerIdString);
+      const modelMatch = !selectedModelIdString || item.model_id === parseInt(selectedModelIdString);
+      return manufacturerMatch && modelMatch;
+    });
+    setFilteredItems(filtered);
+  }, [selectedManufacturerIdString, selectedModelIdString, inspectionItems]);
+
+
   return (
     <DndProvider backend={HTML5Backend}>
       <Card className="w-full">
         <CardHeader>
           <CardTitle className="text-2xl">点検項目管理</CardTitle>
           <div className="flex gap-2">
-            {activeTab === "tables" ? null : (
-              <select
-                className="border rounded p-2"
-                value={selectedFile}
-                onChange={(e) => {
-                  const newFile = e.target.value;
-                  setSelectedFile(newFile);
-                  fetchInspectionItems(newFile);
-                }}
-                style={{ width: '200px' }}
-              >
-                <option value="">ファイルを選択してください</option>
-                {availableFiles.length > 0 ? (
-                  availableFiles.map((file) => (
-                    <option key={file.name} value={file.name}>
-                      {file.name} ({new Date(file.modified).toLocaleString('ja-JP')})
-                    </option>
-                  ))
-                ) : (
-                  <option value="" disabled>利用可能なファイルがありません</option>
-                )}
-              </select>
-            )}
+            <select
+              className="border rounded p-2"
+              value={selectedFile}
+              onChange={(e) => {
+                const newFile = e.target.value;
+                setSelectedFile(newFile);
+                fetchInspectionItems(newFile);
+              }}
+              style={{ width: '200px' }}
+            >
+              <option value="">ファイルを選択してください</option>
+              {availableFiles.length > 0 ? (
+                availableFiles.map((file) => (
+                  <option key={file.name} value={file.name}>
+                    {file.name} ({new Date(file.modified).toLocaleString('ja-JP')})
+                  </option>
+                ))
+              ) : (
+                <option value="" disabled>利用可能なファイルがありません</option>
+              )}
+            </select>
             <Button variant="outline" onClick={handleCancel}>
               キャンセル
             </Button>
@@ -962,8 +988,7 @@ export default function InspectionItems() {
                       <h3 className="text-lg font-medium mb-4">新規追加</h3>
                       <div className="flex gap-4 items-end mb-4">
                         <div>
-                          <Label>製造メーカー名</Label>
-                          <Input
+                          <Label>製造メーカー名</Label                          <Input
                             placeholder="製造メーカー名"
                             value={newItem.name}
                             onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
@@ -1055,107 +1080,63 @@ export default function InspectionItems() {
             <TabsContent value="items">
               <div className="space-y-4">
                 <div className="flex gap-4 mb-4">
-                  <div className="w-64">
-                    <Label>製造メーカー</Label>
-                    <Select value={selectedManufacturer} onValueChange={setSelectedManufacturer}>
+                  <div className="flex-1">
+                    <Select
+                      value={selectedManufacturerIdString}
+                      onValueChange={setSelectedManufacturerIdString}
+                    >
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="製造メーカーを選択" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">すべて</SelectItem>
-                        {manufacturers.map((m) => (
-                          <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>
+                        <SelectItem value="">全て</SelectItem>
+                        {manufacturers.map(manufacturer => (
+                          <SelectItem key={manufacturer.id} value={manufacturer.id.toString()}>
+                            {manufacturer.name}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="w-64">
-                    <Label>機種</Label>
-                    <Select value={selectedModel} onValueChange={setSelectedModel}>
+                  <div className="flex-1">
+                    <Select
+                      value={selectedModelIdString}
+                      onValueChange={setSelectedModelIdString}
+                      disabled={!selectedManufacturerIdString}
+                    >
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="機種を選択" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">すべて</SelectItem>
-                        {models?.map((m) => (
-                          <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>
+                        <SelectItem value="">全て</SelectItem>
+                        {filteredModels.map(model => (
+                          <SelectItem key={model.id} value={model.id.toString()}>
+                            {model.name}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
-                  <Button onClick={handleSearch}>検索</Button>
-                  <div className="w-64">
-                    <Label>検索</Label>
-                    <Input
-                      type="text"
-                      placeholder="検索キーワード"
-                      className="w-full"
-                      onChange={(e) => {
-                        const searchText = e.target.value.toLowerCase();
-                        const filtered = tableItems.filter(item =>
-                          item.name.toLowerCase().includes(searchText) ||
-                          item.code?.toLowerCase().includes(searchText) ||
-                          item.number?.toLowerCase().includes(searchText)
-                        );
-                        setTableItems(filtered);
-                      }}
-                    />
-                  </div>
-                  <div className="flex-1 min-w-[300px]">
-                    <label htmlFor="csv-file" className="mb-2 block">CSVファイルインポート</label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="csv-file"
-                        type="file"
-                        accept=".csv"
-                        onChange={handleCSVUpload}
-                      />
-                      <Button
-                        onClick={importCSVData}
-                      >
-                        インポート
-                      </Button>
-                    </div>
                   </div>
                 </div>
 
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableCell>部位</TableCell>
-                      <TableCell>装置</TableCell>
-                      <TableCell>確認箇所</TableCell>
-                      <TableCell>判断基準</TableCell>
-                      <TableCell>確認要領</TableCell>
-                      <TableCell>操作</TableCell>
+                      <TableHead>カテゴリ</TableHead>
+                      <TableHead>装置</TableHead>
+                      <TableHead>項目</TableHead>
+                      <TableHead>基準</TableHead>
+                      <TableHead>方法</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredItems.map((item: any, index: number) => (
-                      <TableRow key={`${item.id}-${index}`}>
+                    {filteredItems.map(item => (
+                      <TableRow key={item.id}>
                         <TableCell>{item.category}</TableCell>
                         <TableCell>{item.equipment}</TableCell>
                         <TableCell>{item.item}</TableCell>
                         <TableCell>{item.criteria}</TableCell>
                         <TableCell>{item.method}</TableCell>
-                        <TableCell>
-                          <div className="flex space-x-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => openEditDialog(item)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDeleteConfirm(item.id)}
-                            >
-                              <Trash className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -1169,7 +1150,6 @@ export default function InspectionItems() {
           </Tabs>
         </CardContent>
       </Card>
-
 
       <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
         <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>

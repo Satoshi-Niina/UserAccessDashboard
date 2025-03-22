@@ -1,4 +1,5 @@
 
+import React from 'react';
 import {
   Table,
   TableBody,
@@ -18,7 +19,6 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-// import React from 'react';
 
 interface SimplifiedInspectionItem {
   id: number;
@@ -28,7 +28,7 @@ interface SimplifiedInspectionItem {
   model?: string;
 }
 
-const SimplifiedInspectionItems: React.FC = () => {
+const SimplifiedInspectionItems = () => {
   const [items, setItems] = React.useState<SimplifiedInspectionItem[]>([]);
   const { toast } = useToast();
 

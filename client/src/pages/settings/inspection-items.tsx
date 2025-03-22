@@ -8,6 +8,7 @@ import { PencilIcon, TrashIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { useNavigate } from 'react-router-dom';
 
 interface Manufacturer {
   id: string;
@@ -37,6 +38,7 @@ interface MachineNumber {
 }
 
 export default function InspectionItems() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("items");
   const [selectedTable, setSelectedTable] = useState("manufacturers");
   const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
@@ -48,6 +50,7 @@ export default function InspectionItems() {
   const [selectedManufacturer, setSelectedManufacturer] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
   const [tableData, setTableData] = useState<any[]>([]);
+  const [isModified, setIsModified] = useState(false); //Track modifications
   const { toast } = useToast();
 
   const tableOptions = [
@@ -211,6 +214,7 @@ export default function InspectionItems() {
     const [reorderedItem] = newItems.splice(result.source.index, 1);
     newItems.splice(result.destination.index, 0, reorderedItem);
     setItems(newItems);
+    setIsModified(true); //Set modified flag on drag
   };
 
 
@@ -309,14 +313,6 @@ export default function InspectionItems() {
                   </Droppable>
                 </Table>
               </DragDropContext>
-            </div>
-            <div className="flex justify-between mt-4">
-              <Button onClick={handleSaveTable}>
-                保存して終了
-              </Button>
-              <Button variant="outline" onClick={() => setActiveTab("items")}>
-                キャンセル
-              </Button>
             </div>
           </div>
         </TabsContent>
@@ -499,11 +495,13 @@ export default function InspectionItems() {
                   ? machineNumbers.map(machine => machine.id === editItem.id ? editItem : machine)
                   : [...machineNumbers, { ...editItem, id: (machineNumbers.length + 1).toString() }];
                 setMachineNumbers(newMachineNumbers);
+                setIsModified(true); //Set modified flag after edit
               } else {
                 const newItems = items.map(item =>
                   item.id === editItem.id ? editItem : item
                 );
                 setItems(newItems);
+                setIsModified(true); //Set modified flag after edit
               }
               setIsEditDialogOpen(false);
             }}>
@@ -512,6 +510,91 @@ export default function InspectionItems() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+    <div className="fixed bottom-4 right-4 space-x-2">
+      {activeTab === "items" ? (
+        <>
+          <Button
+            onClick={async () => {
+              try {
+                await fetch('/api/save-inspection-items', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ items }),
+                });
+                toast({
+                  title: "保存完了",
+                  description: "点検項目が正常に保存されました",
+                });
+                setIsModified(false);
+              } catch (error) {
+                toast({
+                  title: "エラー",
+                  description: "保存中にエラーが発生しました",
+                  variant: "destructive",
+                });
+              }
+            }}
+            disabled={!isModified}
+          >
+            保存
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (isModified) {
+                if (confirm("変更内容が失われますが、よろしいですか？")) {
+                  navigate("/");
+                }
+              } else {
+                navigate("/");
+              }
+            }}
+          >
+            キャンセル
+          </Button>
+        </>
+      ) : (
+        <>
+          <Button
+            onClick={async () => {
+              try {
+                await fetch(`/api/save-${selectedTable}`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ data: tableData }),
+                });
+                toast({
+                  title: "保存完了",
+                  description: "データが正常に保存されました",
+                });
+                setActiveTab("items");
+              } catch (error) {
+                toast({
+                  title: "エラー",
+                  description: "保存中にエラーが発生しました",
+                  variant: "destructive",
+                });
+              }
+            }}
+          >
+            完了
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setActiveTab("items");
+            }}
+          >
+            戻る
+          </Button>
+        </>
+      )}
+    </div>
     </div>
   );
 }

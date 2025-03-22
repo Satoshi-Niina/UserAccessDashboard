@@ -6,7 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PencilIcon, TrashIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { useToast } from "@/hooks/use-toast";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
@@ -43,19 +42,18 @@ export default function InspectionItems() {
   const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
   const [models, setModels] = useState<Model[]>([]);
   const [items, setItems] = useState<InspectionItem[]>([]);
-  const [machineNumbers, setMachineNumbers] = useState<MachineNumber[]>([]); // Added state for machine numbers
+  const [machineNumbers, setMachineNumbers] = useState<MachineNumber[]>([]);
   const [editItem, setEditItem] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedManufacturer, setSelectedManufacturer] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
   const { toast } = useToast();
 
-  // データ取得
   useEffect(() => {
     fetchManufacturers();
     fetchModels();
     fetchItems();
-    fetchMachineNumbers(); // Fetch machine numbers
+    fetchMachineNumbers();
   }, []);
 
   const fetchManufacturers = async () => {
@@ -90,7 +88,7 @@ export default function InspectionItems() {
 
   const fetchItems = async () => {
     try {
-      const response = await fetch('/api/inspection/table/inspection_items');
+      const response = await fetch('/api/inspection/table/items');
       if (!response.ok) throw new Error('点検項目の取得に失敗しました');
       const data = await response.json();
       setItems(data);
@@ -103,9 +101,9 @@ export default function InspectionItems() {
     }
   };
 
-  const fetchMachineNumbers = async () => { // Added function to fetch machine numbers
+  const fetchMachineNumbers = async () => {
     try {
-      const response = await fetch('/api/inspection/table/machine_numbers');
+      const response = await fetch('/api/inspection/table/machine-numbers');
       if (!response.ok) throw new Error('機械番号の取得に失敗しました');
       const data = await response.json();
       setMachineNumbers(data);
@@ -118,7 +116,24 @@ export default function InspectionItems() {
     }
   };
 
-  // テーブル保存処理
+  const handleEdit = (item: any) => {
+    setEditItem(item);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await fetch(`/api/inspection/table/machine-numbers/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('削除に失敗しました');
+      setMachineNumbers(machineNumbers.filter(machine => machine.id !== id));
+      toast({ title: '成功', description: '機械番号を削除しました' });
+    } catch (error) {
+      toast({ title: 'エラー', description: '機械番号の削除に失敗しました', variant: 'destructive' });
+    }
+  };
+
   const handleSaveTable = async () => {
     try {
       let data;
@@ -164,67 +179,46 @@ export default function InspectionItems() {
 
   const onDragEnd = (result) => {
     if (!result.destination) return;
-
-    const sourceIndex = result.source.index;
-    const destinationIndex = result.destination.index;
-
-    const newItems = [...items];
-    const [movedItem] = newItems.splice(sourceIndex, 1);
-    newItems.splice(destinationIndex, 0, movedItem);
-
+    const newItems = Array.from(items);
+    const [reorderedItem] = newItems.splice(result.source.index, 1);
+    newItems.splice(result.destination.index, 0, reorderedItem);
     setItems(newItems);
-  };
-
-  const handleDelete = async (id: string) => {
-    try {
-      const response = await fetch(`/api/inspection/table/machine_numbers/${id}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) throw new Error('削除に失敗しました');
-      setMachineNumbers(machineNumbers.filter(machine => machine.id !== id));
-      toast({ title: '成功', description: '機械番号を削除しました' });
-    } catch (error) {
-      toast({ title: 'エラー', description: '機械番号の削除に失敗しました', variant: 'destructive' });
-    }
   };
 
 
   return (
     <div className="container mx-auto p-6">
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
+      <h1 className="text-2xl font-bold mb-4">点検項目編集</h1>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="mb-4">
           <TabsTrigger value="items">点検項目編集</TabsTrigger>
           <TabsTrigger value="tables">テーブル編集</TabsTrigger>
-          <TabsTrigger value="machineNumbers">機械番号</TabsTrigger>
         </TabsList>
 
         <TabsContent value="items">
           <div className="space-y-4">
-            <div className="flex space-x-4">
+            <div className="flex gap-4 mb-4">
               <Select value={selectedManufacturer} onValueChange={setSelectedManufacturer}>
                 <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="製造メーカー選択" />
+                  <SelectValue placeholder="製造メーカーを選択" />
                 </SelectTrigger>
                 <SelectContent>
-                  {manufacturers.map((manufacturer) => (
-                    <SelectItem key={manufacturer.id} value={manufacturer.id}>
-                      {manufacturer.name}
-                    </SelectItem>
+                  {manufacturers.map(manufacturer => (
+                    <SelectItem key={manufacturer.id} value={manufacturer.id}>{manufacturer.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
               <Select value={selectedModel} onValueChange={setSelectedModel}>
                 <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="機種選択" />
+                  <SelectValue placeholder="機種を選択" />
                 </SelectTrigger>
                 <SelectContent>
                   {models
                     .filter(model => !selectedManufacturer || model.manufacturer_id === selectedManufacturer)
-                    .map((model) => (
-                      <SelectItem key={model.id} value={model.id}>
-                        {model.name}
-                      </SelectItem>
+                    .map(model => (
+                      <SelectItem key={model.id} value={model.id}>{model.name}</SelectItem>
                     ))}
                 </SelectContent>
               </Select>
@@ -232,15 +226,15 @@ export default function InspectionItems() {
 
             <div className="border rounded-lg p-4">
               <DragDropContext onDragEnd={onDragEnd}>
-                <Table>
+                <Table className="border-collapse border border-gray-200">
                   <TableHeader>
                     <TableRow>
-                      <TableHead>部位</TableHead>
-                      <TableHead>装置</TableHead>
-                      <TableHead>確認箇所</TableHead>
-                      <TableHead>判断基準</TableHead>
-                      <TableHead>確認要領</TableHead>
-                      <TableHead className="text-right">編集</TableHead>
+                      <TableHead className="border border-gray-200">部位</TableHead>
+                      <TableHead className="border border-gray-200">装置</TableHead>
+                      <TableHead className="border border-gray-200">確認箇所</TableHead>
+                      <TableHead className="border border-gray-200">判断基準</TableHead>
+                      <TableHead className="border border-gray-200">確認要領</TableHead>
+                      <TableHead className="border border-gray-200">編集</TableHead>
                     </TableRow>
                   </TableHeader>
                   <Droppable droppableId="items">
@@ -254,20 +248,25 @@ export default function InspectionItems() {
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
                               >
-                                <TableCell>{item.category}</TableCell>
-                                <TableCell>{item.equipment}</TableCell>
-                                <TableCell>{item.item}</TableCell>
-                                <TableCell>{item.criteria}</TableCell>
-                                <TableCell>{item.method}</TableCell>
-                                <TableCell className="text-right">
-                                  <div className="flex space-x-2">
-                                    <Button variant="ghost" size="sm" onClick={() => {
-                                      setEditItem(item);
-                                      setIsEditDialogOpen(true);
-                                    }}>
+                                <TableCell className="border border-gray-200">{item.category}</TableCell>
+                                <TableCell className="border border-gray-200">{item.equipment}</TableCell>
+                                <TableCell className="border border-gray-200">{item.item}</TableCell>
+                                <TableCell className="border border-gray-200">{item.criteria}</TableCell>
+                                <TableCell className="border border-gray-200">{item.method}</TableCell>
+                                <TableCell className="border border-gray-200">
+                                  <div className="flex gap-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => handleEdit(item)}
+                                    >
                                       <PencilIcon className="h-4 w-4" />
                                     </Button>
-                                    <Button variant="ghost" size="sm">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => handleDelete(item.id)}
+                                    >
                                       <TrashIcon className="h-4 w-4" />
                                     </Button>
                                   </div>
@@ -283,7 +282,6 @@ export default function InspectionItems() {
                 </Table>
               </DragDropContext>
             </div>
-
             <div className="flex justify-between mt-4">
               <Button onClick={handleSaveTable}>
                 保存して終了
@@ -299,144 +297,19 @@ export default function InspectionItems() {
           <div className="space-y-4">
             <Select value={selectedTable} onValueChange={setSelectedTable}>
               <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="テーブル選択" />
+                <SelectValue placeholder="テーブルを選択" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="manufacturers">製造メーカー</SelectItem>
                 <SelectItem value="models">機種</SelectItem>
-                <SelectItem value="items">点検項目</SelectItem>
+                <SelectItem value="machine_numbers">機械番号</SelectItem>
               </SelectContent>
             </Select>
 
-            {selectedTable === "manufacturers" && (
-              <div className="border rounded-lg p-4">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>メーカー名</TableHead>
-                      <TableHead>編集</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {manufacturers.map((manufacturer) => (
-                      <TableRow key={manufacturer.id}>
-                        <TableCell>{manufacturer.id}</TableCell>
-                        <TableCell>{manufacturer.name}</TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button variant="ghost" size="sm">
-                              <PencilIcon className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm">
-                              <TrashIcon className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-
-            {selectedTable === "models" && (
-              <div className="border rounded-lg p-4">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>機種名</TableHead>
-                      <TableHead>メーカーID</TableHead>
-                      <TableHead>編集</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {models.map((model) => (
-                      <TableRow key={model.id}>
-                        <TableCell>{model.id}</TableCell>
-                        <TableCell>{model.name}</TableCell>
-                        <TableCell>{model.manufacturer_id}</TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button variant="ghost" size="sm">
-                              <PencilIcon className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm">
-                              <TrashIcon className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-
-            <div className="flex justify-between mt-4">
-              <Button onClick={handleSaveTable}>
-                保存して終了
-              </Button>
-              <Button variant="outline" onClick={() => setActiveTab("items")}>
-                キャンセル
-              </Button>
-            </div>
-          </div>
-        </TabsContent>
-        <TabsContent value="machineNumbers" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold">機械番号編集</h2>
-            <Button onClick={() => {
-              setEditItem({
-                id: '',
-                number: '',
-                model_id: ''
-              });
-              setIsEditDialogOpen(true);
-            }}>
-              + 新規追加
-            </Button>
-          </div>
-          <div className="border rounded-lg">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>機械番号</TableHead>
-                  <TableHead>機種ID</TableHead>
-                  <TableHead className="text-right">編集</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {machineNumbers.map((machine) => (
-                  <TableRow key={machine.id}>
-                    <TableCell>{machine.number}</TableCell>
-                    <TableCell>{machine.model_id}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        onClick={() => {
-                          setEditItem(machine);
-                          setIsEditDialogOpen(true);
-                        }}
-                      >
-                        <PencilIcon className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleDelete(machine.id)}
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            {/* テーブル編集用のコンポーネントをここに実装 */}
           </div>
         </TabsContent>
       </Tabs>
-
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -444,7 +317,7 @@ export default function InspectionItems() {
           </DialogHeader>
           {editItem && (
             <div className="space-y-4">
-              {editItem.number ? ( //check if machine number exists
+              {editItem.number ? ( 
                 <>
                   <div>
                     <label>機械番号</label>
@@ -501,12 +374,12 @@ export default function InspectionItems() {
               キャンセル
             </Button>
             <Button onClick={() => {
-              if (editItem.number) { // Handle machine number update/creation
+              if (editItem.number) { 
                 const newMachineNumbers = editItem.id
                   ? machineNumbers.map(machine => machine.id === editItem.id ? editItem : machine)
                   : [...machineNumbers, { ...editItem, id: (machineNumbers.length + 1).toString() }];
                 setMachineNumbers(newMachineNumbers);
-              } else { // Handle inspection item update
+              } else { 
                 const newItems = items.map(item =>
                   item.id === editItem.id ? editItem : item
                 );

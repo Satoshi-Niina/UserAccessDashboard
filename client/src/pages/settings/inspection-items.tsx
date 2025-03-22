@@ -151,7 +151,7 @@ export default function InspectionItems() {
   };
 
   const handleSaveEdit = (updatedItem: InspectionItem) => {
-    setItems(items.map(item => 
+    setItems(items.map(item =>
       item.id === updatedItem.id ? updatedItem : item
     ));
     setIsEditDialogOpen(false);
@@ -177,15 +177,15 @@ export default function InspectionItems() {
         <div className="flex gap-4">
           <Button onClick={handleCancel}>キャンセル</Button>
           <div className="flex flex-col gap-2">
-            <Button onClick={handleExport}>エクスポート</Button>
-            <Button variant="default" onClick={() => {
+            <Button onClick={() => {
               // Add a save and exit functionality here if needed.  For now, this button does nothing.
             }}>保存して終了</Button>
+            <Button onClick={handleExport}>エクスポート</Button>
           </div>
         </div>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-6 flex gap-4 items-center">
         <Select value={selectedManufacturer} onValueChange={handleManufacturerChange}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="製造メーカーを選択" />
@@ -198,9 +198,8 @@ export default function InspectionItems() {
             ))}
           </SelectContent>
         </Select>
-
         <Select value={selectedModel} onValueChange={setSelectedModel}>
-          <SelectTrigger className="w-[200px] ml-4">
+          <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="機種を選択" />
           </SelectTrigger>
           <SelectContent>
@@ -213,20 +212,19 @@ export default function InspectionItems() {
         </Select>
       </div>
 
-
       <DragDropContext onDragEnd={handleDragEnd}>
         <Droppable droppableId="items">
           {(provided) => (
             <div {...provided.droppableProps} ref={provided.innerRef}>
-              <Table>
+              <Table className="border-collapse">
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>部位</TableHead>
-                    <TableHead>装置</TableHead>
-                    <TableHead>確認箇所</TableHead>
-                    <TableHead>判断基準</TableHead>
-                    <TableHead>確認要領</TableHead>
-                    <TableHead className="w-24">編集</TableHead>
+                  <TableRow className="border-b border-gray-200">
+                    <TableHead className="border border-gray-200">部位</TableHead>
+                    <TableHead className="border border-gray-200">装置</TableHead>
+                    <TableHead className="border border-gray-200">確認箇所</TableHead>
+                    <TableHead className="border border-gray-200">判断基準</TableHead>
+                    <TableHead className="border border-gray-200">確認要領</TableHead>
+                    <TableHead className="border border-gray-200 w-24">編集</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -237,13 +235,14 @@ export default function InspectionItems() {
                           ref={provided.innerRef}
                           {...provided.draggableProps}
                           {...provided.dragHandleProps}
+                          className="border-b border-gray-200"
                         >
-                          <TableCell>{item.category}</TableCell>
-                          <TableCell>{item.equipment}</TableCell>
-                          <TableCell>{item.item}</TableCell>
-                          <TableCell>{item.criteria}</TableCell>
-                          <TableCell>{item.method}</TableCell>
-                          <TableCell>
+                          <TableCell className="border border-gray-200">{item.category}</TableCell>
+                          <TableCell className="border border-gray-200">{item.equipment}</TableCell>
+                          <TableCell className="border border-gray-200">{item.item}</TableCell>
+                          <TableCell className="border border-gray-200">{item.criteria}</TableCell>
+                          <TableCell className="border border-gray-200">{item.method}</TableCell>
+                          <TableCell className="border border-gray-200">
                             <div className="flex gap-2">
                               <button onClick={() => handleAddRecord(index, 'above')}>↑</button>
                               <button onClick={() => handleAddRecord(index, 'below')}>↓</button>

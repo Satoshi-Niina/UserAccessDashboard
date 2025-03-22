@@ -8,7 +8,7 @@ import { PencilIcon, TrashIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'wouter';
 
 interface Manufacturer {
   id: string;
@@ -38,7 +38,7 @@ interface MachineNumber {
 }
 
 export default function InspectionItems() {
-  const navigate = useNavigate();
+  const [location, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState("items");
   const [selectedTable, setSelectedTable] = useState("manufacturers");
   const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);

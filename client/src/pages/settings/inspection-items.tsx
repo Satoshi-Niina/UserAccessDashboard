@@ -988,7 +988,8 @@ export default function InspectionItems() {
                       <h3 className="text-lg font-medium mb-4">新規追加</h3>
                       <div className="flex gap-4 items-end mb-4">
                         <div>
-                          <Label>製造メーカー名</Label                          <Input
+                          <Label>製造メーカー名</Label>
+<Input
                             placeholder="製造メーカー名"
                             value={newItem.name}
                             onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}

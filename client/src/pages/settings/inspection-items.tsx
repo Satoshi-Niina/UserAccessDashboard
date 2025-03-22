@@ -31,12 +31,19 @@ interface InspectionItem {
   model_id: string;
 }
 
+interface MachineNumber {
+  id: string;
+  number: string;
+  model_id: string;
+}
+
 export default function InspectionItems() {
   const [activeTab, setActiveTab] = useState("items");
   const [selectedTable, setSelectedTable] = useState("manufacturers");
   const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
   const [models, setModels] = useState<Model[]>([]);
   const [items, setItems] = useState<InspectionItem[]>([]);
+  const [machineNumbers, setMachineNumbers] = useState<MachineNumber[]>([]); // Added state for machine numbers
   const [editItem, setEditItem] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedManufacturer, setSelectedManufacturer] = useState("");
@@ -48,6 +55,7 @@ export default function InspectionItems() {
     fetchManufacturers();
     fetchModels();
     fetchItems();
+    fetchMachineNumbers(); // Fetch machine numbers
   }, []);
 
   const fetchManufacturers = async () => {
@@ -95,6 +103,21 @@ export default function InspectionItems() {
     }
   };
 
+  const fetchMachineNumbers = async () => { // Added function to fetch machine numbers
+    try {
+      const response = await fetch('/api/inspection/table/machine_numbers');
+      if (!response.ok) throw new Error('機械番号の取得に失敗しました');
+      const data = await response.json();
+      setMachineNumbers(data);
+    } catch (error) {
+      toast({
+        title: "エラー",
+        description: "機械番号の読み込みに失敗しました",
+        variant: "destructive"
+      });
+    }
+  };
+
   // テーブル保存処理
   const handleSaveTable = async () => {
     try {
@@ -108,6 +131,9 @@ export default function InspectionItems() {
           break;
         case "items":
           data = items;
+          break;
+        case "machineNumbers":
+          data = machineNumbers;
           break;
         default:
           return;
@@ -149,12 +175,27 @@ export default function InspectionItems() {
     setItems(newItems);
   };
 
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await fetch(`/api/inspection/table/machine_numbers/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('削除に失敗しました');
+      setMachineNumbers(machineNumbers.filter(machine => machine.id !== id));
+      toast({ title: '成功', description: '機械番号を削除しました' });
+    } catch (error) {
+      toast({ title: 'エラー', description: '機械番号の削除に失敗しました', variant: 'destructive' });
+    }
+  };
+
+
   return (
     <div className="container mx-auto p-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="items">点検項目編集</TabsTrigger>
           <TabsTrigger value="tables">テーブル編集</TabsTrigger>
+          <TabsTrigger value="machineNumbers">機械番号</TabsTrigger>
         </TabsList>
 
         <TabsContent value="items">
@@ -197,7 +238,9 @@ export default function InspectionItems() {
                       <TableHead>部位</TableHead>
                       <TableHead>装置</TableHead>
                       <TableHead>確認箇所</TableHead>
-                      <TableHead>編集</TableHead>
+                      <TableHead>判断基準</TableHead>
+                      <TableHead>確認要領</TableHead>
+                      <TableHead className="text-right">編集</TableHead>
                     </TableRow>
                   </TableHeader>
                   <Droppable droppableId="items">
@@ -214,7 +257,9 @@ export default function InspectionItems() {
                                 <TableCell>{item.category}</TableCell>
                                 <TableCell>{item.equipment}</TableCell>
                                 <TableCell>{item.item}</TableCell>
-                                <TableCell>
+                                <TableCell>{item.criteria}</TableCell>
+                                <TableCell>{item.method}</TableCell>
+                                <TableCell className="text-right">
                                   <div className="flex space-x-2">
                                     <Button variant="ghost" size="sm" onClick={() => {
                                       setEditItem(item);
@@ -339,6 +384,57 @@ export default function InspectionItems() {
             </div>
           </div>
         </TabsContent>
+        <TabsContent value="machineNumbers" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold">機械番号編集</h2>
+            <Button onClick={() => {
+              setEditItem({
+                id: '',
+                number: '',
+                model_id: ''
+              });
+              setIsEditDialogOpen(true);
+            }}>
+              + 新規追加
+            </Button>
+          </div>
+          <div className="border rounded-lg">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>機械番号</TableHead>
+                  <TableHead>機種ID</TableHead>
+                  <TableHead className="text-right">編集</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {machineNumbers.map((machine) => (
+                  <TableRow key={machine.id}>
+                    <TableCell>{machine.number}</TableCell>
+                    <TableCell>{machine.model_id}</TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          setEditItem(machine);
+                          setIsEditDialogOpen(true);
+                        }}
+                      >
+                        <PencilIcon className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleDelete(machine.id)}
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
       </Tabs>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -348,27 +444,56 @@ export default function InspectionItems() {
           </DialogHeader>
           {editItem && (
             <div className="space-y-4">
-              <div>
-                <label>部位</label>
-                <Input
-                  value={editItem.category}
-                  onChange={(e) => setEditItem({...editItem, category: e.target.value})}
-                />
-              </div>
-              <div>
-                <label>装置</label>
-                <Input
-                  value={editItem.equipment}
-                  onChange={(e) => setEditItem({...editItem, equipment: e.target.value})}
-                />
-              </div>
-              <div>
-                <label>確認箇所</label>
-                <Input
-                  value={editItem.item}
-                  onChange={(e) => setEditItem({...editItem, item: e.target.value})}
-                />
-              </div>
+              {editItem.number ? ( //check if machine number exists
+                <>
+                  <div>
+                    <label>機械番号</label>
+                    <Input value={editItem.number} onChange={(e) => setEditItem({ ...editItem, number: e.target.value })} />
+                  </div>
+                  <div>
+                    <label>機種ID</label>
+                    <Input value={editItem.model_id} onChange={(e) => setEditItem({ ...editItem, model_id: e.target.value })} />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label>部位</label>
+                    <Input
+                      value={editItem.category}
+                      onChange={(e) => setEditItem({ ...editItem, category: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label>装置</label>
+                    <Input
+                      value={editItem.equipment}
+                      onChange={(e) => setEditItem({ ...editItem, equipment: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label>確認箇所</label>
+                    <Input
+                      value={editItem.item}
+                      onChange={(e) => setEditItem({ ...editItem, item: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label>判断基準</label>
+                    <Input
+                      value={editItem.criteria}
+                      onChange={(e) => setEditItem({ ...editItem, criteria: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label>確認要領</label>
+                    <Input
+                      value={editItem.method}
+                      onChange={(e) => setEditItem({ ...editItem, method: e.target.value })}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           )}
           <DialogFooter>
@@ -376,10 +501,17 @@ export default function InspectionItems() {
               キャンセル
             </Button>
             <Button onClick={() => {
-              const newItems = items.map(item =>
-                item.id === editItem.id ? editItem : item
-              );
-              setItems(newItems);
+              if (editItem.number) { // Handle machine number update/creation
+                const newMachineNumbers = editItem.id
+                  ? machineNumbers.map(machine => machine.id === editItem.id ? editItem : machine)
+                  : [...machineNumbers, { ...editItem, id: (machineNumbers.length + 1).toString() }];
+                setMachineNumbers(newMachineNumbers);
+              } else { // Handle inspection item update
+                const newItems = items.map(item =>
+                  item.id === editItem.id ? editItem : item
+                );
+                setItems(newItems);
+              }
               setIsEditDialogOpen(false);
             }}>
               完了

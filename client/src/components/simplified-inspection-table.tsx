@@ -1,6 +1,5 @@
 
-import * as React from 'react';
-const { useState, useEffect } = React;
+import React from 'react';
 import { useToast } from '@/hooks/use-toast';
 import {
   Table,

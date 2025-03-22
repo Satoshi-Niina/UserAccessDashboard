@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import {
   Table,
@@ -27,10 +26,10 @@ interface SimplifiedInspectionItem {
 }
 
 export default function SimplifiedInspectionItems() {
-  const [items, setItems] = React.useState<SimplifiedInspectionItem[]>([]);
+  const [items, setItems] = useState<SimplifiedInspectionItem[]>([]);
   const { toast } = useToast();
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchItems = async () => {
       try {
         const response = await fetch('/api/inspection-items/simplified');

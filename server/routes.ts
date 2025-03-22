@@ -148,7 +148,7 @@ export function registerRoutes(app: Express): Server {
   app.post('/api/manufacturers', async (req, res) => {
     try {
       const { name } = req.body;
-      
+
       // CSVファイルからデータを読み込み
       const filePath = path.join(process.cwd(), 'attached_assets/inspection/table/manufacturers.csv');
       let manufacturers = [];
@@ -166,7 +166,7 @@ export function registerRoutes(app: Express): Server {
       const existingIds = manufacturers
         .map(m => parseInt(m.id))
         .filter(id => !isNaN(id));
-      
+
       const newId = existingIds.length > 0 ? 
         Math.max(...existingIds) + 1 : 1;
 
@@ -213,13 +213,13 @@ export function registerRoutes(app: Express): Server {
       if (!name || !manufacturerId) {
         return res.status(400).json({ error: '機種名と製造メーカーIDは必須です' });
       }
-      
+
       const model = await storage.createModel({ 
         name, 
         code: code || '', 
         manufacturerId: parseInt(manufacturerId)
       });
-      
+
       res.status(201).json(model);
     } catch (error) {
       console.error('Error creating model:', error);
@@ -290,11 +290,16 @@ export function registerRoutes(app: Express): Server {
       }
 
       const fileContent = await fs.promises.readFile(filePath, 'utf8');
-      const results = Papa.parse(fileContent, {
+      const cleanContent = fileContent.replace(/^\uFEFF/, ''); // BOMを除去
+
+      const results = Papa.parse(cleanContent, {
         header: true,
-        skipEmptyLines: true
+        skipEmptyLines: true,
+        transformHeader: (header) => header.trim(),
+        transform: (value) => value?.trim() || ''
       });
 
+      console.log(`${tableName}テーブルのデータを読み込みました:`, results.data.length, '件');
       res.json(results.data);
     } catch (error) {
       console.error(`テーブル読み込みエラー:`, error);
@@ -839,7 +844,7 @@ export function registerRoutes(app: Express): Server {
   app.get('/api/tech-support/images/:fileName', async (req, res) => {
     try {
       const fileName = req.params.fileName;
-      const filePath = path.join(process.cwd(), 'attached_assets/images', fileName);
+      const filePath = path.join(process.cwd(), 'attached_assets/images, fileName);
 
       if (!fs.existsSync(filePath)) {
         return res.status(404).json({ error: '画像が見つかりません' });

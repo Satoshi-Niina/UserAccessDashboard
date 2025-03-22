@@ -88,11 +88,20 @@ export default function InspectionItems() {
 
   const fetchItems = async () => {
     try {
-      const response = await fetch('/api/inspection/table/items');
+      const response = await fetch('/api/inspection/table/inspection_items');
       if (!response.ok) throw new Error('点検項目の取得に失敗しました');
       const data = await response.json();
-      setItems(data);
+      console.log('点検項目データ:', data);
+      setItems(data.map((item: any, index: number) => ({
+        id: index + 1,
+        category: item.category || '',
+        equipment: item.equipment || '',
+        checkPoint: item.checkPoint || '',
+        criteria: item.criteria || '',
+        method: item.method || '',
+      })));
     } catch (error) {
+      console.error('点検項目の読み込みエラー:', error);
       toast({
         title: "エラー",
         description: "点検項目の読み込みに失敗しました",

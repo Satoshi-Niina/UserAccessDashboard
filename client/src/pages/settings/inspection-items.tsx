@@ -136,6 +136,19 @@ export default function InspectionItems() {
     }
   };
 
+  const onDragEnd = (result) => {
+    if (!result.destination) return;
+
+    const sourceIndex = result.source.index;
+    const destinationIndex = result.destination.index;
+
+    const newItems = [...items];
+    const [movedItem] = newItems.splice(sourceIndex, 1);
+    newItems.splice(destinationIndex, 0, movedItem);
+
+    setItems(newItems);
+  };
+
   return (
     <div className="container mx-auto p-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -177,13 +190,7 @@ export default function InspectionItems() {
             </div>
 
             <div className="border rounded-lg p-4">
-              <DragDropContext onDragEnd={result => {
-                if (!result.destination) return;
-                const newItems = Array.from(items);
-                const [reorderedItem] = newItems.splice(result.source.index, 1);
-                newItems.splice(result.destination.index, 0, reorderedItem);
-                setItems(newItems);
-              }}>
+              <DragDropContext onDragEnd={onDragEnd}>
                 <Table>
                   <TableHeader>
                     <TableRow>

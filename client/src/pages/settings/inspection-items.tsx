@@ -1,41 +1,21 @@
-
 import React, { useState, useEffect } from 'react';
-import { useToast } from "@/hooks/use-toast";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { PencilIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PencilIcon, TrashIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { useToast } from "@/components/ui/use-toast";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+interface InspectionItem {
+  id: string;
+  category: string;
+  equipment: string;
+  item: string;
+  criteria: string;
+  method: string;
+}
 
 interface Manufacturer {
   id: string;
@@ -45,15 +25,7 @@ interface Manufacturer {
 interface Model {
   id: string;
   name: string;
-}
-
-interface InspectionItem {
-  id: string;
-  category: string;
-  equipment: string;
-  item: string;
-  criteria: string;
-  method: string;
+  manufacturer_id: string;
 }
 
 export default function InspectionItems() {
@@ -68,7 +40,6 @@ export default function InspectionItems() {
   const [selectedItemId, setSelectedItemId] = useState<string>("");
   const { toast } = useToast();
 
-  // 製造メーカーの読み込み
   useEffect(() => {
     fetch('/api/inspection/table/manufacturers')
       .then(res => res.json())
@@ -82,13 +53,12 @@ export default function InspectionItems() {
       });
   }, []);
 
-  // 機種の読み込み
   useEffect(() => {
     if (selectedManufacturer) {
       fetch('/api/inspection/table/models')
         .then(res => res.json())
         .then(data => {
-          const filteredModels = data.filter((model: any) => 
+          const filteredModels = data.filter((model: Model) => 
             model.manufacturer_id === selectedManufacturer
           );
           setModels(filteredModels);
@@ -105,18 +75,11 @@ export default function InspectionItems() {
     }
   }, [selectedManufacturer]);
 
-  // 点検項目の読み込み
   useEffect(() => {
     if (selectedManufacturer && selectedModel) {
-      fetch('/api/inspection/table/inspection_items')
+      fetch(`/api/inspection/table/inspection_items?manufacturer_id=${selectedManufacturer}&model_id=${selectedModel}`)
         .then(res => res.json())
-        .then(data => {
-          const filteredItems = data.filter((item: any) =>
-            item.manufacturer_id === selectedManufacturer &&
-            item.model_id === selectedModel
-          );
-          setItems(filteredItems);
-        })
+        .then(data => setItems(data))
         .catch(() => {
           toast({
             title: "エラー",
@@ -124,8 +87,11 @@ export default function InspectionItems() {
             variant: "destructive",
           });
         });
+    } else {
+      setItems([]);
     }
   }, [selectedManufacturer, selectedModel]);
+
 
   const handleEdit = (item: InspectionItem) => {
     setEditingItem(item);
@@ -137,53 +103,66 @@ export default function InspectionItems() {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleSave = async () => {
-    try {
-      await fetch('/api/inspection/table/inspection_items', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(items),
-      });
-      toast({
-        title: "成功",
-        description: "データを保存しました",
-      });
-    } catch (error) {
-      toast({
-        title: "エラー",
-        description: "データの保存に失敗しました",
-        variant: "destructive",
-      });
-    }
+  const handleConfirmDelete = () => {
+    setItems(items.filter(item => item.id !== selectedItemId));
+    setIsDeleteDialogOpen(false);
+    toast({
+      title: "削除完了",
+      description: "項目が削除されました",
+    });
+  };
+
+  const handleSaveEdit = (updatedItem: InspectionItem) => {
+    setItems(items.map(item => 
+      item.id === updatedItem.id ? updatedItem : item
+    ));
+    setIsEditDialogOpen(false);
+    toast({
+      title: "更新完了",
+      description: "項目が更新されました",
+    });
+  };
+
+  const handleAddRecord = () => {
+    const newItem: InspectionItem = {
+      id: Date.now().toString(),
+      category: "",
+      equipment: "",
+      item: "",
+      criteria: "",
+      method: "",
+    };
+    setEditingItem(newItem);
+    setIsEditDialogOpen(true);
   };
 
   const handleExport = () => {
-    const csvContent = convertToCSV(items);
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = '点検項目一覧.csv';
-    link.click();
-  };
-
-  const convertToCSV = (items: InspectionItem[]) => {
-    const header = ['部位', '装置', '確認箇所', '判断基準', '確認要領'];
-    const rows = items.map(item => [
-      item.category,
-      item.equipment,
-      item.item,
-      item.criteria,
-      item.method
-    ]);
-    return [header, ...rows].map(row => row.join(',')).join('\n');
+    const element = document.createElement("a");
+    const file = new Blob([JSON.stringify(items, null, 2)], {type: 'text/json'});
+    element.href = URL.createObjectURL(file);
+    element.download = "inspection_items.json";
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
   };
 
   return (
     <div className="container mx-auto py-6">
-      <h1 className="text-2xl font-bold mb-6">点検項目編集</h1>
-      
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">点検項目編集</h1>
+        <div className="flex gap-4">
+          <Button onClick={() => window.location.href = "/dashboard"}>
+            キャンセル
+          </Button>
+          <Button onClick={handleExport}>
+            エクスポート
+          </Button>
+          <Button variant="default" onClick={handleSaveEdit}>
+            編集完了保存
+          </Button>
+        </div>
+      </div>
+
       <div className="flex gap-4 mb-6">
         <Select value={selectedManufacturer} onValueChange={setSelectedManufacturer}>
           <SelectTrigger className="w-[200px]">
@@ -212,15 +191,11 @@ export default function InspectionItems() {
         </Select>
       </div>
 
-      <div className="flex justify-between mb-4">
-        <Button onClick={() => handleEdit({ id: '', category: '', equipment: '', item: '', criteria: '', method: '' })}>
+      <div className="flex justify-end mb-4">
+        <Button onClick={handleAddRecord}>
           <PlusIcon className="h-4 w-4 mr-2" />
-          新規追加
+          レコード追加
         </Button>
-        <div className="flex gap-2">
-          <Button onClick={handleExport} variant="outline">エクスポート(CSV)</Button>
-          <Button onClick={handleSave}>保存</Button>
-        </div>
       </div>
 
       <Table>
@@ -231,7 +206,7 @@ export default function InspectionItems() {
             <TableHead>確認箇所</TableHead>
             <TableHead>判断基準</TableHead>
             <TableHead>確認要領</TableHead>
-            <TableHead>操作</TableHead>
+            <TableHead className="text-right">編集</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -242,15 +217,13 @@ export default function InspectionItems() {
               <TableCell>{item.item}</TableCell>
               <TableCell>{item.criteria}</TableCell>
               <TableCell>{item.method}</TableCell>
-              <TableCell>
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
-                    <PencilIcon className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)}>
-                    <TrashIcon className="h-4 w-4" />
-                  </Button>
-                </div>
+              <TableCell className="text-right">
+                <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
+                  <PencilIcon className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)}>
+                  <TrashIcon className="h-4 w-4" />
+                </Button>
               </TableCell>
             </TableRow>
           ))}
@@ -260,70 +233,41 @@ export default function InspectionItems() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingItem?.id ? '点検項目の編集' : '新規点検項目の追加'}</DialogTitle>
+            <DialogTitle>{editingItem?.id ? '項目の編集' : '新規項目の追加'}</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="category">部位</label>
-              <Input
-                id="category"
-                value={editingItem?.category || ''}
-                onChange={(e) => setEditingItem(prev => ({ ...prev!, category: e.target.value }))}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="equipment">装置</label>
-              <Input
-                id="equipment"
-                value={editingItem?.equipment || ''}
-                onChange={(e) => setEditingItem(prev => ({ ...prev!, equipment: e.target.value }))}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="item">確認箇所</label>
-              <Input
-                id="item"
-                value={editingItem?.item || ''}
-                onChange={(e) => setEditingItem(prev => ({ ...prev!, item: e.target.value }))}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="criteria">判断基準</label>
-              <Input
-                id="criteria"
-                value={editingItem?.criteria || ''}
-                onChange={(e) => setEditingItem(prev => ({ ...prev!, criteria: e.target.value }))}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="method">確認要領</label>
-              <Input
-                id="method"
-                value={editingItem?.method || ''}
-                onChange={(e) => setEditingItem(prev => ({ ...prev!, method: e.target.value }))}
-                className="col-span-3"
-              />
-            </div>
+          <div className="space-y-4">
+            <Input
+              placeholder="部位"
+              value={editingItem?.category || ''}
+              onChange={(e) => setEditingItem(prev => ({ ...prev!, category: e.target.value }))}
+            />
+            <Input
+              placeholder="装置"
+              value={editingItem?.equipment || ''}
+              onChange={(e) => setEditingItem(prev => ({ ...prev!, equipment: e.target.value }))}
+            />
+            <Input
+              placeholder="確認箇所"
+              value={editingItem?.item || ''}
+              onChange={(e) => setEditingItem(prev => ({ ...prev!, item: e.target.value }))}
+            />
+            <Input
+              placeholder="判断基準"
+              value={editingItem?.criteria || ''}
+              onChange={(e) => setEditingItem(prev => ({ ...prev!, criteria: e.target.value }))}
+            />
+            <Input
+              placeholder="確認要領"
+              value={editingItem?.method || ''}
+              onChange={(e) => setEditingItem(prev => ({ ...prev!, method: e.target.value }))}
+            />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
               キャンセル
             </Button>
-            <Button onClick={() => {
-              if (editingItem?.id) {
-                setItems(items.map(item => 
-                  item.id === editingItem.id ? editingItem : item
-                ));
-              } else {
-                setItems([...items, { ...editingItem!, id: String(Date.now()) }]);
-              }
-              setIsEditDialogOpen(false);
-            }}>
-              {editingItem?.id ? '更新' : '追加'}
+            <Button onClick={() => handleSaveEdit(editingItem!)}>
+              完了
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -332,19 +276,14 @@ export default function InspectionItems() {
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>点検項目の削除</AlertDialogTitle>
+            <AlertDialogTitle>削除の確認</AlertDialogTitle>
             <AlertDialogDescription>
-              この点検項目を削除してもよろしいですか？この操作は取り消せません。
+              この項目を削除してもよろしいですか？
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>キャンセル</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              setItems(items.filter(item => item.id !== selectedItemId));
-              setIsDeleteDialogOpen(false);
-            }}>
-              削除
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirmDelete}>OK</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

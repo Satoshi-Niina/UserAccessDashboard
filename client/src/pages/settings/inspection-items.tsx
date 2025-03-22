@@ -61,14 +61,7 @@ interface TableItem {
 type TableType = 'manufacturers' | 'models' | 'machineNumbers';
 
 
-const ExitButtonComponent = ({ hasChanges, onSave }: { hasChanges: boolean; onSave: () => Promise<void> }) => {
-  return (
-    <Button variant="default" onClick={onSave}>
-      <Save className="h-4 w-4" />
-      保存して終了
-    </Button>
-  );
-};
+// カスタムのExitButtonComponentを削除し、共通コンポーネントを使用
 
 export default function InspectionItems() {
   const { toast } = useToast();

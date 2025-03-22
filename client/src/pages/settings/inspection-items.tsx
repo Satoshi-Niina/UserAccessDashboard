@@ -999,7 +999,7 @@ export default function InspectionItems() {
                           />
                         </div>
                         <div>
-                          <Label>>製造メーカー</Label>
+                          <Label>製造メーカー</Label>
                           <Select value={selectedManufacturerId?.toString() || ''} onValueChange={(value) => setSelectedManufacturerId(parseInt(value))}>
                             <SelectTrigger className="w-[200px]">
                               <SelectValue placeholder="製造メーカーを選択" />
@@ -1369,7 +1369,7 @@ interface EditableInspectionItem extends InspectionItem {
   method: string;
 };
 
-export default function InspectionItemsPage() {
+function InspectionItemsPage() {
   const { toast } = useToast();
   const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
   const [models, setModels] = useState<ModelType[]>([]);

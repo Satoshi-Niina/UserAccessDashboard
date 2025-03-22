@@ -51,7 +51,7 @@ const menuItems: MenuItem[] = [
     adminOnly: true,
     subItems: [
       { icon: Database, label: "技術支援データ処理", href: "/settings/tech-support-data" },
-      { icon: List, label: "点検項目編集", href: "/settings/inspection-items" },
+      { icon: List, label: "点検項目管理", href: "/settings/inspection-items" }, // Changed label here
       { icon: BarChart2, label: "測定基準値設定", href: "/settings/measurement-standards" },
       { icon: List, label: "点検実績管理", href: "/settings/inspection-records" }, // Added Inspection Records
       { icon: History, label: "履歴検索", href: "/settings/history" },
@@ -164,7 +164,7 @@ export function Sidebar({ onExpandChange }: SidebarProps) {
                         "点検実績管理",
                         "履歴検索",
                         "技術支援データ処理",
-                        "点検項目編集",
+                        "点検項目管理", // Changed label here
                         "測定基準値設定", 
                         "測定基準編集",
                         "ユーザー登録"

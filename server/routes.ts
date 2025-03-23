@@ -324,8 +324,21 @@ export function registerRoutes(app: Express): Server {
       if (!machine) {
         return res.status(404).json({ error: '機械番号が見つかりません' });
       }
+
+      // 関連する点検項目を取得
+      const inspectionItemsPath = path.join(process.cwd(), 'attached_assets/inspection/table/inspection_items.csv');
+      const inspectionContent = await fs.promises.readFile(inspectionItemsPath, 'utf8');
+      const inspectionItems = Papa.parse(inspectionContent, { header: true }).data;
       
-      res.json(machine);
+      // 機械番号に紐づく機種の点検項目をフィルタリング
+      const filteredItems = inspectionItems.filter((item: any) => 
+        String(item.model_id) === String(machine.model_id)
+      );
+
+      res.json({
+        ...machine,
+        inspection_items: filteredItems
+      });
     } catch (error) {
       console.error('Error fetching machine number:', error);
       res.status(500).json({ error: '機械情報の取得に失敗しました' });

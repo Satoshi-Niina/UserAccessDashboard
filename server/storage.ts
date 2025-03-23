@@ -343,13 +343,38 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getMachineNumberById(id: number): Promise<any> {
-    return new Promise((resolve, reject) => {
-      db.get(`
-        SELECT 
-          mn.number,
-          m.name as model_name,
-          mf.name as manufacturer_name
-        FROM machine_numbers mn
+    try {
+      const csvPath = path.join(process.cwd(), 'attached_assets/inspection/table/machine_numbers.csv');
+      if (!fs.existsSync(csvPath)) {
+        return null;
+      }
+
+      const content = fs.readFileSync(csvPath, 'utf-8');
+      const machines = Papa.parse(content, { header: true }).data;
+
+      const machine = machines.find((m: any) => String(m.number) === String(id));
+      if (!machine) {
+        return null;
+      }
+
+      // Get model information
+      const models = await this.getModels();
+      const model = models.find((m: any) => String(m.id) === String(machine.model_id));
+
+      if (!model) {
+        return null;
+      }
+
+      return {
+        number: machine.number,
+        model_name: model.name,
+        manufacturer_name: model.manufacturer
+      };
+    } catch (error) {
+      console.error('Error getting machine number by id:', error);
+      return null;
+    }
+  }M machine_numbers mn
         INNER JOIN models m ON mn.model_id = m.id
         INNER JOIN manufacturers mf ON m.manufacturer_id = mf.id
         WHERE mn.id = ?

@@ -319,7 +319,7 @@ export function registerRoutes(app: Express): Server {
       const content = await fs.promises.readFile(filePath, 'utf8');
       const machines = Papa.parse(content, { header: true }).data;
       
-      const machine = machines.find((m: any) => m.number === machineNumber);
+      const machine = machines.find((m: any) => String(m.number) === String(machineNumber));
       
       if (!machine) {
         return res.status(404).json({ error: '機械番号が見つかりません' });

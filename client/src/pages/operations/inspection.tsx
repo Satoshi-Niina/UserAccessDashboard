@@ -200,12 +200,8 @@ export default function InspectionPage() {
 
       // 該当機種の点検項目をフィルタリング
       const filteredData = data.filter((item: any) => {
-        // 機種IDまたは機械番号で一致を確認
-        return (
-          item.model_id === machineData.model_id || 
-          item.machine_number === machineNumber ||
-          item.model_id === modelData.id
-        );
+        // 機種IDで一致を確認
+        return item.model_id === machineData.model_id;
       });
 
       console.log('Filtered inspection items:', filteredData);

@@ -123,6 +123,9 @@ export default function InspectionPage() {
   const [manufacturers, setManufacturers] = useState<any[]>([]); // Added manufacturers state
   const [models, setModels] = useState<any[]>([]); // Added models state
   const [machineNumbers, setMachineNumbers] = useState<any[]>([]); // Added machineNumbers state
+  const [selectedManufacturer, setSelectedManufacturer] = useState(''); // Added selectedManufacturer state
+  const [selectedModel, setSelectedModel] = useState(''); // Added selectedModel state
+
   const { toast } = useToast();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [scrollIndicatorWidth, setScrollIndicatorWidth] = useState(100);
@@ -195,7 +198,7 @@ export default function InspectionPage() {
         const itemsData = await itemsResponse.json();
 
         // モデルIDに基づいて点検項目をフィルタリング
-        const filteredItems = machineNumber ? itemsData.filter(item => 
+        const filteredItems = machineNumber ? itemsData.filter(item =>
           item.model_id === models.find(m => m.number === machineNumber)?.id
         ) : itemsData;
 
@@ -485,6 +488,38 @@ export default function InspectionPage() {
               )}
               <div className="mb-2 p-2 bg-muted/20 rounded-md">
                 <div className="flex flex-wrap gap-2">
+                  <div className="min-w-[150px]">
+                    <Label htmlFor="manufacturerFilter" className="text-xs">製造メーカー</Label>
+                    <Select value={selectedManufacturer} onValueChange={setSelectedManufacturer}>
+                      <SelectTrigger id="manufacturerFilter" className="h-8">
+                        <SelectValue placeholder="すべて" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">すべて</SelectItem>
+                        {manufacturers.map(m => (
+                          <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="min-w-[150px]">
+                    <Label htmlFor="modelFilter" className="text-xs">機種</Label>
+                    <Select value={selectedModel} onValueChange={setSelectedModel}>
+                      <SelectTrigger id="modelFilter" className="h-8">
+                        <SelectValue placeholder="すべて" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">すべて</SelectItem>
+                        {models
+                          .filter(m => !selectedManufacturer || m.manufacturer_id === selectedManufacturer)
+                          .map(m => (
+                            <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <div className="min-w-[150px]">
                     <Label htmlFor="categoryFilter" className="text-xs">部位</Label>
                     <Select

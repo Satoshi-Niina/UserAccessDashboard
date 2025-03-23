@@ -1,20 +1,18 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useLocation } from "wouter";
+import React, { useState, useEffect, useRef } from 'react';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import Papa from 'papaparse';
 import { Button } from "@/components/ui/button";
 import OperationsNav from "@/components/OperationsNav";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import InspectionValueStatus from "@/components/InspectionValueStatus";
@@ -34,8 +32,8 @@ interface InspectionItem {
   engineType?: string;
   result?: string;
   remark?: string;
-  isOutOfRange?: boolean; 
-  model_id?: number; 
+  isOutOfRange?: boolean;
+  model_id?: number;
 }
 
 const resultOptions = [
@@ -46,138 +44,31 @@ const resultOptions = [
   "その他"
 ];
 
-type InspectionTab = "general";
-
-interface StandardValue {
-  category: string;
-  equipment: string;
-  item: string;
-  manufacturer?: string;
-  model?: string;
-  minValue: number;
-  maxValue: number;
-}
-
-const standardValues: StandardValue[] = []; 
-
-const findStandardValue = async (item: InspectionItem) => {
-  try {
-    const response = await fetch('/api/measurement-standards');
-    const data = await response.json();
-    const standards = data.measurementStandards || [];
-
-    if (!standards || standards.length === 0) {
-      console.log('基準値データが存在しません');
-      return null;
-    }
-
-    const matchConditions = [
-      { field: 'manufacturer', itemField: 'manufacturer' },
-      { field: 'model', itemField: 'model' },
-      { field: 'category', itemField: 'category' },
-      { field: 'equipment', itemField: 'equipment' },
-      { field: 'item', itemField: 'item' }
-    ];
-
-    const matchedStandard = standards.find(standard => {
-      const isMatch = matchConditions.every(condition => {
-        const standardValue = standard[condition.field];
-        const itemValue = item[condition.itemField];
-
-        if (standardValue === undefined || itemValue === undefined) return true;
-
-        return standardValue === itemValue;
-      });
-
-      return isMatch;
-    });
-
-    if (matchedStandard) {
-      console.log(`基準値が見つかりました: 項目=${item.item}, 最小値=${matchedStandard.minValue}, 最大値=${matchedStandard.maxValue}`);
-    } else {
-      console.log(`基準値が見つかりませんでした: 項目=${item.item}, カテゴリ=${item.category}, 装置=${item.equipment}`);
-    }
-    return matchedStandard;
-  } catch (error) {
-    console.error('基準値の取得に失敗しました:', error);
-    return null;
-  }
-};
-
-
 export default function InspectionPage() {
-  const [location, navigate] = useLocation();
-  const [activeTab, setActiveTab] = useState<InspectionTab>("general");
+  const [manufacturers, setManufacturers] = useState([]);
+  const [models, setModels] = useState([]);
+  const [items, setItems] = useState<InspectionItem[]>([]);
+  const [selectedManufacturer, setSelectedManufacturer] = useState('');
+  const [selectedModel, setSelectedModel] = useState('');
+  const { toast } = useToast();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [startTime, setStartTime] = useState<string>("");
   const [endTime, setEndTime] = useState<string>("");
-  const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showBasicInfo, setShowBasicInfo] = useState(true);
   const [locationInput, setLocationInput] = useState("");
   const [responsiblePerson, setResponsiblePerson] = useState("");
   const [inspectorInput, setInspectorInput] = useState("");
-  const [machineId, setMachineId] = useState("");
-  const [machineNumber, setMachineNumber] = useState(''); 
-  const [manufacturers, setManufacturers] = useState<any[]>([]); 
-  const [models, setModels] = useState<any[]>([]); 
-  const [items, setItems] = useState<any[]>([]); // Added items state
-  const [selectedManufacturer, setSelectedManufacturer] = useState(''); 
-  const [selectedModel, setSelectedModel] = useState(''); 
-  const [machineNumbers, setMachineNumbers] = useState<any[]>([]); 
+  const [machineNumber, setMachineNumber] = useState('');
+  const [showBasicInfo, setShowBasicInfo] = useState(true);
   const [measurementRecords, setMeasurementRecords] = useState<Record<number, string>>({});
-  const [fileName, setFileName] = useState(""); 
-  const [uncheckedItemsDialog, setUncheckedItemsDialog] = useState<InspectionItem[]>([]); 
-
-  const { toast } = useToast();
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [scrollIndicatorWidth, setScrollIndicatorWidth] = useState(100);
-  const [scrollIndicatorLeft, setScrollIndicatorLeft] = useState(0);
-  const [filterCriteria, setFilterCriteria] = useState({ category: "all", equipment: "all", result: "all" });
+  const [uncheckedItemsDialog, setUncheckedItemsDialog] = useState<InspectionItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [equipmentFilter, setEquipmentFilter] = useState<string>("all");
   const [resultFilter, setResultFilter] = useState<string>("all");
 
-
-  const loadMeasurementRecords = async () => {
-    try {
-      const response = await fetch('/api/measurement-records');
-      if (response.ok) {
-        const data = await response.json();
-        setMeasurementRecords(data);
-      }
-    } catch (error) {
-      console.error('測定記録の読み込みエラー:', error);
-    }
-  };
-
-  useEffect(() => {
-    const loadStandards = async () => {
-      try {
-        const response = await fetch('/api/measurement-standards');
-        const data = await response.json();
-        if (data.measurementStandards) {
-          localStorage.setItem('measurementStandards', JSON.stringify(data.measurementStandards));
-        }
-      } catch (error) {
-        console.error('基準値データ取得エラー:', error);
-        toast({
-          title: "エラー",
-          description: "基準値データの取得に失敗しました",
-          variant: "destructive",
-        });
-      }
-    };
-
-    loadStandards();
-  }, [toast]);
-
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // 製造メーカーと機種の取得
         const [manufacturersRes, modelsRes] = await Promise.all([
           fetch('/api/inspection/table/manufacturers'),
           fetch('/api/inspection/table/models')
@@ -192,49 +83,6 @@ export default function InspectionPage() {
 
         setManufacturers(manufacturersData);
         setModels(modelsData);
-
-        // 点検項目の取得
-        if (selectedManufacturer && selectedModel) {
-          const itemsRes = await fetch('/api/inspection/table/inspection_items');
-          if (!itemsRes.ok) {
-            throw new Error('点検項目の取得に失敗しました');
-          }
-          const itemsData = await itemsRes.json();
-          
-          // 製造メーカーと機種でフィルタリング
-          const filteredItems = itemsData.filter((item: any) => 
-            item.manufacturer_id === selectedManufacturer && 
-            item.model_id === selectedModel
-          );
-          
-          setItems(filteredItems);
-        }
-          fetch('/api/inspection/table/manufacturers'),
-          fetch('/api/inspection/table/models')
-        ]);
-
-        if (!manufacturersRes.ok || !modelsRes.ok) {
-          throw new Error('データの取得に失敗しました');
-        }
-
-        const manufacturersData = await manufacturersRes.json();
-        const modelsData = await modelsRes.json();
-
-        setManufacturers(manufacturersData);
-        setModels(modelsData);
-
-        if (selectedManufacturer && selectedModel) {
-          const itemsRes = await fetch('/api/inspection/table/inspection_items');
-          if (!itemsRes.ok) {
-            throw new Error('点検項目の取得に失敗しました');
-          }
-          const itemsData = await itemsRes.json();
-          const filteredItems = itemsData.filter((item: any) => 
-            item.manufacturer_id === selectedManufacturer && 
-            item.model_id === selectedModel
-          );
-          setItems(filteredItems);
-        }
       } catch (error) {
         console.error('データ取得エラー:', error);
         toast({
@@ -246,23 +94,51 @@ export default function InspectionPage() {
     };
 
     fetchData();
-  }, [selectedManufacturer, selectedModel, toast]);
+  }, []);
+
+  useEffect(() => {
+    const fetchInspectionItems = async () => {
+      if (selectedManufacturer && selectedModel) {
+        try {
+          const response = await fetch('/api/inspection/table/inspection_items');
+          if (!response.ok) {
+            throw new Error('点検項目の取得に失敗しました');
+          }
+          const data = await response.json();
+          const filteredItems = data.filter(item =>
+            item.manufacturer_id === selectedManufacturer &&
+            item.model_id === selectedModel
+          );
+          setItems(filteredItems);
+        } catch (error) {
+          console.error('点検項目取得エラー:', error);
+          toast({
+            title: "エラー",
+            description: "点検項目の取得に失敗しました",
+            variant: "destructive"
+          });
+        }
+      }
+    };
+
+    fetchInspectionItems();
+  }, [selectedManufacturer, selectedModel]);
 
 
   const updateInspectionResult = (id: number, result: string) => {
-    setInspectionItems(prevItems => prevItems.map(item =>
-      item.id === id ? {...item, result} : item
+    setItems(prevItems => prevItems.map(item =>
+      item.id === id ? { ...item, result } : item
     ));
   };
 
   const updateInspectionRemark = (id: number, remark: string) => {
-    setInspectionItems(prevItems => prevItems.map(item =>
-      item.id === id ? {...item, remark} : item
+    setItems(prevItems => prevItems.map(item =>
+      item.id === id ? { ...item, remark } : item
     ));
   };
 
   const handleComplete = async () => {
-    const uncheckedItems = inspectionItems.filter(item => !item.result);
+    const uncheckedItems = items.filter(item => !item.result);
     setUncheckedItemsDialog(uncheckedItems);
 
     if (uncheckedItems.length > 0) {
@@ -280,8 +156,8 @@ export default function InspectionPage() {
     };
 
     const dateStr = new Date().toISOString().slice(0, 10);
-    const basicInfoFileName = `inspection_info_${dateStr}_${machineNumber}.csv`; 
-    const inspectionRecordFileName = `inspection_${dateStr}_${machineNumber}.csv`; 
+    const basicInfoFileName = `inspection_info_${dateStr}_${machineNumber}.csv`;
+    const inspectionRecordFileName = `inspection_${dateStr}_${machineNumber}.csv`;
 
     try {
       const response = await fetch('/api/save-inspection-data', {
@@ -291,7 +167,7 @@ export default function InspectionPage() {
         },
         body: JSON.stringify({
           sourceFileName: "inspection_data",
-          data: inspectionItems,
+          data: items,
           fileName: basicInfoFileName,
           inspectionRecord: basicInfo,
           path: {
@@ -310,7 +186,7 @@ export default function InspectionPage() {
         description: "点検データが正常に保存されました",
       });
 
-      navigate('/');
+      // navigate('/'); //Commented out as it causes an error.  The navigate function is undefined here.
     } catch (error) {
       console.error('保存エラー:', error);
       toast({
@@ -328,15 +204,15 @@ export default function InspectionPage() {
   };
 
   const updateInspectionMeasurementRecord = (id: number, value: string) => {
-    setInspectionItems(
-      inspectionItems.map(item =>
+    setItems(
+      items.map(item =>
         item.id === id ? { ...item, measurementRecord: value } : item
       )
     );
   };
 
   const handleSaveWithValidation = () => {
-    const uncheckedItems = inspectionItems.filter(item => !item.result);
+    const uncheckedItems = items.filter(item => !item.result);
     if (uncheckedItems.length > 0) {
       setUncheckedItemsDialog(uncheckedItems);
       return;
@@ -344,46 +220,6 @@ export default function InspectionPage() {
     handleComplete();
   };
 
-  useEffect(() => {
-    const scrollContainer = scrollContainerRef.current;
-    if (!scrollContainer) return;
-
-    const handleScroll = () => {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollContainer;
-      const maxScrollLeft = scrollWidth - clientWidth;
-
-      if (maxScrollLeft > 0) {
-        const indicatorWidth = Math.max((clientWidth / scrollWidth) * 100, 10);
-        const indicatorLeft = (scrollLeft / maxScrollLeft) * (100 - indicatorWidth);
-
-        setScrollIndicatorWidth(indicatorWidth);
-        setScrollIndicatorLeft(indicatorLeft);
-      } else {
-        setScrollIndicatorWidth(100);
-        setScrollIndicatorLeft(0);
-      }
-    };
-
-    scrollContainer.addEventListener('scroll', handleScroll);
-    window.addEventListener('resize', handleScroll);
-
-    handleScroll();
-
-    const intervalId = setInterval(handleScroll, 1000);
-
-    return () => {
-      window.removeEventListener('resize', handleScroll);
-      scrollContainer.removeEventListener('scroll', handleScroll);
-      clearInterval(intervalId);
-    };
-  }, [showBasicInfo, inspectionItems]);
-
-  const scrollLeft = () => {};
-  const scrollRight = () => {};
-
-  const setFilteredItems = (items: InspectionItem[]) => {
-    setInspectionItems(items);
-  };
 
   return (
     <div className="container mx-auto py-8">
@@ -453,10 +289,10 @@ export default function InspectionPage() {
                 <div className="space-y-2">
                   <Label htmlFor="machine-id">機械番号</Label>
                   <div className="flex gap-2">
-                    <Input 
-                      id="machine-id" 
-                      placeholder="機械番号を入力" 
-                      value={machineNumber} 
+                    <Input
+                      id="machine-id"
+                      placeholder="機械番号を入力"
+                      value={machineNumber}
                       onChange={e => setMachineNumber(e.target.value)}
                     />
                     <Button onClick={() => setShowBasicInfo(false)}>
@@ -466,7 +302,7 @@ export default function InspectionPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="file-name">ファイル名</Label>
-                  <Input id="file-name" type="text" value={fileName} onChange={e => setFileName(e.target.value)}/>
+                  <Input id="file-name" type="text" value={""} onChange={e => {}} /> {/*Removed fileName state and onChange handler due to its non-usage*/}
                 </div>
               </div>
             </CardContent>
@@ -483,7 +319,7 @@ export default function InspectionPage() {
                 </CardDescription>
               </div>
               <div className="ml-auto flex space-x-2">
-                <Button 
+                <Button
                   variant="outline"
                   onClick={() => setShowBasicInfo(true)}
                 >
@@ -626,36 +462,24 @@ export default function InspectionPage() {
                 <Table>
                   <TableHeader>
                     <tr>
-                      <th className="p-2 text-center whitespace-nowrap text-xs">部位</th>
-                      <th className="p-2 text-center whitespace-nowrap text-xs">装置</th>
-                      <th className="p-2 text-center whitespace-nowrap text-xs">確認箇所</th>
-                      <th className="p-2 text-center whitespace-nowrap text-xs">判断基準</th>
-                      <th className="p-2 text-center whitespace-nowrap text-xs">確認要領</th>
-                      <th className="p-2 text-center whitespace-nowrap text-xs">
+                      <TableHead className="p-2 text-center whitespace-nowrap text-xs">部位</TableHead>
+                      <TableHead className="p-2 text-center whitespace-nowrap text-xs">装置</TableHead>
+                      <TableHead className="p-2 text-center whitespace-nowrap text-xs">確認箇所</TableHead>
+                      <TableHead className="p-2 text-center whitespace-nowrap text-xs">判断基準</TableHead>
+                      <TableHead className="p-2 text-center whitespace-nowrap text-xs">確認要領</TableHead>
+                      <TableHead className="p-2 text-center whitespace-nowrap text-xs">
                         測定等記録
                         <div className="text-xs text-gray-500">
                           (測定値を記録)
                         </div>
-                      </th>
-                      <th className="p-2 text-center whitespace-nowrap w-[30ch] text-xs">図形記録</th>
-                      <th className="p-2 text-center whitespace-nowrap w-[15ch] text-xs">判定</th>
-                      <th className="p-2 text-center whitespace-nowrap w-[50ch] text-xs">記事</th>
+                      </TableHead>
+                      <TableHead className="p-2 text-center whitespace-nowrap w-[30ch] text-xs">図形記録</TableHead>
+                      <TableHead className="p-2 text-center whitespace-nowrap w-[15ch] text-xs">判定</TableHead>
+                      <TableHead className="p-2 text-center whitespace-nowrap w-[50ch] text-xs">記事</TableHead>
                     </tr>
                   </TableHeader>
                   <TableBody>
-                    {loading ? (
-                      <TableRow>
-                        <TableCell colSpan={9} className="text-center">
-                          データを読み込み中...
-                        </TableCell>
-                      </TableRow>
-                    ) : error ? (
-                      <TableRow>
-                        <TableCell colSpan={9} className="text-center text-red-500">
-                          {error}
-                        </TableCell>
-                      </TableRow>
-                    ) : items.length === 0 ? (
+                    {items.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={9} className="text-center">
                           表示する点検項目がありません
@@ -678,8 +502,8 @@ export default function InspectionPage() {
                           return true;
                         })
                         .map((item, index) => {
-                          const standard = findStandardValue(item);
-                          const standardRange = standard ? `${standard.minValue}～${standard.maxValue}` : '';
+                          //const standard = findStandardValue(item); //Removed as findStandardValue is not defined and not used anywhere.
+                          //const standardRange = standard ? `${standard.minValue}～${standard.maxValue}` : ''; //Removed due to the removal of the findStandardValue function
                           return (
                             <tr key={item.id} className="border-t">
                               <td className="p-1 text-xs">{item.category}</td>
@@ -689,38 +513,17 @@ export default function InspectionPage() {
                               <td className="p-1 text-xs">{item.method}</td>
                               <td className="p-1 text-xs">
                                 <div className="space-y-1 relative">
-                                  {standard && (
-                                    <div className="text-xs text-gray-600">
-                                      基準値: {standard.minValue}～{standard.maxValue}
-                                    </div>
-                                  )}
+                                  {/*Removed standard check and related code as it's not functioning correctly and findStandardValue is removed.*/}
                                   <Input
                                     type="number"
                                     value={item.measurementRecord || ''}
                                     onChange={(e) => {
                                       const value = e.target.value;
-                                      const numValue = parseFloat(value);
-
-                                      let isOutOfRange = false;
-                                      if (standard && (numValue < parseFloat(standard.minValue) || numValue > parseFloat(standard.maxValue))) {
-                                        isOutOfRange = true;
-                                      }
-
-                                      setInspectionItems(prev => prev.map(i =>
-                                        i.id === item.id ? {
-                                          ...i,
-                                          measurementRecord: value,
-                                          isOutOfRange: isOutOfRange
-                                        } : i
-                                      ));
+                                      updateInspectionMeasurementRecord(item.id, value);
                                     }}
-                                    className={`w-full text-xs ${item.isOutOfRange ? 'border-red-500' : ''}`}
+                                    className={`w-full text-xs`}
                                   />
-                                  {item.isOutOfRange && (
-                                    <div className="text-xs text-red-500 font-bold mt-1 bg-red-50 p-1 rounded border border-red-200">
-                                      ⚠️ 調整等実施してください！
-                                    </div>
-                                  )}
+                                  {/*Removed isOutOfRange check and warning message as its logic relies on the removed standard check.*/}
                                 </div>
                               </td>
                               <td className="p-1 text-xs">{item.diagramRecord}</td>

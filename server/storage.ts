@@ -312,15 +312,15 @@ export class DatabaseStorage implements IStorage {
     try {
       const csvPath = path.join(process.cwd(), 'attached_assets/inspection/table/machine_numbers.csv');
       if (!fs.existsSync(csvPath)) {
-        return null;
+        throw new Error('機械番号マスタが見つかりません');
       }
 
       const content = fs.readFileSync(csvPath, 'utf-8');
       const machines = Papa.parse(content, { header: true }).data;
 
-      const machine = machines.find((m: any) => m.number === number);
+      const machine = machines.find((m: any) => String(m.number) === String(number));
       if (!machine) {
-        return null;
+        throw new Error('機械番号が見つかりません');
       }
 
       // モデル情報を取得
@@ -328,17 +328,18 @@ export class DatabaseStorage implements IStorage {
       const model = models.find((m: any) => String(m.id) === String(machine.model_id));
 
       if (!model) {
-        return null;
+        throw new Error('該当する機種情報が見つかりません');
       }
 
       return {
         number: machine.number,
+        model_id: machine.model_id,
         model_name: model.name,
-        manufacturer_name: model.manufacturer
+        manufacturer_id: model.manufacturer_id
       };
     } catch (error) {
       console.error('Error getting machine number:', error);
-      return null;
+      throw error;
     }
   }
 

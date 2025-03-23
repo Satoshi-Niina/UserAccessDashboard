@@ -310,38 +310,37 @@ export function registerRoutes(app: Express): Server {
   app.get('/api/machineNumbers/:number', async (req, res) => {
     try {
       const machineNumber = req.params.number;
-      const filePath = path.join(process.cwd(), 'attached_assets/inspection/table/machine_numbers.csv');
+      const machineData = await storage.getMachineNumberByNumber(machineNumber);
       
-      if (!fs.existsSync(filePath)) {
-        return res.status(404).json({ error: '機械番号マスタが見つかりません' });
-      }
-
-      const content = await fs.promises.readFile(filePath, 'utf8');
-      const machines = Papa.parse(content, { header: true }).data;
-      
-      const machine = machines.find((m: any) => String(m.number) === String(machineNumber));
-      
-      if (!machine) {
+      if (!machineData) {
         return res.status(404).json({ error: '機械番号が見つかりません' });
       }
 
       // 関連する点検項目を取得
       const inspectionItemsPath = path.join(process.cwd(), 'attached_assets/inspection/table/inspection_items.csv');
+      if (!fs.existsSync(inspectionItemsPath)) {
+        return res.status(404).json({ error: '点検項目マスタが見つかりません' });
+      }
+
       const inspectionContent = await fs.promises.readFile(inspectionItemsPath, 'utf8');
       const inspectionItems = Papa.parse(inspectionContent, { header: true }).data;
       
       // 機械番号に紐づく機種の点検項目をフィルタリング
       const filteredItems = inspectionItems.filter((item: any) => 
-        String(item.model_id) === String(machine.model_id)
+        String(item.model_id) === String(machineData.model_id)
       );
 
       res.json({
-        ...machine,
+        ...machineData,
         inspection_items: filteredItems
       });
     } catch (error) {
       console.error('Error fetching machine number:', error);
-      res.status(500).json({ error: '機械情報の取得に失敗しました' });
+      if (error instanceof Error) {
+        res.status(404).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: '機械情報の取得に失敗しました' });
+      }
     }
   });
 

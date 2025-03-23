@@ -342,44 +342,6 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getMachineNumberById(id: string): Promise<any> {
-    try {
-      const csvPath = path.join(process.cwd(), 'attached_assets/inspection/table/machine_numbers.csv');
-      if (!fs.existsSync(csvPath)) {
-        throw new Error('機械番号マスタが見つかりません');
-      }
-
-      const content = fs.readFileSync(csvPath, 'utf-8');
-      const machines = Papa.parse(content, { header: true }).data;
-
-      const machine = machines.find((m: any) => m.number === id);
-      if (!machine) {
-        throw new Error('機械番号が見つかりません');
-      }
-
-      // Get model information
-      const models = await this.getModels();
-      if (!models || models.length === 0) {
-        throw new Error('機種マスタが見つかりません');
-      }
-
-      const model = models.find((m: any) => String(m.id) === String(machine.model_id));
-      if (!model) {
-        throw new Error('該当する機種情報が見つかりません');
-      }
-
-      return {
-        number: machine.number,
-        model_id: machine.model_id,
-        model_name: model.name,
-        manufacturer_id: model.manufacturer_id
-      };
-    } catch (error) {
-      console.error('Error getting machine number by id:', error);
-      throw error;
-    }
-  }
-
   async getMachineNumbers(): Promise<any[]> {
     try {
       const csvPath = path.join(process.cwd(), 'attached_assets/inspection/table/machine_numbers.csv');
@@ -405,23 +367,6 @@ export class DatabaseStorage implements IStorage {
       console.error('Error getting machine numbers:', error);
       return [];
     }
-  }
-
-  async getMachineNumbers(): Promise<any[]> {
-    return new Promise((resolve, reject) => {
-      db.all(`
-        SELECT 
-          mn.number,
-          m.name as model_name,
-          mf.name as manufacturer_name
-        FROM machine_numbers mn
-        INNER JOIN models m ON mn.model_id = m.id
-        INNER JOIN manufacturers mf ON m.manufacturer_id = mf.id
-      `, [], (err, rows) => {
-        if (err) reject(err);
-        resolve(rows || []); // Handle potential null result
-      });
-    });
   }
 
   async getInspectionItems(): Promise<any[]> {

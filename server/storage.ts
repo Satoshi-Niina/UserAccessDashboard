@@ -314,7 +314,7 @@ export class DatabaseStorage implements IStorage {
       if (!fs.existsSync(csvPath)) {
         console.log('Creating machine numbers directory');
         fs.mkdirSync(path.dirname(csvPath), { recursive: true });
-        fs.writeFileSync(csvPath, 'number,model_id,manufacturer_id\n1,1,1');
+        fs.writeFileSync(csvPath, 'number,model_id,manufacturer_id\n100,1,1\n1,1,1\n10,1,1');
         console.log('Created initial machine numbers file');
       }
 

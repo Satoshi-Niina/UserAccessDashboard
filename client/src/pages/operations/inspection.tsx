@@ -186,10 +186,41 @@ export default function InspectionPage() {
           fetch('/api/inspection/table/models')
         ]);
 
+        if (!manufacturersRes.ok || !modelsRes.ok) {
+          throw new Error('データの取得に失敗しました');
+        }
+
         const manufacturersData = await manufacturersRes.json();
         const modelsData = await modelsRes.json();
 
         setManufacturers(manufacturersData);
+        setModels(modelsData);
+
+        // 点検項目の取得
+        if (selectedManufacturer && selectedModel) {
+          const itemsRes = await fetch(`/api/inspection/table/inspection_items`);
+          if (!itemsRes.ok) {
+            throw new Error('点検項目の取得に失敗しました');
+          }
+          const itemsData = await itemsRes.json();
+          const filteredItems = itemsData.filter((item: any) => 
+            item.manufacturer_id === selectedManufacturer && 
+            item.model_id === selectedModel
+          );
+          setItems(filteredItems);
+        }
+      } catch (error) {
+        console.error('データ取得エラー:', error);
+        toast({
+          title: "エラー",
+          description: error instanceof Error ? error.message : "データの取得に失敗しました",
+          variant: "destructive"
+        });
+      }
+    };
+
+    fetchData();
+  }, [selectedManufacturer, selectedModel]);rs(manufacturersData);
         setModels(modelsData);
       } catch (error) {
         console.error('データ取得エラー:', error);

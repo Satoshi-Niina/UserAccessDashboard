@@ -177,7 +177,38 @@ export default function InspectionPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // 製造メーカーと機種の取得
         const [manufacturersRes, modelsRes] = await Promise.all([
+          fetch('/api/inspection/table/manufacturers'),
+          fetch('/api/inspection/table/models')
+        ]);
+
+        if (!manufacturersRes.ok || !modelsRes.ok) {
+          throw new Error('データの取得に失敗しました');
+        }
+
+        const manufacturersData = await manufacturersRes.json();
+        const modelsData = await modelsRes.json();
+
+        setManufacturers(manufacturersData);
+        setModels(modelsData);
+
+        // 点検項目の取得
+        if (selectedManufacturer && selectedModel) {
+          const itemsRes = await fetch('/api/inspection/table/inspection_items');
+          if (!itemsRes.ok) {
+            throw new Error('点検項目の取得に失敗しました');
+          }
+          const itemsData = await itemsRes.json();
+          
+          // 製造メーカーと機種でフィルタリング
+          const filteredItems = itemsData.filter((item: any) => 
+            item.manufacturer_id === selectedManufacturer && 
+            item.model_id === selectedModel
+          );
+          
+          setItems(filteredItems);
+        }
           fetch('/api/inspection/table/manufacturers'),
           fetch('/api/inspection/table/models')
         ]);

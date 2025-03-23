@@ -400,20 +400,8 @@ export default function InspectionPage() {
 
   return (
     <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-6">
+      <div className="mb-6">
         <h1 className="text-2xl font-bold">仕業点検</h1>
-        <div className="flex items-center gap-4">
-          <input
-            type="text"
-            placeholder="機械番号"
-            value={machineNumber || ''}
-            onChange={(e) => setMachineNumber(e.target.value)}
-            className="px-3 py-2 border rounded"
-          />
-          <Button onClick={() => loadInspectionItems(machineNumber)}>
-            点検項目取得
-          </Button>
-        </div>
       </div>
 
       <>
@@ -477,7 +465,20 @@ export default function InspectionPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="machine-id">機械番号</Label>
-                  <Input id="machine-id" placeholder="機械番号を入力" value={machineId} onChange={e => setMachineId(e.target.value)}/>
+                  <div className="flex gap-2">
+                    <Input 
+                      id="machine-id" 
+                      placeholder="機械番号を入力" 
+                      value={machineNumber} 
+                      onChange={e => setMachineNumber(e.target.value)}
+                    />
+                    <Button onClick={() => {
+                      loadInspectionItems(machineNumber);
+                      setShowBasicInfo(false);
+                    }}>
+                      点検項目取得
+                    </Button>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="file-name">ファイル名</Label>

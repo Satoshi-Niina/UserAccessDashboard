@@ -1,0 +1,100 @@
+rest-express@1.0.0 dev
+Connected to SQLite database
+6:11:31 AM [express] Server is running on port 5000
+6:11:43 AM [express] GET /api/user 200 in 15ms :: {"id":1,"username":"niina","is_admin":1}
+6:11:51 AM [express] GET /api/inspection-items 200 in 65ms :: [{"id":"1","model_id":"1","category":"…
+6:11:55 AM [express] GET /api/measurement-standards 200 in 130ms :: {"standards":[]}
+Machine numbers content: 
+number,model_id,manufacturer_id
+100,1,1
+101,1,1
+102,1,1
+103,1,1
+104,2,1
+105,2,1
+106,2,1
+107,2,1
+108,2,1
+109,2,1
+110,2,1
+
+Filtered machines: [
+  { number: '100', model_id: '1', manufacturer_id: '1' },
+  { number: '101', model_id: '1', manufacturer_id: '1' },
+  { number: '102', model_id: '1', manufacturer_id: '1' },
+  { number: '103', model_id: '1', manufacturer_id: '1' },
+  { number: '104', model_id: '2', manufacturer_id: '1' },
+  { number: '105', model_id: '2', manufacturer_id: '1' },
+  { number: '106', model_id: '2', manufacturer_id: '1' },
+  { number: '107', model_id: '2', manufacturer_id: '1' },
+  { number: '108', model_id: '2', manufacturer_id: '1' },
+  { number: '109', model_id: '2', manufacturer_id: '1' },
+  { number: '110', model_id: '2', manufacturer_id: '1' }
+]
+Available models: [
+  { '': 'id', __parsed_extra: [ 'name', 'code', 'manufacturer_id' ] },
+  { '': '1', __parsed_extra: [ 'MC300', 'MC300-001', '1' ] },
+  { '': '2', __parsed_extra: [ 'MC500', 'MC500-001', '1' ] },
+  { '': '' }
+]
+Model not found for model_id: 1
+Available models: [
+  { '': 'id', __parsed_extra: [ 'name', 'code', 'manufacturer_id' ] },
+  { '': '1', __parsed_extra: [ 'MC300', 'MC300-001', '1' ] },
+  { '': '2', __parsed_extra: [ 'MC500', 'MC500-001', '1' ] },
+  { '': '' }
+]
+Error getting machine number: Error: 該当する機種情報が見つかりません
+    at DatabaseStorage.getMachineNumberByNumber (/home/runner/workspace/server/storage.ts:350:15)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:313:27)
+Error fetching machine number: Error: 該当する機種情報が見つかりません
+    at DatabaseStorage.getMachineNumberByNumber (/home/runner/workspace/server/storage.ts:350:15)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:313:27)
+6:11:59 AM [express] GET /api/machineNumbers/100 404 in 32ms :: {"error":"該当する機種情報が見つかりません"}
+Machine numbers content: 
+number,model_id,manufacturer_id
+100,1,1
+101,1,1
+102,1,1
+103,1,1
+104,2,1
+105,2,1
+106,2,1
+107,2,1
+108,2,1
+109,2,1
+110,2,1
+
+Filtered machines: [
+  { number: '100', model_id: '1', manufacturer_id: '1' },
+  { number: '101', model_id: '1', manufacturer_id: '1' },
+  { number: '102', model_id: '1', manufacturer_id: '1' },
+  { number: '103', model_id: '1', manufacturer_id: '1' },
+  { number: '104', model_id: '2', manufacturer_id: '1' },
+  { number: '105', model_id: '2', manufacturer_id: '1' },
+  { number: '106', model_id: '2', manufacturer_id: '1' },
+  { number: '107', model_id: '2', manufacturer_id: '1' },
+  { number: '108', model_id: '2', manufacturer_id: '1' },
+  { number: '109', model_id: '2', manufacturer_id: '1' },
+  { number: '110', model_id: '2', manufacturer_id: '1' }
+]
+Available models: [
+  { '': 'id', __parsed_extra: [ 'name', 'code', 'manufacturer_id' ] },
+  { '': '1', __parsed_extra: [ 'MC300', 'MC300-001', '1' ] },
+  { '': '2', __parsed_extra: [ 'MC500', 'MC500-001', '1' ] },
+  { '': '' }
+]
+Model not found for model_id: 1
+Available models: [
+  { '': 'id', __parsed_extra: [ 'name', 'code', 'manufacturer_id' ] },
+  { '': '1', __parsed_extra: [ 'MC300', 'MC300-001', '1' ] },
+  { '': '2', __parsed_extra: [ 'MC500', 'MC500-001', '1' ] },
+  { '': '' }
+]
+Error getting machine number: Error: 該当する機種情報が見つかりません
+    at DatabaseStorage.getMachineNumberByNumber (/home/runner/workspace/server/storage.ts:350:15)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:313:27)
+Error fetching machine number: Error: 該当する機種情報が見つかりません
+    at DatabaseStorage.getMachineNumberByNumber (/home/runner/workspace/server/storage.ts:350:15)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:313:27)
+6:12:00 AM [express] GET /api/machineNumbers/100 404 in 16ms :: {"error":"該当する機種情報が見つかりません"}

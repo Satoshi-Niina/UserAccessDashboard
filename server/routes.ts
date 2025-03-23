@@ -74,6 +74,39 @@ export function registerRoutes(app: Express): Server {
   });
 
 
+  router.get('/inspection/table/:type', async (req, res) => {
+    try {
+      const type = req.params.type;
+      const baseDir = path.join(process.cwd(), 'attached_assets/inspection/table');
+
+      let filePath;
+      switch (type) {
+        case 'manufacturers':
+          filePath = path.join(baseDir, 'manufacturers.csv');
+          break;
+        case 'models':
+          filePath = path.join(baseDir, 'models.csv');
+          break;
+        case 'inspection_items':
+          filePath = path.join(baseDir, 'inspection_items.csv');
+          break;
+        default:
+          return res.status(400).json({ error: '無効なタイプです' });
+      }
+
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'ファイルが見つかりません' });
+      }
+
+      const content = await fs.promises.readFile(filePath, 'utf8');
+      const results = Papa.parse(content, { header: true });
+      res.json(results.data);
+    } catch (error) {
+      console.error('データ取得エラー:', error);
+      res.status(500).json({ error: 'データの取得に失敗しました' });
+    }
+  });
+
   app.use('/api', router);
 
 
@@ -1030,35 +1063,3 @@ export function registerRoutes(app: Express): Server {
   return httpServer;
 }
 
-app.get('/api/inspection/table/:type', async (req, res) => {
-    try {
-      const type = req.params.type;
-      const baseDir = path.join(process.cwd(), 'attached_assets/inspection/table');
-
-      let filePath;
-      switch (type) {
-        case 'manufacturers':
-          filePath = path.join(baseDir, 'manufacturers.csv');
-          break;
-        case 'models':
-          filePath = path.join(baseDir, 'models.csv');
-          break;
-        case 'inspection_items':
-          filePath = path.join(baseDir, 'inspection_items.csv');
-          break;
-        default:
-          return res.status(400).json({ error: '無効なタイプです' });
-      }
-
-      if (!fs.existsSync(filePath)) {
-        return res.status(404).json({ error: 'ファイルが見つかりません' });
-      }
-
-      const content = await fs.promises.readFile(filePath, 'utf8');
-      const results = Papa.parse(content, { header: true });
-      res.json(results.data);
-    } catch (error) {
-      console.error('データ取得エラー:', error);
-      res.status(500).json({ error: 'データの取得に失敗しました' });
-    }
-});

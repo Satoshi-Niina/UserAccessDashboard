@@ -184,7 +184,7 @@ export default function InspectionPage() {
         throw new Error('機械情報の取得に失敗しました');
       }
       const machineData = await machineResponse.json();
-      
+
       if (!machineData || !machineData.model_id) {
         throw new Error('機種情報が見つかりません');
       }
@@ -641,15 +641,16 @@ export default function InspectionPage() {
                     ) : (
                       inspectionItems
                         .filter(item => {
-                          // チェック漏れ（判定未入力）の項目のみを表示
-                          if (item.result !== undefined) return false;
-
                           if (categoryFilter !== "all" && item.category !== categoryFilter) return false;
                           if (equipmentFilter !== "all" && item.equipment !== equipmentFilter) return false;
                           if (searchQuery) {
                             const searchTermLower = searchQuery.toLowerCase();
-                            const remarkText = item.remark || '';
-                            return remarkText.toLowerCase().includes(searchTermLower);
+                            return (
+                              (item.category || '').toLowerCase().includes(searchTermLower) ||
+                              (item.equipment || '').toLowerCase().includes(searchTermLower) ||
+                              (item.item || '').toLowerCase().includes(searchTermLower) ||
+                              (item.remark || '').toLowerCase().includes(searchTermLower)
+                            );
                           }
                           return true;
                         })

@@ -676,7 +676,7 @@ export default function InspectionPage() {
                               <td className="p-1 text-xs">{item.criteria}</td>
                               <td className="p-1 text-xs">{item.method}</td>
                               <td className="p-1 text-xs">
-                                <div className="space-y-1">
+                                <div className="space-y-1 relative">
                                   {standard && (
                                     <div className="text-xs text-gray-600">
                                       基準値: {standard.minValue}～{standard.maxValue}
@@ -705,8 +705,8 @@ export default function InspectionPage() {
                                     className={`w-full text-xs ${item.isOutOfRange ? 'border-red-500' : ''}`}
                                   />
                                   {item.isOutOfRange && (
-                                    <div className="text-xs text-red-500">
-                                      基準値範囲外です
+                                    <div className="text-xs text-red-500 font-bold mt-1 bg-red-50 p-1 rounded border border-red-200">
+                                      ⚠️ 調整等実施してください！
                                     </div>
                                   )}
                                 </div>

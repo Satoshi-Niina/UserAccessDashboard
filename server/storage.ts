@@ -312,14 +312,20 @@ export class DatabaseStorage implements IStorage {
     try {
       const csvPath = path.join(process.cwd(), 'attached_assets/inspection/table/machine_numbers.csv');
       if (!fs.existsSync(csvPath)) {
-        throw new Error('機械番号マスタが見つかりません');
+        console.log('Creating machine numbers directory');
+        fs.mkdirSync(path.dirname(csvPath), { recursive: true });
+        fs.writeFileSync(csvPath, 'number,model_id,manufacturer_id\n1,1,1');
+        console.log('Created initial machine numbers file');
       }
 
       const content = fs.readFileSync(csvPath, 'utf-8');
+      console.log('Machine numbers content:', content);
       const machines = Papa.parse(content, { header: true }).data;
+      console.log('Parsed machines:', machines);
 
       const machine = machines.find((m: any) => String(m.number) === String(number));
       if (!machine) {
+        console.log(`Machine number ${number} not found in:`, machines);
         throw new Error('機械番号が見つかりません');
       }
 

@@ -189,6 +189,13 @@ export default function InspectionPage() {
         throw new Error('機種情報が見つかりません');
       }
 
+      // モデル情報を取得
+      const modelResponse = await fetch(`/api/models/${machineData.model_id}`);
+      if (!modelResponse.ok) {
+        throw new Error('機種情報の取得に失敗しました');
+      }
+      const modelData = await modelResponse.json();
+
       // 機種IDを使用して点検項目を取得
       const response = await fetch(`/api/inspection/table/inspection_items`);
       if (!response.ok) {
@@ -198,8 +205,8 @@ export default function InspectionPage() {
 
       // 該当機種の点検項目をフィルタリング
       const filteredData = data.filter((item: any) => 
-        item.model_id === machineData.model_id || 
-        item.model === machineData.model_id
+        item.model_id === modelData.id || 
+        item.model === modelData.id
       );
 
       if (!filteredData || filteredData.length === 0) {
@@ -401,7 +408,7 @@ export default function InspectionPage() {
   return (
     <div className="container mx-auto py-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">仕業点検</h1>
+        <h1 className="text-2xl font-bold">仕業点検記録</h1>
       </div>
 
       <>

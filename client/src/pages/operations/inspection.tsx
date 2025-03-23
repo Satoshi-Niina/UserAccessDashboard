@@ -676,39 +676,40 @@ export default function InspectionPage() {
                               <td className="p-1 text-xs">{item.criteria}</td>
                               <td className="p-1 text-xs">{item.method}</td>
                               <td className="p-1 text-xs">
-                                <Input
-                                  type="number"
-                                  value={item.measurementRecord || ''}
-                                  onChange={(e) => {
-                                    const value = e.target.value;
-                                    const numValue = parseFloat(value);
+                                <div className="space-y-1">
+                                  {standard && (
+                                    <div className="text-xs text-gray-600">
+                                      基準値: {standard.minValue}～{standard.maxValue}
+                                    </div>
+                                  )}
+                                  <Input
+                                    type="number"
+                                    value={item.measurementRecord || ''}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      const numValue = parseFloat(value);
 
-                                    let isOutOfRange = false;
-                                    if (standard && (numValue < parseFloat(standard.minValue) || numValue > parseFloat(standard.maxValue))) {
-                                      isOutOfRange = true;
-                                    }
+                                      let isOutOfRange = false;
+                                      if (standard && (numValue < parseFloat(standard.minValue) || numValue > parseFloat(standard.maxValue))) {
+                                        isOutOfRange = true;
+                                      }
 
-                                    setInspectionItems(prev => prev.map(i =>
-                                      i.id === item.id ? {
-                                        ...i,
-                                        measurementRecord: value,
-                                        isOutOfRange: isOutOfRange
-                                      } : i
-                                    ));
-                                  }}
-                                  className="w-full text-xs"
-                                />
-                                {item.isOutOfRange && (
-                                  <div className="absolute top-0 right-0 text-red-500 text-xs">
-                                    調整が必要です！
-                                  </div>
-                                )}
-                                <InspectionValueStatus
-                                  value={item.measurementRecord || ''}
-                                  minValue={standard?.minValue || ''}
-                                  maxValue={standard?.maxValue || ''}
-                                  onChange={(value) => updateInspectionMeasurementRecord(item.id, value)}
-                                />
+                                      setInspectionItems(prev => prev.map(i =>
+                                        i.id === item.id ? {
+                                          ...i,
+                                          measurementRecord: value,
+                                          isOutOfRange: isOutOfRange
+                                        } : i
+                                      ));
+                                    }}
+                                    className={`w-full text-xs ${item.isOutOfRange ? 'border-red-500' : ''}`}
+                                  />
+                                  {item.isOutOfRange && (
+                                    <div className="text-xs text-red-500">
+                                      基準値範囲外です
+                                    </div>
+                                  )}
+                                </div>
                               </td>
                               <td className="p-1 text-xs">{item.diagramRecord}</td>
                               <td className="p-1 text-xs">

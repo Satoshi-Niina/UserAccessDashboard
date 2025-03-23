@@ -1,0 +1,4 @@
+
+inspection_item_id,model_id,category,equipment,item,criteria,measurement_unit,min_value,max_value
+,1,制動装置,ブレーキシリンダー,ブレーキシリンダー,ストローク測定,mm,60,90
+,1,制動装置,制輪子,摩耗,厚さ測定,,25,70

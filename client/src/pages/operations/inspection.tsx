@@ -34,8 +34,8 @@ interface InspectionItem {
   engineType?: string;
   result?: string;
   remark?: string;
-  isOutOfRange?: boolean; // Added isOutOfRange property
-  model_id?: number; // Added model_id
+  isOutOfRange?: boolean; 
+  model_id?: number; 
 }
 
 const resultOptions = [
@@ -58,7 +58,7 @@ interface StandardValue {
   maxValue: number;
 }
 
-const standardValues: StandardValue[] = []; // Initialize as empty array
+const standardValues: StandardValue[] = []; 
 
 const findStandardValue = async (item: InspectionItem) => {
   try {
@@ -71,33 +71,33 @@ const findStandardValue = async (item: InspectionItem) => {
       return null;
     }
 
-  const matchConditions = [
-    { field: 'manufacturer', itemField: 'manufacturer' },
-    { field: 'model', itemField: 'model' },
-    { field: 'category', itemField: 'category' },
-    { field: 'equipment', itemField: 'equipment' },
-    { field: 'item', itemField: 'item' }
-  ];
+    const matchConditions = [
+      { field: 'manufacturer', itemField: 'manufacturer' },
+      { field: 'model', itemField: 'model' },
+      { field: 'category', itemField: 'category' },
+      { field: 'equipment', itemField: 'equipment' },
+      { field: 'item', itemField: 'item' }
+    ];
 
-  const matchedStandard = standards.find(standard => {
-    const isMatch = matchConditions.every(condition => {
-      const standardValue = standard[condition.field];
-      const itemValue = item[condition.itemField];
+    const matchedStandard = standards.find(standard => {
+      const isMatch = matchConditions.every(condition => {
+        const standardValue = standard[condition.field];
+        const itemValue = item[condition.itemField];
 
-      if (standardValue === undefined || itemValue === undefined) return true;
+        if (standardValue === undefined || itemValue === undefined) return true;
 
-      return standardValue === itemValue;
+        return standardValue === itemValue;
+      });
+
+      return isMatch;
     });
 
-    return isMatch;
-  });
-
-  if (matchedStandard) {
-    console.log(`基準値が見つかりました: 項目=${item.item}, 最小値=${matchedStandard.minValue}, 最大値=${matchedStandard.maxValue}`);
-  } else {
-    console.log(`基準値が見つかりませんでした: 項目=${item.item}, カテゴリ=${item.category}, 装置=${item.equipment}`);
-  }
-  return matchedStandard;
+    if (matchedStandard) {
+      console.log(`基準値が見つかりました: 項目=${item.item}, 最小値=${matchedStandard.minValue}, 最大値=${matchedStandard.maxValue}`);
+    } else {
+      console.log(`基準値が見つかりませんでした: 項目=${item.item}, カテゴリ=${item.category}, 装置=${item.equipment}`);
+    }
+    return matchedStandard;
   } catch (error) {
     console.error('基準値の取得に失敗しました:', error);
     return null;
@@ -119,12 +119,16 @@ export default function InspectionPage() {
   const [responsiblePerson, setResponsiblePerson] = useState("");
   const [inspectorInput, setInspectorInput] = useState("");
   const [machineId, setMachineId] = useState("");
-  const [machineNumber, setMachineNumber] = useState(''); // Added machineNumber state
-  const [manufacturers, setManufacturers] = useState<any[]>([]); // Added manufacturers state
-  const [models, setModels] = useState<any[]>([]); // Added models state
-  const [machineNumbers, setMachineNumbers] = useState<any[]>([]); // Added machineNumbers state
-  const [selectedManufacturer, setSelectedManufacturer] = useState(''); // Added selectedManufacturer state
-  const [selectedModel, setSelectedModel] = useState(''); // Added selectedModel state
+  const [machineNumber, setMachineNumber] = useState(''); 
+  const [manufacturers, setManufacturers] = useState<any[]>([]); 
+  const [models, setModels] = useState<any[]>([]); 
+  const [items, setItems] = useState<any[]>([]); // Added items state
+  const [selectedManufacturer, setSelectedManufacturer] = useState(''); 
+  const [selectedModel, setSelectedModel] = useState(''); 
+  const [machineNumbers, setMachineNumbers] = useState<any[]>([]); 
+  const [measurementRecords, setMeasurementRecords] = useState<Record<number, string>>({});
+  const [fileName, setFileName] = useState(""); 
+  const [uncheckedItemsDialog, setUncheckedItemsDialog] = useState<InspectionItem[]>([]); 
 
   const { toast } = useToast();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -135,11 +139,8 @@ export default function InspectionPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [equipmentFilter, setEquipmentFilter] = useState<string>("all");
   const [resultFilter, setResultFilter] = useState<string>("all");
-  const [measurementRecords, setMeasurementRecords] = useState<Record<number, string>>({});
-  const [fileName, setFileName] = useState(""); // Add filename state
-  const [uncheckedItemsDialog, setUncheckedItemsDialog] = useState<InspectionItem[]>([]); // Add state for unchecked items dialog
 
-  // 測定記録の読み込み
+
   const loadMeasurementRecords = async () => {
     try {
       const response = await fetch('/api/measurement-records');
@@ -173,11 +174,6 @@ export default function InspectionPage() {
     loadStandards();
   }, [toast]);
 
-  const loadInspectionItems = async (machineNumber: string) => {
-    //This function is now a no-op since data loading is handled in useEffect.
-  };
-
-  // メーカーと機種のデータを取得
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -196,9 +192,8 @@ export default function InspectionPage() {
         setManufacturers(manufacturersData);
         setModels(modelsData);
 
-        // 点検項目の取得
         if (selectedManufacturer && selectedModel) {
-          const itemsRes = await fetch(`/api/inspection/table/inspection_items`);
+          const itemsRes = await fetch('/api/inspection/table/inspection_items');
           if (!itemsRes.ok) {
             throw new Error('点検項目の取得に失敗しました');
           }
@@ -220,51 +215,8 @@ export default function InspectionPage() {
     };
 
     fetchData();
-  }, [selectedManufacturer, selectedModel]);rs(manufacturersData);
-        setModels(modelsData);
-      } catch (error) {
-        console.error('データ取得エラー:', error);
-        toast({
-          title: "エラー",
-          description: "メーカーと機種データの取得に失敗しました",
-          variant: "destructive",
-        });
-      }
-    };
+  }, [selectedManufacturer, selectedModel, toast]);
 
-    fetchData();
-  }, []);
-
-  // 点検項目の取得
-  useEffect(() => {
-    const fetchInspectionItems = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch('/api/inspection/table/inspection_items');
-        const data = await response.json();
-
-        // 選択されたメーカーと機種でフィルタリング
-        const filteredData = data.filter((item: any) => {
-          const matchManufacturer = !selectedManufacturer || item.manufacturer_id === selectedManufacturer;
-          const matchModel = !selectedModel || item.model_id === selectedModel;
-          return matchManufacturer && matchModel;
-        });
-
-        setInspectionItems(filteredData);
-      } catch (error) {
-        console.error('点検項目取得エラー:', error);
-        toast({
-          title: "エラー",
-          description: "点検項目の取得に失敗しました",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchInspectionItems();
-  }, [selectedManufacturer, selectedModel]);
 
   const updateInspectionResult = (id: number, result: string) => {
     setInspectionItems(prevItems => prevItems.map(item =>
@@ -279,7 +231,6 @@ export default function InspectionPage() {
   };
 
   const handleComplete = async () => {
-    // チェック漏れの項目を確認
     const uncheckedItems = inspectionItems.filter(item => !item.result);
     setUncheckedItemsDialog(uncheckedItems);
 
@@ -287,7 +238,6 @@ export default function InspectionPage() {
       return;
     }
 
-    // 基本情報の準備
     const basicInfo = {
       点検年月日: date,
       開始時刻: startTime,
@@ -298,10 +248,9 @@ export default function InspectionPage() {
       引継ぎ: ""
     };
 
-    // ファイル名の準備
     const dateStr = new Date().toISOString().slice(0, 10);
-    const basicInfoFileName = `inspection_info_${dateStr}_${machineNumber}.csv`; // Use machineNumber
-    const inspectionRecordFileName = `inspection_${dateStr}_${machineNumber}.csv`; // Use machineNumber
+    const basicInfoFileName = `inspection_info_${dateStr}_${machineNumber}.csv`; 
+    const inspectionRecordFileName = `inspection_${dateStr}_${machineNumber}.csv`; 
 
     try {
       const response = await fetch('/api/save-inspection-data', {
@@ -330,7 +279,6 @@ export default function InspectionPage() {
         description: "点検データが正常に保存されました",
       });
 
-      // 保存成功後、ホーム画面に戻る
       navigate('/');
     } catch (error) {
       console.error('保存エラー:', error);
@@ -364,7 +312,6 @@ export default function InspectionPage() {
     }
     handleComplete();
   };
-
 
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
@@ -404,9 +351,6 @@ export default function InspectionPage() {
   const scrollRight = () => {};
 
   const setFilteredItems = (items: InspectionItem[]) => {
-    //This function is a placeholder and needs to be implemented based on the filtering logic.
-    //For now, it simply sets the inspectionItems state.  A proper implementation would filter
-    //the items based on categoryFilter, equipmentFilter, and resultFilter.
     setInspectionItems(items);
   };
 
@@ -574,7 +518,7 @@ export default function InspectionPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">すべて</SelectItem>
-                        {[...new Set(inspectionItems.map(item => item.category))]
+                        {[...new Set(items.map(item => item.category))]
                           .filter(Boolean)
                           .sort()
                           .map(category => (
@@ -597,7 +541,7 @@ export default function InspectionPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">すべて</SelectItem>
-                        {[...new Set(inspectionItems
+                        {[...new Set(items
                           .filter(item => !categoryFilter || item.category === categoryFilter)
                           .map(item => item.equipment))]
                           .filter(Boolean)
@@ -642,7 +586,7 @@ export default function InspectionPage() {
                   </div>
                   <div className="w-1/3 flex items-center justify-end">
                     <div className="text-sm font-medium">
-                      残項目: {inspectionItems.filter(item => !item.result).length}件
+                      残項目: {items.filter(item => !item.result).length}件
                     </div>
                   </div>
                 </div>
@@ -680,14 +624,14 @@ export default function InspectionPage() {
                           {error}
                         </TableCell>
                       </TableRow>
-                    ) : inspectionItems.length === 0 ? (
+                    ) : items.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={9} className="text-center">
                           表示する点検項目がありません
                         </TableCell>
                       </TableRow>
                     ) : (
-                      inspectionItems
+                      items
                         .filter(item => {
                           if (categoryFilter !== "all" && item.category !== categoryFilter) return false;
                           if (equipmentFilter !== "all" && item.equipment !== equipmentFilter) return false;

@@ -35,6 +35,7 @@ interface InspectionItem {
   result?: string;
   remark?: string;
   isOutOfRange?: boolean; // Added isOutOfRange property
+  model_id?: number; // Added model_id
 }
 
 const resultOptions = [
@@ -119,6 +120,9 @@ export default function InspectionPage() {
   const [inspectorInput, setInspectorInput] = useState("");
   const [machineId, setMachineId] = useState("");
   const [machineNumber, setMachineNumber] = useState(''); // Added machineNumber state
+  const [manufacturers, setManufacturers] = useState<any[]>([]); // Added manufacturers state
+  const [models, setModels] = useState<any[]>([]); // Added models state
+  const [machineNumbers, setMachineNumbers] = useState<any[]>([]); // Added machineNumbers state
   const { toast } = useToast();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [scrollIndicatorWidth, setScrollIndicatorWidth] = useState(100);
@@ -167,95 +171,53 @@ export default function InspectionPage() {
   }, [toast]);
 
   const loadInspectionItems = async (machineNumber: string) => {
-    if (!machineNumber) {
-      toast({
-        title: "エラー",
-        description: "機械番号を入力してください",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // 機械番号テーブルから情報を取得
-      // 機械番号からデータを取得
-      const machineResponse = await fetch(`/api/machineNumbers/${machineNumber}`);
-      if (!machineResponse.ok) {
-        const errorData = await machineResponse.json();
-        throw new Error(errorData.error || '機械番号が見つかりません');
-      }
-      const machineData = await machineResponse.json();
-
-      if (!machineData || !machineData.model_id) {
-        throw new Error('機種情報が見つかりません');
-      }
-
-      // 点検項目を取得
-      const response = await fetch(`/api/inspection/table/inspection_items`);
-      if (!response.ok) {
-        throw new Error('点検項目の取得に失敗しました');
-      }
-      const data = await response.json();
-
-      // 該当機種の点検項目をフィルタリング
-      const filteredData = data.filter((item: any) => {
-        // 機種IDで一致を確認
-        return item.model_id === machineData.model_id;
-      });
-
-      console.log('Filtered inspection items:', filteredData);
-
-      if (!filteredData || filteredData.length === 0) {
-        throw new Error('点検項目が見つかりません');
-      }
-
-      // 点検項目の設定と機械番号の転写
-      const items = filteredData.map(row => ({
-        id: row.id,
-        machineNumber: machineNumber,
-        category: row.category || '',
-        equipment: row.equipment || '',
-        item: row.item || '',
-        criteria: row.criteria || '',
-        method: row.method || '',
-        measurementRecord: row.measurementRecord || '',
-        diagramRecord: row.diagramRecord || '',
-        remark: ''
-      }));
-
-      setInspectionItems(items);
-      setFilteredItems(items);
-      await loadMeasurementRecords();
-    } catch (error) {
-      console.error('点検項目取得エラー:', error);
-      toast({
-        title: "エラー",
-        description: error.message || "点検項目の取得に失敗しました",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+    //This function is now a no-op since data loading is handled in useEffect.
   };
 
   useEffect(() => {
-    const fetchInspectionData = async () => {
-      if (!machineNumber) return;
+    const fetchAllData = async () => {
       try {
-        await loadInspectionItems(machineNumber);
-      } catch (err) {
-        console.error('点検項目取得エラー:', err);
+        // 製造メーカーの取得
+        const manufacturersResponse = await fetch('/api/inspection/table/manufacturers');
+        if (!manufacturersResponse.ok) throw new Error('製造メーカーの取得に失敗しました');
+        const manufacturersData = await manufacturersResponse.json();
+        setManufacturers(manufacturersData);
+
+        // 機種の取得
+        const modelsResponse = await fetch('/api/inspection/table/models');
+        if (!modelsResponse.ok) throw new Error('機種の取得に失敗しました');
+        const modelsData = await modelsResponse.json();
+        setModels(modelsData);
+
+        // 点検項目の取得
+        const itemsResponse = await fetch('/api/inspection/table/inspection_items');
+        if (!itemsResponse.ok) throw new Error('点検項目の取得に失敗しました');
+        const itemsData = await itemsResponse.json();
+
+        // モデルIDに基づいて点検項目をフィルタリング
+        const filteredItems = machineNumber ? itemsData.filter(item => 
+          item.model_id === models.find(m => m.number === machineNumber)?.id
+        ) : itemsData;
+
+        setInspectionItems(filteredItems);
+
+        // 機械番号の取得
+        const machineNumbersResponse = await fetch('/api/inspection/table/machine_numbers');
+        if (!machineNumbersResponse.ok) throw new Error('機械番号の取得に失敗しました');
+        const machineNumbersData = await machineNumbersResponse.json();
+        setMachineNumbers(machineNumbersData);
+
+      } catch (error) {
+        console.error('データ取得エラー:', error);
         toast({
           title: "エラー",
-          description: "点検項目の取得に失敗しました",
-          variant: "destructive",
+          description: "データの取得に失敗しました",
+          variant: "destructive"
         });
-        setLoading(false);
       }
     };
 
-    fetchInspectionData();
+    fetchAllData();
   }, [machineNumber, toast]);
 
   const updateInspectionResult = (id: number, result: string) => {
@@ -476,10 +438,7 @@ export default function InspectionPage() {
                       value={machineNumber} 
                       onChange={e => setMachineNumber(e.target.value)}
                     />
-                    <Button onClick={() => {
-                      loadInspectionItems(machineNumber);
-                      setShowBasicInfo(false);
-                    }}>
+                    <Button onClick={() => setShowBasicInfo(false)}>
                       点検項目取得
                     </Button>
                   </div>

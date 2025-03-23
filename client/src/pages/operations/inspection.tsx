@@ -104,7 +104,7 @@ const findStandardValue = async (item: InspectionItem) => {
 };
 
 
-export default function InspectionPage() {
+export default async function InspectionPage() {
   const [location, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState<InspectionTab>("general");
   const [date, setDate] = useState<Date | undefined>(new Date());

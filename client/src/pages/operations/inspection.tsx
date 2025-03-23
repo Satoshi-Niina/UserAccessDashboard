@@ -207,10 +207,16 @@ export default function InspectionPage() {
       const data = await response.json();
 
       // 該当機種の点検項目をフィルタリング
-      const filteredData = data.filter((item: any) => 
-        item.model_id === modelData.id || 
-        item.model === modelData.id
-      );
+      const filteredData = data.filter((item: any) => {
+        // 機種IDまたは機械番号で一致を確認
+        return (
+          item.model_id === machineData.model_id || 
+          item.machine_number === machineNumber ||
+          item.model_id === modelData.id
+        );
+      });
+
+      console.log('Filtered inspection items:', filteredData);
 
       if (!filteredData || filteredData.length === 0) {
         throw new Error('点検項目が見つかりません');

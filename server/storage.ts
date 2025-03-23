@@ -398,12 +398,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getInspectionItems(): Promise<any[]> {
-    return new Promise((resolve, reject) => {
-      db.all('SELECT * FROM inspection_items ORDER BY id', [], (err, rows) => {
-        if (err) reject(err);
-        resolve(rows || []);
+    try {
+      const filePath = path.join(process.cwd(), 'attached_assets/inspection/table/inspection_items.csv');
+      if (!fs.existsSync(filePath)) {
+        return [];
+      }
+      const content = fs.readFileSync(filePath, 'utf-8');
+      const parseResult = Papa.parse(content, { 
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (header) => header.trim()
       });
-    });
+      return parseResult.data;
+    } catch (error) {
+      console.error('Error reading inspection items:', error);
+      return [];
+    }
   }
 }
 

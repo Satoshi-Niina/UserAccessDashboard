@@ -179,12 +179,11 @@ export default function InspectionPage() {
     setLoading(true);
     try {
       // 機械番号テーブルから情報を取得
+      // 機械番号からデータを取得
       const machineResponse = await fetch(`/api/machineNumbers/${machineNumber}`);
       if (!machineResponse.ok) {
-        throw new Error('機械情報の取得に失敗しました');
-      }
-      if (!machineResponse.ok) {
-        throw new Error('機械番号が見つかりません');
+        const errorData = await machineResponse.json();
+        throw new Error(errorData.error || '機械番号が見つかりません');
       }
       const machineData = await machineResponse.json();
 
@@ -192,14 +191,7 @@ export default function InspectionPage() {
         throw new Error('機種情報が見つかりません');
       }
 
-      // モデル情報を取得
-      const modelResponse = await fetch(`/api/models/${machineData.model_id}`);
-      if (!modelResponse.ok) {
-        throw new Error('機種情報の取得に失敗しました');
-      }
-      const modelData = await modelResponse.json();
-
-      // 機種IDを使用して点検項目を取得
+      // 点検項目を取得
       const response = await fetch(`/api/inspection/table/inspection_items`);
       if (!response.ok) {
         throw new Error('点検項目の取得に失敗しました');

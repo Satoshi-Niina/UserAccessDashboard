@@ -374,15 +374,33 @@ export class DatabaseStorage implements IStorage {
       console.error('Error getting machine number by id:', error);
       return null;
     }
-  }M machine_numbers mn
-        INNER JOIN models m ON mn.model_id = m.id
-        INNER JOIN manufacturers mf ON m.manufacturer_id = mf.id
-        WHERE mn.id = ?
-      `, [id], (err, row) => {
-        if (err) reject(err);
-        resolve(row);
+  }
+
+  async getMachineNumbers(): Promise<any[]> {
+    try {
+      const csvPath = path.join(process.cwd(), 'attached_assets/inspection/table/machine_numbers.csv');
+      if (!fs.existsSync(csvPath)) {
+        return [];
+      }
+
+      const content = fs.readFileSync(csvPath, 'utf-8');
+      const machines = Papa.parse(content, { header: true }).data;
+
+      // Get model information for each machine
+      const models = await this.getModels();
+      
+      return machines.map((machine: any) => {
+        const model = models.find((m: any) => String(m.id) === String(machine.model_id));
+        return {
+          number: machine.number,
+          model_name: model?.name || 'Unknown Model',
+          manufacturer_name: model?.manufacturer || 'Unknown Manufacturer'
+        };
       });
-    });
+    } catch (error) {
+      console.error('Error getting machine numbers:', error);
+      return [];
+    }
   }
 
   async getMachineNumbers(): Promise<any[]> {

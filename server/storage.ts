@@ -115,8 +115,16 @@ export class DatabaseStorage implements IStorage {
         return [];
       }
       const content = fs.readFileSync(csvPath, 'utf-8');
-      const models = Papa.parse(content, { header: true }).data;
-      return models;
+      const parseResult = Papa.parse(content, { 
+        header: true,
+        skipEmptyLines: true
+      });
+      return parseResult.data.map(model => ({
+        id: model.id,
+        name: model.name,
+        code: model.code,
+        manufacturer_id: model.manufacturer_id
+      }));
     } catch (error) {
       console.error('Error reading models:', error);
       return [];

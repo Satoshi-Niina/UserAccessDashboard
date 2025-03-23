@@ -49,28 +49,27 @@ export function registerRoutes(app: Express): Server {
   });
 
   // 点検項目一覧を取得
-  router.get('/inspection/table/inspection_items', async (req, res) => {
+  router.get('/inspection/table/:tableName', async (req, res) => {
     try {
-      const filePath = path.join(process.cwd(), 'attached_assets/inspection/table/inspection_items.csv');
-      const fileContent = await fs.promises.readFile(filePath, 'utf8');
-      const cleanContent = fileContent.replace(/^\uFEFF/, ''); // BOMを除去
-      
-      const results = Papa.parse(cleanContent, {
-        header: true,
-        skipEmptyLines: true,
-        delimiter: ',',
-        transformHeader: (header) => header.trim(),
-        transform: (value) => value?.trim() || ''
-      });
-
-      if (results.errors && results.errors.length > 0) {
-        console.warn('CSV解析警告:', results.errors);
-      }
-
-      res.json(results.data);
+      const { tableName } = req.params;
+      const filePath = path.join(process.cwd(), `attached_assets/inspection/table/${tableName}.csv`);
+      const data = await readCsvFile(filePath);
+      res.json(data);
     } catch (error) {
-      console.error('点検項目読み込みエラー:', error);
-      res.status(500).json({ error: '点検項目の読み込みに失敗しました' });
+      res.status(500).json({ error: 'テーブルデータの読み込みに失敗しました' });
+    }
+  });
+
+  router.post('/inspection/table/:tableName', async (req, res) => {
+    try {
+      const { tableName } = req.params;
+      const { data } = req.body;
+      const filePath = path.join(process.cwd(), `attached_assets/inspection/table/${tableName}.csv`);
+      const csvContent = Papa.unparse(data);
+      await fs.promises.writeFile(filePath, csvContent);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'テーブルデータの保存に失敗しました' });
     }
   });
 
@@ -840,7 +839,7 @@ export function registerRoutes(app: Express): Server {
 
       await storage.deleteUser(userId);
       res.status(200).json({ message: "ユーザーを削除しました" });
-    } catch (error) {
+    } catch(error) {
       console.error("ユーザー削除エラー:", error);
       res.status(500).json({ error: "ユーザーの削除に失敗しました" });
     }

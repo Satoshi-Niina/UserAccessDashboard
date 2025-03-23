@@ -309,11 +309,23 @@ export function registerRoutes(app: Express): Server {
 
   app.get('/api/machineNumbers/:number', async (req, res) => {
     try {
-      const machineNumber = await storage.getMachineNumberByNumber(req.params.number);
-      if (!machineNumber) {
+      const machineNumber = req.params.number;
+      const filePath = path.join(process.cwd(), 'attached_assets/inspection/table/machine_numbers.csv');
+      
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: '機械番号マスタが見つかりません' });
+      }
+
+      const content = await fs.promises.readFile(filePath, 'utf8');
+      const machines = Papa.parse(content, { header: true }).data;
+      
+      const machine = machines.find((m: any) => m.number === machineNumber);
+      
+      if (!machine) {
         return res.status(404).json({ error: '機械番号が見つかりません' });
       }
-      res.json(machineNumber);
+      
+      res.json(machine);
     } catch (error) {
       console.error('Error fetching machine number:', error);
       res.status(500).json({ error: '機械情報の取得に失敗しました' });

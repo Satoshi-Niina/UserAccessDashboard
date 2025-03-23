@@ -31,7 +31,8 @@ export const modelsRelations = relations(models, ({ one, many }) => ({
 
 // 機械番号テーブル
 export const machines = mysqlTable("machines", {
-  machineId: varchar("machine_id", { length: 20 }).primaryKey(),
+  id: int("id").primaryKey().autoincrement(),
+  machineNumber: varchar("machine_number", { length: 20 }).notNull().unique(),
   modelId: int("model_id").notNull().references(() => models.modelId),
   manufacturerId: int("manufacturer_id").notNull().references(() => manufacturers.manufacturerId),
 });

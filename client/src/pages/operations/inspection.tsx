@@ -178,28 +178,38 @@ export default function InspectionPage() {
 
     setLoading(true);
     try {
-      // 機械番号から製造メーカーと機種情報を取得
+      // 機械番号テーブルから情報を取得
       const machineResponse = await fetch(`/api/machineNumbers/${machineNumber}`);
       if (!machineResponse.ok) {
         throw new Error('機械情報の取得に失敗しました');
       }
       const machineData = await machineResponse.json();
+      
+      if (!machineData || !machineData.model_id) {
+        throw new Error('機種情報が見つかりません');
+      }
 
-      // 点検項目テーブルから機種に紐づく項目を取得
-      const response = await fetch(`/api/inspection/table/inspection_items?model=${machineData.model_name}`);
+      // 機種IDを使用して点検項目を取得
+      const response = await fetch(`/api/inspection/table/inspection_items`);
       if (!response.ok) {
         throw new Error('点検項目の取得に失敗しました');
       }
       const data = await response.json();
 
-      if (!data || data.length === 0) {
+      // 該当機種の点検項目をフィルタリング
+      const filteredData = data.filter((item: any) => 
+        item.model_id === machineData.model_id || 
+        item.model === machineData.model_id
+      );
+
+      if (!filteredData || filteredData.length === 0) {
         throw new Error('点検項目が見つかりません');
       }
 
       // 点検項目の設定と機械番号の転写
-      const items = data.map(row => ({
+      const items = filteredData.map(row => ({
         id: row.id,
-        machineNumber: machineNumber, // 機械番号を転写
+        machineNumber: machineNumber,
         category: row.category || '',
         equipment: row.equipment || '',
         item: row.item || '',

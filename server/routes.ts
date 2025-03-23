@@ -324,112 +324,26 @@ export function registerRoutes(app: Express): Server {
     try {
       const manufacturer = req.query.manufacturer as string;
       const model = req.query.model as string;
+      const tablePath = path.join(process.cwd(), 'attached_assets/inspection/table/inspection_items.csv');
 
-      // CSVファイルのパスを決定
-      const inspectionDir = path.join(process.cwd(), 'attached_assets/inspection');
+      if (!fs.existsSync(tablePath)) {
+        return res.status(404).json({ error: '点検項目マスタファイルが見つかりません' });
+      }
 
-      if (!fs.existsSync(inspectionDir)) {
-          fs.mkdirSync(inspectionDir, { recursive: true });
-        }
+      const fileContent = await fs.promises.readFile(tablePath, 'utf8');
+      const results = Papa.parse(fileContent, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (header) => header.trim(),
+        transform: (value) => value?.trim() || ''
+      });
 
-        const files = await fs.promises.readdir(inspectionDir);
-        const csvFiles = files.filter(file => file.endsWith('.csv'));
-
-        if (csvFiles.length === 0) {
-          return res.status(404).json({ error: '点検項目マスタファイルが見つかりません' });
-        }
-
-        // 最新のファイルを取得
-        const latestFile = await csvFiles.reduce(async (latestPromise, current) => {
-          const latest = await latestPromise;
-          const currentPath = path.join(inspectionDir, current);
-          const currentStat = await fs.promises.stat(currentPath);
-
-          if (!latest) return { name: current, path: currentPath, mtime: currentStat.mtime };
-
-          return currentStat.mtime > latest.mtime ? 
-            { name: current, path: currentPath, mtime: currentStat.mtime } : latest;
-        }, Promise.resolve(null));
-
-        if (!latestFile) {
-          throw new Error('最新のファイルが見つかりません');
-        }
-
-        const csvFilePath = latestFile.path;
-        console.log('使用するCSVファイル:', latestFile.name);
-
-        const fileContent = await fs.promises.readFile(csvFilePath, 'utf8');
-        const cleanContent = fileContent.replace(/^\uFEFF/, ''); 
-
-        const results = Papa.parse(cleanContent, {
-          header: true,
-          skipEmptyLines: true,
-          transformHeader: (header) => {
-            if (!header) return '';
-            const cleanHeader = header.trim();
-            // JSON文字列の場合はパースを試みる
-            try {
-              const parsed = JSON.parse(cleanHeader);
-              return parsed.toString();
-            } catch (e) {
-              return cleanHeader === '[object Object]' ? '' : cleanHeader;
-            }
-          },
-          transform: (value) => {
-            if (!value) return '';
-            if (typeof value === 'string') {
-              // JSON文字列の場合はパースを試みる
-              try {
-                const parsed = JSON.parse(value);
-                return parsed.toString();
-              } catch (e) {
-                return value.trim();
-              }
-            }
-            return value.toString();
-          },
-          delimiter: ',',
-          encoding: 'UTF-8'
-        });
-
-        if (!results.data || results.data.length === 0) {
-          return res.status(500).json({ error: 'データが見つかりません' });
-        }
-
-        // 空のデータと無効なデータを除外
-        results.data = results.data.filter(row => {
-          if (!row || typeof row !== 'object') return false;
-          return Object.values(row).some(value => value && value.toString().trim());
-        });
-
-      // データの検証と正規化
-      const validData = results.data.filter(row => {
-        return row && typeof row === 'object' && Object.keys(row).length > 0;
-      }).map((row: any, index) => ({
-        id: index + 1,
-        manufacturer: row['製造メーカー'] || row.manufacturer || '',
-        model: row['機種'] || row.model || '',
-        engineType: row['エンジン型式'] || row.engineType || '',
-        category: row['部位'] || row.category || '',
-        equipment: row['装置'] || row.equipment || '',
-        item: row['確認箇所'] || row.item || '',
-        criteria: row['判断基準'] || row.criteria || '',
-        method: row['確認要領'] || row.method || '',
-        measurementRecord: row['測定等記録'] || row.measurementRecord || '',
-        diagramRecord: row['図形記録'] || row.diagramRecord || ''
-      }));
-
-      // 必須フィールドの存在確認
-      const finalData = validData.filter(item => 
-        item.manufacturer && 
-        item.model && 
-        item.category && 
-        item.equipment && 
-        item.item
+      // 機種に紐づく点検項目をフィルタリング
+      const filteredItems = results.data.filter((item: any) => 
+        item.model === model || item.機種 === model
       );
 
-      console.log('点検項目データ取得:', finalData.length, '件');
-      return res.json(finalData);
+      res.json(filteredItems);
     } catch (error) {
       console.error('Error loading inspection items:', error);
       if (error.code === 'ENOENT') {
@@ -907,7 +821,7 @@ export function registerRoutes(app: Express): Server {
       ['堀川工機', 'MC500', 'ボルボ', 'エンジン', '冷却系統', '', 'ラジエター', '水漏れ、汚れ', '漏れ・汚れ無し', '', ''].join(','),
       ['堀川工機', 'MC500', 'ボルボ', 'ボルボ', 'エンジン', '油圧系統', '', 'ホース・配管', '油漏れ、亀裂', '亀裂・油漏れ無し', '', ''].join(','),
       ['クボタ', 'KT450', 'クボタV3300', 'エンジン', '冷却系統', '', 'ラジエター', '水漏れ、汚れ', '漏れ・汚れ無し', '', ''].join(','),
-      ['クボタ', 'KT450', 'クボタV3300', 'エンジン', '油圧系統', '', 'ホース・配管', '油漏れ、亀裂', '亀裂・油漏れ無し', '', ''].join(','),
+      ['クボタ', 'KT450', 'クボタV3300', 'エンジン', '油圧系統', '', 'ホース・配管', '油漏れ、亀裂','亀裂・油漏れ無し', '', ''].join(','),
       ['クボタ', 'KT580', 'クボタV3800', '走行装置', 'ブレーキ', '', 'ブレーキペダル', '踏み代、効き', '規定の踏み代で確実に効く', '', ''].join(','),
       ['クボタ', 'KT580', 'クボタV3800', '走行装置', 'クラッチ', '', 'クラッチペダル', '遊び、切れ', '規定の遊びがあり確実に切れる', '', ''].join(','),
       ['ヤンマー', 'YT220', 'ヤンマー4TNV', '走行装置', 'ブレーキ', '', 'ブレーキペダル', '踏み代、効き', '規定の踏み代で確実に効く', '', ''].join(','),

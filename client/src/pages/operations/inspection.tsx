@@ -186,7 +186,7 @@ export default function InspectionPage() {
       const machineData = await machineResponse.json();
 
       // 点検項目を取得
-      const response = await fetch(`/api/inspection-items?manufacturer=${machineData.manufacturer_name}&model=${machineData.model_name}`);
+      const response = await fetch(`/api/inspection-items?model=${machineData.model_name}`);
       if (!response.ok) {
         throw new Error('点検項目の取得に失敗しました');
       }

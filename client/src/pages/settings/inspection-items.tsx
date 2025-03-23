@@ -61,22 +61,51 @@ export default function InspectionItems() {
   ];
 
   useEffect(() => {
-    fetchManufacturers();
-    fetchModels();
-    fetchItems();
-    fetchMachineNumbers();
-    const fetchTableData = async () => {
+    const fetchAllData = async () => {
       try {
-        const response = await fetch(`/api/inspection/table/${selectedTable}`);
-        if (!response.ok) throw new Error('データの取得に失敗しました');
-        const data = await response.json();
-        setTableData(data);
+        // 製造メーカーの取得
+        const manufacturersResponse = await fetch('/api/inspection/table/manufacturers');
+        if (!manufacturersResponse.ok) throw new Error('製造メーカーの取得に失敗しました');
+        const manufacturersData = await manufacturersResponse.json();
+        setManufacturers(manufacturersData);
+
+        // 機種の取得
+        const modelsResponse = await fetch('/api/inspection/table/models');
+        if (!modelsResponse.ok) throw new Error('機種の取得に失敗しました');
+        const modelsData = await modelsResponse.json();
+        setModels(modelsData);
+
+        // 点検項目の取得
+        const itemsResponse = await fetch('/api/inspection/table/inspection_items');
+        if (!itemsResponse.ok) throw new Error('点検項目の取得に失敗しました');
+        const itemsData = await itemsResponse.json();
+        setItems(itemsData);
+
+        // 機械番号の取得
+        const machineNumbersResponse = await fetch('/api/inspection/table/machine_numbers');
+        if (!machineNumbersResponse.ok) throw new Error('機械番号の取得に失敗しました');
+        const machineNumbersData = await machineNumbersResponse.json();
+        setMachineNumbers(machineNumbersData);
+
+        // 選択されているテーブルのデータを設定
+        if (selectedTable) {
+          const selectedData = await fetch(`/api/inspection/table/${selectedTable}`);
+          if (!selectedData.ok) throw new Error('テーブルデータの取得に失敗しました');
+          const data = await selectedData.json();
+          setTableData(data);
+        }
       } catch (error) {
-        console.error('テーブルデータの取得エラー:', error);
+        console.error('データ取得エラー:', error);
+        toast({
+          title: "エラー",
+          description: error.message,
+          variant: "destructive"
+        });
       }
     };
-    fetchTableData();
-  }, [selectedTable]);
+
+    fetchAllData();
+  }, [selectedTable, toast]);
 
   const fetchManufacturers = async () => {
     try {

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,77 +12,81 @@ interface TableData {
 }
 
 export default function TableEditor() {
-  const [selectedTable, setSelectedTable] = useState<string>("");
+  const [selectedManufacturer, setSelectedManufacturer] = useState<string>("");
+  const [selectedModel, setSelectedModel] = useState<string>("");
   const [tableData, setTableData] = useState<TableData>({ headers: [], rows: [] });
-  const [tables] = useState([
-    { id: 'inspection_items', name: '点検項目' },
-    { id: 'measurement_standards', name: '測定基準値' },
-    { id: 'machine_numbers', name: '機械番号' },
-    { id: 'manufacturers', name: '製造メーカー' },
-    { id: 'models', name: '機種' }
-  ]);
+  const [manufacturers, setManufacturers] = useState<string[]>([]);
+  const [models, setModels] = useState<string[]>([]);
+
   const { toast } = useToast();
 
-  const loadTableData = async (tableName: string) => {
-    try {
-      const response = await fetch(`/api/inspection/table/${tableName}`);
-      if (!response.ok) {
-        throw new Error('テーブルデータの取得に失敗しました');
+  useEffect(() => {
+    const fetchManufacturers = async () => {
+      try {
+        const response = await fetch('/api/inspection/table/manufacturers');
+        const data = await response.json();
+        setManufacturers(data.map(item => item.manufacturer)); // Assuming CSV structure
+      } catch (error) {
+        console.error('Error fetching manufacturers:', error);
+        toast({ title: "Error", description: "Failed to fetch manufacturers", variant: "destructive" });
       }
-      const data = await response.json();
-      if (data && data.length > 0) {
-        setTableData({
-          headers: Object.keys(data[0]),
-          rows: data
-        });
-      } else {
-        setTableData({ headers: [], rows: [] });
-        toast({
-          title: "警告",
-          description: "テーブルにデータが存在しません",
-          variant: "destructive",
-        });
+    };
+
+    const fetchModels = async () => {
+      try {
+        const response = await fetch('/api/inspection/table/models');
+        const data = await response.json();
+        setModels(data.map(item => item.model)); // Assuming CSV structure
+      } catch (error) {
+        console.error('Error fetching models:', error);
+        toast({ title: "Error", description: "Failed to fetch models", variant: "destructive" });
       }
-    } catch (error) {
-      console.error('テーブルデータ取得エラー:', error);
-      toast({
-        title: "エラー",
-        description: "テーブルデータの取得に失敗しました",
-        variant: "destructive",
-      });
-    }
-  };
+    };
+    fetchManufacturers();
+    fetchModels();
+  }, []);
 
   useEffect(() => {
-    if (selectedTable) {
-      loadTableData(selectedTable);
+    const fetchInspectionItems = async () => {
+      try {
+        let url = '/api/inspection/table/inspection_items';
+        if (selectedManufacturer) {
+          url += `?manufacturer=${selectedManufacturer}`;
+        }
+        if (selectedModel) {
+          url += `&model=${selectedModel}`;
+        }
+        const response = await fetch(url);
+        const data = await response.json();
+        setTableData({ headers: Object.keys(data[0]), rows: data });
+      } catch (error) {
+        console.error('Error fetching inspection items:', error);
+        toast({ title: "Error", description: "Failed to fetch inspection items", variant: "destructive" });
+      }
     }
-  }, [selectedTable]);
+
+    if (selectedManufacturer || selectedModel) {
+      fetchInspectionItems();
+    }
+  }, [selectedManufacturer, selectedModel]);
+
 
   const handleSave = async () => {
+    //Implementation for saving data to the backend, similar to original
     try {
-      const response = await fetch(`/api/inspection/table/${selectedTable}`, {
+      const response = await fetch(`/api/inspection/table/inspection_items`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ data: tableData.rows })
+        body: JSON.stringify({ data: tableData.rows }),
       });
-
       if (!response.ok) {
         throw new Error('保存に失敗しました');
       }
-
-      toast({
-        title: "成功",
-        description: "データを保存しました",
-      });
+      toast({ title: "成功", description: "データを保存しました" });
     } catch (error) {
-      toast({
-        title: "エラー",
-        description: "データの保存に失敗しました",
-        variant: "destructive",
-      });
+      toast({ title: "エラー", description: "データの保存に失敗しました", variant: "destructive" });
     }
   };
 
@@ -95,20 +98,33 @@ export default function TableEditor() {
         </CardHeader>
         <CardContent>
           <div className="mb-4">
-            <Select value={selectedTable} onValueChange={setSelectedTable}>
+            <Select value={selectedManufacturer} onValueChange={setSelectedManufacturer}>
               <SelectTrigger>
-                <SelectValue placeholder="編集するテーブルを選択" />
+                <SelectValue placeholder="製造メーカーを選択" />
               </SelectTrigger>
               <SelectContent>
-                {tables.map(table => (
-                  <SelectItem key={table.id} value={table.id}>
-                    {table.name}
+                {manufacturers.map((manufacturer) => (
+                  <SelectItem key={manufacturer} value={manufacturer}>
+                    {manufacturer}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-
+          <div className="mb-4">
+            <Select value={selectedModel} onValueChange={setSelectedModel}>
+              <SelectTrigger>
+                <SelectValue placeholder="機種を選択" />
+              </SelectTrigger>
+              <SelectContent>
+                {models.map((model) => (
+                  <SelectItem key={model} value={model}>
+                    {model}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           {tableData.headers.length > 0 && (
             <>
               <div className="border rounded-md overflow-x-auto">
@@ -118,7 +134,7 @@ export default function TableEditor() {
                       {tableData.headers.map((header, index) => (
                         <TableHead key={index}>{header}</TableHead>
                       ))}
-                      <TableHead>操作</TableHead>
+                      {/*Removed 操作 column*/}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -130,27 +146,12 @@ export default function TableEditor() {
                               value={row[header] || ''}
                               onChange={(e) => {
                                 const newRows = [...tableData.rows];
-                                newRows[rowIndex] = {
-                                  ...newRows[rowIndex],
-                                  [header]: e.target.value
-                                };
+                                newRows[rowIndex] = { ...newRows[rowIndex], [header]: e.target.value };
                                 setTableData({ ...tableData, rows: newRows });
                               }}
                             />
                           </TableCell>
                         ))}
-                        <TableCell>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => {
-                              const newRows = tableData.rows.filter((_, index) => index !== rowIndex);
-                              setTableData({ ...tableData, rows: newRows });
-                            }}
-                          >
-                            削除
-                          </Button>
-                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

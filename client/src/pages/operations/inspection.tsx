@@ -82,7 +82,9 @@ export default function InspectionPage() {
         const modelsData = await modelsRes.json();
 
         setManufacturers(manufacturersData);
-        setModels(modelsData);
+        setModels(modelsData.filter(model => 
+          !selectedManufacturer || model.manufacturer_id === selectedManufacturer
+        ));
       } catch (error) {
         console.error('データ取得エラー:', error);
         toast({
@@ -94,7 +96,35 @@ export default function InspectionPage() {
     };
 
     fetchData();
-  }, []);
+  }, [selectedManufacturer]);
+
+  useEffect(() => {
+    const fetchInspectionItems = async () => {
+      if (selectedManufacturer && selectedModel) {
+        try {
+          const response = await fetch('/api/inspection/table/inspection_items');
+          if (!response.ok) {
+            throw new Error('点検項目の取得に失敗しました');
+          }
+          const data = await response.json();
+          const filteredItems = data.filter(item => 
+            item.manufacturer_id === selectedManufacturer && 
+            item.model_id === selectedModel
+          );
+          setItems(filteredItems);
+        } catch (error) {
+          console.error('点検項目取得エラー:', error);
+          toast({
+            title: "エラー",
+            description: "点検項目の取得に失敗しました",
+            variant: "destructive"
+          });
+        }
+      }
+    };
+
+    fetchInspectionItems();
+  }, [selectedManufacturer, selectedModel]);
 
   useEffect(() => {
     const fetchInspectionItems = async () => {

@@ -55,9 +55,7 @@ export default function InspectionItems() {
 
   const tableOptions = [
     { value: "manufacturers", label: "製造メーカー" },
-    { value: "models", label: "機種" },
-    { value: "inspection_items", label: "点検項目" },
-    { value: "machine_numbers", label: "機械番号" }
+    { value: "models", label: "機種" }s", label: "機械番号" }
   ];
 
   useEffect(() => {

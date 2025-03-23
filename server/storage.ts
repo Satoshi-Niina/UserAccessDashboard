@@ -320,8 +320,18 @@ export class DatabaseStorage implements IStorage {
 
       const content = fs.readFileSync(csvPath, 'utf-8');
       console.log('Machine numbers content:', content);
-      const machines = Papa.parse(content, { header: true }).data;
-      console.log('Parsed machines:', machines);
+      const parseResult = Papa.parse(content, { 
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (header) => header.trim()
+      });
+      
+      if (parseResult.errors.length > 0) {
+        console.error('CSV parse errors:', parseResult.errors);
+      }
+
+      const machines = parseResult.data.filter((m: any) => m.number && m.model_id);
+      console.log('Filtered machines:', machines);
 
       const machine = machines.find((m: any) => String(m.number) === String(number));
       if (!machine) {

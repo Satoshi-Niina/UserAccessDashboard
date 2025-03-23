@@ -311,7 +311,7 @@ export function registerRoutes(app: Express): Server {
     try {
       const machineNumber = req.params.number;
       const machineData = await storage.getMachineNumberByNumber(machineNumber);
-      
+
       if (!machineData) {
         return res.status(404).json({ error: '機械番号が見つかりません' });
       }
@@ -324,7 +324,7 @@ export function registerRoutes(app: Express): Server {
 
       const inspectionContent = await fs.promises.readFile(inspectionItemsPath, 'utf8');
       const inspectionItems = Papa.parse(inspectionContent, { header: true }).data;
-      
+
       // 機械番号に紐づく機種の点検項目をフィルタリング
       const filteredItems = inspectionItems.filter((item: any) => 
         String(item.model_id) === String(machineData.model_id)
@@ -348,13 +348,20 @@ export function registerRoutes(app: Express): Server {
     try {
       const manufacturer = req.query.manufacturer as string;
       const model = req.query.model as string;
-      const tablePath = path.join(process.cwd(), 'attached_assets/inspection/table/inspection_items.csv');
+      const filePath = path.join(process.cwd(), 'attached_assets/inspection/table/inspection_items.csv');
 
-      if (!fs.existsSync(tablePath)) {
-        return res.status(404).json({ error: '点検項目マスタファイルが見つかりません' });
+      // ディレクトリとファイルが存在しない場合は作成
+      if (!fs.existsSync(path.dirname(filePath))) {
+        fs.mkdirSync(path.dirname(filePath), { recursive: true });
       }
 
-      const fileContent = await fs.promises.readFile(tablePath, 'utf8');
+      if (!fs.existsSync(filePath)) {
+        // 初期データを作成
+        const initialData = 'model_id,category,equipment,item,criteria,method\n1,エンジン,本体,エンジン状態,正常,目視確認';
+        fs.writeFileSync(filePath, initialData, 'utf-8');
+      }
+
+      const fileContent = await fs.promises.readFile(filePath, 'utf8');
       const results = Papa.parse(fileContent, {
         header: true,
         skipEmptyLines: true,
@@ -840,7 +847,7 @@ export function registerRoutes(app: Express): Server {
     ].join(',');
 
     const dataRows = [
-      ['堀川工機', 'MC300', 'ボルボ', 'エンジン', '本体', '', 'エンジンヘッドカバー、ターボ', 'オイル、燃料漏れ', 'オイル等滲み・垂れ跡が無', '', ''].join(','),
+      ['堀川工機', 'MC300', 'ボルボ', 'エンジン', '本体','', 'エンジンヘッドカバー、ターボ', 'オイル、燃料漏れ', 'オイル等滲み・垂れ跡が無', '', ''].join(','),
       ['堀川工機', 'MC300', 'ボルボ', 'エンジン', '本体', '', '排気及び吸気', '排気ガス色及びガス漏れ等の点検（マフラー等）', 'ほぼ透明の薄紫', '', ''].join(','),
       ['堀川工機', 'MC500', 'ボルボ', 'エンジン', '冷却系統', '', 'ラジエター', '水漏れ、汚れ', '漏れ・汚れ無し', '', ''].join(','),
       ['堀川工機', 'MC500', 'ボルボ', 'ボルボ', 'エンジン', '油圧系統', '', 'ホース・配管', '油漏れ、亀裂', '亀裂・油漏れ無し', '', ''].join(','),

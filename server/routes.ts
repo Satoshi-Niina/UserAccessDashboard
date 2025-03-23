@@ -52,10 +52,25 @@ export function registerRoutes(app: Express): Server {
   router.get('/inspection/table/inspection_items', async (req, res) => {
     try {
       const filePath = path.join(process.cwd(), 'attached_assets/inspection/table/inspection_items.csv');
-      const data = await readCsvFile(filePath);
-      res.json(data);
+      const fileContent = await fs.promises.readFile(filePath, 'utf8');
+      const cleanContent = fileContent.replace(/^\uFEFF/, ''); // BOMを除去
+      
+      const results = Papa.parse(cleanContent, {
+        header: true,
+        skipEmptyLines: true,
+        delimiter: ',',
+        transformHeader: (header) => header.trim(),
+        transform: (value) => value?.trim() || ''
+      });
+
+      if (results.errors && results.errors.length > 0) {
+        console.warn('CSV解析警告:', results.errors);
+      }
+
+      res.json(results.data);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to read inspection items data' });
+      console.error('点検項目読み込みエラー:', error);
+      res.status(500).json({ error: '点検項目の読み込みに失敗しました' });
     }
   });
 

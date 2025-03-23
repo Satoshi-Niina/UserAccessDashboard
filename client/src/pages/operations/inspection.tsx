@@ -183,6 +183,9 @@ export default function InspectionPage() {
       if (!machineResponse.ok) {
         throw new Error('機械情報の取得に失敗しました');
       }
+      if (!machineResponse.ok) {
+        throw new Error('機械番号が見つかりません');
+      }
       const machineData = await machineResponse.json();
 
       if (!machineData || !machineData.model_id) {
@@ -506,6 +509,12 @@ export default function InspectionPage() {
                 </CardDescription>
               </div>
               <div className="ml-auto flex space-x-2">
+                <Button 
+                  variant="outline"
+                  onClick={() => setShowBasicInfo(true)}
+                >
+                  基本情報へ戻る
+                </Button>
               </div>
             </CardHeader>
             <CardContent>

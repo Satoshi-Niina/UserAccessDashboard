@@ -1,0 +1,68 @@
+変更するファイル名は `InspectionValueStatus.tsx` です。以下のようにファイルを更新してください。
+
+```tsx
+import React, { useState, useEffect } from 'react';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+
+export default function InspectionItems() {
+  const [selectedManufacturer, setSelectedManufacturer] = useState<string>("all");
+  const [selectedModel, setSelectedModel] = useState<string>("all");
+  const [manufacturers, setManufacturers] = useState<any[]>([]);
+  const [models, setModels] = useState<any[]>([]);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // データを取得する関数
+    const fetchData = async () => {
+      try {
+        const response = await fetch('/api/inspection/table/manufacturers');
+        if (!response.ok) throw new Error('製造メーカーの取得に失敗しました');
+        const data = await response.json();
+        setManufacturers(data.filter((item: any) => item.name.trim() !== ''));
+      } catch (error) {
+        toast({
+          title: "エラー",
+          description: "製造メーカーの読み込みに失敗しました",
+          variant: "destructive"
+        });
+      }
+    };
+
+    fetchData();
+  }, [toast]);
+
+  return (
+    <div className="container mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-4">点検項目編集</h1>
+      <Select value={selectedManufacturer} onValueChange={setSelectedManufacturer}>
+        <SelectTrigger className="w-[200px]">
+          <SelectValue placeholder="製造メーカーを選択" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectItem value="all">すべて</SelectItem>
+            {manufacturers.map(manufacturer => (
+              <SelectItem key={manufacturer.id} value={manufacturer.id}>{manufacturer.name}</SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+
+      <Select value={selectedModel} onValueChange={setSelectedModel}>
+        <SelectTrigger className="w-[200px]">
+          <SelectValue placeholder="機種を選択" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectItem value="all">すべて</SelectItem>
+            {models.map(model => (
+              <SelectItem key={model.id} value={model.id}>{model.name}</SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+```

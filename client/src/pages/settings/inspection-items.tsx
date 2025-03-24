@@ -195,10 +195,11 @@ export default function InspectionItems() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value="placeholder" disabled>選択してください</SelectItem>
                     <SelectItem value="all">すべて</SelectItem>
                     {manufacturers.map(manufacturer => (
-                      <SelectItem key={manufacturer.id} value={manufacturer.id}>{manufacturer.name}</SelectItem>
+                      manufacturer.name.trim() !== '' && (
+                        <SelectItem key={manufacturer.id} value={manufacturer.id}>{manufacturer.name}</SelectItem>
+                      )
                     ))}
                   </SelectGroup>
                 </SelectContent>
@@ -210,12 +211,13 @@ export default function InspectionItems() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value="placeholder" disabled>選択してください</SelectItem>
                     <SelectItem value="all">すべて</SelectItem>
                     {models
-                      .filter(model => !selectedManufacturerState || model.manufacturer_id === selectedManufacturerState)
+                      .filter(model => !selectedManufacturerState || selectedManufacturerState === "all" || model.manufacturer_id === selectedManufacturerState)
                       .map(model => (
-                        <SelectItem key={model.id} value={model.id}>{model.name}</SelectItem>
+                        model.name.trim() !== '' && (
+                          <SelectItem key={model.id} value={model.id}>{model.name}</SelectItem>
+                        )
                       ))}
                   </SelectGroup>
                 </SelectContent>

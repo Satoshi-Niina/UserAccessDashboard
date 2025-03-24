@@ -108,12 +108,12 @@ export default function InspectionPage() {
             throw new Error('点検項目の取得に失敗しました');
           }
           const data = await response.json();
-          
+
           // 点検項目を設定
           if (data.inspection_items) {
             setItems(data.inspection_items);
           }
-          
+
         } catch (error) {
           console.error('点検項目取得エラー:', error);
           toast({
@@ -127,14 +127,6 @@ export default function InspectionPage() {
 
     fetchInspectionItems();
   }, [machineNumber]);
-            variant: "destructive"
-          });
-        }
-      }
-    };
-
-    fetchInspectionItems();
-  }, [selectedManufacturer, selectedModel]);
 
   useEffect(() => {
     const fetchInspectionItems = async () => {
@@ -382,7 +374,7 @@ export default function InspectionPage() {
               )}
               <div className="mb-2 p-2 bg-muted/20 rounded-md">
                 <div className="flex flex-wrap gap-2">
-                  
+
 
                   <div className="min-w-[150px]">
                     <Label htmlFor="categoryFilter" className="text-xs">部位</Label>

@@ -101,23 +101,37 @@ export default function InspectionPage() {
 
   useEffect(() => {
     const fetchInspectionItems = async () => {
-      if (selectedManufacturer && selectedModel) {
+      if (machineNumber) {
         try {
-          const response = await fetch('/api/inspection/table/inspection_items');
+          const response = await fetch(`/api/machineNumbers/${machineNumber}`);
           if (!response.ok) {
             throw new Error('点検項目の取得に失敗しました');
           }
           const data = await response.json();
-          const filteredItems = data.filter(item => 
-            item.manufacturer_id === selectedManufacturer && 
-            item.model_id === selectedModel
-          );
-          setItems(filteredItems);
+          
+          // 機種情報を設定
+          if (data.model_id) {
+            setSelectedModel(data.model_id);
+          }
+          
+          // 点検項目を設定
+          if (data.inspection_items) {
+            setItems(data.inspection_items);
+          }
+          
         } catch (error) {
           console.error('点検項目取得エラー:', error);
           toast({
             title: "エラー",
             description: "点検項目の取得に失敗しました",
+            variant: "destructive"
+          });
+        }
+      }
+    };
+
+    fetchInspectionItems();
+  }, [machineNumber]);項目の取得に失敗しました",
             variant: "destructive"
           });
         }

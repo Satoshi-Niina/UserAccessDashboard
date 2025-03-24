@@ -568,9 +568,11 @@ export default function InspectionPage() {
                                   </SelectTrigger>
                                   <SelectContent className="text-xs">
                                     {resultOptions.map((option) => (
-                                      <SelectItem key={option} value={option}>
-                                        {option}
-                                      </SelectItem>
+                                      option && (
+                                        <SelectItem key={option} value={option}>
+                                          {option}
+                                        </SelectItem>
+                                      )
                                     ))}
                                   </SelectContent>
                                 </Select>

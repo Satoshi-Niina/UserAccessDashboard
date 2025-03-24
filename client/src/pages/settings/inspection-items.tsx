@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PencilIcon, TrashIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { useToast } from "@/hooks/use-toast";
@@ -47,8 +47,8 @@ export default function InspectionItems() {
   const [machineNumbers, setMachineNumbers] = useState<MachineNumber[]>([]);
   const [editItem, setEditItem] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedManufacturer, setSelectedManufacturer] = useState("");
-  const [selectedModel, setSelectedModel] = useState("");
+  const [selectedManufacturerState, setSelectedManufacturerState] = useState<string | undefined>(undefined);
+  const [selectedModelState, setSelectedModelState] = useState<string | undefined>(undefined);
   const [tableData, setTableData] = useState<any[]>([]);
   const [isModified, setIsModified] = useState(false); //Track modifications
   const { toast } = useToast();
@@ -105,75 +105,6 @@ export default function InspectionItems() {
 
     fetchAllData();
   }, [selectedTable, toast]);
-
-  const fetchManufacturers = async () => {
-    try {
-      const response = await fetch('/api/inspection/table/manufacturers');
-      if (!response.ok) throw new Error('製造メーカーの取得に失敗しました');
-      const data = await response.json();
-      setManufacturers(data);
-    } catch (error) {
-      toast({
-        title: "エラー",
-        description: "製造メーカーの読み込みに失敗しました",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const fetchModels = async () => {
-    try {
-      const response = await fetch('/api/inspection/table/models');
-      if (!response.ok) throw new Error('機種の取得に失敗しました');
-      const data = await response.json();
-      setModels(data);
-    } catch (error) {
-      toast({
-        title: "エラー",
-        description: "機種の読み込みに失敗しました",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const fetchItems = async () => {
-    try {
-      const response = await fetch('/api/inspection/table/inspection_items');
-      if (!response.ok) throw new Error('点検項目の取得に失敗しました');
-      const data = await response.json();
-      console.log('点検項目データ:', data);
-      setItems(data.map((item: any, index: number) => ({
-        id: index + 1,
-        category: item.category || '',
-        equipment: item.equipment || '',
-        checkPoint: item.checkPoint || '',
-        criteria: item.criteria || '',
-        method: item.method || '',
-      })));
-    } catch (error) {
-      console.error('点検項目の読み込みエラー:', error);
-      toast({
-        title: "エラー",
-        description: "点検項目の読み込みに失敗しました",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const fetchMachineNumbers = async () => {
-    try {
-      const response = await fetch('/api/inspection/table/machine-numbers');
-      if (!response.ok) throw new Error('機械番号の取得に失敗しました');
-      const data = await response.json();
-      setMachineNumbers(data);
-    } catch (error) {
-      toast({
-        title: "エラー",
-        description: "機械番号の読み込みに失敗しました",
-        variant: "destructive"
-      });
-    }
-  };
 
   const handleEdit = (item: any) => {
     setEditItem(item);
@@ -245,7 +176,6 @@ export default function InspectionItems() {
     setIsModified(true); //Set modified flag on drag
   };
 
-
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-4">点検項目編集</h1>
@@ -259,27 +189,35 @@ export default function InspectionItems() {
         <TabsContent value="items">
           <div className="space-y-4">
             <div className="flex gap-4 mb-4">
-              <Select value={selectedManufacturer} onValueChange={setSelectedManufacturer}>
+              <Select value={selectedManufacturerState} onValueChange={setSelectedManufacturerState}>
                 <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="製造メーカーを選択" />
                 </SelectTrigger>
                 <SelectContent>
-                  {manufacturers.map(manufacturer => (
-                    <SelectItem key={manufacturer.id} value={manufacturer.id}>{manufacturer.name}</SelectItem>
-                  ))}
+                  <SelectGroup>
+                    <SelectItem value="placeholder" disabled>選択してください</SelectItem>
+                    <SelectItem value="all">すべて</SelectItem>
+                    {manufacturers.map(manufacturer => (
+                      <SelectItem key={manufacturer.id} value={manufacturer.id}>{manufacturer.name}</SelectItem>
+                    ))}
+                  </SelectGroup>
                 </SelectContent>
               </Select>
 
-              <Select value={selectedModel} onValueChange={setSelectedModel}>
+              <Select value={selectedModelState} onValueChange={setSelectedModelState}>
                 <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="機種を選択" />
                 </SelectTrigger>
                 <SelectContent>
-                  {models
-                    .filter(model => !selectedManufacturer || model.manufacturer_id === selectedManufacturer)
-                    .map(model => (
-                      <SelectItem key={model.id} value={model.id}>{model.name}</SelectItem>
-                    ))}
+                  <SelectGroup>
+                    <SelectItem value="placeholder" disabled>選択してください</SelectItem>
+                    <SelectItem value="all">すべて</SelectItem>
+                    {models
+                      .filter(model => !selectedManufacturerState || model.manufacturer_id === selectedManufacturerState)
+                      .map(model => (
+                        <SelectItem key={model.id} value={model.id}>{model.name}</SelectItem>
+                      ))}
+                  </SelectGroup>
                 </SelectContent>
               </Select>
             </div>
@@ -539,90 +477,90 @@ export default function InspectionItems() {
         </DialogContent>
       </Dialog>
 
-    <div className="fixed bottom-4 right-4 space-x-2">
-      {activeTab === "items" ? (
-        <>
-          <Button
-            onClick={async () => {
-              try {
-                await fetch('/api/save-inspection-items', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({ items }),
-                });
-                toast({
-                  title: "保存完了",
-                  description: "点検項目が正常に保存されました",
-                });
-                setIsModified(false);
-              } catch (error) {
-                toast({
-                  title: "エラー",
-                  description: "保存中にエラーが発生しました",
-                  variant: "destructive",
-                });
-              }
-            }}
-            disabled={!isModified}
-          >
-            保存
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              if (isModified) {
-                if (confirm("変更内容が失われますが、よろしいですか？")) {
+      <div className="fixed bottom-4 right-4 space-x-2">
+        {activeTab === "items" ? (
+          <>
+            <Button
+              onClick={async () => {
+                try {
+                  await fetch('/api/save-inspection-items', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ items }),
+                  });
+                  toast({
+                    title: "保存完了",
+                    description: "点検項目が正常に保存されました",
+                  });
+                  setIsModified(false);
+                } catch (error) {
+                  toast({
+                    title: "エラー",
+                    description: "保存中にエラーが発生しました",
+                    variant: "destructive",
+                  });
+                }
+              }}
+              disabled={!isModified}
+            >
+              保存
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (isModified) {
+                  if (confirm("変更内容が失われますが、よろしいですか？")) {
+                    navigate("/");
+                  }
+                } else {
                   navigate("/");
                 }
-              } else {
-                navigate("/");
-              }
-            }}
-          >
-            キャンセル
-          </Button>
-        </>
-      ) : (
-        <>
-          <Button
-            onClick={async () => {
-              try {
-                await fetch(`/api/save-${selectedTable}`, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({ data: tableData }),
-                });
-                toast({
-                  title: "保存完了",
-                  description: "データが正常に保存されました",
-                });
+              }}
+            >
+              キャンセル
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button
+              onClick={async () => {
+                try {
+                  await fetch(`/api/save-${selectedTable}`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ data: tableData }),
+                  });
+                  toast({
+                    title: "保存完了",
+                    description: "データが正常に保存されました",
+                  });
+                  setActiveTab("items");
+                } catch (error) {
+                  toast({
+                    title: "エラー",
+                    description: "保存中にエラーが発生しました",
+                    variant: "destructive",
+                  });
+                }
+              }}
+            >
+              完了
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
                 setActiveTab("items");
-              } catch (error) {
-                toast({
-                  title: "エラー",
-                  description: "保存中にエラーが発生しました",
-                  variant: "destructive",
-                });
-              }
-            }}
-          >
-            完了
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setActiveTab("items");
-            }}
-          >
-            戻る
-          </Button>
-        </>
-      )}
-    </div>
+              }}
+            >
+              戻る
+            </Button>
+          </>
+        )}
+      </div>
     </div>
   );
 }

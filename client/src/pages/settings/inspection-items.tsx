@@ -214,10 +214,11 @@ export default function InspectionItems() {
                     <SelectItem value="all">すべて</SelectItem>
                     {models
                       .filter(model => !selectedManufacturerState || selectedManufacturerState === "all" || model.manufacturer_id === selectedManufacturerState)
+                      .filter(model => model && model.name && typeof model.name === 'string')
                       .map(model => (
-                        model.name.trim() !== '' && (
-                          <SelectItem key={model.id} value={model.id}>{model.name}</SelectItem>
-                        )
+                        <SelectItem key={model.id} value={model.id}>
+                          {model.name.trim() || '(名称なし)'}
+                        </SelectItem>
                       ))}
                   </SelectGroup>
                 </SelectContent>

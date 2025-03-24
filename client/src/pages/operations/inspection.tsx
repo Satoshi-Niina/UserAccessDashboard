@@ -382,7 +382,7 @@ export default function InspectionPage() {
                       <SelectContent>
                         <SelectItem value="">すべて</SelectItem>
                         {manufacturers.map(m => (
-                          <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                          <SelectItem key={m.id} value={m.id || ""}>{m.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -395,11 +395,12 @@ export default function InspectionPage() {
                         <SelectValue placeholder="すべて" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">すべて</SelectItem>
                         {models
-                          .filter(m => !selectedManufacturer || m.manufacturer_id === selectedManufacturer)
-                          .map(m => (
-                            <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                          .filter(model => (!selectedManufacturer || model.manufacturer_id === selectedManufacturer) && model.id && model.name)
+                          .map(model => (
+                            <SelectItem key={model.id} value={model.id || ""}>
+                              {model.name}
+                            </SelectItem>
                           ))}
                       </SelectContent>
                     </Select>
@@ -420,7 +421,7 @@ export default function InspectionPage() {
                           .filter(Boolean)
                           .sort()
                           .map(category => (
-                            <SelectItem key={category} value={category}>
+                            <SelectItem key={category} value={category || ""}>
                               {category}
                             </SelectItem>
                           ))}
@@ -445,7 +446,7 @@ export default function InspectionPage() {
                           .filter(Boolean)
                           .sort()
                           .map(equipment => (
-                            <SelectItem key={equipment} value={equipment}>
+                            <SelectItem key={equipment} value={equipment || ""}>
                               {equipment}
                             </SelectItem>
                           ))}
@@ -465,7 +466,7 @@ export default function InspectionPage() {
                       <SelectContent>
                         <SelectItem value="all">すべて</SelectItem>
                         {resultOptions.map(result => (
-                          <SelectItem key={result} value={result}>{result}</SelectItem>
+                          <SelectItem key={result} value={result || ""}>{result}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -569,7 +570,7 @@ export default function InspectionPage() {
                                   <SelectContent className="text-xs">
                                     {resultOptions.map((option) => (
                                       option && (
-                                        <SelectItem key={option} value={option}>
+                                        <SelectItem key={option} value={option || ""}>
                                           {option}
                                         </SelectItem>
                                       )

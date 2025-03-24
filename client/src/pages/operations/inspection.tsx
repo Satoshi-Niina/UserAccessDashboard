@@ -380,9 +380,9 @@ export default function InspectionPage() {
                         <SelectValue placeholder="すべて" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">すべて</SelectItem>
+                        <SelectItem value="all">すべて</SelectItem>
                         {manufacturers.map(m => (
-                          <SelectItem key={m.id} value={m.id || ""}>{m.name}</SelectItem>
+                          m?.id ? <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem> : null
                         ))}
                       </SelectContent>
                     </Select>
@@ -395,12 +395,13 @@ export default function InspectionPage() {
                         <SelectValue placeholder="すべて" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="all">すべて</SelectItem>
                         {models
-                          .filter(model => (!selectedManufacturer || model.manufacturer_id === selectedManufacturer) && model.id && model.name)
+                          .filter(model => (!selectedManufacturer || model.manufacturer_id === selectedManufacturer))
                           .map(model => (
-                            <SelectItem key={model.id} value={model.id || ""}>
+                            model?.id ? <SelectItem key={model.id} value={model.id}>
                               {model.name}
-                            </SelectItem>
+                            </SelectItem> : null
                           ))}
                       </SelectContent>
                     </Select>

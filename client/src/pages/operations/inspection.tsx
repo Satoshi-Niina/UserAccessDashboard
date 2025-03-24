@@ -109,11 +109,6 @@ export default function InspectionPage() {
           }
           const data = await response.json();
           
-          // 機種情報を設定
-          if (data.model_id) {
-            setSelectedModel(data.model_id);
-          }
-          
           // 点検項目を設定
           if (data.inspection_items) {
             setItems(data.inspection_items);
@@ -131,7 +126,7 @@ export default function InspectionPage() {
     };
 
     fetchInspectionItems();
-  }, [machineNumber]);項目の取得に失敗しました",
+  }, [machineNumber]);
             variant: "destructive"
           });
         }
@@ -387,39 +382,7 @@ export default function InspectionPage() {
               )}
               <div className="mb-2 p-2 bg-muted/20 rounded-md">
                 <div className="flex flex-wrap gap-2">
-                  <div className="min-w-[150px]">
-                    <Label htmlFor="manufacturerFilter" className="text-xs">製造メーカー</Label>
-                    <Select value={selectedManufacturer} onValueChange={setSelectedManufacturer}>
-                      <SelectTrigger id="manufacturerFilter" className="h-8">
-                        <SelectValue placeholder="すべて" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">すべて</SelectItem>
-                        {manufacturers.map(m => (
-                          m?.id ? <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem> : null
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="min-w-[150px]">
-                    <Label htmlFor="modelFilter" className="text-xs">機種</Label>
-                    <Select value={selectedModel} onValueChange={setSelectedModel}>
-                      <SelectTrigger id="modelFilter" className="h-8">
-                        <SelectValue placeholder="すべて" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">すべて</SelectItem>
-                        {models
-                          .filter(model => (!selectedManufacturer || model.manufacturer_id === selectedManufacturer))
-                          .map(model => (
-                            model?.id ? <SelectItem key={model.id} value={model.id}>
-                              {model.name}
-                            </SelectItem> : null
-                          ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  
 
                   <div className="min-w-[150px]">
                     <Label htmlFor="categoryFilter" className="text-xs">部位</Label>

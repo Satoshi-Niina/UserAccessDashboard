@@ -48,6 +48,27 @@ interface InspectionItem {
   maxValue?: string;         // 基準値（最大値）
 }
 
+
+  useEffect(() => {
+    async function loadCSVs() {
+      const [itemsRes, makersRes, modelsRes] = await Promise.all([
+        fetch("/attached_assets/inspection/table/inspection_items.csv"),
+        fetch("/attached_assets/inspection/table/manufacturers.csv"),
+        fetch("/attached_assets/inspection/table/models.csv")
+      ]);
+
+      const [itemsCSV, makersCSV, modelsCSV] = await Promise.all([
+        itemsRes.text(),
+        makersRes.text(),
+        modelsRes.text()
+      ]);
+
+      const items = Papa.parse(itemsCSV, { header: true }).data;
+      setInspectionItems(items);
+    }
+    loadCSVs();
+  }, []);
+
 export default function MeasurementStandards() {
   const [isMenuExpanded, setIsMenuExpanded] = useState(false); // 最小化状態に変更
   const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
@@ -327,24 +348,30 @@ export default function MeasurementStandards() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+<div className="space-y-2">
+  <Label htmlFor="csvImport">CSVインポート</Label>
+  <div className="flex gap-2">
+    <Input id="csvImport" type="file" accept=".csv" onChange={(e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const text = event.target?.result;
+        if (typeof text === "string") {
+          const parsed = Papa.parse(text, { header: true }).data;
+          setInspectionItems(parsed);
+        }
+      };
+      reader.readAsText(file);
+    }} />
+    <Button onClick={() => toast({ title: "インポート完了", description: "CSVを読み込みました" })}>
+      インポート
+    </Button>
+  </div>
+</div>
+
               {/* ファイル選択 */}
-              <div className="space-y-2">
-                <Label htmlFor="fileSelect">ファイル選択</Label>
-                <Select value={selectedFile} onValueChange={setSelectedFile}>
-                  <SelectTrigger id="fileSelect">
-                    <SelectValue placeholder="ファイルを選択" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      {availableFiles.map((file) => (
-                        <SelectItem key={file.name} value={file.name}>
-                          {file.name}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
+
 
               {/* メーカー選択 */}
               <div className="space-y-2">

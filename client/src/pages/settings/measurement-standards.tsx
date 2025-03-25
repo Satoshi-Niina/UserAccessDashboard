@@ -49,6 +49,7 @@ interface InspectionItem {
 }
 
 
+  export default function MeasurementStandards() {
   useEffect(() => {
     async function loadCSVs() {
       const [itemsRes, makersRes, modelsRes] = await Promise.all([
@@ -68,8 +69,6 @@ interface InspectionItem {
     }
     loadCSVs();
   }, []);
-
-export default function MeasurementStandards() {
   const [isMenuExpanded, setIsMenuExpanded] = useState(false); // 最小化状態に変更
   const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
   const [loading, setLoading] = useState(true);

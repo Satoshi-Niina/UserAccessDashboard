@@ -471,10 +471,6 @@ interface InspectionItem {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>メーカー</TableHead>
-                    <TableHead>機種</TableHead>
-                    <TableHead>部位</TableHead>
-                    <TableHead>装置</TableHead>
                     <TableHead>確認箇所</TableHead>
                     <TableHead>判断基準</TableHead>
                     <TableHead>測定基準値</TableHead>
@@ -486,17 +482,13 @@ interface InspectionItem {
                 <TableBody>
                   {filteredItems.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={10} className="text-center">
+                      <TableCell colSpan={6} className="text-center">
                         データがありません
                       </TableCell>
                     </TableRow>
                   ) : (
                     filteredItems.map((item) => (
                       <TableRow key={item.id}>
-                        <TableCell>{item.manufacturer}</TableCell>
-                        <TableCell>{item.model}</TableCell>
-                        <TableCell>{item.category}</TableCell>
-                        <TableCell>{item.equipment}</TableCell>
                         <TableCell>{item.item}</TableCell>
                         <TableCell>{item.criteria}</TableCell>
                         <TableCell>{item.measurementRecord}</TableCell>

@@ -949,28 +949,13 @@ export function registerRoutes(app: Express): Server {
 
   app.post('/api/measurement-standards', async (req, res) => {
     try {
-      const { standard } = req.body;
-      const filePath = path.join(process.cwd(), 'attached_assets/Reference value/measurement_standards.json');
+      const { standards } = req.body;
+      const tablePath = path.join(process.cwd(), 'attached_assets/inspection/table/measurement_standards.csv');
 
-      let standards = { measurementStandards: [] };
-      if (fs.existsSync(filePath)) {
-        const content = await fs.promises.readFile(filePath, 'utf-8');
-        standards = JSON.parse(content);
-      }
+      // CSVとして保存
+      const csv = Papa.unparse(standards);
+      await fs.promises.writeFile(tablePath, csv);
 
-      const existingIndex = standards.measurementStandards.findIndex(s => 
-        s.category === standard.category && 
-        s.equipment === standard.equipment && 
-        s.item === standard.item
-      );
-
-      if (existingIndex >= 0) {
-        standards.measurementStandards[existingIndex] = standard;
-      } else {
-        standards.measurementStandards.push(standard);
-      }
-
-      await fs.promises.writeFile(filePath, JSON.stringify(standards, null, 2));
       res.json({ message: '基準値を保存しました' });
     } catch (error) {
       console.error('基準値保存エラー:', error);
@@ -1040,4 +1025,3 @@ export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
   return httpServer;
 }
-

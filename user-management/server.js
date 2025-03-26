@@ -27,6 +27,7 @@ async function comparePasswords(supplied, stored) {
 
 app.use(express.json());
 app.use(express.static('user-management'));
+app.use('/attached_assets', express.static('attached_assets'));
 app.use(session({
     secret: process.env.REPL_ID,
     resave: false,

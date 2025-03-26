@@ -545,8 +545,8 @@ export default function InspectionPage() {
                               <td className="p-1 text-xs">{item.method}</td>
                               <td className="p-1 text-xs">
                                 <div className="space-y-2">
-                                  <div className="text-xs text-gray-500">
-                                    {item.standardMin && item.standardMax ? `基準値: ${item.standardMin}～${item.standardMax}` : ""}
+                                  <div className="text-xs text-gray-600 mb-1">
+                                    {item.standardMin && item.standardMax ? `基準値：${item.standardMin}～${item.standardMax}` : ''}
                                   </div>
                                   <div className="relative">
                                     <Input

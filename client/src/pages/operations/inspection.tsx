@@ -546,7 +546,7 @@ export default function InspectionPage() {
                               <td className="p-1 text-xs">
                                 <div className="space-y-1 relative">
                                   {item.standardMin && item.standardMax ? (
-                                    <div className="text-xs text-gray-500 mb-1">
+                                    <div className="text-xs text-gray-500 mb-1 border-b pb-1">
                                       基準値: {item.standardMin} ～ {item.standardMax}
                                     </div>
                                   ) : null}
@@ -558,9 +558,25 @@ export default function InspectionPage() {
                                         const value = e.target.value;
                                         handleMeasurementChange(item.id, value);
                                       }}
-                                      className={`w-full text-xs`}
+                                      className={`w-full text-xs ${
+                                        item.standardMin && 
+                                        item.standardMax && 
+                                        item.measurementRecord &&
+                                        (parseFloat(item.measurementRecord) < parseFloat(item.standardMin) || 
+                                         parseFloat(item.measurementRecord) > parseFloat(item.standardMax))
+                                          ? 'border-red-500'
+                                          : ''
+                                      }`}
                                     />
-                                    {item.standardMin && item.standardMax && item.measurementRecord && 
+                                    {item.standardMin && 
+                                     item.standardMax && 
+                                     item.measurementRecord &&
+                                     (parseFloat(item.measurementRecord) < parseFloat(item.standardMin) || 
+                                      parseFloat(item.measurementRecord) > parseFloat(item.standardMax)) && (
+                                      <div className="text-red-500 text-xs absolute -bottom-5">
+                                        調整が必要です！
+                                      </div>
+                                    )} 
                                      (Number(item.measurementRecord) < Number(item.standardMin) || 
                                       Number(item.measurementRecord) > Number(item.standardMax)) && (
                                       <span className="text-red-500 text-xs">調整が必要です！</span>

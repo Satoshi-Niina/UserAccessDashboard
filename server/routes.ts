@@ -952,8 +952,23 @@ export function registerRoutes(app: Express): Server {
       const { standards } = req.body;
       const tablePath = path.join(process.cwd(), 'attached_assets/inspection/table/measurement_standards.csv');
 
+      // ディレクトリが存在しない場合は作成
+      await fs.promises.mkdir(path.dirname(tablePath), { recursive: true });
+
+      // データを正規化
+      const normalizedStandards = standards.map(standard => ({
+        inspection_item_id: standard.inspection_item_id || '',
+        category: standard.category || '',
+        equipment: standard.equipment || '',
+        item: standard.item || '',
+        criteria: standard.criteria || '',
+        measurementRecord: standard.measurementRecord || '',
+        minValue: standard.minValue || '',
+        maxValue: standard.maxValue || ''
+      }));
+
       // CSVとして保存
-      const csv = Papa.unparse(standards);
+      const csv = Papa.unparse(normalizedStandards);
       await fs.promises.writeFile(tablePath, csv);
 
       res.json({ message: '基準値を保存しました' });

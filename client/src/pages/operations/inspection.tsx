@@ -544,12 +544,10 @@ export default function InspectionPage() {
                               <td className="p-1 text-xs">{item.criteria}</td>
                               <td className="p-1 text-xs">{item.method}</td>
                               <td className="p-1 text-xs">
-                                <div className="space-y-1 relative">
-                                  {item.standardMin && item.standardMax ? (
-                                    <div className="text-xs text-gray-500 mb-1 border-b pb-1">
-                                      基準値: {item.standardMin} ～ {item.standardMax}
-                                    </div>
-                                  ) : null}
+                                <div className="grid grid-cols-1 gap-1">
+                                  <div className="text-xs text-gray-500">
+                                    {item.standardMin && item.standardMax ? `基準値: ${item.standardMin}～${item.standardMax}` : ""}
+                                  </div>
                                   <div className="flex items-center gap-2">
                                     <Input
                                       type="number"
@@ -573,7 +571,7 @@ export default function InspectionPage() {
                                      item.measurementRecord &&
                                      (parseFloat(item.measurementRecord) < parseFloat(item.standardMin) || 
                                       parseFloat(item.measurementRecord) > parseFloat(item.standardMax)) && (
-                                      <div className="text-red-500 text-xs absolute -bottom-5">
+                                      <div className="text-red-500 text-xs">
                                         調整が必要です！
                                       </div>
                                     )} 

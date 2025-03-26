@@ -1002,7 +1002,6 @@ export function registerRoutes(app: Express): Server {
     try {
       const { standard } = req.body;
       const tablePath = path.join(process.cwd(), 'attached_assets/inspection/table/measurement_standards.csv');
-      const refPath = path.join(process.cwd(), 'attached_assets/Reference value/measurement_standards.csv');
 
       // 既存のデータを読み込むか、新規作成
       let standards = [];
@@ -1011,23 +1010,22 @@ export function registerRoutes(app: Express): Server {
         standards = Papa.parse(content, { header: true }).data;
       }
 
-      // 既存の項目を更新するか、新規追加
+      // inspection_item_idで既存の項目を検索
       const existingIndex = standards.findIndex(s => 
-        s.category === standard.category && 
-        s.equipment === standard.equipment && 
-        s.item === standard.item
+        s.inspection_item_id === standard.inspection_item_id
       );
 
       if (existingIndex >= 0) {
+        // 既存の項目を更新
         standards[existingIndex] = standard;
       } else {
+        // 新規追加
         standards.push(standard);
       }
 
       // CSVとして保存
       const csv = Papa.unparse(standards);
       await fs.promises.writeFile(tablePath, csv);
-      await fs.promises.writeFile(refPath, csv); 
 
       res.json({ message: '基準値を保存しました' });
     } catch (error) {

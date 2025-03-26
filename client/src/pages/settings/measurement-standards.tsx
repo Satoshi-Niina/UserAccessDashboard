@@ -200,13 +200,23 @@ interface InspectionItem {
     });
 
     try {
+      const targetItem = updatedItems.find(item => item.id === editingItemId);
       const response = await fetch('/api/measurement-standards', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          standard: updatedItems.find(item => item.id === editingItemId)
+          standard: {
+            inspection_item_id: editingItemId,
+            category: targetItem.category,
+            equipment: targetItem.equipment,
+            item: targetItem.item,
+            criteria: targetItem.criteria,
+            measurementRecord: targetItem.measurementRecord,
+            minValue: minValue,
+            maxValue: maxValue
+          }
         }),
       });
 

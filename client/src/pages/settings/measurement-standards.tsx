@@ -184,8 +184,8 @@ interface InspectionItem {
     setIsEditDialogOpen(true);
   };
 
-  // 基準値を保存する
-  const saveStandardValues = async () => {
+  // ダイアログでの基準値保存（一覧表示用）
+  const saveStandardValues = () => {
     if (editingItemId === null) return;
 
     const updatedItems = inspectionItems.map(item => {
@@ -199,24 +199,46 @@ interface InspectionItem {
       return item;
     });
 
+    setInspectionItems(updatedItems);
+    setIsEditDialogOpen(false);
+    toast({
+      title: "基準値を更新しました",
+      description: "項目の基準値が更新されました",
+    });
+  };
+
+  // 全項目の基準値を一括保存
+  const saveAllStandardValues = async () => {
     try {
-      const targetItem = updatedItems.find(item => item.id === editingItemId);
+      const standardsToSave = inspectionItems
+        .filter(item => item.minValue || item.maxValue)
+        .map(item => ({
+          inspection_item_id: item.id,
+          category: item.category || "",
+          equipment: item.equipment || "",
+          item: item.item || "",
+          criteria: item.criteria || "",
+          measurementRecord: item.measurementRecord || "",
+          minValue: item.minValue || "",
+          maxValue: item.maxValue || ""
+        }));
+
+      if (standardsToSave.length === 0) {
+        toast({
+          title: "保存するデータがありません",
+          description: "基準値が入力されている項目がありません",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const response = await fetch('/api/measurement-standards', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          standard: {
-            inspection_item_id: editingItemId,
-            category: targetItem.category,
-            equipment: targetItem.equipment,
-            item: targetItem.item,
-            criteria: targetItem.criteria,
-            measurementRecord: targetItem.measurementRecord,
-            minValue: minValue,
-            maxValue: maxValue
-          }
+          standards: standardsToSave
         }),
       });
 

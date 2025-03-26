@@ -950,25 +950,15 @@ export function registerRoutes(app: Express): Server {
   app.post('/api/measurement-standards', async (req, res) => {
     try {
       const { standards } = req.body;
-      const tablePath = path.join(process.cwd(), 'attached_assets/inspection/table/measurement_standards.csv');
+      if (!standards || !Array.isArray(standards)) {
+        throw new Error('Invalid data format');
+      }
 
-      // ディレクトリが存在しない場合は作成
+      const tablePath = path.join(process.cwd(), 'attached_assets/inspection/table/measurement_standards.csv');
       await fs.promises.mkdir(path.dirname(tablePath), { recursive: true });
 
-      // データを正規化
-      const normalizedStandards = standards.map(standard => ({
-        inspection_item_id: standard.inspection_item_id || '',
-        category: standard.category || '',
-        equipment: standard.equipment || '',
-        item: standard.item || '',
-        criteria: standard.criteria || '',
-        measurementRecord: standard.measurementRecord || '',
-        minValue: standard.minValue || '',
-        maxValue: standard.maxValue || ''
-      }));
-
       // CSVとして保存
-      const csv = Papa.unparse(normalizedStandards);
+      const csv = Papa.unparse(standards);
       await fs.promises.writeFile(tablePath, csv);
 
       res.json({ message: '基準値を保存しました' });
@@ -1005,13 +995,13 @@ export function registerRoutes(app: Express): Server {
       if (standard) {
         const tablePath = path.join(process.cwd(), 'attached_assets/inspection/table/measurement_standards.csv');
         let existingStandards = [];
-        
+
         // 既存のデータを読み込む
         if (fs.existsSync(tablePath)) {
           const content = await fs.promises.readFile(tablePath, 'utf8');
           existingStandards = Papa.parse(content, { header: true }).data;
         }
-        
+
         // 既存の項目を更新または新規追加
         const index = existingStandards.findIndex(s => s.inspection_item_id === standard.inspection_item_id);
         if (index !== -1) {
@@ -1019,14 +1009,14 @@ export function registerRoutes(app: Express): Server {
         } else {
           existingStandards.push(standard);
         }
-        
+
         // ディレクトリ作成
         await fs.promises.mkdir(path.dirname(tablePath), { recursive: true });
-        
+
         // 保存
         const csv = Papa.unparse(existingStandards);
         await fs.promises.writeFile(tablePath, csv);
-        
+
         return res.json({ message: '基準値を保存しました' });
       }
 

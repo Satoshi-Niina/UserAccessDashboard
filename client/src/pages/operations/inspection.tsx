@@ -544,11 +544,11 @@ export default function InspectionPage() {
                               <td className="p-1 text-xs">{item.criteria}</td>
                               <td className="p-1 text-xs">{item.method}</td>
                               <td className="p-1 text-xs">
-                                <div className="grid grid-cols-1 gap-1">
+                                <div className="space-y-2">
                                   <div className="text-xs text-gray-500">
                                     {item.standardMin && item.standardMax ? `基準値: ${item.standardMin}～${item.standardMax}` : ""}
                                   </div>
-                                  <div className="flex items-center gap-2">
+                                  <div className="relative">
                                     <Input
                                       type="number"
                                       value={item.measurementRecord || ''}
@@ -571,14 +571,10 @@ export default function InspectionPage() {
                                      item.measurementRecord &&
                                      (parseFloat(item.measurementRecord) < parseFloat(item.standardMin) || 
                                       parseFloat(item.measurementRecord) > parseFloat(item.standardMax)) && (
-                                      <div className="text-red-500 text-xs">
+                                      <div className="text-red-500 text-xs mt-1">
                                         調整が必要です！
                                       </div>
                                     )} 
-                                     {(Number(item.measurementRecord) < Number(item.standardMin) || 
-                                      Number(item.measurementRecord) > Number(item.standardMax)) && (
-                                      <span className="text-red-500 text-xs">調整が必要です！</span>
-                                    )}
                                   </div>
                                 </div>
                               </td>

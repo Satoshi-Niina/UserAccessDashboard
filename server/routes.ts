@@ -1000,28 +1000,8 @@ export function registerRoutes(app: Express): Server {
   // 基準値を保存
   app.post('/api/measurement-standards', async (req, res) => {
     try {
-      const { standard } = req.body;
+      const { standards } = req.body;
       const tablePath = path.join(process.cwd(), 'attached_assets/inspection/table/measurement_standards.csv');
-
-      // 既存のデータを読み込むか、新規作成
-      let standards = [];
-      if (fs.existsSync(tablePath)) {
-        const content = await fs.promises.readFile(tablePath, 'utf8');
-        standards = Papa.parse(content, { header: true }).data;
-      }
-
-      // inspection_item_idで既存の項目を検索
-      const existingIndex = standards.findIndex(s => 
-        s.inspection_item_id === standard.inspection_item_id
-      );
-
-      if (existingIndex >= 0) {
-        // 既存の項目を更新
-        standards[existingIndex] = standard;
-      } else {
-        // 新規追加
-        standards.push(standard);
-      }
 
       // CSVとして保存
       const csv = Papa.unparse(standards);

@@ -243,20 +243,8 @@ interface InspectionItem {
 
   // 基準値テーブルに保存する
   const saveToStandardsTable = () => {
-    setIsSaveDialogOpen(true);
-    // デフォルトのファイル名を設定
-    const date = new Date();
-    const dateStr = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
-    setSaveFileName(`測定基準値_${dateStr}.csv`);
-  };
-
-  // ファイルに保存する処理
-  const saveToFile = () => {
-    // 保存対象のデータを準備（基準値が入力されている項目のみ）
     const dataToSave = inspectionItems.filter(item => item.minValue || item.maxValue).map(item => ({
-      manufacturer: item.manufacturer || "",
-      model: item.model || "",
-      engineType: item.engineType || "",
+      inspection_item_id: item.id,
       category: item.category || "",
       equipment: item.equipment || "",
       item: item.item || "",
@@ -272,20 +260,17 @@ interface InspectionItem {
         description: "基準値が入力されている項目がありません",
         variant: "destructive",
       });
-      setIsSaveDialogOpen(false);
       return;
     }
 
     // APIを呼び出してデータを保存
-    fetch('/api/save-inspection-data', {
+    fetch('/api/measurement-standards', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        sourceFileName: selectedFile,
-        data: dataToSave,
-        fileName: saveFileName,
+        standards: dataToSave
       }),
     })
       .then(response => {
@@ -297,9 +282,8 @@ interface InspectionItem {
       .then(data => {
         toast({
           title: "保存完了",
-          description: `基準値が ${data.fileName} に保存されました`,
+          description: "基準値が保存されました",
         });
-        setIsSaveDialogOpen(false);
       })
       .catch(error => {
         console.error('保存エラー:', error);
@@ -563,32 +547,7 @@ interface InspectionItem {
         </DialogContent>
       </Dialog>
 
-      {/* 保存ダイアログ */}
-      <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>基準値テーブルの保存</DialogTitle>
-            <DialogDescription>
-              保存するファイル名を入力してください
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="fileName">ファイル名</Label>
-              <Input
-                id="fileName"
-                value={saveFileName}
-                onChange={(e) => setSaveFileName(e.target.value)}
-                placeholder="例: 測定基準値_20240101.csv"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsSaveDialogOpen(false)}>キャンセル</Button>
-            <Button onClick={saveToFile}>保存</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      
     </div>
   );
 }

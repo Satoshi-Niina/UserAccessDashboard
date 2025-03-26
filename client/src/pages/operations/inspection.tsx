@@ -35,6 +35,8 @@ interface InspectionItem {
   remark?: string;
   isOutOfRange?: boolean;
   model_id?: number;
+  standardMin?: string;
+  standardMax?: string;
 }
 
 const resultOptions = [
@@ -66,22 +68,34 @@ export default function InspectionPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [equipmentFilter, setEquipmentFilter] = useState<string>("all");
   const [resultFilter, setResultFilter] = useState<string>("all");
+  const [standards, setStandards] = useState<{[key: string]: {min: string, max: string}}>();
+
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [manufacturersRes, modelsRes] = await Promise.all([
+        const [manufacturersRes, modelsRes, standardsRes] = await Promise.all([
           fetch('/api/inspection/table/manufacturers'),
-          fetch('/api/inspection/table/models')
+          fetch('/api/inspection/table/models'),
+          fetch('/attached_assets/inspection/table/measurement_standards.csv')
         ]);
 
-        if (!manufacturersRes.ok || !modelsRes.ok) {
+        if (!manufacturersRes.ok || !modelsRes.ok || !standardsRes.ok) {
           throw new Error('データの取得に失敗しました');
         }
 
         const manufacturersData = await manufacturersRes.json();
         const modelsData = await modelsRes.json();
+        const standardsText = await standardsRes.text();
 
+        const standardsData = Papa.parse(standardsText, {header: true, dynamicTyping: true}).data;
+        const standardsMap = {};
+        standardsData.forEach(standard => {
+          const key = `${standard.category}-${standard.equipment}-${standard.item}`;
+          standardsMap[key] = {min: standard.min_value, max: standard.max_value};
+        })
+
+        setStandards(standardsMap);
         setManufacturers(manufacturersData);
         setModels(modelsData.filter(model => 
           !selectedManufacturer || model.manufacturer_id === selectedManufacturer
@@ -111,7 +125,16 @@ export default function InspectionPage() {
 
           // 点検項目を設定
           if (data.inspection_items) {
-            setItems(data.inspection_items);
+            const mergedItems = data.inspection_items.map((item: any) => {
+              const key = `${item.category}-${item.equipment}-${item.item}`;
+              const standard = standards[key];
+              return {
+                ...item,
+                standardMin: standard?.min,
+                standardMax: standard?.max
+              };
+            });
+            setItems(mergedItems);
           }
 
         } catch (error) {
@@ -126,7 +149,7 @@ export default function InspectionPage() {
     };
 
     fetchInspectionItems();
-  }, [machineNumber]);
+  }, [machineNumber, standards]);
 
   useEffect(() => {
     const fetchInspectionItems = async () => {
@@ -141,7 +164,16 @@ export default function InspectionPage() {
             item.manufacturer_id === selectedManufacturer &&
             item.model_id === selectedModel
           );
-          setItems(filteredItems);
+          const mergedItems = filteredItems.map((item: any) => {
+            const key = `${item.category}-${item.equipment}-${item.item}`;
+            const standard = standards[key];
+            return {
+              ...item,
+              standardMin: standard?.min,
+              standardMax: standard?.max
+            };
+          });
+          setItems(mergedItems);
         } catch (error) {
           console.error('点検項目取得エラー:', error);
           toast({
@@ -154,7 +186,7 @@ export default function InspectionPage() {
     };
 
     fetchInspectionItems();
-  }, [selectedManufacturer, selectedModel]);
+  }, [selectedManufacturer, selectedModel, standards]);
 
 
   const updateInspectionResult = (id: number, result: string) => {
@@ -235,7 +267,7 @@ export default function InspectionPage() {
     }
   };
 
-  const updateInspectionMeasurementRecord = (id: number, value: string) => {
+  const handleMeasurementChange = (id: number, value: string) => {
     setItems(
       items.map(item =>
         item.id === id ? { ...item, measurementRecord: value } : item
@@ -504,8 +536,6 @@ export default function InspectionPage() {
                           return true;
                         })
                         .map((item, index) => {
-                          //const standard = findStandardValue(item); //Removed as findStandardValue is not defined and not used anywhere.
-                          //const standardRange = standard ? `${standard.minValue}～${standard.maxValue}` : ''; //Removed due to the removal of the findStandardValue function
                           return (
                             <tr key={item.id} className="border-t">
                               <td className="p-1 text-xs">{item.category}</td>
@@ -515,17 +545,27 @@ export default function InspectionPage() {
                               <td className="p-1 text-xs">{item.method}</td>
                               <td className="p-1 text-xs">
                                 <div className="space-y-1 relative">
-                                  {/*Removed standard check and related code as it's not functioning correctly and findStandardValue is removed.*/}
-                                  <Input
-                                    type="number"
-                                    value={item.measurementRecord || ''}
-                                    onChange={(e) => {
-                                      const value = e.target.value;
-                                      updateInspectionMeasurementRecord(item.id, value);
-                                    }}
-                                    className={`w-full text-xs`}
-                                  />
-                                  {/*Removed isOutOfRange check and warning message as its logic relies on the removed standard check.*/}
+                                  {item.standardMin && item.standardMax ? (
+                                    <div className="text-xs text-gray-500 mb-1">
+                                      基準値: {item.standardMin} ～ {item.standardMax}
+                                    </div>
+                                  ) : null}
+                                  <div className="flex items-center gap-2">
+                                    <Input
+                                      type="number"
+                                      value={item.measurementRecord || ''}
+                                      onChange={(e) => {
+                                        const value = e.target.value;
+                                        handleMeasurementChange(item.id, value);
+                                      }}
+                                      className={`w-full text-xs`}
+                                    />
+                                    {item.standardMin && item.standardMax && item.measurementRecord && 
+                                     (Number(item.measurementRecord) < Number(item.standardMin) || 
+                                      Number(item.measurementRecord) > Number(item.standardMax)) && (
+                                      <span className="text-red-500 text-xs">調整が必要です！</span>
+                                    )}
+                                  </div>
                                 </div>
                               </td>
                               <td className="p-1 text-xs">{item.diagramRecord}</td>

@@ -1,19 +1,14 @@
 {
   "measurementStandards": [
     {
-      "id": 44,
-      "manufacturer": "",
-      "model": "",
-      "engineType": "",
+      "inspection_item_id": 44,
       "category": "制動装置",
       "equipment": "ブレーキシリンダー",
       "item": "ブレーキシリンダー",
       "criteria": "ストローク測定",
-      "method": "60～90mm（ブレーキ約200kpa時）",
       "measurementRecord": "",
-      "diagramRecord": "",
-      "minValue": "60",
-      "maxValue": "90"
+      "minValue": "70",
+      "maxValue": "80"
     },
     {
       "id": 2,

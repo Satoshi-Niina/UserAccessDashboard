@@ -7,8 +7,8 @@
       "item": "ブレーキシリンダー",
       "criteria": "ストローク測定",
       "measurementRecord": "",
-      "minValue": "70",
-      "maxValue": "80"
+      "minValue": "50",
+      "maxValue": "100"
     },
     {
       "id": 2,

@@ -577,7 +577,7 @@ export default function InspectionPage() {
                                         調整が必要です！
                                       </div>
                                     )} 
-                                     (Number(item.measurementRecord) < Number(item.standardMin) || 
+                                     (Number(item.measurementRecord) < Number(standards[item.id]?.minValue) || Number(item.measurementRecord) > Number(standards[item.id]?.maxValue)) ? 
                                       Number(item.measurementRecord) > Number(item.standardMax)) && (
                                       <span className="text-red-500 text-xs">調整が必要です！</span>
                                     )}

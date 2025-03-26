@@ -1001,7 +1001,14 @@ export function registerRoutes(app: Express): Server {
   app.post('/api/measurement-standards', async (req, res) => {
     try {
       const { standards } = req.body;
-      const tablePath = path.join(process.cwd(), 'attached_assets/inspection/table/measurement_standards.csv');
+      if (!standards || !Array.isArray(standards)) {
+        throw new Error('Invalid data format');
+      }
+
+      const tablePath = path.join(process.cwd(), 'attached_assets/inspection/measurement_standards.csv');
+
+      // ディレクトリが存在しない場合は作成
+      await fs.promises.mkdir(path.dirname(tablePath), { recursive: true });
 
       // CSVとして保存
       const csv = Papa.unparse(standards);

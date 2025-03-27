@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { SearchPreview } from '@/components/voice-assistant/SearchPreview';
 import { DetailView } from '@/components/voice-assistant/DetailView';
@@ -8,26 +7,42 @@ import Fuse from 'fuse.js';
 
 export default function VoiceAssistant() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchHistory, setSearchHistory] = useState([]);
 
-  // Fuseで検索を実行する関数
-  const performSearch = (query: string) => {
-    // TODO: 実際のデータを使用して検索ロジックを実装
-    const searchResults = [
-      {
-        title: "サンプル結果1",
-        description: "これは検索結果のサンプルです",
-        imagePath: "/path/to/image1.png"
-      },
-      // 他の検索結果...
-    ];
-    return searchResults;
+  const handleEndSession = async () => {
+    try {
+      // 履歴をサーバーに送信
+      await fetch('/api/support-history', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          history: searchHistory,
+          endTime: new Date().toISOString()
+        })
+      });
+
+      // 履歴をクリアして検索結果をリセット
+      setSearchHistory([]);
+      setSearchResults([]);
+      setSearchQuery('');
+    } catch (error) {
+      console.error('履歴の保存に失敗しました:', error);
+    }
   };
 
-  const handleSearch = () => {
-    const results = performSearch(searchQuery);
-    // 検索結果の処理
+  // 検索実行時に履歴に追加
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+
+    setSearchHistory(prev => [...prev, {
+      query: searchQuery,
+      timestamp: new Date().toISOString()
+    }]);
+
+    // 既存の検索処理...
   };
 
   return (
@@ -35,13 +50,22 @@ export default function VoiceAssistant() {
       {/* 左側の検索エリア */}
       <div className="w-1/2 p-4 border-r">
         <div className="mb-4">
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="検索キーワードを入力..."
-            className="mb-2"
-          />
-          <Button onClick={handleSearch}>検索</Button>
+          <div className="flex gap-2">
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="検索キーワードを入力"
+              className="flex-1"
+            />
+            <Button onClick={handleSearch}>検索</Button>
+            <Button 
+              variant="outline" 
+              onClick={handleEndSession}
+              className="bg-red-50 hover:bg-red-100 text-red-600"
+            >
+              終了
+            </Button>
+          </div>
         </div>
       </div>
 

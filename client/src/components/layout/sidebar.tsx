@@ -33,7 +33,7 @@ type MenuItem = {
 
 const menuItems: MenuItem[] = [
   { icon: Home, label: "ホーム", href: "/" },
-  { icon: Mic, label: "技術支援サポート", href: "/voice-assistant" },
+  { icon: Mic, label: "緊急サポート", href: "/voice-assistant" },
   {
     icon: ClipboardCheck,
     label: "運用管理",
@@ -50,7 +50,7 @@ const menuItems: MenuItem[] = [
     href: "/settings",
     adminOnly: true,
     subItems: [
-      { icon: Database, label: "技術支援データ処理", href: "/settings/tech-support-data" },
+      { icon: Database, label: "緊急サポートデータ処理", href: "/settings/tech-support-data" },
       { icon: List, label: "点検項目管理", href: "/settings/inspection-items" }, // Changed label here
       { icon: BarChart2, label: "測定基準値設定", href: "/settings/measurement-standards" },
       { icon: List, label: "点検実績管理", href: "/settings/inspection-records" }, // Added Inspection Records

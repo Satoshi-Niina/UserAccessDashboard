@@ -26,3 +26,17 @@
     "source": "test_doc.pptx"
   }
 }
+[
+  {
+    title: "エンジンの異音",
+    description: "オイルの量と劣化を点検します。",
+    type: "image",
+    source: "/attached_assets/images/test_slide_1.png"
+  },
+  {
+    title: "燃料系統の確認",
+    description: "フィルターの詰まり、燃料圧を点検します。",
+    type: "image",
+    source: "/attached_assets/images/test_slide_2.png"
+  }
+]

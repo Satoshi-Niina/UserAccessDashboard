@@ -281,6 +281,41 @@ export default function InspectionItems() {
                     )}
                   </Droppable>
                 </Table>
+
+                {/* 点検項目編集画面の保存・キャンセルボタン */}
+                <div className="flex justify-end gap-4 mt-4">
+                  <Button variant="outline" onClick={() => {
+                    if (window.confirm("編集をキャンセルしますか？")) {
+                      window.location.href = '/';
+                    }
+                  }}>
+                    キャンセル
+                  </Button>
+                  <Button onClick={async () => {
+                    try {
+                      const response = await fetch('/api/inspection-items', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(items)
+                      });
+
+                      if (!response.ok) throw new Error('保存に失敗しました');
+
+                      toast({
+                        title: "成功",
+                        description: "点検項目が保存されました",
+                      });
+                    } catch (error) {
+                      toast({
+                        title: "エラー",
+                        description: "保存に失敗しました",
+                        variant: "destructive"
+                      });
+                    }
+                  }}>
+                    保存
+                  </Button>
+                </div>
               </DragDropContext>
             </div>
           </div>
@@ -392,6 +427,42 @@ export default function InspectionItems() {
                 ))}
               </TableBody>
             </Table>
+
+            {/* テーブル編集画面の保存・キャンセルボタン */}
+            <div className="flex justify-end gap-4 mt-4">
+              <Button variant="outline" onClick={() => {
+                if (window.confirm("編集をキャンセルしますか？")) {
+                  window.location.href = '/';
+                }
+              }}>
+                キャンセル
+              </Button>
+              <Button onClick={async () => {
+                try {
+                  const endpoint = `/api/${selectedTable}`;
+                  const response = await fetch(endpoint, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(tableData)
+                  });
+
+                  if (!response.ok) throw new Error('保存に失敗しました');
+
+                  toast({
+                    title: "成功",
+                    description: "データが保存されました",
+                  });
+                } catch (error) {
+                  toast({
+                    title: "エラー",
+                    description: "保存に失敗しました",
+                    variant: "destructive"
+                  });
+                }
+              }}>
+                保存
+              </Button>
+            </div>
           </div>
         </TabsContent>
       </Tabs>

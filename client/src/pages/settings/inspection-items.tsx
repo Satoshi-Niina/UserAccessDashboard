@@ -428,11 +428,11 @@ export default function InspectionItems() {
               </TableBody>
             </Table>
 
-            {/* テーブル編集画面の保存・キャンセルボタン */}
-            <div className="flex justify-end gap-4 mt-4">
+            {/* テーブル編集画面のボタン */}
+            <div className="flex justify-end gap-4 mb-4">
               <Button variant="outline" onClick={() => {
-                if (window.confirm("編集をキャンセルしますか？")) {
-                  window.location.href = '/';
+                if (window.confirm("テーブル編集をキャンセルしますか？")) {
+                  setActiveTab("items");
                 }
               }}>
                 キャンセル

@@ -403,53 +403,72 @@ export default function InspectionItems() {
           </DialogHeader>
           {editItem && (
             <div className="space-y-4">
-              {editItem.number ? (
+              {selectedTable === 'manufacturers' && (
+                <div>
+                  <label>メーカー名</label>
+                  <Input
+                    value={editItem.name}
+                    onChange={(e) => setEditItem({ ...editItem, name: e.target.value })}
+                  />
+                </div>
+              )}
+              
+              {selectedTable === 'models' && (
+                <>
+                  <div>
+                    <label>機種名</label>
+                    <Input
+                      value={editItem.name}
+                      onChange={(e) => setEditItem({ ...editItem, name: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label>製造メーカー</label>
+                    <Select 
+                      value={editItem.manufacturer_id} 
+                      onValueChange={(value) => setEditItem({ ...editItem, manufacturer_id: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="製造メーカーを選択" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {manufacturers.map(manufacturer => (
+                          <SelectItem key={manufacturer.id} value={manufacturer.id}>
+                            {manufacturer.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+
+              {selectedTable === 'machine_numbers' && (
                 <>
                   <div>
                     <label>機械番号</label>
-                    <Input value={editItem.number} onChange={(e) => setEditItem({ ...editItem, number: e.target.value })} />
-                  </div>
-                  <div>
-                    <label>機種ID</label>
-                    <Input value={editItem.model_id} onChange={(e) => setEditItem({ ...editItem, model_id: e.target.value })} />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div>
-                    <label>部位</label>
                     <Input
-                      value={editItem.category}
-                      onChange={(e) => setEditItem({ ...editItem, category: e.target.value })}
+                      value={editItem.number}
+                      onChange={(e) => setEditItem({ ...editItem, number: e.target.value })}
                     />
                   </div>
                   <div>
-                    <label>装置</label>
-                    <Input
-                      value={editItem.equipment}
-                      onChange={(e) => setEditItem({ ...editItem, equipment: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <label>確認箇所</label>
-                    <Input
-                      value={editItem.item}
-                      onChange={(e) => setEditItem({ ...editItem, item: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <label>判断基準</label>
-                    <Input
-                      value={editItem.criteria}
-                      onChange={(e) => setEditItem({ ...editItem, criteria: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <label>確認要領</label>
-                    <Input
-                      value={editItem.method}
-                      onChange={(e) => setEditItem({ ...editItem, method: e.target.value })}
-                    />
+                    <label>機種</label>
+                    <Select 
+                      value={editItem.model_id} 
+                      onValueChange={(value) => setEditItem({ ...editItem, model_id: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="機種を選択" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {models.map(model => (
+                          <SelectItem key={model.id} value={model.id}>
+                            {model.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </>
               )}

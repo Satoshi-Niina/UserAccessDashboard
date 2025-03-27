@@ -432,9 +432,12 @@ export default function InspectionItems() {
                       </SelectTrigger>
                       <SelectContent>
                         {manufacturers.map(manufacturer => (
-                          <SelectItem key={manufacturer.id} value={manufacturer.id}>
-                            {manufacturer.name}
-                          </SelectItem>
+                          <SelectItem 
+                          key={manufacturer.id} 
+                          value={manufacturer.id || 'no-id'}
+                        >
+                            {manufacturer.name || '(名称未設定)'}
+                        </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

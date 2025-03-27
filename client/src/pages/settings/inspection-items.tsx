@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -214,10 +215,10 @@ export default function InspectionItems() {
                     <SelectItem value="all">すべて</SelectItem>
                     {models
                       .filter(model => !selectedManufacturerState || selectedManufacturerState === "all" || model.manufacturer_id === selectedManufacturerState)
-                      .filter(model => model && model.name && typeof model.name === 'string')
                       .map(model => (
-                        <SelectItem key={model.id} value={model.id}>
-                          {model.name.trim() || '(名称なし)'}
+                        <SelectItem key={model.id} value={model.id || 'default_value'}>
+                          {model.name && typeof model.name === 'string' ? model.name.trim() : '(名称なし)'}
+
                         </SelectItem>
                       ))}
                   </SelectGroup>
@@ -479,91 +480,6 @@ export default function InspectionItems() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      <div className="fixed bottom-4 right-4 space-x-2">
-        {activeTab === "items" ? (
-          <>
-            <Button
-              onClick={async () => {
-                try {
-                  await fetch('/api/save-inspection-items', {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ items }),
-                  });
-                  toast({
-                    title: "保存完了",
-                    description: "点検項目が正常に保存されました",
-                  });
-                  setIsModified(false);
-                } catch (error) {
-                  toast({
-                    title: "エラー",
-                    description: "保存中にエラーが発生しました",
-                    variant: "destructive",
-                  });
-                }
-              }}
-              disabled={!isModified}
-            >
-              保存
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                if (isModified) {
-                  if (confirm("変更内容が失われますが、よろしいですか？")) {
-                    navigate("/");
-                  }
-                } else {
-                  navigate("/");
-                }
-              }}
-            >
-              キャンセル
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button
-              onClick={async () => {
-                try {
-                  await fetch(`/api/save-${selectedTable}`, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ data: tableData }),
-                  });
-                  toast({
-                    title: "保存完了",
-                    description: "データが正常に保存されました",
-                  });
-                  setActiveTab("items");
-                } catch (error) {
-                  toast({
-                    title: "エラー",
-                    description: "保存中にエラーが発生しました",
-                    variant: "destructive",
-                  });
-                }
-              }}
-            >
-              完了
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setActiveTab("items");
-              }}
-            >
-              戻る
-            </Button>
-          </>
-        )}
-      </div>
     </div>
   );
 }

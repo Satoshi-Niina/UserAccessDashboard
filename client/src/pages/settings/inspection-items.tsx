@@ -480,23 +480,55 @@ export default function InspectionItems() {
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
               キャンセル
             </Button>
-            <Button onClick={() => {
-              if (editItem.number) {
-                const newMachineNumbers = editItem.id
-                  ? machineNumbers.map(machine => machine.id === editItem.id ? editItem : machine)
-                  : [...machineNumbers, { ...editItem, id: (machineNumbers.length + 1).toString() }];
-                setMachineNumbers(newMachineNumbers);
-                setIsModified(true); //Set modified flag after edit
-              } else {
-                const newItems = items.map(item =>
+            <Button onClick={async () => {
+              try {
+                if (selectedTable === 'manufacturers') {
+                  const response = await fetch('/api/manufacturers', {
+                    method: editItem.id ? 'PUT' : 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(editItem)
+                  });
+                  if (!response.ok) throw new Error('保存に失敗しました');
+                } else if (selectedTable === 'models') {
+                  const response = await fetch('/api/models', {
+                    method: editItem.id ? 'PUT' : 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(editItem)
+                  });
+                  if (!response.ok) throw new Error('保存に失敗しました');
+                } else if (selectedTable === 'machine_numbers') {
+                  const response = await fetch('/api/machineNumbers', {
+                    method: editItem.id ? 'PUT' : 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(editItem)
+                  });
+                  if (!response.ok) throw new Error('保存に失敗しました');
+                }
+
+                // テーブルデータを更新
+                const updatedData = tableData.map(item => 
                   item.id === editItem.id ? editItem : item
                 );
-                setItems(newItems);
-                setIsModified(true); //Set modified flag after edit
+                if (!editItem.id) {
+                  updatedData.push(editItem);
+                }
+                setTableData(updatedData);
+
+                toast({
+                  title: "成功",
+                  description: "データを保存しました",
+                });
+                setIsEditDialogOpen(false);
+              } catch (error) {
+                console.error('保存エラー:', error);
+                toast({
+                  title: "エラー",
+                  description: "保存に失敗しました",
+                  variant: "destructive"
+                });
               }
-              setIsEditDialogOpen(false);
             }}>
-              完了
+              保存
             </Button>
           </DialogFooter>
         </DialogContent>

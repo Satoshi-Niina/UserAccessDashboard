@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import Fuse from 'fuse.js';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mic, Send, X, Camera, Pause, StopCircle, Play, UploadCloud, Circle } from "lucide-react";
+import { Mic, Send, X, Pause, StopCircle, Play, UploadCloud, Circle } from "lucide-react";
 
 // 型定義
 type SearchResult = {
@@ -26,13 +26,13 @@ export default function VoiceAssistant() {
   const [fuse, setFuse] = useState<Fuse<any>>();
   const [selectedResult, setSelectedResult] = useState<SearchResult | null>(null);
 
-  const videoRef = useRef<HTMLVideoElement | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const response = await fetch('/api/tech-support/search-data');
+        const endpoint = import.meta.env.VITE_API_ENDPOINT || '/api/tech-support/search-data';
+        const response = await fetch(endpoint);
         const data = await response.json();
         setSearchData(data);
         const fuseOptions = {
@@ -76,9 +76,6 @@ export default function VoiceAssistant() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       mediaStreamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
       console.log("📷 カメラが起動しました");
     } catch (err) {
       console.error("カメラの起動に失敗しました", err);
@@ -87,9 +84,6 @@ export default function VoiceAssistant() {
 
   const stopCamera = () => {
     mediaStreamRef.current?.getTracks().forEach(track => track.stop());
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
     console.log("📷 カメラを停止しました");
   };
 
@@ -199,8 +193,6 @@ export default function VoiceAssistant() {
             <Button variant={mode === 'photo' ? 'default' : 'outline'} onClick={() => setMode('photo')}>📷 写真</Button>
             <Button variant={mode === 'video' ? 'default' : 'outline'} onClick={() => setMode('video')}>🎥 動画</Button>
           </div>
-
-
 
           {mode === 'photo' ? (
             <div className="flex flex-col items-center">

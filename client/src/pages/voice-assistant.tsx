@@ -205,6 +205,14 @@ export default function VoiceAssistant() {
                       setInputText(message.content);
                     }
                   }}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    if (message.isUser) {
+                      if (confirm('このメッセージを削除しますか？')) {
+                        setMessages(prev => prev.filter((_, i) => i !== index));
+                      }
+                    }
+                  }}
                 >
                   <p>{message.content}</p>
                   {!message.isUser && message.results && (

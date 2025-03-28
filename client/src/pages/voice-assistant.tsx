@@ -31,22 +31,15 @@ export default function VoiceAssistant() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const endpoint = import.meta.env.VITE_API_ENDPOINT || '/api/tech-support/search-data';
-        const response = await fetch(endpoint);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        if (!Array.isArray(data)) {
-          throw new Error('Invalid data format received');
-        }
-        setSearchData(data);
+        const data = await fetch('/attached_assets/data/extracted_data.json').then(res => res.json());
+        const slides = data.slides || [];
+        setSearchData(slides);
         const fuseOptions = {
-          keys: ['本文', 'ノート', '画像テキスト.テキスト'],
+          keys: ['本文', 'ノート', '画像テキスト'],
           threshold: 0.3,
           includeMatches: true
         };
-        setFuse(new Fuse(data, fuseOptions));
+        setFuse(new Fuse(slides, fuseOptions));
       } catch (error) {
         console.error('Error loading search data:', error);
       }

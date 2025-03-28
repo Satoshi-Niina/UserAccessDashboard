@@ -49,12 +49,15 @@ export default function VoiceAssistant() {
 
         // Fuse用のキーを設定
         const fuseKeys = ['ノート', '本文', '画像テキスト'];
-          else if (Array.isArray(value) && value.length > 0) {
-            if (typeof value[0] === 'string') fuseKeys.push(key);
-            else if (typeof value[0] === 'object') {
-              Object.keys(value[0]).forEach(subKey => {
-                fuseKeys.push(`${key}.${subKey}`);
-              });
+        
+        // 追加のキーを検索
+        if (processedData.length > 0) {
+          const sample = processedData[0];
+          for (const key in sample) {
+            if (typeof sample[key] === 'string') {
+              if (!fuseKeys.includes(key)) {
+                fuseKeys.push(key);
+              }
             }
           }
         }

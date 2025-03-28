@@ -18,7 +18,9 @@ export const SlidePreview: React.FC<SlidePreviewProps> = ({
 }) => {
   return (
     <div className="border rounded-lg p-2 hover:shadow-lg transition-shadow">
-      <div className="text-sm text-gray-500 mb-1">スライド {slideNumber}</div>
+      <div className="text-sm text-gray-500 mb-1">
+        {title ? `${title} (スライド ${slideNumber})` : `スライド ${slideNumber}`}
+      </div>
       {imagePath && (
         <div className="mb-4">
           <img 

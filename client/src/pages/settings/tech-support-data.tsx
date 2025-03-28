@@ -213,7 +213,7 @@ function TechSupportData() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">緊急サポートデータ処理</h2> {/* Changed Title */}
+        <h2 className="text-xl font-semibold">応急対応サポートデータ処理</h2> {/* Changed Title */}
         <div className="flex space-x-2">
           <Button variant="outline" onClick={handleBack} className="flex items-center gap-1">
             <ArrowLeft className="h-4 w-4" />
@@ -227,7 +227,7 @@ function TechSupportData() {
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>緊急サポートデータ処理</CardTitle> {/* Changed Title */}
+          <CardTitle>応急対応サポートデータ処理</CardTitle> {/* Changed Title */}
           <CardDescription>
             PowerPointまたはExcelファイルをアップロードして、画像とテキストに分割します。
           </CardDescription>

@@ -208,17 +208,24 @@ export default function VoiceAssistant() {
                 >
                   <p>{message.content}</p>
                   {!message.isUser && message.results && (
-                    <div className="mt-2 space-y-2">
+                    <div className="mt-2 grid grid-cols-2 gap-2">
                       {message.results.map((result, idx) => (
-                        <div key={idx} className="border rounded p-2">
-                          <p>{result.content}</p>
-                          {result.type === 'image' && (
-                            <img
-                              src={result.source}
-                              alt={result.content}
-                              className="mt-2 max-w-full h-auto cursor-pointer"
-                              onClick={() => setSelectedResult(result)}
-                            />
+                        <div 
+                          key={idx} 
+                          className="border rounded p-2 cursor-pointer hover:bg-gray-50"
+                          onClick={() => setSelectedResult(result)}
+                        >
+                          {result.type === 'image' ? (
+                            <div className="space-y-2">
+                              <img
+                                src={result.source}
+                                alt={result.content}
+                                className="w-full h-32 object-cover rounded"
+                              />
+                              <p className="text-sm truncate">{result.content}</p>
+                            </div>
+                          ) : (
+                            <p>{result.content}</p>
                           )}
                         </div>
                       ))}
@@ -306,16 +313,33 @@ export default function VoiceAssistant() {
       </div>
 
       {selectedResult && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-4 rounded shadow-md max-w-lg w-full relative">
-            <button
-              className="absolute top-2 right-2 text-gray-600 hover:text-black"
-              onClick={() => setSelectedResult(null)}
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <img src={selectedResult.source} alt={selectedResult.content} className="w-full h-auto mb-4" />
-            <p className="text-sm text-gray-700 whitespace-pre-line">{selectedResult.content}</p>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full relative overflow-hidden">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h3 className="text-lg font-semibold">詳細表示</h3>
+              <button
+                className="text-gray-500 hover:text-gray-700 transition-colors"
+                onClick={() => setSelectedResult(null)}
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-4 grid md:grid-cols-2 gap-4">
+              {selectedResult.type === 'image' && (
+                <div className="relative">
+                  <img 
+                    src={selectedResult.source} 
+                    alt={selectedResult.content} 
+                    className="w-full h-auto rounded-lg"
+                  />
+                </div>
+              )}
+              <div className={selectedResult.type === 'image' ? '' : 'md:col-span-2'}>
+                <p className="text-gray-700 whitespace-pre-line leading-relaxed">
+                  {selectedResult.content}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       )}

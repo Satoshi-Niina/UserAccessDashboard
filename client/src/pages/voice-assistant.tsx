@@ -38,14 +38,17 @@ export default function VoiceAssistant() {
           throw new Error(`HTTPエラー: ${response.status}`);
         }
         const data = await response.json();
-        const processedData = data.slides || [];
+        
+        // データ構造を確認して適切に処理
+        const processedData = Array.isArray(data) ? data : (data.slides || []);
         setSearchData(processedData);
 
-        const fuseKeys: string[] = [];
-        const sample = processedData[0];
-        for (const key in sample) {
-          const value = sample[key];
-          if (typeof value === 'string') fuseKeys.push(key);
+        if (processedData.length === 0) {
+          throw new Error('データが空です');
+        }
+
+        // Fuse用のキーを設定
+        const fuseKeys = ['ノート', '本文', '画像テキスト'];
           else if (Array.isArray(value) && value.length > 0) {
             if (typeof value[0] === 'string') fuseKeys.push(key);
             else if (typeof value[0] === 'object') {
@@ -127,11 +130,13 @@ export default function VoiceAssistant() {
     if (!inputText.trim()) return;
 
     try {
-      if (!fuse) {
-        throw new Error('検索エンジンの初期化に失敗しました');
+      if (!fuse || !searchData.length) {
+        console.error('検索エンジンが準備できていません:', { fuse: !!fuse, dataLength: searchData.length });
+        throw new Error('検索エンジンの準備中です。しばらくお待ちください。');
       }
 
       const results = fuse.search(inputText);
+      console.log('検索結果:', results);
       const searchResults = results.map(result => ({
         content: result.item.ノート || (result.item.本文 ? result.item.本文.join('\n') : ''),
         type: result.item.画像テキスト && result.item.画像テキスト.length > 0 ? 'image' : 'text',

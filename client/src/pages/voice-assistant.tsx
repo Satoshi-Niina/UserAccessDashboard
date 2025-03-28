@@ -214,7 +214,7 @@ export default function VoiceAssistant() {
                     }
                   }}
                 >
-                  <p>{message.content}</p>
+                  <p className="font-bold">{message.content}</p>
                   {!message.isUser && message.results && (
                     <div className="mt-2 grid grid-cols-2 gap-2">
                       {message.results
@@ -338,7 +338,7 @@ export default function VoiceAssistant() {
                 </div>
               )}
               <div className={selectedResult.type === 'image' ? '' : 'md:col-span-2'}>
-                <p className="text-gray-700 whitespace-pre-line leading-relaxed">
+                <p className="text-gray-700 whitespace-pre-line leading-relaxed font-bold">
                   {selectedResult.content}
                 </p>
               </div>

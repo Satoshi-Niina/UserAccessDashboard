@@ -6,8 +6,13 @@ import * as xml2js from 'xml2js';
 
 // PowerPointファイルからコンテンツを抽出
 export async function extractPptxContent(filePath: string, imagesDir: string, timestamp: number) {
-  const content = fs.readFileSync(filePath);
-  const zip = new PizZip(content);
+  try {
+    const content = fs.readFileSync(filePath);
+    const zip = new PizZip(content);
+    
+    if (!zip.files || Object.keys(zip.files).length === 0) {
+      throw new Error('PPTXファイルの解析に失敗しました');
+    }
   
   // テキストデータを格納するオブジェクト
   const textData = {

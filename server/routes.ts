@@ -708,10 +708,17 @@ export function registerRoutes(app: Express): Server {
       return res.status(401).json({ error: "認証が必要です" });
     }
 
+    // タイムアウトの延長
+    req.setTimeout(300000); // 5分
+    res.setTimeout(300000); // 5分
+
     const multer = require('multer');
     const upload = multer({ 
       storage: multer.memoryStorage(),
-      limits: { fileSize: 50 * 1024 * 1024 } 
+      limits: { 
+        fileSize: 50 * 1024 * 1024,
+        fieldSize: 50 * 1024 * 1024 
+      } 
     }).single('file');
 
     upload(req, res, async function(err) {

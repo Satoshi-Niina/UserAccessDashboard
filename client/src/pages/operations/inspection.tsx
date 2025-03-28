@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
@@ -35,8 +34,8 @@ interface InspectionItem {
   remark?: string;
   isOutOfRange?: boolean;
   model_id?: number;
-  standardMin?: string;
-  standardMax?: string;
+  standardMin?: number;
+  standardMax?: number;
 }
 
 const resultOptions = ["良好", "不良", "調整", "交換", "補充"];
@@ -62,7 +61,7 @@ export default function InspectionPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [equipmentFilter, setEquipmentFilter] = useState<string>("all");
   const [resultFilter, setResultFilter] = useState<string>("all");
-  const [standards, setStandards] = useState<{[key: string]: {min: string, max: string}}>({});
+  const [standards, setStandards] = useState<{[key: string]: {min: number, max: number}}>({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -257,9 +256,21 @@ export default function InspectionPage() {
 
   const handleMeasurementChange = (id: number, value: string) => {
     setItems(
-      items.map(item =>
-        item.id === id ? { ...item, measurementRecord: value } : item
-      )
+      items.map(item => {
+        if (item.id === id) {
+          const numValue = Number(value);
+          const isOutOfRange = !isNaN(numValue) && 
+            ((item.standardMin !== undefined && numValue < item.standardMin) ||
+             (item.standardMax !== undefined && numValue > item.standardMax));
+
+          return { 
+            ...item, 
+            measurementRecord: value,
+            isOutOfRange 
+          };
+        }
+        return item;
+      })
     );
   };
 
@@ -523,37 +534,24 @@ export default function InspectionPage() {
                           <TableCell className="p-1 text-xs">{item.method}</TableCell>
                           <TableCell className="p-1 text-xs">
                             <div className="space-y-2">
-                              <div className="text-xs text-gray-600 mb-1">
-                                {item.standardMin && item.standardMax ? `基準値：${item.standardMin}～${item.standardMax}` : ''}
-                              </div>
-                              <div className="relative flex flex-col">
-                                <Input
-                                  type="number"
-                                  value={item.measurementRecord || ''}
-                                  onChange={(e) => {
-                                    const value = e.target.value;
-                                    handleMeasurementChange(item.id, value);
-                                  }}
-                                  className={`w-full text-xs ${
-                                    item.standardMin && 
-                                    item.standardMax && 
-                                    item.measurementRecord &&
-                                    (Number(item.measurementRecord) < Number(item.standardMin) || 
-                                     Number(item.measurementRecord) > Number(item.standardMax)) 
-                                    ? 'border-red-500' 
-                                    : ''
-                                  }`}
-                                />
-                                {item.standardMin && 
-                                 item.standardMax && 
-                                 item.measurementRecord &&
-                                 (Number(item.measurementRecord) < Number(item.standardMin) || 
-                                  Number(item.measurementRecord) > Number(item.standardMax)) && (
-                                  <div className="text-xs text-red-500 mt-1">
-                                    調整が必要です！
-                                  </div>
-                                )}
-                              </div>
+                              {(item.standardMin !== undefined || item.standardMax !== undefined) && (
+                                <div className="text-sm text-gray-500">
+                                  基準値: {item.standardMin !== undefined ? `${item.standardMin}` : ''}
+                                  {item.standardMin !== undefined && item.standardMax !== undefined && ' 〜 '}
+                                  {item.standardMax !== undefined ? `${item.standardMax}` : ''}
+                                </div>
+                              )}
+                              <Input
+                                type="text"
+                                value={item.measurementRecord || ''}
+                                onChange={(e) => handleMeasurementChange(item.id, e.target.value)}
+                                className={`w-full ${item.isOutOfRange ? 'border-red-500' : ''}`}
+                              />
+                              {item.isOutOfRange && (
+                                <div className="text-sm text-red-500">
+                                  調整が必要です！
+                                </div>
+                              )}
                             </div>
                           </TableCell>
                           <TableCell className="p-1 text-xs">{item.diagramRecord}</TableCell>

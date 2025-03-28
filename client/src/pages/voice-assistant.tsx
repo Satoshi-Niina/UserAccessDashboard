@@ -75,11 +75,11 @@ export default function VoiceAssistant() {
       recognition.interimResults = true;
 
       recognition.onresult = (event) => {
-        const transcript = Array.from(event.results)
-          .map(result => result[0])
-          .map(result => result.transcript)
-          .join('');
-        setMessages(prevMessages => [...prevMessages, { content: transcript, isUser: true }]); // 追加
+        const result = event.results[event.results.length - 1];
+        if (result.isFinal) {
+          const transcript = result[0].transcript;
+          setMessages(prevMessages => [...prevMessages, { content: transcript, isUser: true }]);
+        }
       };
 
       recognition.start();
@@ -176,7 +176,15 @@ export default function VoiceAssistant() {
                       ? 'bg-blue-500 text-white cursor-pointer' 
                       : 'bg-gray-100'
                   }`}
-                  onClick={() => message.isUser && setInputText(message.content)}
+                  onClick={() => {
+                    if (message.isUser) {
+                      setInputText(message.content);
+                      const lastMessage = messages[messages.length - 1];
+                      if (lastMessage && lastMessage.content === message.content) {
+                        setMessages(messages.slice(0, -1));
+                      }
+                    }
+                  }}
                 >
                   <p>{message.content}</p>
                   {!message.isUser && message.results && (

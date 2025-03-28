@@ -34,12 +34,9 @@ export default function VoiceAssistant() {
         const data = await fetch('/attached_assets/data/extracted_data.json').then(res => res.json());
         const slides = data.slides || [];
         setSearchData(slides);
+
         const fuseOptions = {
-          keys: [
-            '本文.0',
-            'ノート',
-            'スライド番号'
-          ],
+          keys: ['text', 'slideNumber'], // 新仕様に合わせて修正
           threshold: 0.4,
           includeMatches: true
         };
@@ -51,6 +48,7 @@ export default function VoiceAssistant() {
     loadData();
   }, []);
 
+  
   useEffect(() => {
     if (mode) {
       startCamera();
@@ -114,23 +112,25 @@ export default function VoiceAssistant() {
 
       const results = fuse.search(inputText);
       const searchResults = results.map(result => ({
-        content: result.item.ノート || (result.item.本文 ? result.item.本文.join('\n') : ''),
-        type: result.item.画像テキスト && result.item.画像テキスト.length > 0 ? 'image' : 'text',
-        source: result.item.画像テキスト?.[0]?.画像パス || ''
+        content: result.item.text || '',
+        type: result.item.images?.length > 0 ? 'image' : 'text',
+        source: result.item.images?.[0]?.fileName
+          ? `/attached_assets/images/${result.item.images[0].fileName}`
+          : ''
       }));
-
-      setMessages(prev => [...prev, 
-        { content: "検索結果:", isUser: false, results: searchResults }
-      ]);
-      setInputText("");
-    } catch (error) {
-      console.error('検索エラー:', error);
-      setMessages(prev => [...prev,
-        { content: "検索中にエラーが発生しました。", isUser: false }
-      ]);
-    }
-  };
-
+      setMessages(prev => [
+            ...prev,
+            { content: "検索結果:", isUser: false, results: searchResults }
+          ]);
+          setInputText("");
+        } catch (error) {
+          console.error('検索エラー:', error);
+          setMessages(prev => [
+            ...prev,
+            { content: "検索中にエラーが発生しました。", isUser: false }
+          ]);
+        }
+      };
   const handleCapture = (action: string) => {
     if (mode === 'photo') {
       if (action === 'start') {

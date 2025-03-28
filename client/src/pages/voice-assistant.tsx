@@ -24,20 +24,25 @@ export default function VoiceAssistant() {
   const [mode, setMode] = useState<'photo' | 'video'>('photo');
   const [searchData, setSearchData] = useState<any[]>([]);
   const [fuse, setFuse] = useState<Fuse<any>>();
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedResult, setSelectedResult] = useState<SearchResult | null>(null);
 
   const mediaStreamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
     (async () => {
+      setIsLoading(true);
       try {
-        const data = await fetch('/attached_assets/data/extracted_data.json', { cache: "force-cache" }).then(res => res.json());
-
-        const slides = data.slides || [];
-        setSearchData(slides);
+        const response = await fetch('/attached_assets/data/extracted_data.json');
+        if (!response.ok) {
+          throw new Error(`HTTPエラー: ${response.status}`);
+        }
+        const data = await response.json();
+        const processedData = data.slides || [];
+        setSearchData(processedData);
 
         const fuseKeys: string[] = [];
-        const sample = slides[0];
+        const sample = processedData[0];
         for (const key in sample) {
           const value = sample[key];
           if (typeof value === 'string') fuseKeys.push(key);
@@ -51,13 +56,15 @@ export default function VoiceAssistant() {
           }
         }
 
-        setFuse(new Fuse(slides, {
+        setFuse(new Fuse(processedData, {
           keys: fuseKeys,
           threshold: 0.4,
           includeMatches: true,
         }));
       } catch (err) {
         console.error('❌ データ読み込みエラー:', err);
+      } finally {
+        setIsLoading(false);
       }
     })();
   }, []);
@@ -227,7 +234,7 @@ export default function VoiceAssistant() {
             className="flex-1"
           />
 
-            <Button onClick={handleSearch} disabled={!fuse}>
+          <Button onClick={handleSearch} disabled={isLoading || !fuse}>
             <Send className="h-4 w-4" />
           </Button>
         </div>

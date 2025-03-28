@@ -15,8 +15,12 @@ export const PresentationView: React.FC = () => {
 
   return (
     <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">プレゼンテーション詳細</h2>
-      <div className="space-y-4">
+      <h2 className="text-2xl font-bold mb-2">{slideData?.metadata?.タイトル || "無題のプレゼンテーション"}</h2>
+      <div className="text-sm text-gray-500 mb-4">
+        作成者: {slideData?.metadata?.作成者 || "不明"}
+        {slideData?.metadata?.作成日 && ` / 作成日: ${new Date(slideData.metadata.作成日).toLocaleDateString()}`}
+      </div>
+      <div className="grid grid-cols-5 gap-4">
         {slideData.slides.map((slide: any) => (
           <SlidePreview
             key={slide.スライド番号}

@@ -17,8 +17,8 @@ export const SlidePreview: React.FC<SlidePreviewProps> = ({
   notes
 }) => {
   return (
-    <div className="border rounded-lg p-4 mb-4">
-      <h3 className="text-lg font-bold mb-2">スライド {slideNumber}</h3>
+    <div className="border rounded-lg p-2 hover:shadow-lg transition-shadow">
+      <div className="text-sm text-gray-500 mb-1">スライド {slideNumber}</div>
       {imagePath && (
         <div className="mb-4">
           <img 

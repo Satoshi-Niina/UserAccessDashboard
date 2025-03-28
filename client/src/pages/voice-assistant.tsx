@@ -33,7 +33,13 @@ export default function VoiceAssistant() {
       try {
         const endpoint = import.meta.env.VITE_API_ENDPOINT || '/api/tech-support/search-data';
         const response = await fetch(endpoint);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const data = await response.json();
+        if (!Array.isArray(data)) {
+          throw new Error('Invalid data format received');
+        }
         setSearchData(data);
         const fuseOptions = {
           keys: ['title', 'description', 'content'],
@@ -43,6 +49,10 @@ export default function VoiceAssistant() {
         setFuse(new Fuse(data, fuseOptions));
       } catch (error) {
         console.error('Error loading search data:', error);
+        setMessages(prev => [...prev, {
+          content: "申し訳ありません。データの読み込みに失敗しました。",
+          isUser: false
+        }]);
       }
     };
     loadData();
@@ -63,13 +73,13 @@ export default function VoiceAssistant() {
       recognition.lang = 'ja-JP';
       recognition.continuous = true;
       recognition.interimResults = true;
-      
+
       recognition.onresult = (event) => {
         const transcript = Array.from(event.results)
           .map(result => result[0])
           .map(result => result.transcript)
           .join('');
-        setInputText(transcript);
+        setMessages(prevMessages => [...prevMessages, { content: transcript, isUser: true }]); // 追加
       };
 
       recognition.start();
@@ -103,7 +113,7 @@ export default function VoiceAssistant() {
 
   const handleSearch = async () => {
     if (!inputText.trim()) return;
-    
+
     try {
       const response = await fetch('/api/tech-support/search', {
         method: 'POST',

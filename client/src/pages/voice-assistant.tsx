@@ -208,7 +208,7 @@ export default function VoiceAssistant() {
                 >
                   <p>{message.content}</p>
                   {!message.isUser && message.results && (
-                    <div className="mt-2 grid grid-cols-3 gap-2">
+                    <div className="mt-2 grid grid-cols-2 gap-2">
                       {message.results
                         .filter(result => result.type === 'image' && result.source)
                         .map((result, idx) => (

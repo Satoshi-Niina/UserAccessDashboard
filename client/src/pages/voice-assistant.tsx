@@ -35,8 +35,12 @@ export default function VoiceAssistant() {
         const slides = data.slides || [];
         setSearchData(slides);
         const fuseOptions = {
-          keys: ['本文', 'ノート', '画像テキスト'],
-          threshold: 0.3,
+          keys: [
+            '本文.0',
+            'ノート',
+            'スライド番号'
+          ],
+          threshold: 0.4,
           includeMatches: true
         };
         setFuse(new Fuse(slides, fuseOptions));
@@ -110,8 +114,8 @@ export default function VoiceAssistant() {
 
       const results = fuse.search(inputText);
       const searchResults = results.map(result => ({
-        content: result.item.content || result.item.本文?.join('\n') || '',
-        type: result.item.画像テキスト?.length > 0 ? 'image' : 'text',
+        content: result.item.ノート || (result.item.本文 ? result.item.本文.join('\n') : ''),
+        type: result.item.画像テキスト && result.item.画像テキスト.length > 0 ? 'image' : 'text',
         source: result.item.画像テキスト?.[0]?.画像パス || ''
       }));
 

@@ -26,14 +26,17 @@ export default function VoiceAssistant() {
   const [fuse, setFuse] = useState<Fuse<any>>();
   const [isLoading, setIsLoading] = useState(true);
   const [selectedResult, setSelectedResult] = useState<SearchResult | null>(null);
+  const [initError, setInitError] = useState<string | null>(null);
 
   const mediaStreamRef = useRef<MediaStream | null>(null);
 
+  // コンポーネントマウント時にデータを読み込む
   useEffect(() => {
-    (async () => {
+    const initializeSearch = async () => {
       setIsLoading(true);
+      setInitError(null);
       try {
-        const response = await fetch('/attached_assets/data/extracted_data.json');
+        const response = await fetch('/api/tech-support/data/extracted_data.json');
         if (!response.ok) {
           throw new Error(`HTTPエラー: ${response.status}`);
         }
@@ -238,9 +241,16 @@ export default function VoiceAssistant() {
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-            placeholder="検索したいキーワードを入力..."
+            placeholder={isLoading ? "データ読み込み中..." : "検索したいキーワードを入力..."}
             className="flex-1"
+            disabled={isLoading}
           />
+
+          {initError && (
+            <div className="text-red-500 text-sm mt-2">
+              {initError}
+            </div>
+          )}
 
           <Button onClick={handleSearch} disabled={isLoading || !fuse}>
             <Send className="h-4 w-4" />

@@ -31,24 +31,32 @@ export default function VoiceAssistant() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const data = await fetch('/attached_assets/data/extracted_data.json').then(res => res.json());
+        const response = await fetch('/attached_assets/data/extracted_data.json');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
         const slides = data.slides || [];
         setSearchData(slides);
 
         const fuseOptions = {
-          keys: ['text', 'slideNumber'], // 新仕様に合わせて修正
+          keys: ['本文', 'スライド番号', 'ノート'],
           threshold: 0.4,
           includeMatches: true
         };
-        setFuse(new Fuse(slides, fuseOptions));
+        const fuseInstance = new Fuse(slides, fuseOptions);
+        setFuse(fuseInstance);
       } catch (error) {
         console.error('Error loading search data:', error);
+        setMessages(prev => [...prev, 
+          { content: "データの読み込みに失敗しました。", isUser: false }
+        ]);
       }
     };
     loadData();
   }, []);
 
-  
+
   useEffect(() => {
     if (mode) {
       startCamera();

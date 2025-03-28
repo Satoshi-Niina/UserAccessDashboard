@@ -846,6 +846,7 @@ export function registerRoutes(app: Express): Server {
       const filePath = path.join(process.cwd(), 'attached_assets/images', fileName);
 
       if (!fs.existsSync(filePath)) {
+        console.warn(`Image not found: ${filePath}`);
         return res.status(404).json({ error: '画像が見つかりません' });
       }
 

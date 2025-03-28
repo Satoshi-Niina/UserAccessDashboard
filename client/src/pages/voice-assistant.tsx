@@ -29,47 +29,37 @@ export default function VoiceAssistant() {
   const mediaStreamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
-    const loadData = async () => {
+    (async () => {
       try {
-        const response = await fetch('/api/tech-support/search-data');
-        if (!response.ok) {
-          throw new Error('データの取得に失敗しました');
+        const data = await fetch('/attached_assets/data/extracted_data.json', { cache: "force-cache" }).then(res => res.json());
+
+        const slides = data.slides || [];
+        setSearchData(slides);
+
+        const fuseKeys: string[] = [];
+        const sample = slides[0];
+        for (const key in sample) {
+          const value = sample[key];
+          if (typeof value === 'string') fuseKeys.push(key);
+          else if (Array.isArray(value) && value.length > 0) {
+            if (typeof value[0] === 'string') fuseKeys.push(key);
+            else if (typeof value[0] === 'object') {
+              Object.keys(value[0]).forEach(subKey => {
+                fuseKeys.push(`${key}.${subKey}`);
+              });
+            }
+          }
         }
-        const data = await response.json();
-        
-        // データ構造の確認と正規化
-        const normalizedData = Array.isArray(data.slides) ? data.slides : Array.isArray(data) ? data : [];
-        
-        if (normalizedData.length === 0) {
-          throw new Error('検索可能なデータがありません');
-        }
 
-        // 検索用のデータ構造に変換
-        const searchableData = normalizedData.map((item: any) => ({
-          text: item.text || '',
-          note: item.note || '',
-          images: item.images || [],
-          slideNumber: item.slideNumber || 0
-        }));
-
-        setSearchData(searchableData);
-
-        const fuseOptions = {
-          keys: ['text', 'note'],
+        setFuse(new Fuse(slides, {
+          keys: fuseKeys,
           threshold: 0.4,
           includeMatches: true,
-          ignoreLocation: true,
-          useExtendedSearch: true
-        };
-        
-        // 正規化したデータでFuseインスタンスを作成
-        const fuseInstance = new Fuse(searchableData, fuseOptions);
-        setFuse(fuseInstance);
-      } catch (error) {
-        console.error('Error loading search data:', error);
+        }));
+      } catch (err) {
+        console.error('❌ データ読み込みエラー:', err);
       }
-    };
-    loadData();
+    })();
   }, []);
 
 
@@ -130,47 +120,29 @@ export default function VoiceAssistant() {
     if (!inputText.trim()) return;
 
     try {
-      if (!fuse || !searchData || searchData.length === 0) {
+      if (!fuse) {
         throw new Error('検索エンジンの初期化に失敗しました');
       }
 
-      console.log('検索キーワード:', inputText);
-      console.log('検索データ:', searchData);
-      
       const results = fuse.search(inputText);
-      console.log('検索結果:', results);
-      if (results.length === 0) {
-        setMessages(prev => [
-          ...prev,
-          { content: "検索結果が見つかりませんでした。", isUser: false }
-        ]);
-        return;
-      }
-      
-      const searchResults = results.map(result => {
-        const item = result.item;
-        return {
-          content: item.text + (item.note ? `\n${item.note}` : ''),
-          type: item.images?.length > 0 ? 'image' : 'text',
-          source: item.images?.[0]?.fileName
-            ? `/attached_assets/images/${item.images[0].fileName}`
-            : '',
-          slideNumber: item.slideNumber
-        };
-      });
-      setMessages(prev => [
-            ...prev,
-            { content: "検索結果:", isUser: false, results: searchResults }
-          ]);
-          setInputText("");
-        } catch (error) {
-          console.error('検索エラー:', error);
-          setMessages(prev => [
-            ...prev,
-            { content: "検索中にエラーが発生しました。", isUser: false }
-          ]);
-        }
-      };
+      const searchResults = results.map(result => ({
+        content: result.item.ノート || (result.item.本文 ? result.item.本文.join('\n') : ''),
+        type: result.item.画像テキスト && result.item.画像テキスト.length > 0 ? 'image' : 'text',
+        source: result.item.画像テキスト?.[0]?.画像パス?.replace(/^.*\\output\\images\\/, '/api/tech-support/images/') || ''
+      }));
+
+      setMessages(prev => [...prev, 
+        { content: "検索結果:", isUser: false, results: searchResults }
+      ]);
+      setInputText("");
+    } catch (error) {
+      console.error('検索エラー:', error);
+      setMessages(prev => [...prev,
+        { content: "検索中にエラーが発生しました。", isUser: false }
+      ]);
+    }
+  };
+
   const handleCapture = (action: string) => {
     if (mode === 'photo') {
       if (action === 'start') {
@@ -188,7 +160,7 @@ export default function VoiceAssistant() {
 
   return (
     <div className="container mx-auto p-4 relative">
-      <h1 className="text-center text-xl font-bold mb-4">応急対応サポート</h1>
+      <h1 className="text-center text-xl font-bold mb-4">緊急サポート</h1>
 
       <Button
         variant="outline"
@@ -255,7 +227,7 @@ export default function VoiceAssistant() {
             className="flex-1"
           />
 
-          <Button onClick={handleSearch}>
+            <Button onClick={handleSearch} disabled={!fuse}>
             <Send className="h-4 w-4" />
           </Button>
         </div>

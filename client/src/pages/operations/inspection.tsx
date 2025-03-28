@@ -534,19 +534,24 @@ export default function InspectionPage() {
                           <TableCell className="p-1 text-xs">{item.method}</TableCell>
                           <TableCell className="p-1 text-xs">
                             <div className="space-y-2">
-                              {(item.standardMin !== undefined || item.standardMax !== undefined) && (
-                                <div className="text-sm text-gray-500">
-                                  基準値: {item.standardMin !== undefined ? `${item.standardMin}` : ''}
-                                  {item.standardMin !== undefined && item.standardMax !== undefined && ' 〜 '}
-                                  {item.standardMax !== undefined ? `${item.standardMax}` : ''}
-                                </div>
-                              )}
-                              <Input
-                                type="text"
-                                value={item.measurementRecord || ''}
-                                onChange={(e) => handleMeasurementChange(item.id, e.target.value)}
-                                className={`w-full ${item.isOutOfRange ? 'border-red-500' : ''}`}
-                              />
+                              <div className="text-xs text-gray-600 mb-1">
+                                {item.standardMin && item.standardMax ? (
+                                  `基準値：${item.standardMin}～${item.standardMax}`
+                                ) : item.category === '制動装置' && item.equipment === 'ブレーキシリンダー' ? (
+                                  '基準値：60～90mm（ブレーキ約200kpa時）'
+                                ) : ''}
+                              </div>
+                              <div className="relative flex flex-col">
+                                <Input
+                                  type="number"
+                                  value={item.measurementRecord || ''}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    handleMeasurementChange(item.id, value);
+                                  }}
+                                  className={`w-full ${item.isOutOfRange ? 'border-red-500' : ''}`}
+                                />
+                              </div>
                               {item.isOutOfRange && (
                                 <div className="text-sm text-red-500">
                                   調整が必要です！

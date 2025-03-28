@@ -208,27 +208,22 @@ export default function VoiceAssistant() {
                 >
                   <p>{message.content}</p>
                   {!message.isUser && message.results && (
-                    <div className="mt-2 grid grid-cols-2 gap-2">
-                      {message.results.map((result, idx) => (
-                        <div 
-                          key={idx} 
-                          className="border rounded p-2 cursor-pointer hover:bg-gray-50"
-                          onClick={() => setSelectedResult(result)}
-                        >
-                          {result.type === 'image' ? (
-                            <div className="space-y-2">
-                              <img
-                                src={result.source}
-                                alt={result.content}
-                                className="w-full h-32 object-cover rounded"
-                              />
-                              <p className="text-sm truncate">{result.content}</p>
-                            </div>
-                          ) : (
-                            <p>{result.content}</p>
-                          )}
-                        </div>
-                      ))}
+                    <div className="mt-2 grid grid-cols-3 gap-2">
+                      {message.results
+                        .filter(result => result.type === 'image' && result.source)
+                        .map((result, idx) => (
+                          <div 
+                            key={idx} 
+                            className="border rounded cursor-pointer hover:shadow-lg transition-shadow"
+                            onClick={() => setSelectedResult(result)}
+                          >
+                            <img
+                              src={result.source}
+                              alt={result.content}
+                              className="w-full h-32 object-cover rounded"
+                            />
+                          </div>
+                        ))}
                     </div>
                   )}
                 </div>

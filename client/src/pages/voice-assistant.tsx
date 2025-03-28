@@ -59,6 +59,20 @@ export default function VoiceAssistant() {
 
   const startMic = async () => {
     try {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = 'ja-JP';
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      
+      recognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map(result => result[0])
+          .map(result => result.transcript)
+          .join('');
+        setInputText(transcript);
+      };
+
+      recognition.start();
       await navigator.mediaDevices.getUserMedia({ audio: true });
       console.log("🎤 マイクが起動しました");
       setIsRecording(true);
@@ -87,20 +101,31 @@ export default function VoiceAssistant() {
     console.log("📷 カメラを停止しました");
   };
 
-  const handleSearch = () => {
-    if (!inputText.trim() || !fuse) return;
-    const results = fuse.search(inputText);
-    const searchResults: SearchResult[] = results.map(result => ({
-      content: result.item.title,
-      type: result.item.type,
-      source: result.item.source
-    }));
+  const handleSearch = async () => {
+    if (!inputText.trim()) return;
+    
+    try {
+      const response = await fetch('/api/tech-support/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: inputText })
+      });
 
-    setMessages(prev => [...prev, 
-      { content: inputText, isUser: true },
-      { content: "検索結果:", isUser: false, results: searchResults }
-    ]);
-    setInputText("");
+      if (!response.ok) throw new Error('検索に失敗しました');
+      const searchResults = await response.json();
+
+      setMessages(prev => [...prev, 
+        { content: inputText, isUser: true },
+        { content: "検索結果:", isUser: false, results: searchResults }
+      ]);
+      setInputText("");
+    } catch (error) {
+      console.error('検索エラー:', error);
+      setMessages(prev => [...prev,
+        { content: inputText, isUser: true },
+        { content: "検索中にエラーが発生しました。", isUser: false }
+      ]);
+    }
   };
 
   const handleCapture = (action: string) => {
@@ -187,7 +212,8 @@ export default function VoiceAssistant() {
 
       <div className="flex items-start justify-between px-2">
         <div className="flex flex-col items-start">
-          <span className="text-sm font-semibold mb-2 ml-1">カメラ</span>
+          <span className="text-sm font-bold text-blue-600 mb-2 ml-1">カメラ</span>
+          <span className="ml-5">撮影した画像は報告用としてサーバーに送信できます！</span>
 
           <div className="flex gap-2 mb-3">
             <Button variant={mode === 'photo' ? 'default' : 'outline'} onClick={() => setMode('photo')}>📷 写真</Button>

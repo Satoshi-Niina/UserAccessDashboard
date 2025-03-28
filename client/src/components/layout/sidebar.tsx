@@ -140,10 +140,10 @@ export function Sidebar({ onExpandChange }: SidebarProps) {
                 <div
                   className={cn(
                     "flex items-center p-3 mx-3 rounded-lg cursor-pointer",
-                    isActive ? "bg-sidebar-selected text-sidebar-foreground font-medium" : "text-sidebar-muted hover:bg-sidebar-hover"
+                    isActive ? "bg-blue-100 text-blue-600 font-medium" : "text-gray-600 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 hover:text-purple-600"
                   )}
                 >
-                  <Icon className="h-5 w-5 mr-3" />
+                  <Icon className={cn("h-5 w-5 mr-3", isActive ? "text-blue-500" : "text-gray-400")} />
                   {isExpanded && (
                     <div className="flex-1 flex items-center justify-between">
                       <span>{item.label}</span>
@@ -187,7 +187,7 @@ export function Sidebar({ onExpandChange }: SidebarProps) {
                           <div 
                             className={cn(
                               "flex items-center p-2 rounded-md text-sm",
-                              location === subItem.href ? "bg-sidebar-selected/50 text-sidebar-foreground font-medium" : "text-sidebar-muted hover:bg-sidebar-hover"
+                              location === subItem.href ? "bg-blue-100/50 text-blue-600 font-medium" : "text-gray-600 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 hover:text-purple-600"
                             )}
                           >
                             {subItem.label}

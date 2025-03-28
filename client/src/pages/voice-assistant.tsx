@@ -33,16 +33,26 @@ export default function VoiceAssistant() {
       try {
         const response = await fetch('/api/tech-support/search-data');
         if (!response.ok) {
-          return; // エラーメッセージを表示せずに終了
+          throw new Error('データの取得に失敗しました');
         }
         const data = await response.json();
-        if (!Array.isArray(data) && data.length === 0) {
-          return; // データが空の場合は終了
+        
+        // スライドデータの構造を正規化
+        const normalizedData = data.slides?.map((slide: any) => ({
+          text: slide.text || '',
+          slideNumber: slide.slideNumber,
+          note: slide.note || '',
+          images: slide.images || []
+        })) || [];
+
+        if (normalizedData.length === 0) {
+          throw new Error('検索可能なデータが見つかりません');
         }
-        setSearchData(data);
+        
+        setSearchData(normalizedData);
 
         const fuseOptions = {
-          keys: ['text', 'slideNumber', 'note', 'images'],
+          keys: ['text', 'note'],
           threshold: 0.4,
           includeMatches: true
         };
@@ -117,14 +127,20 @@ export default function VoiceAssistant() {
         throw new Error('検索エンジンの初期化に失敗しました');
       }
 
+      if (!fuse) {
+        throw new Error('検索エンジンが初期化されていません');
+      }
       const results = fuse.search(inputText);
-      const searchResults = results.map(result => ({
-        content: result.item.text || '',
-        type: result.item.images?.length > 0 ? 'image' : 'text',
-        source: result.item.images?.[0]?.fileName
-          ? `/attached_assets/images/${result.item.images[0].fileName}`
-          : ''
-      }));
+      const searchResults = results.map(result => {
+        const item = result.item;
+        return {
+          content: `${item.text}\n${item.note || ''}`,
+          type: item.images?.length > 0 ? 'image' : 'text',
+          source: item.images?.[0]?.fileName
+            ? `/attached_assets/images/${item.images[0].fileName}`
+            : ''
+        };
+      });
       setMessages(prev => [
             ...prev,
             { content: "検索結果:", isUser: false, results: searchResults }

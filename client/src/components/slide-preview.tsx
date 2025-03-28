@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface SlidePreviewProps {
@@ -24,9 +23,14 @@ export const SlidePreview: React.FC<SlidePreviewProps> = ({
       {imagePath && (
         <div className="mb-4">
           <img 
-            src={`/api/tech-support/images/${imagePath}`} 
+            src={imagePath} 
             alt={`スライド ${slideNumber}`}
-            className="max-w-full h-auto"
+            className="w-full h-auto"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.onerror = null;
+              target.src = '/placeholder-image.png';
+            }}
           />
         </div>
       )}

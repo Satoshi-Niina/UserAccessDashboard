@@ -32,6 +32,9 @@ function TechSupportData() {
   const fetchProcessedFiles = async () => {
     try {
       const response = await fetch('/api/tech-support/files');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
       if (data.files) {
         setProcessedFiles(data.files);
@@ -97,14 +100,31 @@ function TechSupportData() {
 
       if (response.ok) {
         const result = await response.json();
+        // データ構造を変換
+        const formattedData = {
+          slides: result.textData.slides.map((slide: any) => ({
+            slideNumber: slide.slideNumber,
+            text: slide.text || '',
+            note: slide.notes || '',
+            images: slide.images || []
+          }))
+        };
+
+        // JSONファイルとして保存
+        const jsonFormData = new FormData();
+        jsonFormData.append('data', JSON.stringify(formattedData));
+        await fetch('/api/tech-support/save-formatted-data', {
+          method: 'POST',
+          body: jsonFormData
+        });
+
         toast({
           title: "成功",
           description: `ファイルが正常に処理されました。画像数: ${result.imageCount}`,
         });
         setFile(null);
-        // 処理済みファイル一覧を更新
         fetchProcessedFiles();
-        setHasChanges(true); //add this line
+        setHasChanges(true);
       } else {
         const error = await response.json();
         toast({
@@ -129,16 +149,11 @@ function TechSupportData() {
     setSelectedFile(fileName);
     try {
       const response = await fetch(`/api/tech-support/data/${fileName}`);
-      if (response.ok) {
-        const data = await response.json();
-        setFileData(data);
-      } else {
-        toast({
-          title: "エラー",
-          description: "データの取得に失敗しました",
-          variant: "destructive",
-        });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+      const data = await response.json();
+      setFileData(data);
     } catch (error) {
       console.error('データ取得エラー:', error);
       toast({

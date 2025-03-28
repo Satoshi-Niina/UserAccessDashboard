@@ -33,16 +33,16 @@ export default function VoiceAssistant() {
       try {
         const response = await fetch('/api/tech-support/search-data');
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          return; // エラーメッセージを表示せずに終了
         }
         const data = await response.json();
-        if (!Array.isArray(data)) {
-          throw new Error('Invalid data format');
+        if (!Array.isArray(data) && data.length === 0) {
+          return; // データが空の場合は終了
         }
         setSearchData(data);
 
         const fuseOptions = {
-          keys: ['本文', 'スライド番号', 'ノート'],
+          keys: ['text', 'slideNumber', 'note', 'images'],
           threshold: 0.4,
           includeMatches: true
         };
@@ -50,9 +50,6 @@ export default function VoiceAssistant() {
         setFuse(fuseInstance);
       } catch (error) {
         console.error('Error loading search data:', error);
-        setMessages(prev => [...prev, 
-          { content: "検索データの読み込みに失敗しました。", isUser: false }
-        ]);
       }
     };
     loadData();

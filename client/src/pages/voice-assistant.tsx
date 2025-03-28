@@ -170,7 +170,6 @@ export default function VoiceAssistant() {
                 >
                   <p>{message.content}</p>
                   {!message.isUser && message.results && (
-                    <p>{message.content}</p>
                     <div className="mt-2 space-y-2">
                       {message.results.map((result, idx) => (
                         <div key={idx} className="border rounded p-2">

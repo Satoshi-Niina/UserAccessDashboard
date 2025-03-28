@@ -49,10 +49,6 @@ export default function VoiceAssistant() {
         setFuse(new Fuse(data, fuseOptions));
       } catch (error) {
         console.error('Error loading search data:', error);
-        setMessages(prev => [...prev, {
-          content: "申し訳ありません。データの読み込みに失敗しました。",
-          isUser: false
-        }]);
       }
     };
     loadData();
@@ -179,10 +175,6 @@ export default function VoiceAssistant() {
                   onClick={() => {
                     if (message.isUser) {
                       setInputText(message.content);
-                      const lastMessage = messages[messages.length - 1];
-                      if (lastMessage && lastMessage.content === message.content) {
-                        setMessages(messages.slice(0, -1));
-                      }
                     }
                   }}
                 >

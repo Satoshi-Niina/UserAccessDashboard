@@ -23,7 +23,7 @@ export const SlidePreview: React.FC<SlidePreviewProps> = ({
       {imagePath && (
         <div className="mb-4">
           <img 
-            src={`/api/tech-support/images/${imagePath}`}
+            src={imagePath}
             alt={`スライド ${slideNumber}`}
             className="w-full h-auto object-contain"
             onError={(e) => {

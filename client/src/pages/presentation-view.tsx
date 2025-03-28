@@ -25,7 +25,7 @@ export const PresentationView: React.FC = () => {
           <SlidePreview
             key={slide.スライド番号}
             slideNumber={slide.スライド番号}
-            imagePath={slide.画像テキスト?.[0]?.画像パス?.split('\\').pop()}
+            imagePath={`/api/tech-support/images/slide_${slide.スライド番号}_image.png`}
             title={slide.タイトル}
             content={slide.本文 || []}
             notes={slide.ノート}

@@ -121,14 +121,12 @@ export default function VoiceAssistant() {
       const searchResults = await response.json();
 
       setMessages(prev => [...prev, 
-        { content: inputText, isUser: true },
         { content: "検索結果:", isUser: false, results: searchResults }
       ]);
       setInputText("");
     } catch (error) {
       console.error('検索エラー:', error);
       setMessages(prev => [...prev,
-        { content: inputText, isUser: true },
         { content: "検索中にエラーが発生しました。", isUser: false }
       ]);
     }

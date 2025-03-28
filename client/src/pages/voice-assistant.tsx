@@ -42,8 +42,8 @@ export default function VoiceAssistant() {
         }
         setSearchData(data);
         const fuseOptions = {
-          keys: ['title', 'description', 'content'],
-          threshold: 0.4,
+          keys: ['本文', 'ノート', '画像テキスト.テキスト'],
+          threshold: 0.3,
           includeMatches: true
         };
         setFuse(new Fuse(data, fuseOptions));
@@ -111,14 +111,16 @@ export default function VoiceAssistant() {
     if (!inputText.trim()) return;
 
     try {
-      const response = await fetch('/api/tech-support/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: inputText })
-      });
+      if (!fuse) {
+        throw new Error('検索エンジンの初期化に失敗しました');
+      }
 
-      if (!response.ok) throw new Error('検索に失敗しました');
-      const searchResults = await response.json();
+      const results = fuse.search(inputText);
+      const searchResults = results.map(result => ({
+        content: result.item.content || result.item.本文?.join('\n') || '',
+        type: result.item.画像テキスト?.length > 0 ? 'image' : 'text',
+        source: result.item.画像テキスト?.[0]?.画像パス || ''
+      }));
 
       setMessages(prev => [...prev, 
         { content: "検索結果:", isUser: false, results: searchResults }

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -26,55 +25,35 @@ export const InspectionValueStatus: React.FC<InspectionValueStatusProps> = ({
     }
 
     const numValue = parseFloat(value);
-
-    // 入力値が数値でない場合は比較しない
     if (isNaN(numValue)) {
       setIsOutOfRange(false);
       return;
     }
 
-    // 最小値と最大値の確認
     const numMinValue = minValue ? parseFloat(minValue) : null;
     const numMaxValue = maxValue ? parseFloat(maxValue) : null;
 
-    // 最小値または最大値のどちらかが設定されている場合のみチェック
     if (numMinValue !== null || numMaxValue !== null) {
-      // 最小値より小さい、または最大値より大きい場合は範囲外
       const belowMin = numMinValue !== null && numValue < numMinValue;
       const aboveMax = numMaxValue !== null && numValue > numMaxValue;
-
-      console.log(`値のチェック: 入力値=${numValue}, 最小値=${numMinValue}, 最大値=${numMaxValue}, 範囲外=${belowMin || aboveMax}`);
-      
       setIsOutOfRange(belowMin || aboveMax);
-    } else {
-      setIsOutOfRange(false);
     }
   }, [value, minValue, maxValue]);
 
   return (
     <div className="relative">
-      <Input
+      <input
         type="number"
-        value={value || ''}
+        value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={`w-full text-xs p-1 h-7 ${isOutOfRange ? 'border-red-500' : ''}`}
-        placeholder="数値を入力"
-        step="0.1"
+        className={`w-full px-3 py-2 border rounded ${
+          isOutOfRange ? 'border-red-500' : 'border-gray-300'
+        }`}
       />
       {isOutOfRange && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                <AlertCircle className="h-4 w-4 text-red-500" />
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>調整が必要です！</p>
-              <p className="text-xs">基準値: {minValue || '-'} 〜 {maxValue || '-'}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <div className="text-red-500 text-sm mt-1">
+          調整が必要です！
+        </div>
       )}
     </div>
   );

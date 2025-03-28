@@ -542,14 +542,11 @@ export default function InspectionPage() {
                                 ) : ''}
                               </div>
                               <div className="relative flex flex-col">
-                                <Input
-                                  type="number"
+                                <InspectionValueStatus
                                   value={item.measurementRecord || ''}
-                                  onChange={(e) => {
-                                    const value = e.target.value;
-                                    handleMeasurementChange(item.id, value);
-                                  }}
-                                  className={`w-full ${item.isOutOfRange ? 'border-red-500' : ''}`}
+                                  minValue={item.standardMin?.toString()}
+                                  maxValue={item.standardMax?.toString()}
+                                  onChange={(value) => handleMeasurementChange(item.id, value)}
                                 />
                               </div>
                               {item.isOutOfRange && (

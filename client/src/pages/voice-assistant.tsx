@@ -37,27 +37,33 @@ export default function VoiceAssistant() {
         }
         const data = await response.json();
         
-        if (!data || !Array.isArray(data)) {
-          throw new Error('無効なデータ形式です');
+        // データ構造の確認と正規化
+        const normalizedData = Array.isArray(data.slides) ? data.slides : Array.isArray(data) ? data : [];
+        
+        if (normalizedData.length === 0) {
+          throw new Error('検索可能なデータがありません');
         }
 
-        // データを正規化
-        const normalizedData = data.map((item: any) => ({
+        // 検索用のデータ構造に変換
+        const searchableData = normalizedData.map((item: any) => ({
           text: item.text || '',
           note: item.note || '',
           images: item.images || [],
-          slideNumber: item.slideNumber
+          slideNumber: item.slideNumber || 0
         }));
 
-        setSearchData(normalizedData);
+        setSearchData(searchableData);
 
         const fuseOptions = {
           keys: ['text', 'note'],
           threshold: 0.4,
           includeMatches: true,
-          ignoreLocation: true
+          ignoreLocation: true,
+          useExtendedSearch: true
         };
-        const fuseInstance = new Fuse(data, fuseOptions);
+        
+        // 正規化したデータでFuseインスタンスを作成
+        const fuseInstance = new Fuse(searchableData, fuseOptions);
         setFuse(fuseInstance);
       } catch (error) {
         console.error('Error loading search data:', error);
@@ -124,14 +130,15 @@ export default function VoiceAssistant() {
     if (!inputText.trim()) return;
 
     try {
-      if (!fuse) {
+      if (!fuse || !searchData || searchData.length === 0) {
         throw new Error('検索エンジンの初期化に失敗しました');
       }
 
-      if (!fuse) {
-        throw new Error('検索エンジンが初期化されていません');
-      }
+      console.log('検索キーワード:', inputText);
+      console.log('検索データ:', searchData);
+      
       const results = fuse.search(inputText);
+      console.log('検索結果:', results);
       if (results.length === 0) {
         setMessages(prev => [
           ...prev,

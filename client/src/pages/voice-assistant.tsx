@@ -32,7 +32,7 @@ export default function VoiceAssistant() {
 
   // コンポーネントマウント時にデータを読み込む
   useEffect(() => {
-    const initializeSearch = async () => {
+    async function initializeSearch() {
       setIsLoading(true);
       setInitError(null);
       try {
@@ -75,7 +75,8 @@ export default function VoiceAssistant() {
       } finally {
         setIsLoading(false);
       }
-    })();
+    }
+    initializeSearch();
   }, []);
 
 

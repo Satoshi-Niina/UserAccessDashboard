@@ -212,8 +212,10 @@ export default function VoiceAssistant() {
 
       <div className="flex items-start justify-between px-2">
         <div className="flex flex-col items-start">
-          <span className="text-sm font-bold text-blue-600 mb-2 ml-1">カメラ</span>
-          <span className="ml-5">撮影した画像は報告用としてサーバーに送信できます！</span>
+          <div className="flex items-center gap-4 mb-2">
+            <span className="text-lg font-bold text-blue-600">カメラ</span>
+            <span className="text-xs text-gray-600">撮影した画像は報告用としてサーバーに送信できます！</span>
+          </div>
 
           <div className="flex gap-2 mb-3">
             <Button variant={mode === 'photo' ? 'default' : 'outline'} onClick={() => setMode('photo')}>📷 写真</Button>

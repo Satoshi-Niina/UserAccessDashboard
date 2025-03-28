@@ -157,45 +157,39 @@ export default function VoiceAssistant() {
 
       <div className="flex flex-col h-[60vh] border border-blue-400 rounded-lg p-4 overflow-hidden mb-6">
         <div className="flex-1 overflow-y-auto mb-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-4">
-              {messages.filter(m => m.isUser).map((message, index) => (
-                <div key={index} className="flex justify-end">
-                  <div
-                    className="rounded-lg p-3 max-w-[90%] cursor-pointer bg-blue-500 text-white"
-                    onClick={() => setInputText(message.content)}
-                  >
+          <div className="space-y-4">
+            {messages.map((message, index) => (
+              <div key={index} className={`flex ${message.isUser ? 'justify-start' : 'justify-end'}`}>
+                <div
+                  className={`rounded-lg p-3 max-w-[60%] ${
+                    message.isUser 
+                      ? 'bg-blue-500 text-white cursor-pointer' 
+                      : 'bg-gray-100'
+                  }`}
+                  onClick={() => message.isUser && setInputText(message.content)}
+                >
+                  <p>{message.content}</p>
+                  {!message.isUser && message.results && (
                     <p>{message.content}</p>
-                  </div>
+                    <div className="mt-2 space-y-2">
+                      {message.results.map((result, idx) => (
+                        <div key={idx} className="border rounded p-2">
+                          <p>{result.content}</p>
+                          {result.type === 'image' && (
+                            <img
+                              src={result.source}
+                              alt={result.content}
+                              className="mt-2 max-w-full h-auto cursor-pointer"
+                              onClick={() => setSelectedResult(result)}
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-            <div className="space-y-4">
-              {messages.filter(m => !m.isUser).map((message, index) => (
-                <div key={index} className="flex justify-start">
-                  <div className="rounded-lg p-3 max-w-[90%] bg-gray-100">
-                    <p>{message.content}</p>
-                    {message.results && (
-                      <div className="mt-2 space-y-2">
-                        {message.results.map((result, idx) => (
-                          <div key={idx} className="border rounded p-2">
-                            <p>{result.content}</p>
-                            {result.type === 'image' && (
-                              <img
-                                src={result.source}
-                                alt={result.content}
-                                className="mt-2 max-w-full h-auto cursor-pointer"
-                                onClick={() => setSelectedResult(result)}
-                              />
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
 

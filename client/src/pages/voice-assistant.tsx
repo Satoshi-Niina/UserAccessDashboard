@@ -179,7 +179,7 @@ export default function VoiceAssistant() {
 
   return (
     <div className="container mx-auto p-4 relative">
-      <h1 className="text-center text-xl font-bold mb-4">緊急サポート</h1>
+      <h1 className="text-center text-xl font-bold mb-4">応急対応サポート</h1>
 
       <Button
         variant="outline"

@@ -23,12 +23,13 @@ export const SlidePreview: React.FC<SlidePreviewProps> = ({
       {imagePath && (
         <div className="mb-4">
           <img 
-            src={imagePath} 
+            src={`/api/tech-support/images/${imagePath}`}
             alt={`スライド ${slideNumber}`}
-            className="w-full h-auto"
+            className="w-full h-auto object-contain"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.onerror = null;
+              console.error(`画像読み込みエラー: ${imagePath}`);
               target.src = '/placeholder-image.png';
             }}
           />

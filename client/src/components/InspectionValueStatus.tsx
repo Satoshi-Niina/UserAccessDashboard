@@ -40,19 +40,31 @@ export const InspectionValueStatus: React.FC<InspectionValueStatusProps> = ({
     }
   }, [value, minValue, maxValue]);
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    onChange(newValue);
+  };
+
+  const handleBlur = () => {
+    if (isOutOfRange) {
+      alert('入力値が基準範囲外です。確認してください。');
+    }
+  };
+
   return (
     <div className="relative">
       <input
         type="number"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={handleChange}
+        onBlur={handleBlur}
         className={`w-full px-3 py-2 border rounded ${
           isOutOfRange ? 'border-red-500' : 'border-gray-300'
         }`}
       />
       {isOutOfRange && (
-        <div className="text-red-500 text-sm mt-1">
-          調整が必要です！
+        <div className="text-red-500 text-sm mt-1 font-bold">
+          調整が必要です！（基準値: {minValue || '-'} ～ {maxValue || '-'}）
         </div>
       )}
     </div>

@@ -37,24 +37,25 @@ export default function VoiceAssistant() {
         }
         const data = await response.json();
         
-        // スライドデータの構造を正規化
-        const normalizedData = data.slides?.map((slide: any) => ({
-          text: slide.text || '',
-          slideNumber: slide.slideNumber,
-          note: slide.note || '',
-          images: slide.images || []
-        })) || [];
-
-        if (normalizedData.length === 0) {
-          throw new Error('検索可能なデータが見つかりません');
+        if (!data || !Array.isArray(data)) {
+          throw new Error('無効なデータ形式です');
         }
-        
+
+        // データを正規化
+        const normalizedData = data.map((item: any) => ({
+          text: item.text || '',
+          note: item.note || '',
+          images: item.images || [],
+          slideNumber: item.slideNumber
+        }));
+
         setSearchData(normalizedData);
 
         const fuseOptions = {
           keys: ['text', 'note'],
           threshold: 0.4,
-          includeMatches: true
+          includeMatches: true,
+          ignoreLocation: true
         };
         const fuseInstance = new Fuse(data, fuseOptions);
         setFuse(fuseInstance);
@@ -131,14 +132,23 @@ export default function VoiceAssistant() {
         throw new Error('検索エンジンが初期化されていません');
       }
       const results = fuse.search(inputText);
+      if (results.length === 0) {
+        setMessages(prev => [
+          ...prev,
+          { content: "検索結果が見つかりませんでした。", isUser: false }
+        ]);
+        return;
+      }
+      
       const searchResults = results.map(result => {
         const item = result.item;
         return {
-          content: `${item.text}\n${item.note || ''}`,
+          content: item.text + (item.note ? `\n${item.note}` : ''),
           type: item.images?.length > 0 ? 'image' : 'text',
           source: item.images?.[0]?.fileName
             ? `/attached_assets/images/${item.images[0].fileName}`
-            : ''
+            : '',
+          slideNumber: item.slideNumber
         };
       });
       setMessages(prev => [

@@ -75,7 +75,7 @@ export default function InspectionPage() {
         const [manufacturersRes, modelsRes, standardsRes] = await Promise.all([
           fetch('/api/inspection/table/manufacturers'),
           fetch('/api/inspection/table/models'),
-          fetch('/api/measurement-standards')
+          fetch('/attached_assets/inspection/table/measurement_standards.csv')
         ]);
 
         if (!manufacturersRes.ok || !modelsRes.ok || !standardsRes.ok) {

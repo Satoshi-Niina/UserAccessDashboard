@@ -31,21 +31,18 @@ export const InspectionValueStatus: React.FC<InspectionValueStatusProps> = ({
       return;
     }
 
-    // 入力値を数値に変換
     const numVal = parseFloat(val);
+    const min = minValue ? parseFloat(minValue) : null;
+    const max = maxValue ? parseFloat(maxValue) : null;
+
     if (isNaN(numVal)) {
       setIsOutOfRange(false);
       return;
     }
 
-    // 基準値の確認
-    const min = minValue ? parseFloat(minValue) : null;
-    const max = maxValue ? parseFloat(maxValue) : null;
-
-    // 基準値が設定されている場合のみ判定
     if (min !== null && max !== null) {
       const isOutside = numVal < min || numVal > max;
-      console.log(`Validating value: ${numVal}, min: ${min}, max: ${max}, isOutside: ${isOutside}`);
+      console.log(`Validation: value=${numVal}, min=${min}, max=${max}, outside=${isOutside}`);
       setIsOutOfRange(isOutside);
     }
   };

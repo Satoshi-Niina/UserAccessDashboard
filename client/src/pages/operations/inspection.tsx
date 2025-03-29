@@ -598,31 +598,6 @@ export default function InspectionPage() {
             <Button variant="outline" onClick={handleCancel}>キャンセル</Button>
             <Button onClick={handleSaveWithValidation}>点検完了</Button>
           </div>
-          {uncheckedItemsDialog.length > 0 && (
-            <div className="mt-4 p-4 border rounded-lg bg-red-50">
-              <h3 className="text-lg font-semibold text-red-500 mb-2">未確認項目 ({uncheckedItemsDialog.length}件)</h3>
-              <div className="max-h-[400px] overflow-y-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>カテゴリー</TableHead>
-                      <TableHead>装置</TableHead>
-                      <TableHead>点検項目</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {uncheckedItemsDialog.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell>{item.category}</TableCell>
-                        <TableCell>{item.equipment}</TableCell>
-                        <TableCell>{item.name}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          )}
 
           {showUncheckedDialog && (
             <Dialog open>
@@ -631,15 +606,43 @@ export default function InspectionPage() {
                   <DialogTitle>点検完了の確認</DialogTitle>
                 </DialogHeader>
                 <div className="p-4">
-                  <p>未確認項目が{uncheckedItemsDialog.length}件あります。確認してください。</p>
+                  {uncheckedItemsDialog.length > 0 ? (
+                    <>
+                      <p>未確認項目が{uncheckedItemsDialog.length}件あります。確認してください。</p>
+                      <div className="mt-4 max-h-[400px] overflow-y-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>カテゴリー</TableHead>
+                              <TableHead>装置</TableHead>
+                              <TableHead>点検項目</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {uncheckedItemsDialog.map((item) => (
+                              <TableRow key={item.id}>
+                                <TableCell>{item.category}</TableCell>
+                                <TableCell>{item.equipment}</TableCell>
+                                <TableCell>{item.name}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </>
+                  ) : (
+                    <p>すべての項目が確認済みです。点検を完了しますか？</p>
+                  )}
                 </div>
                 <DialogFooter className="flex justify-between p-4">
                   <Button variant="outline" onClick={() => setShowUncheckedDialog(false)}>
                     戻る
                   </Button>
-                  <Button onClick={handleComplete}>
-                    点検を完了する
-                  </Button>
+                  {uncheckedItemsDialog.length === 0 && (
+                    <Button onClick={handleComplete}>
+                      点検を完了する
+                    </Button>
+                  )}
                 </DialogFooter>
               </DialogContent>
             </Dialog>

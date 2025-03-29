@@ -544,11 +544,6 @@ export default function InspectionPage() {
                                   onChange={(value) => handleMeasurementChange(item.id, value)}
                                 />
                               </div>
-                              {item.isOutOfRange && (
-                                <div className="text-sm text-red-500">
-                                  調整が必要です！
-                                </div>
-                              )}
                             </div>
                           </TableCell>
                           <TableCell className="p-1 text-xs">{item.diagramRecord}</TableCell>

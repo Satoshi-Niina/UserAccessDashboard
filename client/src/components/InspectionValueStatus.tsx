@@ -1,7 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { Input } from "@/components/ui/input";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { AlertCircle } from "lucide-react";
+import React, { useState } from 'react';
 
 interface InspectionValueStatusProps {
   value: string;
@@ -14,41 +11,32 @@ export const InspectionValueStatus: React.FC<InspectionValueStatusProps> = ({
   value,
   minValue,
   maxValue,
-  onChange,
+  onChange
 }) => {
   const [isOutOfRange, setIsOutOfRange] = useState(false);
-
-  useEffect(() => {
-    if (!value) {
-      setIsOutOfRange(false);
-      return;
-    }
-
-    const numValue = parseFloat(value);
-    if (isNaN(numValue)) {
-      setIsOutOfRange(false);
-      return;
-    }
-
-    const numMinValue = minValue ? parseFloat(minValue) : null;
-    const numMaxValue = maxValue ? parseFloat(maxValue) : null;
-
-    if (numMinValue !== null || numMaxValue !== null) {
-      const belowMin = numMinValue !== null && numValue < numMinValue;
-      const aboveMax = numMaxValue !== null && numValue > numMaxValue;
-      setIsOutOfRange(belowMin || aboveMax);
-    }
-  }, [value, minValue, maxValue]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     onChange(newValue);
+    validateValue(newValue);
   };
 
-  const handleBlur = () => {
-    if (isOutOfRange) {
-      alert('入力値が基準範囲外です。確認してください。');
+  const validateValue = (val: string) => {
+    if (!val || !minValue || !maxValue) {
+      setIsOutOfRange(false);
+      return;
     }
+
+    const numVal = parseFloat(val);
+    const min = parseFloat(minValue);
+    const max = parseFloat(maxValue);
+
+    if (isNaN(numVal) || isNaN(min) || isNaN(max)) {
+      setIsOutOfRange(false);
+      return;
+    }
+
+    setIsOutOfRange(numVal < min || numVal > max);
   };
 
   return (
@@ -57,14 +45,13 @@ export const InspectionValueStatus: React.FC<InspectionValueStatusProps> = ({
         type="number"
         value={value}
         onChange={handleChange}
-        onBlur={handleBlur}
         className={`w-full px-3 py-2 border rounded ${
-          isOutOfRange ? 'border-red-500' : 'border-gray-300'
+          isOutOfRange ? 'border-red-500 bg-red-50' : 'border-gray-300'
         }`}
       />
       {isOutOfRange && (
-        <div className="text-red-500 text-sm mt-1 font-bold">
-          調整が必要です！（基準値: {minValue || '-'} ～ {maxValue || '-'}）
+        <div className="text-red-500 text-sm mt-1">
+          調整が必要です！（基準値: {minValue} ～ {maxValue}）
         </div>
       )}
     </div>

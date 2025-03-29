@@ -68,6 +68,9 @@ export default function InspectionPage() {
   const [standards, setStandards] = useState<{[key: string]: {min: number, max: number}}>({});
   const [showUncheckedDialog, setShowUncheckedDialog] = useState(false); // Added state for dialog
   const [measurementStandards, setMeasurementStandards] = useState<Record<string, any>>({});
+  const [fileName, setFileName] = useState(''); // Added fileName state
+  const [operator, setOperator] = useState(''); // Added operator state
+  const [formErrors, setFormErrors] = React.useState({}); // Added form error state
 
   useEffect(() => {
     const fetchData = async () => {
@@ -224,7 +227,7 @@ export default function InspectionPage() {
 
   const validateAndSaveBasicInfo = () => {
     // Basic info validation (replace with your actual validation logic)
-    if (!date || !startTime || !endTime || !locationInput || !responsiblePerson || !inspectorInput || !machineNumber) {
+    if (!date || !startTime || !endTime || !locationInput || !responsiblePerson || !inspectorInput || !machineNumber || !fileName || !operator) {
       toast({
         title: "エラー",
         description: "全ての基本情報を入力してください。",
@@ -241,7 +244,9 @@ export default function InspectionPage() {
       locationInput,
       responsiblePerson,
       inspectorInput,
-      machineNumber
+      machineNumber,
+      fileName,
+      operator
     }));
 
     setShowBasicInfo(false);
@@ -321,6 +326,26 @@ export default function InspectionPage() {
     handleComplete();
   };
 
+  const getInputStyle = (fieldName) => {
+    return formErrors[fieldName] ? 'border-red-500 focus:ring-red-500' : '';
+  };
+
+  const handleSaveAndProceed = () => {
+    const errors = {};
+    // Required fields validation
+    if (!date) errors['date'] = true;
+    if (!machineNumber) errors['machineNumber'] = true;
+    if (!fileName) errors['fileName'] = true;
+    if (!operator) errors['operator'] = true;
+
+    setFormErrors(errors);
+
+    if (Object.keys(errors).length === 0) {
+      // Save basic info and proceed to inspection form
+      validateAndSaveBasicInfo();
+    }
+  };
+
   return (
     <div className="container mx-auto py-8">
       <div className="mb-6">
@@ -389,17 +414,34 @@ export default function InspectionPage() {
                     placeholder="機械番号を入力"
                     value={machineNumber}
                     onChange={e => setMachineNumber(e.target.value)}
+                    className={getInputStyle('machineNumber')}
                   />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="file-name">ファイル名</Label>
-                <Input id="file-name" type="text" value={""} onChange={e => {}} />
+                <Input
+                  id="file-name"
+                  placeholder="ファイル名を入力"
+                  value={fileName}
+                  onChange={e => setFileName(e.target.value)}
+                  className="w-[calc(100%+10ch)]"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="operator">作業者</Label>
+                <Input
+                  id="operator"
+                  placeholder="作業者名を入力"
+                  value={operator}
+                  onChange={e => setOperator(e.target.value)}
+                  className={getInputStyle('operator')}
+                />
               </div>
             </div>
           </CardContent>
           <CardFooter>
-            <Button onClick={validateAndSaveBasicInfo}>
-              保存して点検表へ
+            <Button onClick={handleSaveAndProceed} className={Object.values(formErrors).some(error => error) ? 'bg-red-500' : ''}>
+              一時保存して仕業点検表を表示
             </Button>
           </CardFooter>
         </Card>

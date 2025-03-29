@@ -67,7 +67,7 @@ export default function InspectionPage() {
   const [resultFilter, setResultFilter] = useState<string>("all");
   const [standards, setStandards] = useState<{[key: string]: {min: number, max: number}}>({});
   const [showUncheckedDialog, setShowUncheckedDialog] = useState(false); // Added state for dialog
-
+  const [measurementStandards, setMeasurementStandards] = useState<Record<string, any>[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -183,6 +183,28 @@ export default function InspectionPage() {
 
     fetchInspectionItems();
   }, [selectedManufacturer, selectedModel, standards]);
+
+  useEffect(() => {
+    // 基準値の読み込み
+    fetch('/api/measurement-standards')
+      .then(response => response.json())
+      .then(data => {
+        const standards = data.standards || [];
+        // inspection_item_idをキーとして基準値をマッピング
+        const mappedStandards = standards.reduce((acc: Record<string, any>, standard: any) => {
+          acc[standard.inspection_item_id] = {
+            minValue: standard.minValue,
+            maxValue: standard.maxValue
+          };
+          return acc;
+        }, {});
+        setMeasurementStandards(mappedStandards);
+      })
+      .catch(error => {
+        console.error('基準値の読み込みエラー:', error);
+      });
+  }, []);
+
 
   const updateInspectionResult = (id: number, result: string) => {
     setItems(prevItems => prevItems.map(item =>

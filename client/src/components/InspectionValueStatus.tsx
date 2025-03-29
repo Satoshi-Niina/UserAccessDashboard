@@ -26,21 +26,26 @@ export const InspectionValueStatus: React.FC<InspectionValueStatusProps> = ({
   };
 
   const validateValue = (val: string) => {
-    if (!val || !minValue || !maxValue) {
+    if (!val) {
       setIsOutOfRange(false);
       return;
     }
 
     const numVal = parseFloat(val);
-    const min = parseFloat(minValue);
-    const max = parseFloat(maxValue);
+    const numMin = minValue ? parseFloat(minValue) : null;
+    const numMax = maxValue ? parseFloat(maxValue) : null;
 
-    if (isNaN(numVal) || isNaN(min) || isNaN(max)) {
+    if (isNaN(numVal)) {
       setIsOutOfRange(false);
       return;
     }
 
-    setIsOutOfRange(numVal < min || numVal > max);
+    // 基準値が設定されている場合のみ判定
+    if (numMin !== null && numMax !== null) {
+      setIsOutOfRange(numVal < numMin || numVal > numMax);
+    } else {
+      setIsOutOfRange(false);
+    }
   };
 
   return (

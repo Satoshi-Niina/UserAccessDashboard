@@ -23,6 +23,13 @@ export const InspectionValueStatus: React.FC<InspectionValueStatusProps> = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     onChange(newValue);
+    // 入力時に即座にバリデーション
+    validateValue(newValue);
+  };
+
+  const handleBlur = () => {
+    // フォーカスが外れた時にもバリデーション
+    validateValue(value);
   };
 
   const validateValue = (val: string) => {
@@ -55,6 +62,7 @@ export const InspectionValueStatus: React.FC<InspectionValueStatusProps> = ({
         type="number"
         value={value}
         onChange={handleChange}
+        onBlur={handleBlur}
         className={`w-full px-3 py-2 border rounded ${
           isOutOfRange ? 'border-red-500 bg-red-50' : 'border-gray-300'
         }`}

@@ -226,6 +226,8 @@ export default function InspectionPage() {
 
   const validateAndSaveBasicInfo = () => {
     const errors: {[key: string]: boolean} = {};
+    
+    // すべての必須フィールドをチェック
     if (!date) errors.date = true;
     if (!startTime) errors.startTime = true;
     if (!endTime) errors.endTime = true;
@@ -237,10 +239,21 @@ export default function InspectionPage() {
 
     setFormErrors(errors);
 
+    // エラーがある場合は具体的なメッセージを表示
     if (Object.keys(errors).length > 0) {
+      const missingFields = [];
+      if (errors.date) missingFields.push('点検日');
+      if (errors.location) missingFields.push('点検場所');
+      if (errors.responsible) missingFields.push('責任者');
+      if (errors.inspector) missingFields.push('点検者');
+      if (errors.startTime) missingFields.push('開始時刻');
+      if (errors.endTime) missingFields.push('終了時刻');
+      if (errors.machineNumber) missingFields.push('機番');
+      if (errors.fileName) missingFields.push('ファイル名');
+
       toast({
-        title: "エラー",
-        description: "全ての基本情報を入力してください。",
+        title: "入力エラー",
+        description: `以下の項目が未入力です：${missingFields.join('、')}`,
         variant: "destructive"
       });
       return;

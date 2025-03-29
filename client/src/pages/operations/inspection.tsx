@@ -597,7 +597,7 @@ export default function InspectionPage() {
             <Button onClick={handleSaveWithValidation}>点検完了</Button>
           </div>
         </Card>
-      )}
+      
       <Dialog open={showUncheckedDialog} onOpenChange={setShowUncheckedDialog}>
         <DialogContent>
           <DialogHeader>

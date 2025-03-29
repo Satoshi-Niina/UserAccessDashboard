@@ -384,17 +384,12 @@ export default function InspectionPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="machine-id">機械番号</Label>
-                <div className="flex gap-2">
-                  <Input
+                <Input
                     id="machine-id"
                     placeholder="機械番号を入力"
                     value={machineNumber}
                     onChange={e => setMachineNumber(e.target.value)}
                   />
-                  <Button onClick={() => setShowBasicInfo(false)}>
-                    点検項目取得
-                  </Button>
-                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="file-name">ファイル名</Label>

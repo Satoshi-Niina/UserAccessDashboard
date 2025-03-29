@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import Papa from 'papaparse';
 import { Button } from "@/components/ui/button";
 import OperationsNav from "@/components/OperationsNav";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
@@ -222,61 +222,56 @@ export default function InspectionPage() {
     ));
   };
 
-  const handleComplete = async () => {
-    const uncheckedItems = items.filter(item => !item.result);
-    setUncheckedItemsDialog(uncheckedItems);
-    if (uncheckedItems.length > 0) {
-      setShowUncheckedDialog(true); // Show dialog if unchecked items exist
+  const validateAndSaveBasicInfo = () => {
+    // Basic info validation (replace with your actual validation logic)
+    if (!date || !startTime || !endTime || !locationInput || !responsiblePerson || !inspectorInput || !machineNumber) {
+      toast({
+        title: "エラー",
+        description: "全ての基本情報を入力してください。",
+        variant: "destructive"
+      });
       return;
     }
 
-    const basicInfo = {
-      点検年月日: date,
-      開始時刻: startTime,
-      終了時刻: endTime,
-      実施箇所: locationInput,
-      責任者: responsiblePerson,
-      点検者: inspectorInput,
-      引継ぎ: ""
+    // Store basic info in local storage (temporary solution)
+    localStorage.setItem('inspectionBasicInfo', JSON.stringify({
+      date: date.toISOString(),
+      startTime,
+      endTime,
+      locationInput,
+      responsiblePerson,
+      inspectorInput,
+      machineNumber
+    }));
+
+    setShowBasicInfo(false);
+  };
+
+  const handleComplete = async () => {
+    // Basic info and inspection data are combined and saved in handleSaveWithValidation now.
+    const basicInfo = JSON.parse(localStorage.getItem('inspectionBasicInfo') || '{}');
+    const completeData = {
+      ...basicInfo,
+      inspectionItems: items
     };
+    console.log("Complete data to save:", completeData); // Replace with actual save logic
 
-    const dateStr = new Date().toISOString().slice(0, 10);
-    const basicInfoFileName = `inspection_info_${dateStr}_${machineNumber}.csv`;
-    const inspectionRecordFileName = `inspection_${dateStr}_${machineNumber}.csv`;
-
-    try {
-      const response = await fetch('/api/save-inspection-data', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          sourceFileName: "inspection_data",
-          data: items,
-          fileName: basicInfoFileName,
-          inspectionRecord: basicInfo,
-          path: {
-            basicInfo: 'Inspection results',
-            inspectionRecord: 'Inspection record'
-          }
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('保存に失敗しました');
-      }
-
-      toast({
-        title: "保存完了",
-        description: "点検データが正常に保存されました",
-      });
-    } catch (error) {
-      console.error('保存エラー:', error);
-      toast({
-        title: "保存エラー",
-        description: "点検データの保存中にエラーが発生しました",
-        variant: "destructive",
-      });
+    // Placeholder for file saving - Replace with your actual file saving logic
+    try{
+      const response = await fetch('/api/save-inspection-data', { // Replace with your API endpoint
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(completeData)
+        });
+        if(!response.ok){
+          throw new Error("Failed to save data")
+        }
+        toast({title: "Saved successfully!", description: "Inspection data saved successfully!"})
+    } catch(error){
+      console.error("Failed to save data:", error);
+      toast({title: "Error", description: "Failed to save data", variant: "destructive"})
     }
   };
 
@@ -310,9 +305,19 @@ export default function InspectionPage() {
     const uncheckedItems = items.filter(item => !item.result);
     if (uncheckedItems.length > 0) {
       setUncheckedItemsDialog(uncheckedItems);
-      setShowUncheckedDialog(true); // Show the dialog
+      setShowUncheckedDialog(true);
       return;
     }
+
+    // 基本情報と点検結果を組み合わせて保存
+    const basicInfo = JSON.parse(localStorage.getItem('inspectionBasicInfo') || '{}');
+    const completeData = {
+      ...basicInfo,
+      inspectionItems: items
+    };
+    // TODO: ファイル保存処理を実装
+    console.log('Save complete data:', completeData);
+
     handleComplete();
   };
 
@@ -397,6 +402,11 @@ export default function InspectionPage() {
               </div>
             </div>
           </CardContent>
+          <CardFooter>
+            <Button onClick={validateAndSaveBasicInfo}>
+              保存して点検表へ
+            </Button>
+          </CardFooter>
         </Card>
       ) : (
         <Card className="mb-6">

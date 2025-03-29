@@ -598,7 +598,7 @@ export default function InspectionPage() {
           </div>
         </Card>
       
-      <Dialog open={showUncheckedDialog} onOpenChange={setShowUncheckedDialog}>
+      <Dialog>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>未確認項目があります！</DialogTitle>

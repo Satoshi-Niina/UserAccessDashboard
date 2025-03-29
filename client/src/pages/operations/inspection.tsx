@@ -17,6 +17,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import InspectionValueStatus from "@/components/InspectionValueStatus";
+import { Dialog, DialogHeader, DialogTitle, DialogBody, DialogContent, DialogFooter } from '@headlessui/react' // Added import
+
 
 interface InspectionItem {
   id: number;
@@ -62,6 +64,8 @@ export default function InspectionPage() {
   const [equipmentFilter, setEquipmentFilter] = useState<string>("all");
   const [resultFilter, setResultFilter] = useState<string>("all");
   const [standards, setStandards] = useState<{[key: string]: {min: number, max: number}}>({});
+  const [showUncheckedDialog, setShowUncheckedDialog] = useState(false); // Added state for dialog
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -193,8 +197,8 @@ export default function InspectionPage() {
   const handleComplete = async () => {
     const uncheckedItems = items.filter(item => !item.result);
     setUncheckedItemsDialog(uncheckedItems);
-
     if (uncheckedItems.length > 0) {
+      setShowUncheckedDialog(true); // Show dialog if unchecked items exist
       return;
     }
 
@@ -278,6 +282,7 @@ export default function InspectionPage() {
     const uncheckedItems = items.filter(item => !item.result);
     if (uncheckedItems.length > 0) {
       setUncheckedItemsDialog(uncheckedItems);
+      setShowUncheckedDialog(true); // Show the dialog
       return;
     }
     handleComplete();
@@ -592,6 +597,38 @@ export default function InspectionPage() {
             <Button onClick={handleSaveWithValidation}>点検完了</Button>
           </div>
         </Card>
+      )}
+      {showUncheckedDialog && (
+        <Dialog open={showUncheckedDialog} onClose={() => setShowUncheckedDialog(false)}> {/*Corrected onClose*/}
+          <DialogContent className="relative bg-white rounded-lg shadow">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-medium text-gray-900">未確認項目があります！</DialogTitle>
+            </DialogHeader>
+            <div className="max-h-[400px] overflow-y-auto p-4">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>カテゴリー</TableHead>
+                    <TableHead>装置</TableHead>
+                    <TableHead>点検項目</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {uncheckedItemsDialog.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell>{item.category}</TableCell>
+                      <TableCell>{item.equipment}</TableCell>
+                      <TableCell>{item.item}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <DialogFooter className="flex justify-end p-4">
+              <Button onClick={() => setShowUncheckedDialog(false)}>確認</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

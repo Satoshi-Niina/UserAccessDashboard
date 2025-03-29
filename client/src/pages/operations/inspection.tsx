@@ -17,7 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import InspectionValueStatus from "@/components/InspectionValueStatus";
-import { Dialog, DialogHeader, DialogTitle, DialogBody, DialogContent, DialogFooter } from '@headlessui/react' // Added import
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 
 
 interface InspectionItem {
@@ -598,13 +598,12 @@ export default function InspectionPage() {
           </div>
         </Card>
       )}
-      {showUncheckedDialog && (
-        <Dialog open={showUncheckedDialog} onClose={() => setShowUncheckedDialog(false)}> {/*Corrected onClose*/}
-          <DialogContent className="relative bg-white rounded-lg shadow">
-            <DialogHeader>
-              <DialogTitle className="text-lg font-medium text-gray-900">未確認項目があります！</DialogTitle>
-            </DialogHeader>
-            <div className="max-h-[400px] overflow-y-auto p-4">
+      <Dialog open={showUncheckedDialog} onOpenChange={setShowUncheckedDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>未確認項目があります！</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[400px] overflow-y-auto p-4">
               <Table>
                 <TableHeader>
                   <TableRow>

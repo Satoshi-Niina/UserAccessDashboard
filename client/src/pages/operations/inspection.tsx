@@ -598,12 +598,13 @@ export default function InspectionPage() {
           </div>
         </Card>
       
-      <Dialog>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>未確認項目があります！</DialogTitle>
-          </DialogHeader>
-          <div className="max-h-[400px] overflow-y-auto p-4">
+      {showUncheckedDialog && (
+        <Dialog open={showUncheckedDialog} onOpenChange={setShowUncheckedDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>未確認項目があります！</DialogTitle>
+            </DialogHeader>
+            <div className="max-h-[400px] overflow-y-auto p-4">
               <Table>
                 <TableHeader>
                   <TableRow>

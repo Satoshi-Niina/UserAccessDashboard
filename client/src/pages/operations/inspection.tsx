@@ -84,16 +84,19 @@ export default function InspectionPage() {
 
         const manufacturersData = await manufacturersRes.json();
         const modelsData = await modelsRes.json();
-        const standardsData = await standardsRes.json();
+        const standardsText = await standardsRes.text();
 
+        const standardsData = Papa.parse(standardsText, {header: true, dynamicTyping: true}).data;
         const standardsMap = {};
-        standardsData.standards.forEach(standard => {
-          standardsMap[standard.inspection_item_id] = {
-            minValue: standard.minValue,
-            maxValue: standard.maxValue
+        standardsData.forEach(standard => {
+          const key = `${standard.category}-${standard.equipment}-${standard.item}`;
+          standardsMap[key] = {
+            min: parseFloat(standard.min_value),
+            max: parseFloat(standard.max_value)
           };
         });
 
+        console.log('Loaded standards:', standardsMap);
         setStandards(standardsMap);
         setManufacturers(manufacturersData);
         setModels(modelsData.filter(model => 

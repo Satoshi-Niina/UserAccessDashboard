@@ -44,6 +44,8 @@ export const InspectionValueStatus: React.FC<InspectionValueStatusProps> = ({
       const isOutside = numVal < min || numVal > max;
       console.log(`Validation: value=${numVal}, min=${min}, max=${max}, outside=${isOutside}`);
       setIsOutOfRange(isOutside);
+    } else {
+      console.log('No min/max values available for validation');
     }
   };
 

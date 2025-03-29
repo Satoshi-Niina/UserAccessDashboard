@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from "wouter";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -17,7 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import InspectionValueStatus from "@/components/InspectionValueStatus";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 
 interface InspectionItem {
@@ -44,6 +45,7 @@ const resultOptions = ["良好", "不良", "調整", "交換", "補充"];
 
 export default function InspectionPage() {
   const [manufacturers, setManufacturers] = useState([]);
+  const [, setLocation] = useLocation();
   const [models, setModels] = useState([]);
   const [items, setItems] = useState<InspectionItem[]>([]);
   const [selectedManufacturer, setSelectedManufacturer] = useState('');
@@ -254,7 +256,7 @@ export default function InspectionPage() {
 
   const handleCancel = () => {
     if (window.confirm("点検をキャンセルしますか？変更内容は破棄されます。")) {
-      window.location.href = '/';
+      setLocation("/operations");
     }
   };
 
@@ -596,52 +598,39 @@ export default function InspectionPage() {
             <Button variant="outline" onClick={handleCancel}>キャンセル</Button>
             <Button onClick={handleSaveWithValidation}>点検完了</Button>
           </div>
-          {uncheckedItems.length > 0 && (
-            <div className="mt-4">
-              <h3 className="text-lg font-semibold text-red-500 mb-2">未確認項目があります！</h3>
-              <div className="max-h-[400px] overflow-y-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>カテゴリー</TableHead>
-                      <TableHead>装置</TableHead>
-                      <TableHead>点検項目</TableHead>
-                      <TableHead>判定</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {uncheckedItems.map((item, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{item.category}</TableCell>
-                        <TableCell>{item.equipment}</TableCell>
-                        <TableCell>{item.name}</TableCell>
-                        <TableCell>未記入</TableCell>
+          {showUncheckedDialog && (
+            <Dialog open>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>未確認項目</DialogTitle>
+                </DialogHeader>
+                <div className="p-4">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>カテゴリー</TableHead>
+                        <TableHead>装置</TableHead>
+                        <TableHead>点検項目</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
+                    </TableHeader>
+                    <TableBody>
+                      {uncheckedItemsDialog.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell>{item.category}</TableCell>
+                          <TableCell>{item.equipment}</TableCell>
+                          <TableCell>{item.item}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                <DialogFooter className="flex justify-end p-4">
+                  <Button onClick={() => setShowUncheckedDialog(false)}>確認</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           )}
         </Card>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {uncheckedItemsDialog.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>{item.category}</TableCell>
-                      <TableCell>{item.equipment}</TableCell>
-                      <TableCell>{item.item}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            <DialogFooter className="flex justify-end p-4">
-              <Button onClick={() => setShowUncheckedDialog(false)}>確認</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       )}
     </div>
   );

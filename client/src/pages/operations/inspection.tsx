@@ -603,13 +603,17 @@ export default function InspectionPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>項目</TableHead>
+                      <TableHead>カテゴリー</TableHead>
+                      <TableHead>装置</TableHead>
+                      <TableHead>点検項目</TableHead>
                       <TableHead>判定</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {uncheckedItems.map((item, index) => (
                       <TableRow key={index}>
+                        <TableCell>{item.category}</TableCell>
+                        <TableCell>{item.equipment}</TableCell>
                         <TableCell>{item.name}</TableCell>
                         <TableCell>未記入</TableCell>
                       </TableRow>
@@ -620,9 +624,6 @@ export default function InspectionPage() {
             </div>
           )}
         </Card>
-                    <TableHead>カテゴリー</TableHead>
-                    <TableHead>装置</TableHead>
-                    <TableHead>点検項目</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

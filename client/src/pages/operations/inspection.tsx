@@ -234,9 +234,9 @@ export default function InspectionPage() {
     if (!inspectorInput) errors.inspector = true;
     if (!machineNumber) errors.machineNumber = true;
     if (!fileName) errors.fileName = true;
-    
+
     setFormErrors(errors);
-    
+
     if (Object.keys(errors).length > 0) {
       toast({
         title: "エラー",
@@ -255,8 +255,7 @@ export default function InspectionPage() {
       responsiblePerson,
       inspectorInput,
       machineNumber,
-      fileName,
-      operator
+      fileName
     }));
 
     setShowBasicInfo(false);
@@ -346,7 +345,6 @@ export default function InspectionPage() {
     if (!date) errors['date'] = true;
     if (!machineNumber) errors['machineNumber'] = true;
     if (!fileName) errors['fileName'] = true;
-    if (!operator) errors['operator'] = true;
 
     setFormErrors(errors);
 

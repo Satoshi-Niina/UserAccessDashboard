@@ -67,7 +67,7 @@ export default function InspectionPage() {
   const [resultFilter, setResultFilter] = useState<string>("all");
   const [standards, setStandards] = useState<{[key: string]: {min: number, max: number}}>({});
   const [showUncheckedDialog, setShowUncheckedDialog] = useState(false); // Added state for dialog
-  const [measurementStandards, setMeasurementStandards] = useState<Record<string, any>[]>([]);
+  const [measurementStandards, setMeasurementStandards] = useState<Record<string, any>>({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -75,7 +75,7 @@ export default function InspectionPage() {
         const [manufacturersRes, modelsRes, standardsRes] = await Promise.all([
           fetch('/api/inspection/table/manufacturers'),
           fetch('/api/inspection/table/models'),
-          fetch('/attached_assets/inspection/table/measurement_standards.csv')
+          fetch('/api/measurement-standards')
         ]);
 
         if (!manufacturersRes.ok || !modelsRes.ok || !standardsRes.ok) {
@@ -84,13 +84,14 @@ export default function InspectionPage() {
 
         const manufacturersData = await manufacturersRes.json();
         const modelsData = await modelsRes.json();
-        const standardsText = await standardsRes.text();
+        const standardsData = await standardsRes.json();
 
-        const standardsData = Papa.parse(standardsText, {header: true, dynamicTyping: true}).data;
         const standardsMap = {};
-        standardsData.forEach(standard => {
-          const key = `${standard.category}-${standard.equipment}-${standard.item}`;
-          standardsMap[key] = {min: standard.min_value, max: standard.max_value};
+        standardsData.standards.forEach(standard => {
+          standardsMap[standard.inspection_item_id] = {
+            minValue: standard.minValue,
+            maxValue: standard.maxValue
+          };
         });
 
         setStandards(standardsMap);

@@ -15,10 +15,14 @@ export const InspectionValueStatus: React.FC<InspectionValueStatusProps> = ({
 }) => {
   const [isOutOfRange, setIsOutOfRange] = useState(false);
 
+  // 初期値と値の変更時に検証を行う
+  React.useEffect(() => {
+    validateValue(value);
+  }, [value, minValue, maxValue]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     onChange(newValue);
-    validateValue(newValue);
   };
 
   const validateValue = (val: string) => {

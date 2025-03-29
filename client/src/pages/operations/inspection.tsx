@@ -41,7 +41,7 @@ interface InspectionItem {
   standardMax?: number;
 }
 
-const resultOptions = ["良好", "不良", "調整", "交換", "補充"];
+const resultOptions = ["未チェック", "良好", "不良", "調整", "交換", "補充"];
 
 export default function InspectionPage() {
   const [manufacturers, setManufacturers] = useState([]);
@@ -391,18 +391,6 @@ export default function InspectionPage() {
             </div>
           </CardHeader>
           <CardContent>
-            {uncheckedItemsDialog.length > 0 && (
-              <div className="mb-4 p-4 border-2 border-red-500 rounded-lg">
-                <h3 className="text-lg font-bold text-red-500 mb-2">チェック漏れの項目</h3>
-                <ul className="list-disc pl-5">
-                  {uncheckedItemsDialog.map((item) => (
-                    <li key={item.id} className="text-red-700">
-                      {item.category} - {item.equipment} - {item.item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
             <div className="mb-2 p-2 bg-muted/20 rounded-md">
               <div className="flex flex-wrap gap-2">
                 <div className="min-w-[150px]">

@@ -66,11 +66,10 @@ export default function InspectionPage() {
   const [equipmentFilter, setEquipmentFilter] = useState<string>("all");
   const [resultFilter, setResultFilter] = useState<string>("all");
   const [standards, setStandards] = useState<{[key: string]: {min: number, max: number}}>({});
-  const [showUncheckedDialog, setShowUncheckedDialog] = useState(false); // Added state for dialog
+  const [showUncheckedDialog, setShowUncheckedDialog] = useState(false);
   const [measurementStandards, setMeasurementStandards] = useState<Record<string, any>>({});
-  const [fileName, setFileName] = useState(''); // Added fileName state
-  const [operator, setOperator] = useState(''); // Added operator state
-  const [formErrors, setFormErrors] = React.useState({}); // Added form error state
+  const [fileName, setFileName] = useState('');
+  const [formErrors, setFormErrors] = React.useState<{[key: string]: boolean}>({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -226,8 +225,19 @@ export default function InspectionPage() {
   };
 
   const validateAndSaveBasicInfo = () => {
-    // Basic info validation (replace with your actual validation logic)
-    if (!date || !startTime || !endTime || !locationInput || !responsiblePerson || !inspectorInput || !machineNumber || !fileName || !operator) {
+    const errors: {[key: string]: boolean} = {};
+    if (!date) errors.date = true;
+    if (!startTime) errors.startTime = true;
+    if (!endTime) errors.endTime = true;
+    if (!locationInput) errors.location = true;
+    if (!responsiblePerson) errors.responsible = true;
+    if (!inspectorInput) errors.inspector = true;
+    if (!machineNumber) errors.machineNumber = true;
+    if (!fileName) errors.fileName = true;
+    
+    setFormErrors(errors);
+    
+    if (Object.keys(errors).length > 0) {
       toast({
         title: "エラー",
         description: "全ての基本情報を入力してください。",
@@ -326,8 +336,8 @@ export default function InspectionPage() {
     handleComplete();
   };
 
-  const getInputStyle = (fieldName) => {
-    return formErrors[fieldName] ? 'border-red-500 focus:ring-red-500' : '';
+  const getInputStyle = (fieldName: string) => {
+    return cn(formErrors[fieldName] && "border-red-500 focus:ring-red-500");
   };
 
   const handleSaveAndProceed = () => {
@@ -424,17 +434,7 @@ export default function InspectionPage() {
                   placeholder="ファイル名を入力"
                   value={fileName}
                   onChange={e => setFileName(e.target.value)}
-                  className="w-[calc(100%+10ch)]"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="operator">作業者</Label>
-                <Input
-                  id="operator"
-                  placeholder="作業者名を入力"
-                  value={operator}
-                  onChange={e => setOperator(e.target.value)}
-                  className={getInputStyle('operator')}
+                  className={cn("w-[calc(100%+10ch)]", formErrors.fileName && "border-red-500")}
                 />
               </div>
             </div>

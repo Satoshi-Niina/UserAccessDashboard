@@ -596,18 +596,30 @@ export default function InspectionPage() {
             <Button variant="outline" onClick={handleCancel}>キャンセル</Button>
             <Button onClick={handleSaveWithValidation}>点検完了</Button>
           </div>
+          {uncheckedItems.length > 0 && (
+            <div className="mt-4">
+              <h3 className="text-lg font-semibold text-red-500 mb-2">未確認項目があります！</h3>
+              <div className="max-h-[400px] overflow-y-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>項目</TableHead>
+                      <TableHead>判定</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {uncheckedItems.map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{item.name}</TableCell>
+                        <TableCell>未記入</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
         </Card>
-      
-      {showUncheckedDialog && (
-        <Dialog open={showUncheckedDialog} onOpenChange={setShowUncheckedDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>未確認項目があります！</DialogTitle>
-            </DialogHeader>
-            <div className="max-h-[400px] overflow-y-auto p-4">
-              <Table>
-                <TableHeader>
-                  <TableRow>
                     <TableHead>カテゴリー</TableHead>
                     <TableHead>装置</TableHead>
                     <TableHead>点検項目</TableHead>

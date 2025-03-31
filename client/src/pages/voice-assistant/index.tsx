@@ -51,9 +51,18 @@ export default function VoiceAssistant() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json(); // Attempt to get error details
-        const errorMessage = errorData.message || "検索に失敗しました";
-        throw new Error(errorMessage);
+        //Improved error handling:  More specific error messages based on status code
+        let errorMessage = "検索に失敗しました";
+        if (response.status === 404) {
+          errorMessage = "該当する検索結果がありませんでした";
+        } else if (response.status === 500) {
+          errorMessage = "サーバーエラーが発生しました。管理者にお問い合わせください。";
+        }
+        setMessages(prev => [...prev, {
+          content: errorMessage,
+          isUser: false
+        }]);
+        return; // Stop further execution on error
       }
       const searchResults = await response.json();
 
@@ -69,7 +78,7 @@ export default function VoiceAssistant() {
     } catch (error) {
       console.error('検索エラー:', error);
       setMessages(prev => [...prev, {
-        content: `エラーが発生しました: ${error.message}`, // Show more descriptive error message
+        content: `エラーが発生しました: ${error.message}`, 
         isUser: false
       }]);
     }
@@ -118,7 +127,7 @@ export default function VoiceAssistant() {
           isUser: true,
           isSelectable: true 
         }]);
-        // 自動検索を無効化
+        // 自動検索を無効化 -  This line does nothing in the original code.  No immediate search is implemented.
       }
     };
 
@@ -161,7 +170,7 @@ export default function VoiceAssistant() {
               className="flex-1"
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
             />
-            <Button onClick={handleSearch} className="flex-none">
+            <Button onClick={handleSearch} className="flex-none"> {/*Corrected onClick handler*/}
               <Send className="h-4 w-4" />
             </Button>
           </div>

@@ -105,7 +105,7 @@ export function Sidebar({ onExpandChange }: SidebarProps) {
   return (
     <div
       className={cn(
-        "fixed h-screen bg-sidebar border-r border-sidebar-border flex flex-col transition-all duration-300 z-50",
+        "fixed h-[95vh] bg-sidebar border-r border-sidebar-border flex flex-col transition-all duration-300 z-50 overflow-y-auto",
         isExpanded ? "w-64" : "w-16"
       )}
       //onMouseEnter={() => setIsExpanded(true)}

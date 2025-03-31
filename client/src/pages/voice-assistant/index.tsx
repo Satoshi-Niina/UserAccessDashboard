@@ -122,12 +122,7 @@ export default function VoiceAssistant() {
       const transcript = event.results[last][0].transcript;
 
       if (event.results[last].isFinal) {
-        setMessages(prevMessages => [...prevMessages, { 
-          content: transcript, 
-          isUser: true,
-          isSelectable: true 
-        }]);
-        // 自動検索を無効化 -  This line does nothing in the original code.  No immediate search is implemented.
+        handleVoiceResult(transcript);
       }
     };
 

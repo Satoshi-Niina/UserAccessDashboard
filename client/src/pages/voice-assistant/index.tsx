@@ -40,16 +40,16 @@ export default function VoiceAssistant() {
   };
 
   // 検索実行
-  const handleSearch = async (query = inputText) => { //Modified to accept optional query
-    if (!query.trim()) return;
+  const handleSearch = async () => {
+    if (!inputText.trim()) return;
 
     try {
-      setMessages(prev => [...prev, { content: query, isUser: true }]);
+      setMessages(prev => [...prev, { content: inputText, isUser: true }]);
 
       const response = await fetch('/api/tech-support/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: query })
+        body: JSON.stringify({ query: inputText })
       });
 
       if (!response.ok) {
@@ -66,7 +66,6 @@ export default function VoiceAssistant() {
       const searchResults = await response.json();
 
       // Removed Search Preview -  no longer displaying search results directly
-      setMessages(prev => [...prev, { content: query, isUser: true }]); //Added to compensate for removed search result display
       setInputText("");
     } catch (error) {
       console.error('検索エラー:', error);

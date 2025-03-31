@@ -25,16 +25,18 @@ export default function VoiceAssistant() {
     setIsRecording(false);
   };
 
-  // メッセージをクリックしたときのハンドラ
-  const handleMessageClick = (message) => {
-    if (message.isUser) {
-      setInputText(message.content);
+  // テキスト選択ハンドラ
+  const handleTextSelection = () => {
+    const selection = window.getSelection();
+    if (selection && selection.toString().trim()) {
+      setInputText(selection.toString().trim());
     }
   };
 
-  //テキスト選択ハンドラ
-  const handleTextSelection = (text) => {
-    setSelectedText(text);
+  // メッセージをクリックしたときのハンドラ
+  const handleMessageClick = (message) => {
+    // クリックだけでは入力欄に反映しない
+    return;
   };
 
   // 検索実行
@@ -112,7 +114,7 @@ export default function VoiceAssistant() {
           isUser: true,
           isSelectable: true 
         }]);
-        setInputText(transcript);
+        // 自動検索を無効化
       }
     };
 

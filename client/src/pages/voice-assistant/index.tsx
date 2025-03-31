@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { DetailView } from '@/components/voice-assistant/DetailView';
 import { Input } from '@/components/ui/input';
@@ -78,7 +77,7 @@ export default function VoiceAssistant() {
 
     const recognition = new SpeechRecognition();
     recognition.lang = 'ja-JP';
-    recognition.continuous = false;
+    recognition.continuous = true; // 継続的な認識を有効化
     recognition.interimResults = true;
 
     recognition.onstart = () => {
@@ -94,12 +93,12 @@ export default function VoiceAssistant() {
     };
 
     recognition.onresult = (event) => {
-      const transcript = Array.from(event.results)
-        .map(result => result[0].transcript)
-        .join('');
-      
-      if (event.results[0].isFinal) {
-        handleVoiceResult(transcript);
+      const last = event.results.length - 1;
+      const transcript = event.results[last][0].transcript;
+
+      if (event.results[last].isFinal) {
+        setMessages(prevMessages => [...prevMessages, { content: transcript, isUser: true }]);
+        setInputText(transcript); // 認識したテキストを入力欄に設定
       }
     };
 

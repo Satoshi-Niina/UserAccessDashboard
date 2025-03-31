@@ -12,13 +12,15 @@ export default function VoiceAssistant() {
   const [messages, setMessages] = useState([]);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedText, setSelectedText] = useState(''); // Added state for selected text
 
   // 音声認識の結果をメッセージとして表示する
   const handleVoiceResult = (transcript) => {
     setMessages(prev => [...prev, { 
       content: transcript, 
       isUser: true,
-      isVoiceResult: true 
+      isVoiceResult: true,
+      isSelectable: true 
     }]);
     setIsRecording(false);
   };
@@ -30,22 +32,27 @@ export default function VoiceAssistant() {
     }
   };
 
+  //テキスト選択ハンドラ
+  const handleTextSelection = (text) => {
+    setSelectedText(text);
+  };
+
   // 検索実行
-  const handleSearch = async () => {
-    if (!inputText.trim()) return;
+  const handleSearch = async (query = inputText) => { //Modified to accept optional query
+    if (!query.trim()) return;
 
     try {
       const response = await fetch('/api/tech-support/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: inputText })
+        body: JSON.stringify({ query: query })
       });
 
       if (!response.ok) throw new Error('検索に失敗しました');
       const searchResults = await response.json();
 
       setMessages(prev => [...prev, 
-        { content: inputText, isUser: true },
+        { content: query, isUser: true },
         { 
           content: "検索結果:", 
           isUser: false,
@@ -77,7 +84,7 @@ export default function VoiceAssistant() {
 
     const recognition = new SpeechRecognition();
     recognition.lang = 'ja-JP';
-    recognition.continuous = true; // 継続的な認識を有効化
+    recognition.continuous = true; 
     recognition.interimResults = true;
 
     recognition.onstart = () => {
@@ -89,7 +96,10 @@ export default function VoiceAssistant() {
     };
 
     recognition.onend = () => {
-      setIsRecording(false);
+      // 音声認識が終了したら自動的に再開
+      if (isRecording) {
+        recognition.start();
+      }
     };
 
     recognition.onresult = (event) => {
@@ -97,8 +107,12 @@ export default function VoiceAssistant() {
       const transcript = event.results[last][0].transcript;
 
       if (event.results[last].isFinal) {
-        setMessages(prevMessages => [...prevMessages, { content: transcript, isUser: true }]);
-        setInputText(transcript); // 認識したテキストを入力欄に設定
+        setMessages(prevMessages => [...prevMessages, { 
+          content: transcript, 
+          isUser: true,
+          isSelectable: true 
+        }]);
+        setInputText(transcript);
       }
     };
 
@@ -116,6 +130,7 @@ export default function VoiceAssistant() {
                 message.isUser ? 'bg-blue-100 ml-auto' : 'bg-gray-100'
               } ${message.isVoiceResult ? 'border-2 border-blue-300' : ''}`}
               onClick={() => handleMessageClick(message)}
+              onMouseUp={() => message.isSelectable && handleTextSelection(message.content)}
             >
               {message.content}
               {message.results && <SearchPreview results={message.results} />}

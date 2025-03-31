@@ -41,7 +41,7 @@ export default function VoiceAssistant() {
           throw new Error(`HTTPエラー: ${response.status}`);
         }
         const data = await response.json();
-        
+
         // データ構造を確認して適切に処理
         const processedData = Array.isArray(data) ? data : (data.slides || []);
         setSearchData(processedData);
@@ -52,7 +52,7 @@ export default function VoiceAssistant() {
 
         // Fuse用のキーを設定
         const fuseKeys = ['ノート', '本文', '画像テキスト'];
-        
+
         // 追加のキーを検索
         if (processedData.length > 0) {
           const sample = processedData[0];
@@ -91,21 +91,32 @@ export default function VoiceAssistant() {
 
   const startMic = async () => {
     try {
+      if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
+        throw new Error('音声認識がサポートされていません');
+      }
+
       const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
       recognition.lang = 'ja-JP';
       recognition.continuous = true;
       recognition.interimResults = true;
 
       recognition.onresult = (event) => {
-        const result = event.results[event.results.length - 1];
-        if (result.isFinal) {
-          const transcript = result[0].transcript;
+        const last = event.results.length - 1;
+        const transcript = event.results[last][0].transcript;
+
+        if (event.results[last].isFinal) {
           setMessages(prevMessages => [...prevMessages, { content: transcript, isUser: true }]);
+          handleSearch(transcript);
         }
       };
 
-      recognition.start();
+      recognition.onerror = (event) => {
+        console.error('音声認識エラー:', event.error);
+        setIsRecording(false);
+      };
+
       await navigator.mediaDevices.getUserMedia({ audio: true });
+      recognition.start();
       console.log("🎤 マイクが起動しました");
       setIsRecording(true);
     } catch (err) {
@@ -133,8 +144,9 @@ export default function VoiceAssistant() {
     console.log("📷 カメラを停止しました");
   };
 
-  const handleSearch = async () => {
-    if (!inputText.trim()) return;
+  const handleSearch = async (query?: string) => {
+    const searchText = query || inputText.trim();
+    if (!searchText) return;
 
     try {
       if (!fuse || !searchData.length) {
@@ -142,7 +154,7 @@ export default function VoiceAssistant() {
         throw new Error('検索エンジンの準備中です。しばらくお待ちください。');
       }
 
-      const results = fuse.search(inputText);
+      const results = fuse.search(searchText);
       console.log('検索結果:', results);
       const searchResults = results.map(result => ({
         content: result.item.ノート || (result.item.本文 ? result.item.本文.join('\n') : ''),

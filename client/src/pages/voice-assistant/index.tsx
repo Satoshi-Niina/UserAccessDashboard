@@ -44,6 +44,8 @@ export default function VoiceAssistant() {
     if (!query.trim()) return;
 
     try {
+      setMessages(prev => [...prev, { content: query, isUser: true }]);
+
       const response = await fetch('/api/tech-support/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -58,27 +60,18 @@ export default function VoiceAssistant() {
         } else if (response.status === 500) {
           errorMessage = "サーバーエラーが発生しました。管理者にお問い合わせください。";
         }
-        setMessages(prev => [...prev, {
-          content: errorMessage,
-          isUser: false
-        }]);
+        setMessages(prev => [...prev, { content: errorMessage, isUser: false }]);
         return; // Stop further execution on error
       }
       const searchResults = await response.json();
 
-      setMessages(prev => [...prev, 
-        { content: query, isUser: true },
-        { 
-          content: "検索結果:", 
-          isUser: false,
-          results: searchResults
-        }
-      ]);
+      // Removed Search Preview -  no longer displaying search results directly
+      setMessages(prev => [...prev, { content: query, isUser: true }]); //Added to compensate for removed search result display
       setInputText("");
     } catch (error) {
       console.error('検索エラー:', error);
       setMessages(prev => [...prev, {
-        content: `エラーが発生しました: ${error.message}`, 
+        content: `検索エラーが発生しました: ${error.message}`, 
         isUser: false
       }]);
     }
@@ -111,7 +104,7 @@ export default function VoiceAssistant() {
     };
 
     recognition.onend = () => {
-      // 音声認識が終了したら自動的に再開
+      // 音声認識が終了したら自動的に再開 (継続処理)
       if (isRecording) {
         recognition.start();
       }
@@ -143,7 +136,6 @@ export default function VoiceAssistant() {
               onMouseUp={() => message.isSelectable && handleTextSelection()}
             >
               {message.content}
-              {message.results && <SearchPreview results={message.results} />}
             </div>
           ))}
         </div>

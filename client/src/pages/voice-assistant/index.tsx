@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { DetailView } from '@/components/voice-assistant/DetailView';
 import { Input } from '@/components/ui/input';
@@ -13,6 +14,24 @@ export default function VoiceAssistant() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
+  // 音声認識の結果をメッセージとして表示する
+  const handleVoiceResult = (transcript) => {
+    setMessages(prev => [...prev, { 
+      content: transcript, 
+      isUser: true,
+      isVoiceResult: true 
+    }]);
+    setIsRecording(false);
+  };
+
+  // メッセージをクリックしたときのハンドラ
+  const handleMessageClick = (message) => {
+    if (message.isUser) {
+      setInputText(message.content);
+    }
+  };
+
+  // 検索実行
   const handleSearch = async () => {
     if (!inputText.trim()) return;
 
@@ -37,86 +56,97 @@ export default function VoiceAssistant() {
       setInputText("");
     } catch (error) {
       console.error('検索エラー:', error);
+      setMessages(prev => [...prev, {
+        content: "エラーが発生しました。しばらく待ってから再度お試しください。",
+        isUser: false
+      }]);
     }
   };
 
+  // 音声認識の開始・停止
+  const toggleRecording = () => {
+    if (isRecording) {
+      setIsRecording(false);
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('お使いのブラウザは音声認識をサポートしていません。');
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'ja-JP';
+    recognition.continuous = false;
+    recognition.interimResults = true;
+
+    recognition.onstart = () => {
+      setIsRecording(true);
+      setMessages(prev => [...prev, {
+        content: "音声認識を開始しました...",
+        isUser: false
+      }]);
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = Array.from(event.results)
+        .map(result => result[0].transcript)
+        .join('');
+      
+      if (event.results[0].isFinal) {
+        handleVoiceResult(transcript);
+      }
+    };
+
+    recognition.start();
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto py-4 px-4">
-          <h1 className="text-2xl font-bold text-center">緊急サポート</h1>
+    <div className="flex h-screen">
+      <div className="flex-1 flex flex-col">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {messages.map((message, index) => (
+            <div
+              key={index}
+              className={`p-2 rounded-lg cursor-pointer ${
+                message.isUser ? 'bg-blue-100 ml-auto' : 'bg-gray-100'
+              } ${message.isVoiceResult ? 'border-2 border-blue-300' : ''}`}
+              onClick={() => handleMessageClick(message)}
+            >
+              {message.content}
+              {message.results && <SearchPreview results={message.results} />}
+            </div>
+          ))}
         </div>
-      </header>
 
-      <main className="max-w-7xl mx-auto p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-[calc(100vh-8rem)]">
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div className={`max-w-[80%] p-3 rounded-lg ${
-                    message.isUser ? 'bg-blue-100' : 'bg-gray-100'
-                  }`}>
-                    <p>{message.content}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="border-t bg-white p-4">
-              <div className="flex items-center gap-2">
-                <Button
-                  variant={isRecording ? "destructive" : "secondary"}
-                  size="icon"
-                  onClick={() => setIsRecording(!isRecording)}
-                  className="flex-none"
-                >
-                  {isRecording ? <X className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                </Button>
-                <Input
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  placeholder="キーワードを入力..."
-                  className="flex-1"
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                />
-                <Button onClick={handleSearch} className="flex-none">
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-4 overflow-y-auto">
-            <div className="space-y-4">
-              {messages.length > 0 &&
-                messages[messages.length - 1].results?.map((result, index) => (
-                  <SearchPreview
-                    key={index}
-                    title={result.title}
-                    description={result.description}
-                    imagePath={result.image_path}
-                    onClick={() => {
-                      setSelectedItem(result);
-                      setIsDetailOpen(true);
-                    }}
-                  />
-                ))}
-            </div>
+        <div className="border-t bg-white p-4">
+          <div className="flex items-center gap-2">
+            <Button
+              variant={isRecording ? "destructive" : "secondary"}
+              size="icon"
+              onClick={toggleRecording}
+              className="flex-none"
+            >
+              {isRecording ? <X className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+            </Button>
+            <Input
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              placeholder="キーワードを入力..."
+              className="flex-1"
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+            />
+            <Button onClick={handleSearch} className="flex-none">
+              <Send className="h-4 w-4" />
+            </Button>
           </div>
         </div>
-      </main>
-
-      <DetailView
-        isOpen={isDetailOpen}
-        onClose={() => setIsDetailOpen(false)}
-        title={selectedItem?.title}
-        description={selectedItem?.description}
-        imagePath={selectedItem?.image_path}
-      />
+      </div>
     </div>
   );
 }

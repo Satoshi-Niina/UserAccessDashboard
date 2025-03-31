@@ -26,7 +26,7 @@ localPort = 5003
 externalPort = 3002
 
 [workflows]
-runButton = "Clean and Start"
+runButton = "Full Clean Start"
 
 [[workflows.workflow]]
 name = "Project"

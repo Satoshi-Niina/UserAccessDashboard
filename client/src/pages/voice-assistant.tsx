@@ -91,11 +91,16 @@ export default function VoiceAssistant() {
 
   const startMic = async () => {
     try {
-      if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
+      // iOSのSafariではwebkitSpeechRecognitionを使用
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      
+      if (!SpeechRecognition) {
         throw new Error('音声認識がサポートされていません');
       }
 
-      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      const recognition = new SpeechRecognition();
+      // iOSでの音声認識を確実にするため、continuous をfalseに設定
+      recognition.continuous = false;
       recognition.lang = 'ja-JP';
       recognition.continuous = true;
       recognition.interimResults = true;
@@ -121,6 +126,11 @@ export default function VoiceAssistant() {
       setIsRecording(true);
     } catch (err) {
       console.error("マイクの起動に失敗しました", err);
+      setMessages(prev => [...prev, {
+        content: `音声認識の開始に失敗しました: ${err.message}`,
+        isUser: false
+      }]);
+      setIsRecording(false);
     }
   };
 

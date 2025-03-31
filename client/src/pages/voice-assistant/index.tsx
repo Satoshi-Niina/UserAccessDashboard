@@ -50,7 +50,11 @@ export default function VoiceAssistant() {
         body: JSON.stringify({ query: query })
       });
 
-      if (!response.ok) throw new Error('検索に失敗しました');
+      if (!response.ok) {
+        const errorData = await response.json(); // Attempt to get error details
+        const errorMessage = errorData.message || "検索に失敗しました";
+        throw new Error(errorMessage);
+      }
       const searchResults = await response.json();
 
       setMessages(prev => [...prev, 
@@ -65,7 +69,7 @@ export default function VoiceAssistant() {
     } catch (error) {
       console.error('検索エラー:', error);
       setMessages(prev => [...prev, {
-        content: "エラーが発生しました。しばらく待ってから再度お試しください。",
+        content: `エラーが発生しました: ${error.message}`, // Show more descriptive error message
         isUser: false
       }]);
     }
@@ -132,7 +136,7 @@ export default function VoiceAssistant() {
                 message.isUser ? 'bg-blue-100 ml-auto' : 'bg-gray-100'
               } ${message.isVoiceResult ? 'border-2 border-blue-300' : ''}`}
               onClick={() => handleMessageClick(message)}
-              onMouseUp={() => message.isSelectable && handleTextSelection(message.content)}
+              onMouseUp={() => message.isSelectable && handleTextSelection()}
             >
               {message.content}
               {message.results && <SearchPreview results={message.results} />}

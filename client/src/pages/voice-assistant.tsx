@@ -37,11 +37,15 @@ export default function VoiceAssistant() {
 
   // 🔽 ナレッジ検索用データ読み込み＆Fuse.js 初期化
   useEffect(() => {
-     if ((window as any).SpeechSDK) {
+    const checkSpeechSDK = () => {
+      if ((window as any).SpeechSDK) {
         console.log("✅ Azure Speech SDK が読み込まれました");
       } else {
-        console.error("❌ Speech SDK が未定義です（HTMLに <script> が足りないか、順序の問題）");
+        console.error("❌ Speech SDK が未定義です - 再試行します");
+        setTimeout(checkSpeechSDK, 1000); // 1秒後に再確認
       }
+    };
+    checkSpeechSDK();
     async function initializeSearch() {
       setIsLoading(true);
       setInitError(null);

@@ -301,8 +301,8 @@ ${userText}
         </div>
       </div>
       {selectedResult && (
-        <Dialog open={!!selectedResult}>
-          <DialogContent className="max-w-3xl" onInteractOutside={() => setSelectedResult(null)}>
+        <Dialog open={!!selectedResult} onOpenChange={(open) => !open && setSelectedResult(null)}>
+          <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle>詳細表示</DialogTitle>
             </DialogHeader>

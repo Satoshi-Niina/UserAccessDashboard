@@ -226,16 +226,16 @@ export default function InspectionPage() {
 
   const validateAndSaveBasicInfo = () => {
     const errors: {[key: string]: boolean} = {};
-    
+
     // すべての必須フィールドをチェック
     if (!date) errors.date = true;
     if (!startTime) errors.startTime = true;
-    if (!endTime) errors.endTime = true;
+    // if (!endTime) errors.endTime = true;
     if (!locationInput) errors.location = true;
     if (!responsiblePerson) errors.responsible = true;
     if (!inspectorInput) errors.inspector = true;
     if (!machineNumber) errors.machineNumber = true;
-    if (!fileName) errors.fileName = true;
+    // if (!fileName) errors.fileName = true;
 
     setFormErrors(errors);
 
@@ -247,9 +247,9 @@ export default function InspectionPage() {
       if (errors.responsible) missingFields.push('責任者');
       if (errors.inspector) missingFields.push('点検者');
       if (errors.startTime) missingFields.push('開始時刻');
-      if (errors.endTime) missingFields.push('終了時刻');
+      // if (errors.endTime) missingFields.push('終了時刻');
       if (errors.machineNumber) missingFields.push('機番');
-      if (errors.fileName) missingFields.push('ファイル名');
+      // if (errors.fileName) missingFields.push('ファイル名');
 
       toast({
         title: "入力エラー",
@@ -274,13 +274,24 @@ export default function InspectionPage() {
     setShowBasicInfo(false);
   };
 
-  const handleComplete = async () => {
-    // Basic info and inspection data are combined and saved in handleSaveWithValidation now.
+    const handleComplete = async () => {
     const basicInfo = JSON.parse(localStorage.getItem('inspectionBasicInfo') || '{}');
+
+      // ✅ 終了時刻チェック
+      if (!basicInfo.endTime) {
+        toast({
+          title: "入力エラー",
+          description: "点検終了時刻が未入力です。",
+          variant: "destructive"
+        });
+        return;
+      }
+
     const completeData = {
       ...basicInfo,
       inspectionItems: items
     };
+
     console.log("Complete data to save:", completeData); // Replace with actual save logic
 
     // Placeholder for file saving - Replace with your actual file saving logic
@@ -348,25 +359,45 @@ export default function InspectionPage() {
     handleComplete();
   };
 
+  // 🔽 入力エラー時の赤枠に使う関数
   const getInputStyle = (fieldName: string) => {
     return cn(formErrors[fieldName] && "border-red-500 focus:ring-red-500");
   };
 
+  // 🔽 「一時保存して仕業点検表へ」ボタンで使う関数
   const handleSaveAndProceed = () => {
-    const errors = {};
-    // Required fields validation
+    const errors: {[key: string]: boolean} = {};
+
     if (!date) errors['date'] = true;
+    if (!startTime) errors['startTime'] = true;
+    if (!locationInput) errors['location'] = true;
+    if (!responsiblePerson) errors['responsible'] = true;
+    if (!inspectorInput) errors['inspector'] = true;
     if (!machineNumber) errors['machineNumber'] = true;
-    if (!fileName) errors['fileName'] = true;
+    // ✅ ファイル名・終了時刻はここではチェックしない
 
     setFormErrors(errors);
 
     if (Object.keys(errors).length === 0) {
-      // Save basic info and proceed to inspection form
+      // ✅ 入力問題なければ基本情報を保存して点検画面へ
       validateAndSaveBasicInfo();
+    } else {
+      // ✅ 未入力項目をトーストに表示
+      const missingFields = [];
+      if (errors.date) missingFields.push('点検日');
+      if (errors.startTime) missingFields.push('開始時刻');
+      if (errors.location) missingFields.push('点検場所');
+      if (errors.responsible) missingFields.push('責任者');
+      if (errors.inspector) missingFields.push('点検者');
+      if (errors.machineNumber) missingFields.push('機番');
+
+      toast({
+        title: "入力エラー",
+        description: `以下の項目が未入力です：${missingFields.join('、')}`,
+        variant: "destructive"
+      });
     }
   };
-
   return (
     <div className="container mx-auto py-8">
       <div className="mb-6">
@@ -410,7 +441,7 @@ export default function InspectionPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="start-time">開始時刻</Label>
-                <Input id="start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+                <Input id="start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)}className={getInputStyle('startTime')} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="end-time">終了時刻</Label>
@@ -418,15 +449,38 @@ export default function InspectionPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="location">点検場所</Label>
-                <Input id="location" placeholder="点検場所を入力" value={locationInput} onChange={e => setLocationInput(e.target.value)}/>
+                <Input id="location" placeholder="点検場所を入力" value={locationInput} onChange={e => setLocationInput(e.target.value)}className={getInputStyle('location')} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="responsible-person">責任者</Label>
-                <Input id="responsible-person" placeholder="責任者名を入力" value={responsiblePerson} onChange={e => setResponsiblePerson(e.target.value)}/>
+                <Input
+                  id="responsible-person"
+                  placeholder="責任者名を入力"
+                  value={responsiblePerson}
+                  onChange={(e) => {
+                    setResponsiblePerson(e.target.value);
+                    if (formErrors.responsible && e.target.value.trim() !== "") {
+                      setFormErrors(prev => ({ ...prev, responsible: false }));
+                    }
+                  }}
+                  className={getInputStyle('responsible')}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="inspector">点検者</Label>
-                <Input id="inspector" placeholder="点検者名を入力" value={inspectorInput} onChange={e => setInspectorInput(e.target.value)}/>
+                <Input
+                  id="inspector"
+                  placeholder="点検者名を入力"
+                  value={inspectorInput}
+                  onChange={(e) => {
+                    setInspectorInput(e.target.value);
+                    if (formErrors.inspector && e.target.value.trim() !== "") {
+                      setFormErrors(prev => ({ ...prev, inspector: false }));
+                    }
+                  }}
+                  className={getInputStyle('inspector')}
+                />
+
               </div>
               <div className="space-y-2">
                 <Label htmlFor="machine-id">機械番号</Label>
@@ -445,7 +499,7 @@ export default function InspectionPage() {
                   placeholder="ファイル名を入力"
                   value={fileName}
                   onChange={e => setFileName(e.target.value)}
-                  className={cn("w-[calc(100%+10ch)]", formErrors.fileName && "border-red-500")}
+                  className="w-[calc(100%+10ch)]" // 赤枠判定削除
                 />
               </div>
             </div>
@@ -468,7 +522,10 @@ export default function InspectionPage() {
             <div className="ml-auto flex space-x-2">
               <Button
                 variant="outline"
-                onClick={() => setShowBasicInfo(true)}
+                onClick={() => {
+                  setShowBasicInfo(true);
+                  setFormErrors({});
+                }}
               >
                 基本情報へ戻る
               </Button>

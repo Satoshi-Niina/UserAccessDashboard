@@ -6,6 +6,8 @@ import Fuse from 'fuse.js';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mic, Send, X } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@headlessui/react' // Added import
+
 
 // 型定義（Fuse.js検索結果とチャットメッセージ）
 type SearchResult = {
@@ -267,7 +269,7 @@ ${userText}
                 >
                   <p className="font-bold">{message.content}</p>
                   {!message.isUser && message.results && (
-                    <div className="mt-2 grid grid-cols-2 gap-2">
+                    <div className="mt-2 grid grid-cols-2 md:grid-cols-3 gap-2">
                       {message.results.filter(r => r.type === 'image' && r.source).map((result, idx) => (
                         <div key={idx} className="border rounded cursor-pointer hover:shadow-lg" onClick={() => setSelectedResult(result)}>
                           <img src={result.source} alt={result.content} className="w-full h-32 object-cover rounded" />
@@ -298,6 +300,19 @@ ${userText}
           </Button>
         </div>
       </div>
+      {selectedResult && (
+        <Dialog open={!!selectedResult} onClose={() => setSelectedResult(null)}> {/* Corrected onClose */}
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>詳細表示</DialogTitle>
+            </DialogHeader>
+            <div className="mt-4">
+              <img src={selectedResult.source} alt={selectedResult.content} className="w-full rounded-lg mb-4" />
+              <p className="text-gray-700">{selectedResult.content}</p>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

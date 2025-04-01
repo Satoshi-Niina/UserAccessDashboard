@@ -6,7 +6,7 @@ import Fuse from 'fuse.js';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mic, Send, X } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@headlessui/react' // Added import
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 
 // 型定義（Fuse.js検索結果とチャットメッセージ）
